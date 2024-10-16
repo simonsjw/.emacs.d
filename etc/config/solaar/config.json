@@ -1,0 +1,67 @@
+{
+  "407B:FF5C6B3B": {
+    "_modelId": "B020407BC08A",
+    "_name": "MX Vertical Wireless Mouse",
+    "_serial": "FF5C6B3B",
+    "_unitId": "37374D43",
+    "divert-keys": {
+      "253": 0,
+      "82": 0,
+      "83": 0,
+      "86": 0
+    },
+    "dpi": 1000,
+    "dpi-sliding": 0,
+    "lowres-smooth-scroll": false,
+    "mouse-gestures": 0,
+    "reprogrammable-keys": {
+      "253": 253,
+      "80": 80,
+      "81": 81,
+      "82": 82,
+      "83": 83,
+      "86": 86
+    }
+  },
+  "408A:532A3610": {
+    "_modelId": "B35B408A0000",
+    "_name": "MX Keys Keyboard",
+    "_serial": "532A3610",
+    "_unitId": "532A3610",
+    "backlight": true,
+    "disable-keyboard-keys": {
+      "1": false,
+      "16": false,
+      "2": false,
+      "4": false,
+      "8": false
+    },
+    "divert-keys": {
+      "10": 0,
+      "110": 0,
+      "111": 0,
+      "191": 0,
+      "199": 0,
+      "200": 0,
+      "209": 0,
+      "210": 0,
+      "211": 0,
+      "224": 0,
+      "225": 0,
+      "226": 0,
+      "227": 0,
+      "228": 0,
+      "229": 0,
+      "230": 0,
+      "231": 0,
+      "232": 0,
+      "233": 0,
+      "234": 0,
+      "235": 0,
+      "236": 0
+    },
+    "fn-swap": false,
+    "multiplatform": 0
+  },
+  "_version": "1.1.1"
+}

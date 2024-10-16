@@ -1,0 +1,1 @@
+((t (0 0 302 59) (nil (0 0 302 44) #<window 6 on *SPEEDBAR*> #<window 18 on custom-window-tree.el> (t (215 0 302 44) #<window 12 on *cell sheet*> #<window 14 on *Dictionary*>)) (nil (0 44 302 59) #<window 10 on *Messages*> #<window 16 on magit: .emacs.d> (t (200 44 302 59) #<window 17 on *ielm .emacs.d*> #<window 39>))) #<window 7 on  *Minibuf-0*>)
