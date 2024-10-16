@@ -17,12 +17,11 @@ var/**/project-list.el
 var/**/projectile
 var/**/recentf-save.el
 var/**/savehist.el
-var/**/clock-persist.el
 var/**/transient/**
 var/**/url/
 var/**/undo/
-/eln-cache/
-var/**/org/clock-persist.el
+**/eln-cache/
+var/**/clock-persist.el
 /tree-sitter/
 var/**/persistent-scratch.el
 var/**/org/org-roam.db

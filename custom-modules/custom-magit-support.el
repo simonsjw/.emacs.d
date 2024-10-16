@@ -18,32 +18,28 @@
 
 ;;; Package phase
 
-                   ;; :files ("lisp/magit*.el" "lisp/git-rebase.el"
-                   ;;         "docs/magit.texi" "docs/AUTHORS.md"
-                   ;;         "LICENSE" "Documentation/magit.texi"
-                   ;;         "Documentation/AUTHORS.md"
-                   ;;         (:exclude "lisp/magit-libgit.el"
-                   ;;                   "lisp/magit-libgit-pkg.el"
-                   ;;                   "lisp/magit-section.el"
-                   ;;                   "lisp/magit-section-pkg.el")
-                   ;;         "magit-pkg.el")
+(use-package transient
+  :straight (:type git
+                   :flavor melpa
+                   :host github
+                   :repo "magit/transient"))
+
+(require 'transient)                    ; this is a temporary workaround to manage the below error:
+                                        ;     https://emacs.stackexchange.com/questions/50592/whats-this-slot-missing-invalid-slot-name-transient-prefix-transient-pref/50781#50781
+                                        ;     ⛔ Error (use-package): forge/:catch: Invalid slot name: "#<transient-prefix transient-prefix-16feca7769a6>", :transient-switch-frame
 
 (use-package magit
   :straight (:type git
                    :flavor melpa
-                   :host github
-                   :repo "magit/magit")
-;;  :commands (magit-status magit-get-current-branch)
-;;  :config
-;;  (setq magit-save-repository-buffers 'dontask)
-;;  (setq magit-set-upstream-on-push t)
-  )
+                   :files ("lisp/magit*.el"
+                           "lisp/git-*.el"
+                           "docs/magit.texi"
+                           "docs/AUTHORS.md"
+                           "LICENSE"
+                           "magit-pkg.el"
+                           (:exclude "lisp/magit-section.el") "magit-pkg.el")
+                   :host github :repo "magit/magit"))
 
-;; (use-package transient
-;;   :straight (:type git
-;;                    :flavor melpa
-;;                    :host github
-;;                    :repo "magit/transient"))
 
 ;; Ensure github functionality is activated in magit. 
 ;; (use-package forge
@@ -177,8 +173,8 @@
 
 ;;
 ;; This functionality hides and shows the full path to your repo list.
-(defvar my-org-table-repo-col-visible nil
-  "State of the 'Repository' column visibility, t for full paths, nil for shortened paths.")
+;; (defvar my-org-table-repo-col-visible nil
+;;   "State of the 'Repository' column visibility, t for full paths, nil for shortened paths.")
 
 ;; (defun my-toggle-repo-path-display ()
 ;;   "Toggle the display format of the 'Repository' column between full and shortened paths."
@@ -237,7 +233,10 @@
 
 ;; (defun my/tagCommits ()
 ;;   "Display a list of tags for git commit messages and insert the selected tag.
-;; Utilizes `tagCommits-alist` for retrieving the list of available tags. Users can select a tag from a prompted list in the minibuffer, and the selected tag is then inserted at the current cursor position in the active buffer."
+;; Utilizes `tagCommits-alist` for retrieving the list of available tags.
+;; Users can select a tag from a prompted list in the minibuffer, and the
+;; selected tag is then inserted at the current cursor position in the active
+;; buffer."
 ;;   (interactive)
 ;;   ;; Generate a list of strings that combine each tag with its description.
 ;;   (let* ((tag-list (mapcar (lambda (item)
