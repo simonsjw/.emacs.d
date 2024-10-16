@@ -19,8 +19,10 @@ var/**/recentf-save.el
 var/**/savehist.el
 var/**/clock-persist.el
 var/**/transient/**
-/var/INFODYNAMICS/url/
-/var/INFODYNAMICS/undo/
+var/**/url/
+var/**/undo/
 /eln-cache/
-var/INFODYNAMICS/org/clock-persist.el
+var/**/org/clock-persist.el
 /tree-sitter/
+var/**/persistent-scratch.el
+var/**/org/org-roam.db
