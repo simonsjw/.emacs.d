@@ -1,6 +1,7 @@
 *.eld
 *.log
 *.eln
+etc/images/ucd.all.flat.xml
 etc/**/dist
 etc/**/eln-cache
 etc/**/elpa
