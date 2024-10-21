@@ -225,21 +225,6 @@ file paths.")
 ;; define a key to define the word at point.
 (keymap-set global-map "C-c d l" #'dictionary-lookup-definition)
 
-;; Show dictionary definition on the left
-(add-to-list 'display-buffer-alist
-             '("^\\*Dictionary\\*"
-               (display-buffer-in-side-window)
-               (side . left)
-               (window-width . 70)))
-
-(setq display-buffer-alist
-      '(("^\\*Dictionary\\*"
-         (display-buffer-in-side-window)
-         (side . left)
-         (slot . 0)
-         (window-width . 0.5)
-         (window-parameters . ((no-delete-other-windows . t))))))
-
 
 ;; Set up the spell-checker
 ;; ------------------------
