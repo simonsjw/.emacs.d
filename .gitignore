@@ -13,12 +13,12 @@ var/**/anaconda-mode
 var/**/auto-save
 var/**/backups
 var/**/elisp-autofmt/
-var/**/org/persist/**
+var/**/org/persist/
 var/**/project-list.el
 var/**/projectile
 var/**/recentf-save.el
 var/**/savehist.el
-var/**/transient/**
+var/**/transient/
 var/**/url/
 var/**/undo/
 **/eln-cache/
@@ -26,4 +26,5 @@ var/**/clock-persist.el
 /tree-sitter/
 var/**/persistent-scratch.el
 var/**/org/org-roam.db
-/var/INFODYNAMICS/image-dired/*.jpg
+var/**/image-dired/
+var/**/eshell/
