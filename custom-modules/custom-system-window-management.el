@@ -128,7 +128,9 @@
                  ("*Help*" . config)
                  ("*info*" . config)
                  ("todos.org" . config)
-                 (".gitignore" . vc)))
+                 (".gitignore" . vc)
+                 ;;  ("*vterm*" . terminal)
+                 ))
     (:regexps . (("^documentation$" . config)     ; exact match for `documentation'
                  ("^README.*" . config)           ; strings beginning upper or lower case `README'.
                  (".*\\.conf$" . config)          ; any number of characters followed by `.conf'.
@@ -185,19 +187,31 @@
 
 ;; Preserve existing elements in display-buffer-alist
 ;; and append rules for the *Messages* and *Backtrace* buffers.
-(add-to-list 'display-buffer-alist
-             '("^\\*Messages\\*"
-               (display-buffer-reuse-window
-                display-buffer-pop-up-window)
-               (inhibit-same-window . t)
-               (window-height . 0.3)))
 
+;; BACKTRACE AND MESSAGES HANDLED BY WINDOW MANAGEMENT FUNCTIONS NOW.
+;; THESE ARE KEPT TO SHOW HOW DISPLAY-BUFFER-ALIST CAN BE USED. 
+;; (add-to-list 'display-buffer-alist
+;;              '("^\\*Messages\\*"
+;;                (display-buffer-reuse-window
+;;                 display-buffer-pop-up-window)
+;;                (inhibit-same-window . t)
+;;                (window-height . 0.3)))
+
+;; (add-to-list 'display-buffer-alist
+;;              '("^\\*Backtrace\\*"
+;;                (display-buffer-reuse-window
+;;                 display-buffer-pop-up-window)
+;;                (inhibit-same-window . t)
+;;                (window-height . 0.3)))
+
+;; Show dictionary definition on the left
 (add-to-list 'display-buffer-alist
-             '("^\\*Backtrace\\*"
-               (display-buffer-reuse-window
-                display-buffer-pop-up-window)
-               (inhibit-same-window . t)
-               (window-height . 0.3)))
+             '("^\\*Dictionary\\*"
+               (display-buffer-in-side-window)
+               (side . left)
+               (window-width . 70)  ; change to 0.5 to make it half the size of the buffer it is next to. 
+               (window-parameters . ((no-delete-other-windows . t)))
+               ))
 
 
 (defvar my-window-tools/window-hash (make-hash-table :test 'equal)
@@ -206,6 +220,18 @@
 
 (defvar my-window-tools/known-buffers nil
   "List of buffers known to the system. Used to detect newly created buffers.")
+
+
+;; ensure that our buffer list is updated when a buffer is killed. 
+(defun my-window-tools/update-known-buffers-on-kill ()
+  "Update `my-window-tools/known-buffers` when a non-system buffer is killed."
+  (unless (string-prefix-p " " (buffer-name))
+    ;; Only update known buffers if it's not a system buffer.
+    (setq my-window-tools/known-buffers (buffer-list))))
+
+;; Add this function to `kill-buffer-hook`
+(add-hook 'kill-buffer-hook #'my-window-tools/update-known-buffers-on-kill)
+
 
 (defconst my-window-tools/default-tag 'edit
   "The default tag assigned to non-system buffers when no tag is found. ")
@@ -422,20 +448,44 @@ the window assignment algorithm here. "
   )
 
 
-(defun my-window-tools/detect-new-buffer ()
-  "Detect if a new buffer has been created and trigger assignment logic."
-  (let ((current-buffers (buffer-list)))
+;; (defun my-window-tools/detect-new-buffer ()
+;;   "Detect if a new buffer has been created and trigger assignment logic."
+;;   (let ((current-buffers (buffer-list)))
+;;     ;; Compare current buffers to known buffers to detect new ones
+;;     (dolist (buffer current-buffers)
+;;       (unless (memq buffer my-window-tools/known-buffers)
+;;         ;; Update the known buffers list as soon as a new buffer is detected
+;;         (setq my-window-tools/known-buffers current-buffers)
+;;         ;; Ensure the buffer is live and not internal (starting with a space)
+;;         (when (and (buffer-live-p buffer)
+;;                    (not (string-prefix-p " " (buffer-name buffer))))
+;;           ;; Indicate a new buffer has been found (that is not a system buffer)
+;;           (message "new buffer %s detected" buffer)
+;;           ;; Call the buffer assignment function here
+;;           (my-window-tools/assign-buffer-to-window buffer))))))
+
+(defun my-window-tools/detect-new-non-system-buffer ()
+  "Detect if a new non-system buffer has been created and use assignment logic.
+
+Note that this function does not control the circumstances in which it is
+called. To prevent it running on new system buffers being created, add a check
+at the point at which it is called."
+  (let ((current-buffers (seq-filter
+                          (lambda (buffer)
+                            (not (string-prefix-p " " (buffer-name buffer))))
+                          (buffer-list))))
     ;; Compare current buffers to known buffers to detect new ones
     (dolist (buffer current-buffers)
       (unless (memq buffer my-window-tools/known-buffers)
-        (message "new buffer %s detected" buffer)
-        ;; Update the known buffers list as soon as a new buffer is detected
+        ;; Update the known buffers list with only non-system buffers
         (setq my-window-tools/known-buffers current-buffers)
         ;; Ensure the buffer is live and not internal (starting with a space)
-        (when (and (buffer-live-p buffer)
-                   (not (string-prefix-p " " (buffer-name buffer))))
+        (when (buffer-live-p buffer)
+          ;; Indicate a new buffer has been found (that is not a system buffer)
+          (message "new buffer %s detected" buffer)
           ;; Call the buffer assignment function here
           (my-window-tools/assign-buffer-to-window buffer))))))
+
 
 (defun my-window-tools/reassign-buffer-to-default-window (buffer)
   "Reassign BUFFER to its default window based on the buffer's tag,
