@@ -26,3 +26,4 @@ var/**/clock-persist.el
 /tree-sitter/
 var/**/persistent-scratch.el
 var/**/org/org-roam.db
+/var/INFODYNAMICS/image-dired/*.jpg
