@@ -171,6 +171,7 @@
           :obj t)
 
 (require 'custom-hydra-config)
+(require 'custom-terminal-support)
 (require 'custom-summary-config)
 (require 'custom-system-window-management)
 (require 'custom-startup-config)

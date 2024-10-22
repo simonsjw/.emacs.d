@@ -1,4 +1,4 @@
-personal_ws-1.1 en 29 
+personal_ws-1.1 en 31 
 ARGS
 Backtrace
 Bunnings
@@ -11,6 +11,7 @@ README
 SPEEDBAR
 TODO
 adhoc
+alist
 analytics
 balancer
 config
@@ -28,3 +29,4 @@ noqa
 py
 txt
 usr
+vterm
