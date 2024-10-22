@@ -85,7 +85,7 @@ parent that has already run them (and so set these flags to 1). Note that
 NOECHO is set to t to avoid this statement showing in the console. "
 
   (vterm-send-string
-   "unset BASHRC_SOURCED_IN_INTERACTIVE_SHELL > /dev/null 2>&1; unset BASH_PROFILE_SOURCED_IN_INTERACTIVE_SHELL > /dev/null 2>&1; source ~/.bashrc\n"
+   "unset BASHRC_SOURCED_IN_INTERACTIVE_SHELL > /dev/null 2>&1; unset BASH_PROFILE_SOURCED_IN_INTERACTIVE_SHELL > /dev/null 2>&1; clear; source ~/.bashrc\n"
    t)
 
   )
