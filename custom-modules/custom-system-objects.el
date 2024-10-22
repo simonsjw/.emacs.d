@@ -74,6 +74,17 @@ If not supplied, the default names `idx' and `item' are used."
   (interactive "sEnter new frame name: ")  ; Prompt for the frame name interactively
   (set-frame-name name))
 
+
+(defun my-frame-tools/close-all-windows-except-first (&optional frame)
+  "Close all windows in FRAME except the first window.
+If FRAME is nil, use the current frame."
+  (let* ((target-frame (or frame (selected-frame)))
+         (first-window (frame-first-window target-frame)))
+    (select-window first-window) ; Select the first window
+    (with-selected-frame target-frame
+      (delete-other-windows)))) ; Close all other windows
+
+
 ;; end of Frame management
 ;; ---------------------------
 

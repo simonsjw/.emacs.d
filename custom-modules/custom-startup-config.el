@@ -30,6 +30,7 @@
 (require 'projectile-speedbar)
 (require 'magit)
 (require 'bufler)
+(require 'vterm)
 (require 'cell-mode)
 
 
@@ -238,7 +239,8 @@ created."
             (projectile-dired)
             (scratch-buffer)
             (eshell)
-            (projectile-run-ielm))
+            (projectile-run-ielm)
+            (vterm))
 
           ;; Bottom windows: bottom left
           (with-selected-window bottom-left

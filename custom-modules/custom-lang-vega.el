@@ -119,8 +119,6 @@ my-fn-vega/set-vega-spec-type."
 
 
 ;; Hooks
-(require 'custom-logging-config)
-
 
 ;;; Provision
 (provide 'custom-lang-vega)

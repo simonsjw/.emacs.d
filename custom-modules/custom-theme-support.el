@@ -977,7 +977,7 @@
 ;; What to display as the version while a new one is being loaded
 (setq doom-modeline-env-load-string "...")
 
-;; By default, almost all segments are displayed only in the active window. 
+;; By default, almost all segments are displayed only in the active window.
 ;; To display such segments in all windows, specify e.g.
 (setq doom-modeline-always-visible-segments '(mu4e irc))
 
@@ -1062,6 +1062,9 @@
                         :weight 'normal
                         :inherit nil
                         :box `(:line-width ,box-width :color ,bg)))))
+
+
+
 
 (provide 'custom-theme-support)
 ;;; custom-theme-support.el ends here
