@@ -13,8 +13,6 @@
 ;; https://github.com/magit/magit
 
 ;;; library imports:
-(require 'custom-logging-config)
-
 
 ;;; Package phase
 
@@ -219,35 +217,36 @@
 
 ;;; Set up git tags list.
 ;;  ---------------------
-;; Define `tagCommits-alist` with `defcustom` to make it customizable via Emacs's Customize interface.
-;; (defcustom my/tagCommits-alist
-;;   '(("[debug]" . "fix of previous errors")
-;;     ("[feature]" . "introduction of new functionality")
-;;     ("[doc]"     . "supporting documentation for the code")
-;;     ("[tidy]" . "clean up of the project files (removal of .ipynb and such)")
-;;     ("[refactor]" . "refactor of existing functionality")
-;;     ("[gitRefactor]" . "change to the repo (creating of new branches and such)"))
-;;   "Alist of tags for git commit messages. Each element is a cons cell (TAG . DESCRIPTION)."
-;;   :type '(alist :key-type string :value-type string)
-;;   :group 'my/customizations)
+;; Define `my-magit/tagCommits-alist` with `defcustom` to make it customizable
+;; via Emacs's Customize interface.
+(defcustom my-magit/tagCommits-alist
+  '(("[debug]" . "fix of previous errors")
+    ("[feature]" . "introduction of new functionality")
+    ("[doc]"     . "supporting documentation for the code")
+    ("[tidy]" . "clean up of the project files (removal of .ipynb and such)")
+    ("[refactor]" . "refactor of existing functionality")
+    ("[gitRefactor]" . "change to the repo (creating of new branches and such)"))
+  "Alist of tags for git commit messages. Each element is a cons cell (TAG . DESCRIPTION)."
+  :type '(alist :key-type string :value-type string)
+  :group 'my/customizations)
 
-;; (defun my/tagCommits ()
-;;   "Display a list of tags for git commit messages and insert the selected tag.
-;; Utilizes `tagCommits-alist` for retrieving the list of available tags.
-;; Users can select a tag from a prompted list in the minibuffer, and the
-;; selected tag is then inserted at the current cursor position in the active
-;; buffer."
-;;   (interactive)
-;;   ;; Generate a list of strings that combine each tag with its description.
-;;   (let* ((tag-list (mapcar (lambda (item)
-;;                              (concat (car item) " - " (cdr item)))
-;;                            my/tagCommits-alist))
-;;          ;; Prompt the user to select a tag. `completing-read` returns the chosen string.
-;;          (selection (completing-read "Select tag: " tag-list nil t))
-;;          ;; Extract the tag part from the selection.
-;;          (tag (car (split-string selection " - "))))
-;;     ;; Insert the selected tag at the current cursor position.
-;;     (insert tag)))
+(defun my-magit/tagCommits ()
+  "Display a list of tags for git commit messages and insert the selected tag.
+Utilises `tagCommits-alist` for retrieving the list of available tags.
+Users can select a tag from a prompted list in the minibuffer, and the
+selected tag is then inserted at the current cursor position in the active
+buffer."
+  (interactive)
+  ;; Generate a list of strings that combine each tag with its description.
+  (let* ((tag-list (mapcar (lambda (item)
+                             (concat (car item) " - " (cdr item)))
+                           my-magit/tagCommits-alist))
+         ;; Prompt the user to select a tag. `completing-read` returns the chosen string.
+         (selection (completing-read "Select tag: " tag-list nil t))
+         ;; Extract the tag part from the selection.
+         (tag (car (split-string selection " - "))))
+    ;; Insert the selected tag at the current cursor position.
+    (insert tag)))
 
 
 ;; end of toggle repo list functionality.
