@@ -1,6 +1,8 @@
 *.eld
 *.log
 *.eln
+/tree-sitter/
+**/eln-cache/
 etc/images/ucd.all.flat.xml
 etc/**/dist
 etc/**/eln-cache
@@ -21,10 +23,9 @@ var/**/savehist.el
 var/**/transient/
 var/**/url/
 var/**/undo/
-**/eln-cache/
 var/**/clock-persist.el
-/tree-sitter/
 var/**/persistent-scratch.el
 var/**/org/org-roam.db
 var/**/image-dired/
 var/**/eshell/
+var/**/tramp/
