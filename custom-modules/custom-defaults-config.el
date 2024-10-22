@@ -229,7 +229,10 @@ file paths.")
 ;; Set up the spell-checker
 ;; ------------------------
 (setq ispell-program-name "aspell") ; Or "hunspell" or "ispell"
-(setq ispell-extra-args '("--sug-mode=normal"))
+
+(setq ispell-extra-args '("--sug-mode=normal"
+                          (concat "--repl=" my-paths/ispell-word-replacement)))
+
 (setq ispell-local-dictionary-alist
       '(("Australian"
          "[A-Za-z]" "[^A-Za-z]" "[']" nil

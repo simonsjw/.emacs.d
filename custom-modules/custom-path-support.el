@@ -49,8 +49,9 @@
 (defvar diary-file nil
   "Path to the Emacs diary file for built in diary functionality.")
 
-(defvar ispell-replacement-dictionary)
+(defvar my-paths/ispell-word-replacement)
 (defvar ispell-personal-dictionary)
+
 
 (declare-function
  my-on-disk-tools/ensure-directory-exists custom-system-tools)
@@ -243,14 +244,15 @@
 
 
 ;; Set up dictionary paths
-(setq ispell-replacement-dictionary
-      (expand-file-name ".aspell.en.prepl" user-emacs-directory))
 (setq ispell-personal-dictionary
       (expand-file-name ".aspell.en.pws" user-emacs-directory))
 
+(setq my-paths/ispell-word-replacement
+      (expand-file-name ".aspell.en.prepl" user-emacs-directory))
+
 
 (setq save-sql-history-dir
-       (expand-file-name "sql-history/" no-littering-var-directory))
+      (expand-file-name "sql-history/" no-littering-var-directory))
 (setq save-sql-history-dir
       (expand-file-name "sql-history/" no-littering-var-directory))
 
@@ -281,3 +283,5 @@
 
 (provide 'custom-path-support)
 ;;; custom-path-support.el ends here
+
+                                        ; LocalWords:  pws prepl
