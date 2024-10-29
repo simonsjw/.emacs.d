@@ -224,9 +224,6 @@ Return the text with as many prepended spaces as needed."
         (apply #'fancy-splash-insert text)
         (insert "\n"))
       
-      ;; unlike the original routine, we do not check for updates
-      ;; to save resources.
-
       ;; draw the crafted-module list.
       ;; -----------------------------
       (mapc
@@ -505,7 +502,7 @@ starts.  See the variable documenation for
   
   (let ((splash-buffer (get-buffer-create "*Crafted Emacs*")))
     (with-current-buffer splash-buffer
-      (add-hook 'window-state-change-hook #'recenter-crafted-content nil t)
+      ;;(add-hook 'window-state-change-hook #'recenter-crafted-content nil t)
       
       (let ((inhibit-read-only t))
         
@@ -584,6 +581,17 @@ starts.  See the variable documenation for
       (format-diary-entry-with-faces start end)))
   (goto-char (point-min))) ; ensure the buffer is displayed from the top.
 
+(defun my-extended-keyboard-quit ()
+  "Execute `keyboard-quit` and optionally `recenter-crafted-content`
+ in *Crafted Emacs* buffer."
+  (interactive)
+  (keyboard-quit)  ;; Original C-g behavior
+  ;; Only run `recenter-crafted-content` if in *Crafted Emacs* buffer
+  (when (string= (buffer-name) "*Crafted Emacs*")
+    (recenter-crafted-content)))
+
+;; Remap C-g to the new function
+(global-set-key (kbd "C-g") 'my-extended-keyboard-quit)
 
 (provide 'custom-summary-config)
 ;;; custom-summary-config.el ends here
