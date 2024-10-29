@@ -170,8 +170,58 @@ context, in the current active buffer."
   (interactive)
   ;; Make sure to switch to the correct buffer (if not already in it)
   ;;(with-current-buffer (other-buffer (current-buffer) 1)
-    (let ((current-face (face-at-point nil t)))
-      (message "current face: %s" current-face)))
+  (let ((current-face (face-at-point nil t)))
+    (message "current face: %s" current-face)))
+
+
+(defvar-local align-comment-prefix nil
+  "Buffer-local variable to store the comment prefix for align-eol-comments.")
+
+
+(defvar-local align-comment-prefix nil
+  "Buffer-local variable to store the comment prefix for align-eol-comments.")
+
+
+;; (defun align-eol-comments ()
+;;   "Align end-of-line comments to the fill column using `align-comment-prefix`.
+;; If called with an active region, align comments within the region.
+;; If no region is active, align comments on the current line.
+;; If called without a region or line, align comments in the entire buffer.
+
+;; Only aligns comments that are not in a string, and that follow other characters
+;; on the same line.
+
+;; Does not align comments that start with repeated COMMENT-PREFIX.
+
+;; Example usage for aligning across the buffer:
+;;    (align-eol-comments)"
+;;   (interactive)
+;;   (unless align-comment-prefix
+;;     (error "align-comment-prefix is not set. Please set it using a mode-specific hook.")) ; Ensure comment prefix is defined
+;;   (save-excursion
+;;     (let (
+;;           (comment-regex
+;;            (concat
+;;             "\\([^" (substring align-comment-prefix 0 1) "]\\)"                ; Match any character not starting with the prefix
+;;             "\\(\\s-*\\)"                                                      ; Match and capture optional whitespace before the comment
+;;             (regexp-quote align-comment-prefix)                                ; Match the actual comment prefix
+;;             "\\s-*"))                                                          ; Match any following whitespace after the comment prefix
+
+;;           (start (if (use-region-p) (region-beginning) (point-min)))           ; Determine the start point (region or whole buffer)
+;;           (end (if (use-region-p) (region-end) (point-max))))                  ; Determine the end point (region or whole buffer)
+
+;;       (goto-char start)                                                        ; Start searching from the determined position
+;;       (while (re-search-forward comment-regex end t)                           ; Search for matches of the comment pattern
+;;         (let ((comment-start (match-beginning 2)))                             ; Capture where the comment starts
+;;           (unless (nth 3 (syntax-ppss))                                        ; Ensure we are not inside a string
+;;             (goto-char comment-start)                                          ; Move to the start of the comment
+;;             (unless (looking-at " ")                                           ; Ensure there's at least one space before the comment
+;;               (insert " "))                                                    ; Insert a space if none is present
+;;             (move-to-column fill-column t)                                     ; Move cursor to the `fill-column` for alignment
+;;             (insert (match-string 3))))))))                                    ; Reinsert the matched comment part at the new column position
+
+
+
 
 ;; turn on editorconfig if it is available
 (when (require 'editorconfig nil :noerror)
