@@ -90,7 +90,8 @@
         (forward-line 1)))))
 
 
-;; enhance ibuffer with ibuffer-projectile-default-group-name if it is available.
+;; enhance ibuffer with ibuffer-projectile-default-group-name if it is
+;; available.
 (when (require 'ibuffer-projectile nil :noerror)
 
   (defun crafted-ide-enhance-ibuffer-with-ibuffer-project ()
