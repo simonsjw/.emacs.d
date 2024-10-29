@@ -1,4 +1,4 @@
-personal_ws-1.1 en 31 
+personal_ws-1.1 en 39 
 ARGS
 Backtrace
 Bunnings
@@ -13,12 +13,16 @@ TODO
 adhoc
 alist
 analytics
+aspell
 balancer
+cd
 config
 defconst
 defvar
+dir
 flymake
 gitignore
+hdb
 hoc
 ipython
 json
@@ -26,7 +30,11 @@ jsonl
 lvl
 modeline
 noqa
+odbc
 py
+rlwrap
+sym
 txt
 usr
 vterm
+ws
