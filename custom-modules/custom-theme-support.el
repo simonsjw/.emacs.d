@@ -18,6 +18,8 @@
 (defvar modus-themes-tabs-accented)
 (defvar modus-themes-scale-headings)
 
+(defvar log-font-lock-keywords)
+
 (defvar doom-modeline-support-imenu)
 (defvar doom-modeline-height)
 (defvar doom-modeline-bar-width)
@@ -228,6 +230,7 @@
 ;; Height is in 1/10 of a point so :height 120 is a 12 point font size.
 (add-hook 'emacs-startup-hook
           (lambda ()
+            ;; Set the main faces. 
             (custom-set-faces
 
              `(default
@@ -249,7 +252,8 @@
                ((t (:inherit nil
                              :weight regular :height 100
                              :family "courier new"))))
-
+             
+             ;; Now generate the modus themes faces. 
              `(modus-themes-heading-0
                ((t (:foreground ,info-theme-white-grey  :weight regular :height 300
                                 :family "Impact"))) t)
@@ -274,14 +278,122 @@
                ((t (:foreground ,info-theme-white-grey :weight regular :height 80
                                 :family "arial"))) t)
 
-             ))
+             )
 
-          (defface my-font-faces/prog-mode-face
-            '((t :inherit fixed-pitch :weight normal :slant normal :height 100))
-            "Prog-mode default face. "
-            :group 'my-custom-programming-faces)
+            (defface my-font-faces/prog-mode-face
+              '((t :inherit fixed-pitch :weight normal :slant normal :height 100))
+              "Prog-mode default face. "
+              :group 'my-custom-programming-faces)
 
+            (defface my-font-faces/prog-mode-face
+              '((t :inherit fixed-pitch :weight normal :slant normal :height 100))
+              "Prog-mode default face. "
+              :group 'my-custom-programming-faces)
+
+            ))
+
+
+(defun my-font-lock-line-test/log-line-p ()
+  "Return non-nil if the current line matches the log entry criteria."
+  (save-excursion
+    (beginning-of-line)
+    (let* ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+           (open-bracket (string-match-p "\\[" line))
+           (close-bracket (and open-bracket (string-match-p "\\]" line open-bracket))))
+      (when (and open-bracket close-bracket
+                 (<= (- close-bracket open-bracket) 100)) ;; Check ] is within 100 chars
+        ;; Count the semicolons between [ and ]
+        (let ((section (substring line open-bracket close-bracket)))
+          (eq (length (split-string section ";" t)) 4)))))) ;; Exactly three ';' in between
+
+
+;; create a minor mode for log viewing
+(define-minor-mode my-font-lock/log-mode
+  "Minor mode for highlighting specific log lines."
+  :lighter " LogHighlight"
+  (if my-font-lock/log-mode
+      (progn
+        (font-lock-add-keywords
+         nil ;; Apply to the current buffer
+         `((my-font-lock-line-test/log-line-p    ;; Pre-match form to check if this rule should be applied
+            ,(concat
+              "\\(\\[\\)"                        ;; 1. Opening bracket
+              "\\([0-9]\\{4\\}\\)"               ;; 2. Year
+              "\\(\\.\\)"                        ;; 3. Dot
+              "\\([0-9]\\{2\\}\\)"               ;; 4. Month
+              "\\(\\.\\)"                        ;; 5. Dot
+              "\\([0-9]\\{2\\}\\)"               ;; 6. Day
+              "\\(D\\)"                          ;; 7. Literal 'D'
+              "\\([0-9]\\{2\\}\\)"               ;; 8. Hours
+              "\\(:\\)"                          ;; 9. Colon
+              "\\([0-9]\\{2\\}\\)"               ;; 10. Minutes
+              "\\(:\\)"                          ;; 11. Colon
+              "\\([0-9]\\{2\\}\\)"               ;; 12. Seconds
+              "\\(\\.\\)"                        ;; 13. Dot
+              "\\(\\([0-9]+\\)\\)"               ;; 14. Milliseconds
+              "\\(\\;\\)"                        ;; 15. Semicolon
+              "\\([^;]+\\)"                      ;; 16. Section up to first semicolon
+              "\\(\\;\\)"                        ;; 17. Semicolon
+              "\\([^;]+\\)"                      ;; 18. Section up to second semicolon
+              "\\(\\;\\)"                        ;; 19. Semicolon
+              "\\([^;]+\\)"                      ;; 20. Section up to third semicolon
+              "\\(\\]\\)"                        ;; 21. Closing bracket
+              ":\\(?:[^;\"\\]+\\|\\\"[^\\\"]*\\\"\\|\\\\;\\)*\\;\
+      \\(.*\\)"                         ;; 22. Catch-all at the end
+              )
+            (1 'log-delimiter-face)   ;; Opening bracket
+            (2 'log-datetime-face)    ;; Year
+            (4 'log-datetime-face)    ;; Month
+            (6 'log-datetime-face)    ;; Day
+            (8 'log-datetime-face)    ;; Hours
+            (10 'log-datetime-face)   ;; Minutes
+            (12 'log-datetime-face)   ;; Seconds
+            (14 'log-datetime-face)   ;; Milliseconds
+            (16 'log-process-face)    ;; Section after date, e.g., process name
+            (22 'log-message-face)    ;; Catch-all, log message
+            )))
+        (font-lock-flush))
+    (font-lock-add-keywords
+     nil ;; Apply to the current buffer
+     `((my-font-lock-line-test/log-line-p ;; Pre-match form to check if this rule should be applied
+        ,(concat
+          "\\(\\[\\)"                         ;; 1. Opening bracket
+          "\\([0-9]\\{4\\}\\)"                ;; 2. Year
+          "\\(\\.\\)"                        ;; 3. Dot
+          "\\([0-9]\\{2\\}\\)"                ;; 4. Month
+          "\\(\\.\\)"                        ;; 5. Dot
+          "\\([0-9]\\{2\\}\\)"                ;; 6. Day
+          "\\(D\\)"                          ;; 7. Literal 'D'
+          "\\([0-9]\\{2\\}\\)"                ;; 8. Hours
+          "\\(:\\)"                          ;; 9. Colon
+          "\\([0-9]\\{2\\}\\)"                ;; 10. Minutes
+          "\\(:\\)"                          ;; 11. Colon
+          "\\([0-9]\\{2\\}\\)"                ;; 12. Seconds
+          "\\(\\.\\)"                        ;; 13. Dot
+          "\\(\\([0-9]+\\)\\)"               ;; 14. Milliseconds
+          "\\(\\;\\)"                        ;; 15. Semicolon
+          "\\([^;]+\\)"                      ;; 16. Section up to first semicolon
+          "\\(\\;\\)"                        ;; 17. Semicolon
+          "\\([^;]+\\)"                      ;; 18. Section up to second semicolon
+          "\\(\\;\\)"                        ;; 19. Semicolon
+          "\\([^;]+\\)"                      ;; 20. Section up to third semicolon
+          "\\(\\]\\)"                        ;; 21. Closing bracket
+          ":\\(?:[^;\"\\]+\\|\\\"[^\\\"]*\\\"\\|\\\\;\\)*\\;\
+      \\(.*\\)"                         ;; 22. Catch-all at the end
           )
+        (1 'log-delimiter-face)   ;; Opening bracket
+        (2 'log-datetime-face)    ;; Year
+        (4 'log-datetime-face)    ;; Month
+        (6 'log-datetime-face)    ;; Day
+        (8 'log-datetime-face)    ;; Hours
+        (10 'log-datetime-face)   ;; Minutes
+        (12 'log-datetime-face)   ;; Seconds
+        (14 'log-datetime-face)   ;; Milliseconds
+        (16 'log-process-face)    ;; Section after date, e.g., process name
+        (22 'log-message-face)    ;; Catch-all, log message
+        ))
+     (font-lock-flush))))
+
 
 ;; ** Customise the Modeline
 ;; Here we make sure that the modeline has the right 'fixed pitch' font.
@@ -1000,68 +1112,69 @@
 ;; Here set the fonts and the colours for each window tab.
 ;; We also set up exclutions from tabbing based on modes found in the buffer
 ;; tab candidates.
+
 (with-eval-after-load 'tab-line
-(setq tab-line-new-button-show t)                     ; show/do not show add-new button
-(setq tab-line-close-button-show t)                   ; show/do not show close button
-(setq tab-line-separator "")                          ; set it to empty
+  (setq tab-line-new-button-show t)                     ; show/do not show add-new button
+  (setq tab-line-close-button-show t)                   ; show/do not show close button
+  (setq tab-line-separator "")                          ; set it to empty
 
-(let ((bg
-       (if (facep 'solaire-default-face)
-           (face-attribute 'solaire-default-face :background nil 'default)
-         (face-attribute 'default :background nil 'default)))
+  (let ((bg
+         (if (facep 'solaire-default-face)
+             (face-attribute 'solaire-default-face :background nil 'default)
+           (face-attribute 'default :background nil 'default)))
 
-      (fg
-       (face-attribute 'default :foreground nil 'default))
+        (fg
+         (face-attribute 'default :foreground nil 'default))
 
-      (base
-       (face-attribute 'mode-line :background nil 'default))
+        (base
+         (face-attribute 'mode-line :background nil 'default))
 
-      (box-width
-       (if (functionp 'line-pixel-height)
-           (/ (line-pixel-height) 5)
-         1)))                                         ; Fallback to 1 if line-pixel-height is undefined
+        (box-width
+         (if (functionp 'line-pixel-height)
+             (/ (line-pixel-height) 5)
+           1)))                                         ; Fallback to 1 if line-pixel-height is undefined
 
-  (when
-      (and bg fg base)
-    (set-face-attribute 'tab-line nil                 ; BACKGROUND BEHIND TABS
-                        :family "fixed-pitch"
-                        :background base
-                        :foreground fg
-                        :height 100
-                        :inherit nil
-                        :box `(:line-width -1 :color ,base))
+    (when
+        (and bg fg base)
+      (set-face-attribute 'tab-line nil                 ; BACKGROUND BEHIND TABS
+                          :family "fixed-pitch"
+                          :background base
+                          :foreground fg
+                          :height 100
+                          :inherit nil
+                          :box `(:line-width -1 :color ,base))
 
-    (set-face-attribute 'tab-line-tab nil             ; ACTIVE TAB IN ANOTHER WINDOW
-                        :family "fixed-pitch"
-                        :foreground fg
-                        :background bg
-                        :weight 'normal
-                        :inherit nil
-                        :box `(:line-width ,box-width :color ,bg))
+      (set-face-attribute 'tab-line-tab nil             ; ACTIVE TAB IN ANOTHER WINDOW
+                          :family "fixed-pitch"
+                          :foreground fg
+                          :background bg
+                          :weight 'normal
+                          :inherit nil
+                          :box `(:line-width ,box-width :color ,bg))
 
-    (set-face-attribute 'tab-line-tab-inactive nil    ; INACTIVE TAB
-                        :family "fixed-pitch"
-                        :foreground fg
-                        :background base
-                        :weight 'normal
-                        :inherit nil
-                        :box `(:line-width ,box-width :color ,base))
+      (set-face-attribute 'tab-line-tab-inactive nil    ; INACTIVE TAB
+                          :family "fixed-pitch"
+                          :foreground fg
+                          :background base
+                          :weight 'normal
+                          :inherit nil
+                          :box `(:line-width ,box-width :color ,base))
 
-    (set-face-attribute 'tab-line-tab-current nil     ; ACTIVE TAB CONTAINING BUFFER WITH FOCUS
-                        :family "fixed-pitch"
-                        :foreground fg
-                        :background bg
-                        :weight 'normal
-                        :inherit nil
-                        :box `(:line-width ,box-width :color ,bg))
+      (set-face-attribute 'tab-line-tab-current nil     ; ACTIVE TAB CONTAINING BUFFER WITH FOCUS
+                          :family "fixed-pitch"
+                          :foreground fg
+                          :background bg
+                          :weight 'normal
+                          :inherit nil
+                          :box `(:line-width ,box-width :color ,bg))
 
-    (set-face-attribute 'tab-line-highlight nil       ; TAB WITH MOUSE-OVER
-                        :family "fixed-pitch"
-                        :foreground fg
-                        :background bg
-                        :weight 'normal
-                        :inherit nil
-                        :box `(:line-width ,box-width :color ,bg)))))
+      (set-face-attribute 'tab-line-highlight nil       ; TAB WITH MOUSE-OVER
+                          :family "fixed-pitch"
+                          :foreground fg
+                          :background bg
+                          :weight 'normal
+                          :inherit nil
+                          :box `(:line-width ,box-width :color ,bg)))))
 
 
 
