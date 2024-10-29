@@ -86,9 +86,7 @@ NOECHO is set to t to avoid this statement showing in the console. "
 
   (vterm-send-string
    "unset BASHRC_SOURCED_IN_INTERACTIVE_SHELL > /dev/null 2>&1; unset BASH_PROFILE_SOURCED_IN_INTERACTIVE_SHELL > /dev/null 2>&1; clear; source ~/.bashrc\n"
-   t)
-
-  )
+   t))
 
 ;;; Hooks:
 (add-hook 'term-mode-hook #'my-terminal/unset_bash_file_loader_flags)
