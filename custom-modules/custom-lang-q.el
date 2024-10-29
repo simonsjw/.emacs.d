@@ -22,24 +22,37 @@
 
 ;;; Packages:
 
-(use-package q-mode
-  :straight ( :type git
-              :host github
-              :repo "psaris/q-mode"))
+;; (use-package q-mode
+;;   :straight ( :type git
+;;               :host github
+;;               :repo "psaris/q-mode"))
+
+(load-file
+ (expand-file-name
+  "custom-packages/q-loadbalancer/q-loadbalancer.el" user-emacs-directory))
+
+(load-file
+ (expand-file-name
+  "custom-packages/q-loadbalancer/process-groups.el" user-emacs-directory))
+
+(load-file
+ (expand-file-name
+  "custom-packages/q-loadbalancer/q-parse.el" user-emacs-directory))
 
 ;;; Code:
 
 ;;; File associations
 ;; (.k and .q)
-(add-to-list 'auto-mode-alist '("\\.[kq]\\'" . q-mode))
+(add-to-list 'auto-mode-alist '("\\.[kq]\\'" . q-script-mode))
+
 
 ;; Set default port. 
 (customize-set-variable 'q-init-port 6060
                         "set the default port to run kdb/q. ")
 
-(defun my-lang/q-mode-setup ()
+(defun my-lang/q-script-mode-setup ()
   (message
-   "[%s ; DEBUG; my-lang/q-mode-setup]starting loading the defun ; ;"
+   "[%s ; DEBUG; my-lang/q-script-mode-setup]starting loading the defun ; ;"
    (current-time-string))
 
   (my-programming-mode/set-fill-column-indicator 140)
@@ -59,11 +72,11 @@
 ;; Hooks
 (add-hook 'ess-mode-hook 'remove-ess-q-extn)
 (add-hook 'inferior-ess-mode-hook 'remove-ess-q-extn)
-(add-hook 'q-mode-hook #'my-lang/q-mode-setup)
+(add-hook 'q-script-mode-hook #'my-lang/q-mode-setup)
 
 (require 'custom-logging-config)
 
 
 ;;; Provision
 (provide 'custom-lang-q)
-;;; crafted-q-mode-support.el ends here
+;;; custom-lang-q.el ends here
