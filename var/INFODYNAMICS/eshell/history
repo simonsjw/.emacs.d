@@ -1,1 +1,7 @@
 git status
+ls
+ls -alh
+ls
+ls ~/
+ls -alh ~/
+echo $BASHRC_SOURCED_IN_INTERACTIVE_SHELL
