@@ -41,11 +41,30 @@ If no directory path is given, use Dired to navigate to one.
 
 GIVEN-PROJECT-PATH is the path to the project folder for which an ide will be
 created."
+  
+  ;; (setq given-project-path user-emacs-directory)
+  ;; (setq project-path
+  
+  ;;       (my-strings/ensure-directory-path    ; ensure the path ends in a '/'
+  ;;        (if
+  ;;            (and
+  ;;             given-project-path
+  ;;             (not (string= given-project-path "")))
+  ;;            given-project-path
+  ;;          (my-interactive-tools/select-directory-using-dired))))
+  ;; (setq magit-display-buffer-function #'my-window-tools/magit-display-buffer)
+  ;; (setq new-frame
+  ;;       (make-frame
+  ;;        `((name . ,(file-name-nondirectory
+  ;;                    (directory-file-name project-path))))))
+  
 
+  
   ;; Prompt user to select directory
   (interactive "DSelect project directory: ")
+  ;; (setq debug-on-error t)
 
-  ;; This bit uses dired to help the user navigate to a directory
+  ;; This `let' uses dired to help the user navigate to a directory
   (let
       ((project-path
         (my-strings/ensure-directory-path    ; ensure the path ends in a '/'
@@ -60,9 +79,6 @@ created."
        ;; appropriate window and show the buffer there. 
        (magit-display-buffer-function #'my-window-tools/magit-display-buffer)
        )
-
-    
-    ;; (setq debug-on-error t)
 
     ;; If speedbar is open, close it.
     (when
@@ -87,23 +103,15 @@ created."
           (make-frame
            `((name . ,(file-name-nondirectory
                        (directory-file-name project-path)))))))
-
-      ;;now save the new frame to our reference table.
-      (select-frame-set-input-focus new-frame)
-
-      ;; set the current directory to the project root  and ensure projectile
-      ;; is also looking at that directory.
-      (cd project-path)
-
-      (setq default-directory project-path)
       
       ;; (when
       ;;   (not (string= (projectile-project-name) ".emacs.d"))
       ;;   (projectile-switch-project project-path))
 
       (with-selected-frame new-frame
-        (let* ((frame-name (frame-parameter nil 'name))
-               (top-left (selected-window))
+        (let* (
+               (frame-name (frame-parameter nil 'name))
+               (top-left  (selected-window))
                (bottom-left
                 (split-window-below
                  (floor (* 3.0 (/ (frame-height) 4.0)))))
@@ -121,14 +129,16 @@ created."
                (bottom-right
                 (progn
                   (select-window bottom-middle)
-                  (split-window-right))))
+                  (split-window-right)))
+               )
+
+          ;; set the current directory to the project root and ensure 
+          ;; projectile is also looking at that directory.
+          (cd project-path)
+          (setq default-directory project-path)
 
           ;; Create and assign buffers to the windows
-          
-          (progn
-            (set-window-buffer top-left (get-buffer-create "edit"))
-            (with-current-buffer "edit"
-              (tab-line-mode 1)))
+
           
           (progn
             (set-window-buffer bottom-left (get-buffer-create "logs"))
@@ -155,7 +165,25 @@ created."
             (with-current-buffer "terminal"
               (tab-line-mode 1)))
 
+          ;; Speedbar (create from the edit window before creating a buffer)
+          (with-selected-window top-left
+            (sr-speedbar-open))
+          
+          (progn
+            (set-window-buffer top-left (get-buffer-create "edit"))
+            (with-current-buffer "edit"
+              (tab-line-mode 1)))
+
           ;; Naming the windows uniquely based on frame
+
+          (let ((speedbar-win (sr-speedbar-select-window)))
+            (set-window-parameter
+             speedbar-win 'name (concat frame-name "-[speedbar]"))
+            ;; (set-window-parameter speedbar-win  'tag 'speedbar)
+            ;;  (my-window-tools/add-window speedbar-win 'speedbar)
+            ;; (my-os-tools/set-sr-speedbar-directory-to-file-path project-path)
+            )
+          
           (set-window-parameter
            top-left 'name (concat frame-name "-top-middle-[edit]"))
           ;; Assigning the 'edit tag to the window and adding it to the
@@ -203,16 +231,6 @@ created."
           (set-window-parameter bottom-right 'tag 'terminal)
           (my-window-tools/add-window bottom-right 'terminal)
           
-          ;; Speedbar
-          (with-selected-window top-left
-            (sr-speedbar-open))
-          
-          (let ((speedbar-window (sr-speedbar-select-window)))
-            (set-window-parameter
-             speedbar-window 'name (concat frame-name "-[speedbar]"))
-            (set-window-parameter speedbar-window  'tag 'speedbar)
-            (my-window-tools/add-window top-left 'speedbar))
-
           ;; Side windows: top right upper
           (with-selected-window top-right-sub-upper
             (cell-sheet-create "20" "20")
@@ -221,8 +239,7 @@ created."
           ;; Side windows: top right lower
           (with-selected-window top-right-sub-lower
             (find-file ide-init/default-config-file)
-            (info)
-            (bufler)
+            (ibuffer)
             (my-tab-line/close-specific-buffer "*scratch*"))
           
           ;; Bottom windows: bottom middle
@@ -239,7 +256,6 @@ created."
             (projectile-dired)
             (scratch-buffer)
             (eshell)
-            (projectile-run-ielm)
             (vterm))
 
           ;; Bottom windows: bottom left
@@ -247,19 +263,22 @@ created."
             (find-file ide-init/default-log-file)
             (my-tab-line/close-specific-buffer "*scratch*"))
 
-          (with-selected-window top-left
-            (my-os-tools/set-sr-speedbar-directory-to-file-path project-path)
-            (message "speedbar directory set at %s" project-path))
+          ;;  (with-selected-window top-left
+          ;;   (my-os-tools/set-sr-speedbar-directory-to-file-path project-path)
+          ;;    (message "speedbar directory set at %s" project-path))
 
-          (select-window top-left)
+          ;;(select-window top-left)
           
           ;; Main window
           (with-selected-window top-left
             (crafted-startup-screen)
-            (my-tab-line/close-specific-buffer "*scratch*"))
-          
+            (my-tab-line/close-specific-buffer "*scratch*")
+            )
           )
         )
+      ;; clean up the start-up frame. 
+      (let ((startup-frame (my-frame-tools/get-frame-by-name "startup")))
+        (if startup-frame (delete-frame startup-frame))) 
       )
     )
   )
@@ -272,7 +291,7 @@ created."
   ;; relationships for new buffers specified in
   ;; custom-system-window-management.el
   (add-hook 'buffer-list-update-hook
-            #'my-window-tools/detect-new-buffer)     
+            #'my-window-tools/detect-new-non-system-buffer)     
   )
 
 ;; Use the function on startup
@@ -285,3 +304,5 @@ created."
 (provide 'custom-startup-config)
 ;;; custom-startup-config.el ends here
 
+
+; LocalWords:  speedbar
