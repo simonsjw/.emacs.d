@@ -90,6 +90,7 @@
 ;;
 (require 'custom-system-objects)
 (require 'custom-ui-config)
+
 ;;; Code:
 
 (defvar my-window-tools/buffer-window-map
@@ -151,7 +152,9 @@
                  (".*-log.*" . logs)              ; strings with `-log' in them. 
                  (".*tramp.*" . logs)             ; strings with `tramp' in them.
                  ("^\\*ielm*" . terminal)         ; strings beginning `*ielm'.
-                 ("^q-.*" . terminal)))           ; strings beginning `q-'. 
+                 ;; ("^q-.*" . terminal)             ; strings beginning `q-'.
+                 ("^\\*Q PROC.*" . terminal)      ; strings beginning `*Q PROC'. 
+                 ))            
     (:modes   . ((vterm-mode . terminal)
                  (eshell-mode . terminal)
                  (shell-mode . terminal)
@@ -163,7 +166,7 @@
                  (clojure-mode . edit)
                  (lisp-mode . edit)
                  (python-mode . edit)
-                 (q-mode . edit)
+                 (q-script-mode . edit)
                  (rust-mode . edit)
                  (scheme-mode . edit)
                  (systemd-mode . config)
@@ -213,14 +216,14 @@
                (window-parameters . ((no-delete-other-windows . t)))
                ))
 
+(defvar my-window-tools/whitelabel-buffers '("*SPEEDBAR*" "logs" "edit" "data" "terminal" "config")
+  "A list of buffers to be excluded from the matching process.")
 
 (defvar my-window-tools/window-hash (make-hash-table :test 'equal)
   "Hash table to store window references keyed by window-tag.")
 
-
 (defvar my-window-tools/known-buffers nil
   "List of buffers known to the system. Used to detect newly created buffers.")
-
 
 ;; ensure that our buffer list is updated when a buffer is killed. 
 (defun my-window-tools/update-known-buffers-on-kill ()
@@ -234,7 +237,7 @@
 
 
 (defconst my-window-tools/default-tag 'edit
-  "The default tag assigned to non-system buffers when no tag is found. ")
+  "The default tag assigned to non-system buffers when no tag is found.")
 
 
 (defun my-window-tools/add-window (window window-tag)
@@ -265,60 +268,51 @@ WINDOW-TAG is the tag describing the window's purpose."
   "Assign BUFFER to the appropriate window based on its purpose.
 
 This function assigns the buffer to the window tagged with the
-appropriate purpose. If the tag is `no-tag, and the buffer is a system buffer,
-a message is printed and the buffer is not assigned to any window. Note that
+appropriate purpose.  If the tag is `no-tag, and the buffer is a system buffer,
+a message is printed and the buffer is not assigned to any window.  Note that
 system buffers are matched to a tag using the buffer name directly or via
-regexp. Unlike standard buffers, they are not matched by mode.  
+regexp.  Unlike standard buffers, they are not matched by mode.  
 
 Unmatched buffers that are not system buffers are assigned to the value
 defined by `my-window-tools/default-tag'.
 
-If no window with the required tag exists, it is created. "
-  
-  (let*
-      (
-       (buffer-name (buffer-name buffer))
-       (special-buffers '("*Messages*" "*Backtrace*"))
-       (tag
-        (with-current-buffer buffer
-          (my-window-tools/get-buffer-tag buffer)))
-       (original-window (get-buffer-window buffer)))
+If no window with the required tag exists, it is created.if OUTPUT-ONLY is
+set, then no buffers are moved but the target tag is found."
+  (let ((buffer-name-text (buffer-name buffer)))
+    ;; Check if buffer is in the whitelist
+    (if (member buffer-name-text my-window-tools/whitelabel-buffers)
+        (message "Buffer %s is whitelisted, no window assignment performed."
+                 buffer-name-text)
 
-    (if (member buffer-name special-buffers)
-        ;; if the buffer is one of the listed special buffers, 
-        (let ((target-window (gethash tag my-window-tools/window-hash)))
-          (when (window-live-p target-window)
-            (set-window-buffer target-window buffer)))
-      
-      (if tag
-          (progn
-            (message "Tag for the buffer is: %s" tag)
-            ;; If the tag is 'no-tag, check if it is a system buffer and if so, leave
-            ;; it unassigned. Otherwise, assign it to the default tag in 
+      (let ((buffer-name-text (buffer-name buffer)))
+        (unless (string-prefix-p " " buffer-name-text)
+          (let*
+              ((tag
+                (with-current-buffer buffer
+                  (my-window-tools/get-buffer-tag buffer)))
+               (original-window (get-buffer-window buffer)))
+
+            ;; If the tag is 'no-tag, assign it to the default tag in 
             ;; my-window-tools/default-tag.
             (if (eq tag 'no-tag)
-                (if (string-prefix-p "*" (buffer-name buffer))
-                    (message
-                     "No suitable tag found for system buffer %s. Not assigning to any window."
-                     (buffer-name buffer))
-                  (progn
-                    (setq tag my-window-tools/default-tag)
-                    (message
-                     "Buffer %s assigned to default tab '%s. "
-                     (buffer-name buffer) my-window-tools/default-tag))))
+                (progn
+                  (setq tag my-window-tools/default-tag)
+                  (message
+                   "Buffer %s does not map to a tag. Assigned to default tab '%s. "
+                   buffer-name-text my-window-tools/default-tag)))
             
             ;; If a tag was found, assign the buffer to the first window with that
             ;; tag. 
             (let* ((key tag)
                    (window (gethash key my-window-tools/window-hash)))
               
-              ;; Check if a window was found and if that window is live
+              ;; Check if a window was found using gethash and check if that
+              ;; window is live
               (if window
                   (progn
-                    (message "Found window %s in look-ups with tag %s." window key)
                     (if (window-live-p window)
                         (progn
-                          (message "Window is live, assigning buffer.")
+                          (message "Found window %s in look-ups with tag %s. Window is live, assigning buffer." window key)
                           ;; don't assign the buffer to a window if it is being
                           ;; 'moved' from that window. 
                           (if (eq window original-window)
@@ -327,11 +321,11 @@ If no window with the required tag exists, it is created. "
                               (message
                                "Using set-window-buffer with buffer %s and window %s"
                                buffer window)
-                              (if (not output-only)                            ; output only is the flag determining if the buffer is moved according to the tag or whether the point is simply to find the relevant tag. 
-                                  (progn
+                              (if (not output-only)                            ; output only is a flag given to the function determining if the buffer is moved
+                                  (progn                                       ; according to the tag or whether this is a 'dry run' simply returning the relevant tag. 
                                     (set-window-buffer window buffer)
                                     (with-current-buffer buffer (tab-line-mode 1))
-                                    (if original-window
+                                    (if original-window                        ; close the tab in the original window. 
                                         (my-tab-line/tab-line-close-tab-given-buffer
                                          buffer original-window)))
                                 
@@ -344,10 +338,7 @@ If no window with the required tag exists, it is created. "
                        "Window in look-ups is no longer live. No assignment made.")))
                 (message
                  "No window found in look-ups with tag %s. No assignment made." key)
-                )))
-        (message "The buffer is a system buffer and didn't match to a tag.
-No assignment made.")
-        ))))
+                ))))))))
 
 
 (defun my-window-tools/find-frame-by-project-root (project-root)
@@ -373,55 +364,38 @@ project."
 
 (defun my-window-tools/get-buffer-tag (buffer)
   "Get the tag for the given BUFFER.
-
 Return `nil' if the buffer is a system buffer without a match by name or
 regexp. Return `no-tag' if the buffer is not a system buffer but isn't matched
-by name, regexp or mode.
+by name, regexp or mode."
+  (let ((buffer-name-text (buffer-name buffer)))
+    ;; Step 0: Early return if the buffer is a system buffer.
+    (if (string-prefix-p " " buffer-name-text)
+        nil
+      ;; Proceed to check for tag matches.
+      (let ((tag 'no-tag)
+            (buffer-mode (buffer-local-value 'major-mode buffer))
+            (map my-window-tools/buffer-window-map))
 
- The process works as follows:
- 1. Checks the buffer's name against the `:names' in
-    `my-window-tools/buffer-window-map'. If a match is found, it is returned
-    in `tag'.
- 2. Checks the buffer's name against the regex patterns in `:regexps' and
- 3. Checks if the buffer is a system buffer (name starts with `*'). If not,
-    check for a match on buffer mode against `:modes'.
- 4. Returns `no-tag' if no matches are found in any of the checks.
-    (Recall system buffers are not matched to a tag by mode.)"
+        ;; Step 1: Check for match by buffer name.
+        (dolist (name (cdr (assoc :names map)))
+          (when (string-match-p (car name) buffer-name-text)
+            (setq tag (cdr name))))
 
-  (let ((buffer-name (buffer-name buffer))
-        (buffer-mode (buffer-local-value 'major-mode buffer))
-        (map my-window-tools/buffer-window-map)
-        tag)
+        ;; Step 2: Check regex patterns if no match was found.
+        (when (eq tag 'no-tag)
+          (dolist (regexp (cdr (assoc :regexps map)))
+            (when (string-match-p (car regexp) buffer-name-text)
+              (setq tag (cdr regexp)))))
 
-    (message "Buffer name: %s" buffer-name)
-
-    ;; Step 1: check for match by buffer name.
-    (dolist (name (cdr (assoc :names map)))
-      (when (string-match-p (car name) buffer-name)
-        (message "Found by name: %s" (cdr name))
-        (setq tag (cdr name))))
-
-    ;; Step 2: Check regexps if no match found in names
-    (unless tag
-      (dolist (regexp (cdr (assoc :regexps map)))
-        (when (string-match-p (car regexp) buffer-name)
-          (message "Found by regexp: %s" (cdr regexp))
-          (setq tag (cdr regexp)))))
-
-    ;; Step 3: If it's not a system buffer, check for match by buffer mode.
-    (unless tag
-      (if (not (string-prefix-p "*" buffer-name))
+        ;; Step 3: Match by buffer mode if still no match.
+        (when (eq tag 'no-tag)
           (dolist (mode (cdr (assoc :modes map)))
             (when (eq buffer-mode (car mode))
-              (message "Found by mode: %s" (cdr mode))
-              (setq tag (cdr mode))))))
+              (setq tag (cdr mode)))))
 
-    ;; Step 4: Return 'no-tag if no match found
-    (unless tag
-      (setq tag 'no-tag))
-
-    ;; Return the final tag value
-    tag))
+        ;; Return the final tag value in the case where the buffer
+        ;; does not begin with a space. 
+        tag))))
 
 
 ;; Example usage
@@ -447,45 +421,20 @@ the window assignment algorithm here. "
     )
   )
 
-
-;; (defun my-window-tools/detect-new-buffer ()
-;;   "Detect if a new buffer has been created and trigger assignment logic."
-;;   (let ((current-buffers (buffer-list)))
-;;     ;; Compare current buffers to known buffers to detect new ones
-;;     (dolist (buffer current-buffers)
-;;       (unless (memq buffer my-window-tools/known-buffers)
-;;         ;; Update the known buffers list as soon as a new buffer is detected
-;;         (setq my-window-tools/known-buffers current-buffers)
-;;         ;; Ensure the buffer is live and not internal (starting with a space)
-;;         (when (and (buffer-live-p buffer)
-;;                    (not (string-prefix-p " " (buffer-name buffer))))
-;;           ;; Indicate a new buffer has been found (that is not a system buffer)
-;;           (message "new buffer %s detected" buffer)
-;;           ;; Call the buffer assignment function here
-;;           (my-window-tools/assign-buffer-to-window buffer))))))
-
 (defun my-window-tools/detect-new-non-system-buffer ()
-  "Detect if a new non-system buffer has been created and use assignment logic.
-
-Note that this function does not control the circumstances in which it is
-called. To prevent it running on new system buffers being created, add a check
-at the point at which it is called."
-  (let ((current-buffers (seq-filter
-                          (lambda (buffer)
-                            (not (string-prefix-p " " (buffer-name buffer))))
-                          (buffer-list))))
-    ;; Compare current buffers to known buffers to detect new ones
-    (dolist (buffer current-buffers)
-      (unless (memq buffer my-window-tools/known-buffers)
-        ;; Update the known buffers list with only non-system buffers
-        (setq my-window-tools/known-buffers current-buffers)
-        ;; Ensure the buffer is live and not internal (starting with a space)
-        (when (buffer-live-p buffer)
-          ;; Indicate a new buffer has been found (that is not a system buffer)
-          (message "new buffer %s detected" buffer)
-          ;; Call the buffer assignment function here
-          (my-window-tools/assign-buffer-to-window buffer))))))
-
+  "Detect if a new non-system buffer has been created and use assignment logic."
+  (dolist (buffer (buffer-list))
+    ;; Check if the buffer is new and not already in the known list
+    (unless (memq buffer my-window-tools/known-buffers)
+      ;; Only add non-system buffers to known-buffers
+      (when (and (buffer-live-p buffer)
+                 (not (string-prefix-p " " (buffer-name buffer))))
+        ;; Add to the known-buffers list
+        (push buffer my-window-tools/known-buffers)
+        ;; Indicate a new buffer has been found
+        (message "new buffer %s detected" buffer)
+        ;; Call the buffer assignment function here
+        (my-window-tools/assign-buffer-to-window buffer)))))
 
 (defun my-window-tools/reassign-buffer-to-default-window (buffer)
   "Reassign BUFFER to its default window based on the buffer's tag,
