@@ -390,6 +390,21 @@ This function is used in setting up the IDE."
 ;;CNTRL-SPACE activates any major-mode-hydra defined. 
 (global-set-key (kbd "C-SPC") #'major-mode-hydra)
 
+;; Manage your change indicators. 
+(defun my-ui/add-change-indicators-right-click-menu()
+  "Add 'Remove Change Indicators' to right-click menu in prog-mode."
+  (easy-menu-define my-prog-mode-menu prog-mode-map
+    "Custom right-click menu for prog-mode."
+    '("Change Indicators"
+      ["Remove Indicators" highlight-changes-remove-highlight t]
+      ["Rotate Indicators" highlight-changes-rotate-faces t]))
+  
+  ;; Bind the custom menu to right-click
+  (define-key prog-mode-map [mouse-3] 'my-prog-mode-menu))
+
+;; Add the function to prog-mode-hook to ensure it's active in prog-mode buffers
+(add-hook 'prog-mode-hook 'my-ui/add-change-indicators-right-click-menu)
+
 ;; Define menu items
 
 ;; (with-eval-after-load 'projectile
