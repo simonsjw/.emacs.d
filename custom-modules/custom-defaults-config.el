@@ -230,8 +230,9 @@ file paths.")
 ;; ------------------------
 (setq ispell-program-name "aspell") ; Or "hunspell" or "ispell"
 
-(setq ispell-extra-args '("--sug-mode=normal"
-                          (concat "--repl=" my-paths/ispell-word-replacement)))
+(setq ispell-extra-args
+      `("--sug-mode=normal"
+        ,(concat "--repl=" my-paths/ispell-word-replacement)))
 
 (setq ispell-local-dictionary-alist
       '(("Australian"
@@ -357,8 +358,6 @@ If COLUMN is not provided, use 80 as the default value."
   "Set useful layout tweeks for programming modes."
   (interactive)
 
-
-
   ;; Provide an autosave hook.
   (defun my/auto-save-hook ()
     "Enable auto-saving in prog-mode buffers."
@@ -384,9 +383,9 @@ If COLUMN is not provided, use 80 as the default value."
   (setq display-fill-column-indicator-column t)
   (display-fill-column-indicator-mode)
 
-  ;; enable aggressive-indent-mode
-  ;; (aggressive-indent-mode t)
-
+  ;; ensure changes are visible in the buffer. 
+  ;;(highlight-changes-mode)
+  
   ;; (setq yas-use-menu 'abbreviate)  ;; show only the snippets for the mode of the buffer.
   ;; activate yas mode.
   ;; (yas-minor-mode) ;; or M-x yas-reload-all if you've started YASnippet already.
@@ -394,7 +393,7 @@ If COLUMN is not provided, use 80 as the default value."
 
   ;; (setq fci-rule-width 1)
   ;; (setq fci-rule-color "darkgrey")
-
+  
   (setq truncate-lines t))               ; deactivate line-wrapping.
 
 
