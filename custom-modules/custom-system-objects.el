@@ -68,6 +68,21 @@ If not supplied, the default names `idx' and `item' are used."
     (unless found
       (message "No frame named '%s' found." frame-name))))
 
+(defun my-frame-tools/get-frame-by-name (frame-name)
+  "Get a frame object when given its name FRAME-NAME."
+  (defvar frame-object nil)
+  (let ((found nil))  ; Track if we found the frame
+    (dolist (frame (frame-list))
+      (when (string= (frame-parameter frame 'name) frame-name)
+        
+        (setq found t)
+        (setq frame-object frame)
+        (message "found frame named '%s'." frame-name)))
+    (unless found
+      (message "No frame named '%s' found." frame-name))
+    frame-object))
+
+
 
 (defun my-frame-tools/set-current-frame-name (name)
   "Set the name of the current frame to NAME."
@@ -123,6 +138,12 @@ If FRAME is nil, use the current frame."
     (mapcar (lambda (param)
               (message "Tag: %s, Value: %s" (car param) (cdr param)))
             params)))
+
+(defun my-window-tools/select-window-by-name (name)
+  "Select the window with a custom `\'name' parameter matching NAME."
+  (let ((target-window (my-window-tools/find-window-by-name name)))
+    (when target-window
+      (select-window target-window))))
 
 ;; end of Window management
 ;; ---------------------------
