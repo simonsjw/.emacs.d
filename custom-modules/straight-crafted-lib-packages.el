@@ -19,11 +19,11 @@
 (use-package s
   :straight (:type git :host github :repo "magnars/s.el"))
 
-(use-package pkg-info
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "emacsorphanage/pkg-info"))
+;; (use-package pkg-info
+;;   :straight (:type git
+;;                    :flavor melpa
+;;                    :host github
+;;                    :repo "emacsorphanage/pkg-info"))
 
 (use-package jump
   :straight (:type git :host github :repo "eschulte/jump.el"))
