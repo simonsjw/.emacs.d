@@ -165,13 +165,7 @@
 ;; (setq pretty-speedbar-about-stroke "#DCDCDC")       ;; Stroke color for all icons placed to the right of the file name, including checks and locks.
 ;; (setq pretty-speedbar-signs-fill "#CC00CC")         ;; Fill color for plus and minus signs used on non-folder icons. darkblue/magenta: #594968
 
-;; First, inherit properties from 'org-level-2
-(set-face-attribute 'speedbar-separator-face
-                    nil :inherit 'org-level-2)
 
-;; Then, change the background color while preserving other inherited properties
-(set-face-attribute 'speedbar-separator-face
-                    nil :background info-theme-dark-blue)
 
 (custom-set-faces
  '(speedbar-button-face ((t (:foreground "#FFFFFF"))))
@@ -229,10 +223,24 @@
   ;; Refresh speedbar to apply changes
   (speedbar-refresh))
 
-;; Bind the toggle function to the '.' key in speedbar mode
+
 (add-hook 'speedbar-mode-hook
           (lambda ()
-            (define-key speedbar-mode-map "." 'my-speedbar/toggle-filter)))
+            ;; Disable word wrapping in speedbar if you always enable it globally.
+            (visual-line-mode 0)
+
+            ;; Adjust horizontal scrolling behavior
+            (setq-local truncate-lines t) ; Ensure lines do not wrap
+            (setq-local auto-hscroll-mode 'current-line) ; Horizontal scroll on the current line
+            (setq-local hscroll-margin 0) ; No margin for horizontal scrolling
+
+            ;; Bind the toggle function to the '.' key in speedbar mode
+            (define-key speedbar-mode-map "." 'my-speedbar/toggle-filter)
+            ;; First, inherit properties from 'org-level-2
+            (set-face-attribute 'speedbar-separator-face nil :inherit 'org-level-2)
+            ;; Then, change the background color while preserving other inherited properties
+            (set-face-attribute 'speedbar-separator-face nil :background info-theme-dark-blue)))
+
 
 
 ;; get the name of the available views from
