@@ -8,86 +8,11 @@
 
 ;;; Commentary:
 ;; This script provides a mechanism for managing windows in Emacs, supporting
-;; multiple projects each in different frames. It uses a hash table to store
+;; multiple projects each in different frames.  It uses a hash table to store
 ;; window references keyed by a combination of frame and window tags, allowing
 ;; efficient matching of buffers to the appropriate frame and window.
 ;;
-;; Summary: Objects and Their Intended Workflows
-;; ---------------------------------------------
-;; 2. my-window-tools/add-window:
-;; Adds a window to the hash table with the given frame and window tag.
-;; Used in the workflow for storing windows.
-;;
-;; 4. my-window-tools/get-project-root:
-;; Retrieves the project root directory for a buffer.
-;; Used for matching buffers to frames based on project roots.
-;;
-;; 5. my-window-tools/buffer-project-root:
-;; Gets the project root or default directory for a buffer.
-;; Used for determining the appropriate frame for a buffer.
-;;
-;; 6. my-window-tools/assign-buffer-to-window:
-;; Assigns a buffer to the appropriate window based on its project root or
-;; origin.
-;; Used in the workflow for assigning buffers.
-;;
-;; 7. my-window-tools/find-frame-by-project-root:
-;; Finds the frame associated with a given project root.
-;; Used for matching buffers to frames.
-;;
-;; 8. my-window-tools/frame-project-root:
-;; Retrieves the project root associated with a frame.
-;; Used for finding the correct frame for a buffer.
-;;
-;; 9. my-window-tools/set-frame-project-root:
-;; Sets the project root for a frame.
-;; Used for setting up frames with the correct project root.
-;;
-;; 10. my-window-tools/get-buffer-tag:
-;; Placeholder function to get the tag associated with the current buffer.
-;; Used for determining the buffer tag for assignment purposes.
-;;
-;;
-;; Workflows:
-;; ----------
-;; 1. Storing a Window with a Tag in the Hash Table as It Is Created
-;; Function: my-window-tools/add-window
-;; Steps:
-;;     Create the Window:
-;;         When a window is created, determine its frame and the tag that
-;;         describes its purpose.
-;;     Store in Hash Table:
-;;         Use the my-window-tools/add-window function to store the window
-;;         reference in the hash table with the generated key.
-;;
-;; 2. Removing a Window from the Hash Table When It Is Removed
-;; Function: my-window-tools/remove-window
-;; Steps:
-;;     Identify the Window:
-;;         Determine the frame and tag of the window being removed.
-;;     Generate the Key:
-;;         Use the my-window-tools/generate-key function to create the unique
-;;         key.
-;;     Remove from Hash Table:
-;;         Remove the window reference from the hash table.
-;;
-;; 3. Assigning a New Buffer to a Window as It Is Created
-;; Function: my-window-tools/assign-buffer-to-window
-;; Steps:
-;;     Determine Buffer Tag:
-;;         Determine the tag associated with the buffer. This is done using
-;;         the my-get-buffer-tag function.
-;;     Find the Appropriate Frame:
-;;         Determine the frame based on the buffer's project root or the frame
-;;         from which it was called. Use my-buffer-project-root and
-;;         my-find-frame-by-project-root.
-;;     Generate the Key:
-;;         Use the my-window-tools/generate-key function to create a unique
-;;         key using the frame and buffer tag.
-;;     Assign Buffer to Window:
-;;         Use my-window-tools/assign-buffer-to-window to assign the buffer to
-;;         the appropriate window.
-;;
+
 (require 'custom-system-objects)
 (require 'custom-ui-config)
 
@@ -130,7 +55,6 @@
                  ("*info*" . config)
                  ("todos.org" . config)
                  (".gitignore" . vc)
-                 ;;  ("*vterm*" . terminal)
                  ))
     (:regexps . (("^documentation$" . config)     ; exact match for `documentation'
                  ("^README.*" . config)           ; strings beginning upper or lower case `README'.
@@ -187,43 +111,20 @@
     )
   )
 
-
-;; Preserve existing elements in display-buffer-alist
-;; and append rules for the *Messages* and *Backtrace* buffers.
-
-;; BACKTRACE AND MESSAGES HANDLED BY WINDOW MANAGEMENT FUNCTIONS NOW.
-;; THESE ARE KEPT TO SHOW HOW DISPLAY-BUFFER-ALIST CAN BE USED. 
-;; (add-to-list 'display-buffer-alist
-;;              '("^\\*Messages\\*"
-;;                (display-buffer-reuse-window
-;;                 display-buffer-pop-up-window)
-;;                (inhibit-same-window . t)
-;;                (window-height . 0.3)))
-
-;; (add-to-list 'display-buffer-alist
-;;              '("^\\*Backtrace\\*"
-;;                (display-buffer-reuse-window
-;;                 display-buffer-pop-up-window)
-;;                (inhibit-same-window . t)
-;;                (window-height . 0.3)))
-
-;; Show dictionary definition on the left
-(add-to-list 'display-buffer-alist
-             '("^\\*Dictionary\\*"
-               (display-buffer-in-side-window)
-               (side . left)
-               (window-width . 70)  ; change to 0.5 to make it half the size of the buffer it is next to. 
-               (window-parameters . ((no-delete-other-windows . t)))
-               ))
-
-(defvar my-window-tools/whitelabel-buffers '("*SPEEDBAR*" "logs" "edit" "data" "terminal" "config")
+(defvar my-window-tools/whitelabel-buffers '("*SPEEDBAR*"
+                                             "logs"
+                                             "edit"
+                                             "data"
+                                             "terminal"
+                                             "config"
+                                             "vc")
   "A list of buffers to be excluded from the matching process.")
 
 (defvar my-window-tools/window-hash (make-hash-table :test 'equal)
   "Hash table to store window references keyed by window-tag.")
 
 (defvar my-window-tools/known-buffers nil
-  "List of buffers known to the system. Used to detect newly created buffers.")
+  "List of buffers known to the system.  Used to detect newly created buffers.")
 
 ;; ensure that our buffer list is updated when a buffer is killed. 
 (defun my-window-tools/update-known-buffers-on-kill ()
@@ -235,10 +136,8 @@
 ;; Add this function to `kill-buffer-hook`
 (add-hook 'kill-buffer-hook #'my-window-tools/update-known-buffers-on-kill)
 
-
 (defconst my-window-tools/default-tag 'edit
   "The default tag assigned to non-system buffers when no tag is found.")
-
 
 (defun my-window-tools/add-window (window window-tag)
   "Add WINDOW with WINDOW-TAG to the hash table.
@@ -248,7 +147,6 @@ WINDOW-TAG is the tag describing the window's purpose."
   (let ((key window-tag))
     (message "Adding window with key: %s" key) ; Add this line
     (puthash key window my-window-tools/window-hash)))
-
 
 (defun my-window-tools/get-project-root (buffer)
   "Get the project root directory for BUFFER using the project.el package."
@@ -263,109 +161,76 @@ WINDOW-TAG is the tag describing the window's purpose."
     (or (my-window-tools/get-project-root buffer)
         (buffer-local-value 'default-directory buffer))))
 
+;; ############################################################################
+;;; Buffer assignment to windows
+;; ----------------------------------------------------------------------------
+;; Here we implement the mechanics that, when given a buffer, can determine
+;; the appropriate window for that buffer and move it if necessary.
+;; The steps in this process are:
+;; 1) Call a function to determine the action needed to assign a given buffer
+;;    to the right window. This function is:
+;;    my-window-tools/assign-buffer-to-window
+;; 3) Evaluate if the buffer is suitable to be matched to a tagged window.
+;;    Use the function  my-window-tools/get-buffer-tag-or-default. If a tag
+;;    is needed, it will proceed to step 2
+;; 3) find the correct tag for the window.
+;;    Use function my-window-tools/get-buffer-tag. 
+;; 4) having found a tag for the buffer, find the window that matches the tag.
+;;    Use function my-window-tools/get-window-for-tag. (If the tag has no
+;;    match, then the default window is selected.)
+;; 5) When a move is needed, call my-window-tools/assign-buffer-to-window. Note
+;;    that if the output-only flag is set to true, all these functions will
+;;    still be called. Only the final move inside this function is inhibited.
+;;    This ensures we have the opportunity to have the full function footprint
+;;    in any testing.
 
 (defun my-window-tools/assign-buffer-to-window (buffer &optional output-only)
-  "Assign BUFFER to the appropriate window based on its purpose.
-
-This function assigns the buffer to the window tagged with the
-appropriate purpose.  If the tag is `no-tag, and the buffer is a system buffer,
-a message is printed and the buffer is not assigned to any window.  Note that
-system buffers are matched to a tag using the buffer name directly or via
-regexp.  Unlike standard buffers, they are not matched by mode.  
-
-Unmatched buffers that are not system buffers are assigned to the value
-defined by `my-window-tools/default-tag'.
-
-If no window with the required tag exists, it is created.if OUTPUT-ONLY is
-set, then no buffers are moved but the target tag is found."
-  (let ((buffer-name-text (buffer-name buffer)))
-    ;; Check if buffer is in the whitelist
-    (if (member buffer-name-text my-window-tools/whitelabel-buffers)
+  "Main function to assign BUFFER to an appropriate window based on its tag.
+If OUTPUT-ONLY is non-nil, this function will only determine the target window
+without moving the buffer."
+  (let* ((tag (my-window-tools/get-buffer-tag-or-default buffer)))
+    (if (not tag)
         (message "Buffer %s is whitelisted, no window assignment performed."
-                 buffer-name-text)
+                 (buffer-name buffer))
+      (let* ((window (my-window-tools/get-window-for-tag tag))
+             (original-window (get-buffer-window buffer)))
+        ;; Check if a suitable window was found
+        (if window
+            ;; Move the buffer to the target window, respecting OUTPUT-ONLY flag
+            (my-window-tools/move-buffer-to-window
+             buffer window original-window output-only)
+          ;; No window found; print message with dynamically generated default tag
+          (message "No window with tag '%s' was found."
+                   my-window-tools/default-tag))))))
 
-      (let ((buffer-name-text (buffer-name buffer)))
-        (unless (string-prefix-p " " buffer-name-text)
-          (let*
-              ((tag
-                (with-current-buffer buffer
-                  (my-window-tools/get-buffer-tag buffer)))
-               (original-window (get-buffer-window buffer)))
+(defun my-window-tools/get-buffer-tag-or-default (buffer)
+  "Determine and return the tag for BUFFER.
 
-            ;; If the tag is 'no-tag, assign it to the default tag in 
-            ;; my-window-tools/default-tag.
-            (if (eq tag 'no-tag)
-                (progn
-                  (setq tag my-window-tools/default-tag)
-                  (message
-                   "Buffer %s does not map to a tag. Assigned to default tab '%s. "
-                   buffer-name-text my-window-tools/default-tag)))
-            
-            ;; If a tag was found, assign the buffer to the first window with that
-            ;; tag. 
-            (let* ((key tag)
-                   (window (gethash key my-window-tools/window-hash)))
-              
-              ;; Check if a window was found using gethash and check if that
-              ;; window is live
-              (if window
-                  (progn
-                    (if (window-live-p window)
-                        (progn
-                          (message "Found window %s in look-ups with tag %s. Window is live, assigning buffer." window key)
-                          ;; don't assign the buffer to a window if it is being
-                          ;; 'moved' from that window. 
-                          (if (eq window original-window)
-                              (message "Target window is the window the buffer is in. No changes made.")
-                            (progn
-                              (message
-                               "Using set-window-buffer with buffer %s and window %s"
-                               buffer window)
-                              (if (not output-only)                            ; output only is a flag given to the function determining if the buffer is moved
-                                  (progn                                       ; according to the tag or whether this is a 'dry run' simply returning the relevant tag. 
-                                    (set-window-buffer window buffer)
-                                    (with-current-buffer buffer (tab-line-mode 1))
-                                    (if original-window                        ; close the tab in the original window. 
-                                        (my-tab-line/tab-line-close-tab-given-buffer
-                                         buffer original-window)))
-                                
-                                (message
-                                 "Function set for message output-only. No changes made.")
-                                )))
-                          )
-                      
-                      (message
-                       "Window in look-ups is no longer live. No assignment made.")))
-                (message
-                 "No window found in look-ups with tag %s. No assignment made." key)
-                ))))))))
-
-
-(defun my-window-tools/find-frame-by-project-root (project-root)
-  "Find the frame associated with the given PROJECT-ROOT.
-PROJECT-ROOT is the root directory of the project to find the frame for."
-  (catch 'found
-    (dolist (frame (frame-list))
-      (when (string= (my-window-tools/frame-project-root frame) project-root)
-        (throw 'found frame)))))
-
-
-(defun my-window-tools/frame-project-root (frame)
-  "Get the project root associated with FRAME."
-  (frame-parameter frame 'project-root))
-
-(defun my-window-tools/set-frame-project-root (frame project-root)
-  "Set the project root for FRAME to PROJECT-ROOT.
-
-This parameter is used to identify the frame corresponding to a particular
-project."
-  (set-frame-parameter frame 'project-root project-root))
-
+This function uses the default tag if unassigned.  If the buffer is
+whitelisted, no tag will be assigned, and no window assignment will occur."
+  (let ((buffer-name-text (buffer-name buffer)))
+    ;; Check if the buffer is whitelisted (skip assignment if true)
+    (if (member buffer-name-text my-window-tools/whitelabel-buffers)
+        (progn
+          (message "Buffer %s is whitelisted, no window assignment performed."
+                   buffer-name-text)
+          nil)
+      ;; Get the tag for the buffer, defaulting to `my-window-tools/default-tag` if `no-tag`
+      (let ((tag (with-current-buffer buffer
+                   (my-window-tools/get-buffer-tag buffer))))
+        (if (eq tag 'no-tag)
+            ;; If no tag found, assign the default tag and log the action
+            (progn
+              (message "Buffer %s does not map to a tag. Assigned to default tag '%s."
+                       buffer-name-text my-window-tools/default-tag)
+              my-window-tools/default-tag)
+          ;; Return the found tag if it is not 'no-tag'
+          tag)))))
 
 (defun my-window-tools/get-buffer-tag (buffer)
   "Get the tag for the given BUFFER.
-Return `nil' if the buffer is a system buffer without a match by name or
-regexp. Return `no-tag' if the buffer is not a system buffer but isn't matched
+Return nil if the buffer is a system buffer without a match by name or
+regexp.  Return `no-tag' if the buffer is not a system buffer but isn't matched
 by name, regexp or mode."
   (let ((buffer-name-text (buffer-name buffer)))
     ;; Step 0: Early return if the buffer is a system buffer.
@@ -397,6 +262,92 @@ by name, regexp or mode."
         ;; does not begin with a space. 
         tag))))
 
+(defun my-window-tools/get-window-for-tag (tag)
+  "Retrieve a window associated with TAG.
+
+If no live window exists with TAG, check for a window with the default tag.
+(Found in `my-window-tools/default-tag`).  Return nil if neither is available."
+  (let ((window (gethash tag my-window-tools/window-hash)))
+    (cond
+     ;; Return the window if it's live
+     ((and window (window-live-p window)) window)
+     ;; Otherwise, look for a live window with the default tag
+     ((let ((default-window (gethash my-window-tools/default-tag
+                                     my-window-tools/window-hash)))
+        (if (and default-window (window-live-p default-window))
+            default-window
+          ;; Return nil if neither a window for TAG nor for the default tag exists
+          nil))))))
+
+(defun my-window-tools/move-buffer-to-window (buffer window original-window
+                                                     output-only)
+  "Assign BUFFER to WINDOW.
+
+if ORIGINAL-WINDOW is the same as WINDOW then the window does not need to be
+moved. 
+
+If OUTPUT-ONLY is non-nil, only log the target window without moving the
+buffer."
+  (if output-only
+      ;; Log only, do not perform buffer assignment
+      (message "Output-only flag is set. No buffer reassignment performed.")
+    ;; Check if the buffer is already in the target window
+    (if (eq window original-window)
+        ;; If so, log a message and do nothing further
+        (message
+         "Target window is the window the buffer is already in. No changes made.")
+      ;; Otherwise, assign the buffer to the window and activate necessary modes
+      (progn
+        ;; Set the buffer in the target window
+        (set-window-buffer window buffer)
+        ;; Enable tab-line mode for better tab management
+        (with-current-buffer buffer (tab-line-mode 1))
+        ;; If the buffer was previously in a different window, close it there
+        (when original-window
+          (my-tab-line/tab-line-close-tab-given-buffer buffer original-window))
+        ;; Log the successful assignment
+        (message "Buffer %s assigned to window %s."
+                 (buffer-name buffer) window)))))
+
+;; ----------------------------------------------------------------------------
+;; END OF Buffer assignment to windows 
+;; ############################################################################
+
+
+
+;; (defun my-window-tools/assign-buffer-to-window (buffer &optional output-only)
+;;   "Assign BUFFER to the appropriate window based on its purpose.
+
+;; This function assigns the buffer to the window tagged with the
+;; appropriate purpose.  If the tag is `no-tag, and the buffer is a system buffer,
+;; a message is printed and the buffer is not assigned to any window.  Note that
+;; system buffers are matched to a tag using the buffer name directly or via
+;; regexp.  Unlike standard buffers, they are not matched by mode.  
+
+;; Unmatched buffers that are not system buffers are assigned to the value
+;; defined by `my-window-tools/default-tag'.
+
+
+(defun my-window-tools/find-frame-by-project-root (project-root)
+  "Find the frame associated with the given PROJECT-ROOT.
+PROJECT-ROOT is the root directory of the project to find the frame for."
+  (catch 'found
+    (dolist (frame (frame-list))
+      (when (string= (my-window-tools/frame-project-root frame) project-root)
+        (throw 'found frame)))))
+
+
+(defun my-window-tools/frame-project-root (frame)
+  "Get the project root associated with FRAME."
+  (frame-parameter frame 'project-root))
+
+(defun my-window-tools/set-frame-project-root (frame project-root)
+  "Set the project root for FRAME to PROJECT-ROOT.
+
+This parameter is used to identify the frame corresponding to a particular
+project."
+  (set-frame-parameter frame 'project-root project-root))
+
 
 ;; Example usage
 ;; (my-window-tools/get-buffer-tag (current-buffer))
@@ -413,7 +364,7 @@ by name, regexp or mode."
 The function prompts the user for a buffer name, retrieves the buffer, and
 passes it to `my-window-tools/get-buffer-tag`, returning the tag it produces.
 It is handy for checking you have the right assignment being carried out by
-the window assignment algorithm here. "
+the window assignment algorithm here."
   (interactive "BBuffer name: ")
   (let ((buffer (get-buffer buffer-name)))
     (with-current-buffer buffer
@@ -437,9 +388,11 @@ the window assignment algorithm here. "
         (my-window-tools/assign-buffer-to-window buffer)))))
 
 (defun my-window-tools/reassign-buffer-to-default-window (buffer)
-  "Reassign BUFFER to its default window based on the buffer's tag,
-  remove it from the original window, and update the tab-line."
+  "Reassign BUFFER to its default window based the value it has in `tag',
+
+  It is also removed from the original window and the tab-line is updated."
   (my-window-tools/assign-buffer-to-window buffer))
+
 
 (defun my-window-tools/set-window-purpose (tag)
   "Given a TAG, apply it to the window around the active buffer."
@@ -453,9 +406,12 @@ the window assignment algorithm here. "
     (my-window-tools/add-window current-window tag)
     (message "Window on buffer '%s' tagged as '%s'" name-of-buffer tag)))
 
+
 (defun my-window-tools/reassign-all-buffers-to-default-windows ()
-  "Reassign all buffers in the current frame to their default windows,
-  except for the buffer named *SPEEDBAR*."
+  "Reassign all buffers in the current frame.
+
+The buffers will be assigned to their default windows, except for the buffer
+named *SPEEDBAR*."
   (interactive)
   (dolist (buffer (buffer-list (selected-frame)))
     (unless (string= (buffer-name buffer) "*SPEEDBAR*")
@@ -463,10 +419,38 @@ the window assignment algorithm here. "
 
 
 (defun my-window-tools/reassign-current-buffer-to-default-window ()
-  "Reassign the current buffer to its default window based on the buffer's tag
-and remove it from the original window, updating the tab-line."
+  "Reassign the current buffer to its default window.
+
+The reassignment is  based on the buffer's tag.  It will be removed from the
+original window, updating the tab-line."
   (interactive)
   (my-window-tools/reassign-buffer-to-default-window (current-buffer)))
+
+
+(defun my-window-tools/get-window-with-tag (tag)
+  "Get a window by its tag.
+
+Utility function takes a TAG and returns the first window object it finds
+with that tag.  It is envisioned there will never be more than one window
+per tag."
+  (catch 'window
+    (dolist (win (window-list))
+      (when (equal (window-parameter win 'tag) tag)
+        (throw 'window win)))
+    nil))
+
+
+(defun my-window-tools/get-tag-given-window ()
+  "Get the tag corresponding to the current window.
+
+Utility function shows the tag associated with the current selected window."
+  (let ((current-window (selected-window)))
+    (catch 'tag
+      (maphash (lambda (key value)
+                 (when (equal value current-window)
+                   (throw 'tag key)))
+               my-window-tools/window-hash)
+      nil))) 
 
 
 ;; ---------------------------
@@ -482,51 +466,89 @@ and remove it from the original window, updating the tab-line."
           window)
       (display-buffer buffer))))
 
-(defun my-window-tools/get-window-with-tag (tag)
-  "Get a window by its tag.
-
-Utility function takes a TAG and returns the first window object it finds
-with that tag. It is envisioned there will never be more than one window
-per tag."
-  (catch 'window
-    (dolist (win (window-list))
-      (when (equal (window-parameter win 'tag) tag)
-        (throw 'window win)))
-    nil))
-
-
-(defun my-window-tools/get-tag-given-window ()
-  "Get the tag corresponding to the current window.
-
-Utility function shows the tag associated with the current selected window. "
-  (let ((current-window (selected-window)))
-    (catch 'tag
-      (maphash (lambda (key value)
-                 (when (equal value current-window)
-                   (throw 'tag key)))
-               my-window-tools/window-hash)
-      nil))) 
-
-
 ;; ----------------------------------------------------------------------------
-;; BELOW FUNCTIONS ARE ALTERNATIVES TO ASSIGNING A BUFFER TO A WINDOW (IN
-;; THIS CASE USING THE display-buffer-alist MECHANISM.)
+;; ASSIGN BUFFERS TO A WINDOW USING display-buffer-alist MECHANISM.
 
-;; (defun my-ui/display-buffer (buffer alist)
-;;   "Display BUFFER in the appropriate window based on the configuration map."
-;;   (let ((window (my-ui/find-window-for-buffer buffer)))
-;;     (if window
+
+;; (defun my-window-tools/display-buffer (buffer alist)
+;;   "Display BUFFER in the window matching its tag."
+;;   (let* ((tag (my-window-tools/get-buffer-tag-or-default buffer))
+;;          (window (and tag (my-window-tools/get-window-for-tag tag)))
+;;          (original-window (get-buffer-window buffer)))
+;;     (cond
+;;      ;; If the buffer is whitelisted, do not interfere with its display.
+;;      ((not tag)
+;;       nil)
+;;      ;; If a suitable window is found, display the buffer there.
+;;      ((and window (window-live-p window))
+;;       (progn
 ;;         (set-window-buffer window buffer)
-;;       (display-buffer buffer alist))))
+;;         ;; Optionally, close the buffer in the original window if it's different.
+;;         (when (and original-window (not (eq original-window window)))
+;;           (with-selected-window original-window
+;;             (quit-window)))
+;;         ;; Return the window to indicate successful display.
+;;         window))
+;;      ;; If no suitable window is found, fall back to default behavior.
+;;      (t
+;;       nil))))
+
+(defun my-window-tools/display-buffer (buffer alist)
+  "Display BUFFER in the appropriate window based on its tag."
+  (let* ((tag (my-window-tools/get-buffer-tag-or-default buffer))
+         (window (and tag (my-window-tools/get-window-for-tag tag)))
+         (original-window (get-buffer-window buffer)))
+    (cond
+     ;; Whitelisted buffer; do not interfere.
+     ((not tag)
+      nil)
+     ;; Display in the window matching the tag.
+     ((and window (window-live-p window))
+      (set-window-buffer window buffer)
+      (when (and original-window (not (eq original-window window)))
+        (with-selected-window original-window
+          (quit-window)))
+      window)
+     ;; No matching window; fall back to default.
+     (t
+      nil))))
 
 
-;; ;; Override display-buffer to use the custom display function
-;; (setq display-buffer-alist
-;;       '((".*" . (my-ui/display-buffer . nil))))
+
+;; Configure display-buffer-alist
+(setq display-buffer-alist
+      `(
+        ;; Specific rule for *Dictionary* buffer (Show dictionary definition on the left)
+        ("^\\*Dictionary\\*"
+         (display-buffer-in-side-window)
+         (side . left)
+         (window-width . 70)  ; change to 0.5 to make it half the size of the buffer it is next to. 
+         (window-parameters . ((no-delete-other-windows . t)))
+         )
+        ;; General rule using your custom function
+        (".*" . (my-window-tools/display-buffer))))
+
+
+;; BACKTRACE AND MESSAGES HANDLED BY WINDOW MANAGEMENT FUNCTIONS NOW.
+;; THESE ARE KEPT TO SHOW HOW DISPLAY-BUFFER-ALIST CAN BE USED. 
+;; (add-to-list 'display-buffer-alist
+;;              '("^\\*Messages\\*"
+;;                (display-buffer-reuse-window
+;;                 display-buffer-pop-up-window)
+;;                (inhibit-same-window . t)
+;;                (window-height . 0.3)))
+
+;; (add-to-list 'display-buffer-alist
+;;              '("^\\*Backtrace\\*"
+;;                (display-buffer-reuse-window
+;;                 display-buffer-pop-up-window)
+;;                (inhibit-same-window . t)
+;;                (window-height . 0.3)))
 ;; ----------------------------------------------------------------------------
 
 (provide 'custom-system-window-management)
 
 ;;; custom-system-window-management.el ends here
 
-                                        ; LocalWords:  Customize
+                                        ; LocalWords:  Customize vc
+                                        ; LocalWords:  elisp
