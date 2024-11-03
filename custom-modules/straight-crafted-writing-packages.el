@@ -13,51 +13,48 @@
 (require 'straight)
 
 ;; Markdown support
-(straight-use-package
- '(markdown-mode :type git
-                 :flavor melpa
-                 :host github
-                 :repo "jrblevin/markdown-mode"))
+(use-package markdown-mode
+  :straight (:type git
+                   :flavor melpa
+                   :host github
+                   :repo "jrblevin/markdown-mode"))
 
 ;; lint markdown in flymake if markdownlint-cli is installed. 
-(straight-use-package
- '(flymake-markdownlint :type git
-                        :flavor melpa
-                        :host github
-                        :repo "shaohme/flymake-markdownlint"))
+(use-package flymake-markdownlint 
+  :straight (:type git
+                   :flavor melpa
+                   :host github
+                   :repo "shaohme/flymake-markdownlint"))
 
-(straight-use-package
- '(pandoc-mode :type git
-               :flavor melpa
-               :host github
-               :repo "joostkremers/pandoc-mode"))
+(use-package pandoc-mode 
+  :straight (:type git
+                   :flavor melpa
+                   :host github
+                   :repo "joostkremers/pandoc-mode"))
 
-(straight-use-package
- '(olivetti :type git
-            :flavor melpa
-            :host github
-            :repo "rnkn/olivetti"))
+(use-package olivetti
+  :straight (:type git
+                   :flavor melpa
+                   :host github
+                   :repo "rnkn/olivetti"))
 
 ;; PDF support
-(straight-use-package
- '(pdf-tools :type git
-             :flavor melpa
-             :files (:defaults "README"
-                               ("build" "Makefile")
-                               ("build" "server")
-                               "pdf-tools-pkg.el")
-             :host github
-             :repo "vedang/pdf-tools"))
+(use-package pdf-tools
+  :straight (:type git
+                   :flavor melpa
+                   :host github
+                   :repo "vedang/pdf-tools")
+  :config
+  (pdf-tools-install))
  
 ;; LaTeX support - uses Auctex
 ;; only install and load auctex when the latex executable is found,
 ;; otherwise it crashes when loading
 (when (executable-find "latex")
-  (straight-use-package
-   '(auctex :type git
-            :host github
-            :repo "emacs-straight/auctex"
-            :files ("*" (:exclude ".git")))))
+  (use-package auctex
+    :straight (:type git
+                     :host github
+                     :repo "emacs-straight/auctex")))
 ;; Install the auctex-latexmk package when the latex and latexmk
 ;; executable are found.
 ;;
@@ -75,14 +72,34 @@
 ;; '(auctex-latexmk :fetcher git :host github :repo \"wang1zhen/auctex-latexmk\")
 (when (and (executable-find "latex")
            (executable-find "latexmk"))
-  (straight-use-package
-   '(auctex-latexmk :type git
-                    :flavor melpa
-                    :host github
-                    :repo "emacsmirror/auctex-latexmk")))
+  (use-package auctex-latexmk
+    :straight (:type git
+                     :flavor melpa
+                     :host github
+                     :repo "emacsmirror/auctex-latexmk")))
 
-(require 'custom-logging-config)
+(use-package citar
+  :straight(:type git
+                  :flavor melpa
+                  :files (:defaults
+                          (:exclude "citar-embark.el")
+                          "citar-pkg.el")
+                  :host github
+                  :repo "emacs-citar/citar")
+  :custom
+  (citar-bibliography (list (getenv "BIB_HOME")))  ;; Wrap in `list` to ensure it's a list
+  :hook
+  (LaTeX-mode . citar-capf-setup)
+  (org-mode . citar-capf-setup))
 
+(use-package citar-embark
+  :straight (:type git
+                   :flavor melpa
+                   :files ("citar-embark.el" "citar-embark-pkg.el")
+                   :host github :repo "emacs-citar/citar")
+  :after citar embark
+  :no-require
+  :config (citar-embark-mode))
 
 (provide 'straight-crafted-writing-packages)
 ;;; straight-crafted-writing-packages.el ends here
