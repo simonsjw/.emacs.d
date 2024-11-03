@@ -95,7 +95,17 @@ Make sure you have the following external dependencies:
 |                            | git checkout -b master origin/master              |                      |                                     |
 |----------------------------+---------------------------------------------------+----------------------+-------------------------------------|
 
-
+# ;; \\usepackage[usenames]{color}
+# ;; \\usepackage{xcolor}
+# ;; \\usepackage{amsmath}
+# ;; \\usepackage{amsfonts}
+# ;; \\usepackage{amssymb}
+# ;; \\usepackage{graphicx}
+# ;; \\usepackage{fontspec}            % fontspec allows us to set the font 
+# ;; \\setmainfont{source code pro}    % Set the font to Source Code Pro
+# ;; \\usepackage{array}               % for specifying cell format
+# ;; \\pagestyle{empty}                % Removes page numbers
+# ;; \\color[HTML]{FFFFFF}             % Sets default text color to white") default-frame-alist
 # \begin{table}[ht]
 # \centering
 # \begin{tabular}{|l|r|c|r|}
@@ -113,6 +123,28 @@ Make sure you have the following external dependencies:
 # \label{tab:Dependencies}
 # \end{table}
 
+#+BEGIN_SRC latex :results output file link replace :file ukkonen-minimal-cost-paths.png :buffer no :headers '("\\usepackage{tikz}" "\\usetikzlibrary{tikzmark}")
+  \begin{table}[htbp]
+  \caption{minimal cost paths}
+  \centering
+  \begin{tabular}{lrrrrrrr}
+   &  & p & a & p & l & e & t\\[0pt]
+  \hline
+    & 0\tikzmark{a} & 2\tikzmark{b} & 4 & 6 & 8 & 10 & 12\\[0pt]
+  a & 2\tikzmark{c} & 3 & 2\tikzmark{d} & 4 & 6 & 8 & 10\\[0pt]
+  p & 4 & 2\tikzmark{e} & 4\tikzmark{f} & 2\tikzmark{g} & 4 & 6 & 8\\[0pt]
+  p & 6 & 4 & 5 & 4\tikzmark{h} & 5 & 7 & 9\\[0pt]
+  l & 8 & 6 & 7 & 6 & 4\tikzmark{i} & 6 & 7\\[0pt]
+  e & 10 & 8 & 6 & 8 & 6 & 4\tikzmark{j} & 6\tikzmark{k}\\[0pt]
+  \end{tabular}
+  \end{table}
+
+  \begin{tikzpicture}[remember picture, overlay]
+  \draw[->] ([xshift=0.5ex, yshift=0.75ex] pic cs:a) -- ([xshift=-1.5ex, yshift=0.75ex] pic cs:b);   % horiz
+  \draw[->] ([xshift=-0.5ex, yshift=0.0ex] pic cs:a) -- ([xshift=-0.5ex, yshift=1.75ex] pic cs:c);   % vert
+  % ... many more
+  \end{tikzpicture}
+#+END_SRC
 
 ** Image magik security policy update.
 Remember to change the security policies in image magik to allow production of pdfs.
