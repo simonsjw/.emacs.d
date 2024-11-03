@@ -1,13 +1,16 @@
-personal_ws-1.1 en 39 
+personal_ws-1.1 en 44 
 ARGS
 Backtrace
 Bunnings
 DDirectory
 Eglot
+KDB
 Maroubra
 NLP
+OPTARG
 OpenAI
 README
+Reddit
 SPEEDBAR
 TODO
 adhoc
@@ -17,6 +20,7 @@ aspell
 balancer
 cd
 config
+csv
 defconst
 defvar
 dir
@@ -25,6 +29,7 @@ gitignore
 hdb
 hoc
 ipython
+jdk
 json
 jsonl
 lvl
