@@ -61,6 +61,8 @@
   )
 
 
+;; single line regex.
+;; "\\_<\\([.]?[a-zA-Z]\\(?:\\s_\\|\\w\\|_\\)*\\s-*\\)::?\\s-*\\(?:{\\|'\\s-*\\[\\|[^;{\n]*?\\(?:::\\|[-.~=!@#$%^&*_+|,<>?/\\:']\\)\\s-*\\(?:\\s<\\|$\\|;\\)\\)"
 (defvar q-function-regex
   (concat
    "\\_<"                                                                      ; Match the start of a symbol or word (word boundary)
@@ -70,41 +72,50 @@
    "\\)::?"                                                                    ; Close the group and match optional `::` for local and global functions
    "\\s-*"                                                                     ; Optional whitespace after `::`
    "\\(?:{\\|'\\s-*\\[\\|[^;{\n]*?"                                            ; Match function bodies, parameter lists, or certain characters
-   "\\(?:::\\|[-.~=!@#$%^&*_+|,<>?/\\:']\\)\\s-*"                              ; Handle operators or `::`, followed by optional whitespace
-   "\\(?:\\s<\\|$\\|;\\)")                                                     ; End with comments, end-of-line, or semicolon
+   "\\(?:::\\|[-.~=!@#$%^&*_+|,<>?/\\:']\\)\\s-*"                              ; Handle operators or `::`, followed by optional white-space
+   "\\(?:\\s<\\|$\\|;\\)\\)"                                                   ; End with comments, end-of-line, or semicolon
+   )
+  
   "Regular expression used to find function declarations.
 
    This regex matches a variety of function declarations in `q`, supporting:
    - Namespaced functions, like `.namespace.function'
-   - Functions declared using `{}' or parameter lists 
+   - Functions declared using `{}' or parameter lists
    - Handles both global (`::') and local functions
    - Ends cleanly at comments, newlines, or semicolons.
-
+  
    Examples:
    - function: `myFunc::\ {x+y}'
    - `.ns.myFunc\ {x*y}'
    - `sum::\[x\;y\]\ x+y'")
 
 
+;; (defvar q-variable-regex
+;;   (concat
+;;    "\\_<"                                                                      ; Match the start of a symbol or word (word boundary)
+;;    "\\([.]?[a-zA-Z]"                                                           ; Match an optional dot followed by a letter, indicating a namespace or identifier
+;;    "\\(?:\\s_\\|\\w\\|_\\)*"                                                   ; Followed by any combination of symbol characters, word characters, or underscores
+;;    "\\s-*"                                                                     ; Optional whitespace after the identifier
+;;    "\\)[-.~=!@#$%^&*_+|,<>?]?"                                                 ; Optionally match operators such as `-`, `~`, `=`, `!`, and more
+;;    "::?")                                                                      ; Match optional `::`, allowing both local and global variable declarations
+;;   "Regular expression used to find variable declarations.
+
+;;    This regex matches a variety of variable declarations in `q', supporting:
+;;    - Namespaced variables
+;;    - Variables that may include operators in their assignment (e.g., `+=')
+;;    - Handles both global (`::') and local variables.
+
+;;    Examples:
+;;    - `myVar::\ 42'
+;;    - `.config.setting::\ 'enabled'
+;;    - `counter\ +=\ 1'")
+
+
+
+
 (defvar q-variable-regex
-  (concat
-   "\\_<"                                                                      ; Match the start of a symbol or word (word boundary)
-   "\\([.]?[a-zA-Z]"                                                           ; Match an optional dot followed by a letter, indicating a namespace or identifier
-   "\\(?:\\s_\\|\\w\\|_\\)*"                                                   ; Followed by any combination of symbol characters, word characters, or underscores
-   "\\s-*"                                                                     ; Optional whitespace after the identifier
-   "\\)[-.~=!@#$%^&*_+|,<>?]?"                                                 ; Optionally match operators such as `-`, `~`, `=`, `!`, and more
-   "::?")                                                                      ; Match optional `::`, allowing both local and global variable declarations
-  "Regular expression used to find variable declarations.
-
-   This regex matches a variety of variable declarations in `q', supporting:
-   - Namespaced variables
-   - Variables that may include operators in their assignment (e.g., `+=')
-   - Handles both global (`::') and local variables.
-
-   Examples:
-   - `myVar::\ 42'
-   - `.config.setting::\ 'enabled'
-   - `counter\ +=\ 1'")
+  "\\_<\\([.]?[a-zA-Z]\\(?:\\s_\\|\\w\\|_\\)*\\s-*\\)[-.~=!@#$%^&*_+|,<>?]?::?"
+  "Regular expression used to find variable declarations.")
 
 (defvar q-keywords
   (eval-when-compile
@@ -114,20 +125,20 @@
        "hopen" "if" "in" "insert" "last" "like" "log" "max" "min" "prd"
        "select" "setenv" "sin" "sqrt" "ss" "sum" "tan" "update" "var" "wavg"
        "while" "within" "wsum" "xexp")
-     `words))
+     `words)
+    )
   "Keywords for q mode.")
 
 (defvar q-type-words
   (eval-when-compile
     (concat "\\(`"
-            (regexp-opt
-             '("boolean" "byte" "short" "long" "real" "int" "float" "char"
-               "symbol" "month" "date" "datetime" "minute" "second" "time"
-               "timespan" "timestamp" "year" "mm" "dd" "hh" "uu" "ss" "week")
-             t)
-            "\\)\\s-*[$]"))
+            (regexp-opt '("boolean" "byte" "short" "long" "real" "int" "float" "char" "symbol"
+                          "month" "date" "datetime" "minute" "second" "time" "timespan" "timestamp"
+                          "year" "mm" "dd" "hh" "uu" "ss" "week")
+                        t)
+            "\\)\\s-*[$]")
+    )
   "Types for q mode.")
-
 
 (defvar q-builtin-words
   (eval-when-compile
@@ -158,10 +169,10 @@
   "Regular expression for highlighting built-in functions in q.k.
    
    This variable defines a regex pattern to match built-in keywords 
-   from the `q` programming language. The pattern is optimized for 
+   from the `q` programming language.  The pattern is optimized for 
    performance using `regexp-opt` and supports matching optional 
-   `.q.` prefixes. It ensures that only whole words or symbols are 
-   matched, not substrings.
+   `.q.` prefixes.  It ensures that only whole words or symbols are 
+   matched, not sub-strings.
 
    For example, this regex will match:
    - `aj', `each', `count' (built-in functions)
@@ -300,6 +311,7 @@ Includes optional seconds and fractional seconds.
              . font-lock-constant-face)                                        ; symbols      - Examples: `\`symbol', `\`s.1'
            '("\\b[0-2]:"                                                       ; Match word boundary followed by digits 0, 1, or 2, and a colon
              . font-lock-preprocessor-face)                                    ; IO/IPC       - Examples: `0:', `2:'
+           
            (list q-type-words                                                  ; Highlight words defined in `q-type-words` with a type face
                  1 font-lock-type-face nil)                                    ; `minute`year - Examples: `\`minute', `\`year'
            (cons q-keywords 'font-lock-keyword-face)                           ; select from  - Examples: `\`select', `\`from'

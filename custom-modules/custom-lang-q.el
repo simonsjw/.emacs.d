@@ -72,7 +72,7 @@
 ;; Hooks
 (add-hook 'ess-mode-hook 'remove-ess-q-extn)
 (add-hook 'inferior-ess-mode-hook 'remove-ess-q-extn)
-(add-hook 'q-script-mode-hook #'my-lang/q-mode-setup)
+(add-hook 'q-script-mode-hook #'my-lang/q-script-mode-setup)
 
 (require 'custom-logging-config)
 
