@@ -3,18 +3,14 @@
 ;; Copyright (C) 2023
 ;; SPDX-License-Identifier: MIT
 
-;; Author: System Crafters Community
+;; Author: Simon Watson (based on system-crafters template)
 
 ;;; Commentary:
 
-;; Configuration for editing text or writing documents of different
-;; kinds. Markdown and LaTeX documents are supported, general text
-;; editing is also supported.  Not configured here are second brain /
-;; Zettelkasten systems, those are found in the `custom-org-config'
-;; module.
+;; Configures Markdown, LaTeX, and general text editing in Emacs.
 
 ;;; Code:
-(require 'custom-logging-config)
+
 
 ;;; Whitespace
 (defun crafted-writing-configure-whitespace
@@ -90,7 +86,12 @@ Example usage:
 (electric-pair-mode 1) ; auto-insert matching bracket
 (show-paren-mode 1)    ; turn on paren match highlighting
 
-
+;;; configure citar
+(setq citar-templates
+      '((main . "${author editor:30%sn}     ${date year issued:4}     ${title:48}")
+        (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
+        (preview . "${author editor:%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
+        (note . "Notes on ${author editor:%etal}, ${title}")))
 
 ;;; LaTeX configuration
 (with-eval-after-load 'tex
@@ -105,113 +106,105 @@ Example usage:
 
   ;; Ensure AUCTeX generates PDFs by default
   (setq TeX-PDF-mode t)
-
-  ;; correlate the source and the output
+  
+  ;; Enable source correlation to map between source code and PDF viewer.
   (TeX-source-correlate-mode)
 
-  ;; set a correct indentation in a few additional environments
-  (add-to-list 'LaTeX-indent-environment-list
-               '("lstlisting" current-indentation))
-  (add-to-list 'LaTeX-indent-environment-list
-               '("tikzcd" LaTeX-indent-tabular))
-  (add-to-list 'LaTeX-indent-environment-list
-               '("tikzpicture" current-indentation))
+  ;; Custom indentation for specific LaTeX environments.
+  ;; `lstlisting`: Used for code listings.
+  ;; `tikzcd`: Used for commutative diagrams (indentation aligns with tables).
+  ;; `tikzpicture`: Used for TikZ graphics.
+  (add-to-list 'LaTeX-indent-environment-list '("lstlisting" current-indentation))
+  (add-to-list 'LaTeX-indent-environment-list '("tikzcd" LaTeX-indent-tabular))
+  (add-to-list 'LaTeX-indent-environment-list '("tikzpicture" current-indentation))
 
-  ;; add a few macros and environment as verbatim
+  ;; Define `verbatim` environments to prevent LaTeX from auto-formatting text.
+  ;; This applies especially to code, ensuring it appears as-is.
   (add-to-list 'LaTeX-verbatim-environments "lstlisting")
   (add-to-list 'LaTeX-verbatim-environments "Verbatim")
   (add-to-list 'LaTeX-verbatim-macros-with-braces "lstinline")
   (add-to-list 'LaTeX-verbatim-macros-with-delims "lstinline")
 
-  ;; electric pairs in auctex
+
+  ;; Enable electric pairs for sub- and superscripts, braces, and `$` symbols.
+  ;; This makes it easier to enter LaTeX math environments and brackets.
   (customize-set-variable 'TeX-electric-sub-and-superscript t)
   (customize-set-variable 'LaTeX-electric-left-right-brace t)
   (customize-set-variable 'TeX-electric-math (cons "$" "$"))
 
-  ;; open all buffers with the math mode and auto-fill mode
+  ;; Automatically enable `auto-fill-mode` for line wrapping in LaTeX files.
+  ;; Enables `LaTeX-math-mode` for easier input of math symbols.
   (add-hook 'LaTeX-mode-hook #'auto-fill-mode)
   (add-hook 'LaTeX-mode-hook #'LaTeX-math-mode)
 
-  ;; add support for references
+  ;; Turn on RefTeX, a powerful tool for managing references, citations, and
+  ;; cross-references in LaTeX.
+  ;; Citar and RefTeX
   (add-hook 'LaTeX-mode-hook #'turn-on-reftex)
+  (add-hook 'LaTeX-mode-hook #'citar-refresh)
   (customize-set-variable 'reftex-plug-into-AUCTeX t)
 
-  ;; to have the buffer refresh after compilation
-  (add-hook
-   'TeX-after-compilation-finished-functions
-   #'TeX-revert-document-buffer))
+  ;; Automatically refresh the PDF buffer after compilation to keep it up-to-date.
+  (add-hook 'TeX-after-compilation-finished-functions
+            #'TeX-revert-document-buffer)
 
-(defun crafted-latex-use-pdf-tools ()
-  "Use PDF Tools instead of docview, requires a build environment
-to compile PDF Tools.
+;;; PDF Support when using pdf-tools
+  ;; PDF Tools configuration to replace the default viewer with PDF Tools
+  ;; (if available) for synchronized viewing of the compiled document.
+  (defun my-tex/latex-use-pdf-tools ()
+    "Use PDF Tools instead of docview, requires a build environment
+to compile PDF Tools and on having `pdf-tools'."
+    (require 'pdf-tools nil :noerror)
+    (with-eval-after-load 'tex
+      ;; Select PDF Tools as the default viewer for PDFs.
+      (customize-set-variable 'TeX-view-program-selection '((output-pdf "PDF Tools")))
+      
+      ;; Add PDF Tools to the program list, enabling source sync between TeX and PDF.
+      (customize-set-variable 'TeX-view-program-list '(("PDF Tools" "TeX-pdf-tools-sync-view")))
+      
+      ;; Start the server for source correlation to sync the PDF viewer with LaTeX source.
+      (customize-set-variable 'TeX-source-correlate-start-server t)))
 
-Depends on having `pdf-tools'."
+  (when (locate-library "pdf-tools")
+    ;; load pdf-tools when going into doc-view-mode
+    (add-hook 'doc-view-mode-hook #'my-tex/latex-use-pdf-tools)
 
-  (with-eval-after-load 'tex
-    (customize-set-variable
-     'TeX-view-program-selection '((output-pdf "PDF Tools")))
-    (customize-set-variable
-     'TeX-view-program-list '(("PDF Tools" TeX-pdf-tools-sync-view)))
-    (customize-set-variable
-     'TeX-source-correlate-start-server t)))
+    ;; when pdf-tools is loaded, apply settings.
+    (with-eval-after-load 'pdf-tools
+      (setq-default pdf-view-display-size 'fit-width)))
 
-;; message the user if the latex executable is not found
-(defun crafted-writing-tex-warning-if-no-latex-executable ()
-  "Print a message to the minibuffer if the \"latex\" executable
-cannot be found."
-  (unless (executable-find "latex")
-    (message "latex executable not found")))
-(add-hook
- 'tex-mode-hook #'crafted-writing-tex-warning-if-no-latex-executable)
+  ;; Check if `latex` and `latexmk` executables are available and configure
+  ;; AUCTeX to use `latexmk` for building documents.
+  ;; message the user if the latex executable is not found
 
-(when (and (executable-find "latex")
-           (executable-find "latexmk"))
-  (with-eval-after-load 'tex
+  ;; Check for `latex` and `latexmk`, configure AUCTeX to use `latexmk`
+  (defun my-tex/latex-warning-if-no-executable ()
+    "Notify if `latex` executable not found."
+    (unless (executable-find "latex")
+      (message "latex executable not found")))
+
+  (add-hook 'tex-mode-hook #'my-tex/latex-warning-if-no-executable)
+
+  (when (and (executable-find "latex") (executable-find "latexmk"))
     (when (require 'auctex-latexmk nil 'noerror)
-      (with-eval-after-load 'auctex-latexmk
-        (auctex-latexmk-setup)
-        (customize-set-variable
-         'auctex-latexmk-inherit-TeX-PDF-mode t))
+      (auctex-latexmk-setup)
+      (customize-set-variable 'auctex-latexmk-inherit-TeX-PDF-mode t)
+      ;; Set up Biber as the default for bibliography management
+      (setq TeX-command-list (delete '("Biber" "biber %s" TeX-run-BibTeX nil t :help "Run Biber") TeX-command-list))
+      (add-to-list 'TeX-command-list '("Biber" "biber %s" TeX-run-BibTeX nil t :help "Run Biber"))
+      (setq bibtex-dialect 'biblatex)
+      (setq TeX-command-default "LatexMk"))))
 
-      (defun crafted-writing-tex-make-latexmk-default-command ()
-        "Set `TeX-command-default' to \"LatexMk\"."
-        (setq TeX-command-default "LatexMk"))
-      (add-hook
-       'TeX-mode-hook
-       #'crafted-writing-tex-make-latexmk-default-command))))
-
-;;; Markdown
+;;; Markdown support
 (when (fboundp 'markdown-mode)
-  ;; because the markdown-command variable may not be loaded (yet),
-  ;; check manually for the other markdown processors.  If it is
-  ;; loaded, the others are superfluous but `or' fails fast, so they
-  ;; are not checked if `markdown-command' is set and the command is
-  ;; indeed found.
-  (unless (or (and (boundp 'markdown-command)
-                   (executable-find markdown-command))
+  (unless (or (bound-and-true-p markdown-command)
               (executable-find "markdown")
               (executable-find "pandoc"))
-    (message
-     "No markdown processor found, preview may not possible."))
-
+    (message "No Markdown processor found; preview may not be possible."))
   (with-eval-after-load 'markdown-mode
     (customize-set-variable 'markdown-enable-math t)
     (customize-set-variable 'markdown-enable-html t)
     (add-hook 'markdown-mode-hook #'conditionally-turn-on-pandoc)))
-
-;;; PDF Support when using pdf-tools
-(when (locate-library "pdf-tools")
-  ;; load pdf-tools when going into doc-view-mode
-  (defun crafted-writing-load-pdf-tools ()
-    "Attempts to require pdf-tools, but for attaching to hooks."
-    (require 'pdf-tools nil :noerror))
-  (add-hook 'doc-view-mode-hook #'crafted-writing-load-pdf-tools)
-
-  ;; when pdf-tools is loaded, apply settings.
-  (with-eval-after-load 'pdf-tools
-    (setq-default pdf-view-display-size 'fit-width))
-  )
-
 
 ;; provide a means of calling a temp org buffer without underlying file.
 ;;(global-set-key (kbd "C-c t") 'my-buffer-tools/open-temp-org-buffer)

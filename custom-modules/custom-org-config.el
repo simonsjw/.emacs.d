@@ -24,9 +24,47 @@
 ;; ensure org-roam looks after itself.
 (org-roam-db-autosync-mode)
 
-;; ensure Luatex is used to process LaTex rather than dvipng.
+
+
+;; Use LuaTeX as the default LaTeX compiler for better support with complex documents
 (customize-set-variable
- 'org-latex-compiler "luatex" "Use LuaLaTeX as the default LaTeX compiler.")
+ 'org-latex-compiler "luatex"
+ "Use LuaLaTeX as the default LaTeX compiler for better font support and compatibility.")
+
+;; Define a multi-pass PDF generation process to handle complex LaTeX documents,
+;; including those with TikZ diagrams.
+(setq org-latex-pdf-process
+      '("pdflatex -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -interaction nonstopmode -output-directory %o %f"))
+
+;; set the pdf rendering engine. 
+;; (setq org-latex-pdf-process
+;;       '"lualatex -interaction nonstopmode -output-directory %o %f")
+
+;;; Enable inline LaTeX rendering and configure rendering options
+;; 
+;; This setup allows Org Mode to preview LaTeX fragments inline, using image files
+;; rendered by external programs like dvipng and imagemagick, for better visual compatibility.
+(with-eval-after-load 'org
+  (setq org-preview-latex-process-alist
+        '((dvipng :programs ("latex" "dvipng")
+                  :description "dvi > png"
+                  :message "You need to install the programs: latex and dvipng."
+                  :image-input-type "dvi"
+                  :image-output-type "png"
+                  :image-size-adjust (1.0 . 1.0)
+                  :latex-compiler ("latex -interaction nonstopmode -output-directory %o %f")
+                  :image-converter ("dvipng -D %D -T tight -o %O %f"))
+          (imagemagick :programs ("latex" "convert")
+                       :description "pdf > png"
+                       :message "You need to install the programs: latex and imagemagick."
+                       :image-input-type "pdf"
+                       :image-output-type "png"
+                       :image-size-adjust (1.0 . 1.0)
+                       :latex-compiler ("pdflatex -interaction nonstopmode -output-directory %o %f")
+                       :image-converter ("convert -density %D -trim -antialias %f -quality 100 %O")))))
+
 
 ;;; set the defaults for viewing latex in org-mode
 ;;  ----------------------------------------------
@@ -36,28 +74,39 @@
 ;; environmental variable where the name of the machine using this
 ;; setup is stored.
 
-;; set the pdf rendering engine. 
-(setq org-latex-pdf-process
-      '"lualatex -interaction nonstopmode -output-directory %o %f")
+;; Default to imagemagick for rendering LaTeX previews for improved quality.
+(customize-set-variable
+ 'org-preview-latex-default-process 'imagemagick
+ "Use ImageMagick to render LaTeX previews in Org Mode for high-quality output.")
 
-;; Render wiht luaLatex and use image magik to produce pngs in org files.
-(with-eval-after-load 'org
-  (add-to-list
-   'org-preview-latex-process-alist
-   '(luatex
-     :programs ("lualatex" "convert")
-     :description "pdf > png"
-     :message "you need to install the programs: lualatex and imagemagick."
-     :image-input-type "pdf"
-     :image-output-type "png"
-     :image-size-adjust (0.25 . 0.25)
-     :latex-compiler ("lualatex -output-format=pdf -interaction nonstopmode -output-directory %o %f")
-     :image-converter ("convert -density 300 %f -quality 90 %O")))
-  (customize-set-variable
-   'org-preview-latex-default-process 'luatex
-   "Use LuaLaTeX for LaTeX previews.")
-  )
+;; Render latex by default. 
+(setq org-startup-with-latex-preview t)
 
+;; Set the default format. 
+;; (setq org-format-latex-header
+;;       "\\documentclass[12pt]{article}    % This sets the default font size to 10pt
+;; \\usepackage[usenames]{color}
+;; \\usepackage{xcolor}
+;; \\usepackage{amsmath}
+;; \\usepackage{amsfonts}
+;; \\usepackage{amssymb}
+;; \\usepackage{graphicx}
+;; \\usepackage{fontspec}            % fontspec allows us to set the font 
+;; \\setmainfont{source code pro}    % Set the font to Source Code Pro
+;; \\usepackage{array}               % for specifying cell format
+;; \\pagestyle{empty}                % Removes page numbers
+;; \\color[HTML]{FFFFFF}             % Sets default text color to white") 
+
+
+;;begin{document}
+
+;; Set the scale of the latex object so it is bigger.
+;;(default makes you squint)
+(setq org-format-latex-options
+      (plist-put org-format-latex-options :scale 0.25))
+
+;; Enable LaTeX previews on file open and when editing LaTeX fragments.
+(add-hook 'org-mode-hook 'org-latex-preview)
 
 (customize-set-variable
  'org-agenda-window-setup 'only-window
@@ -83,7 +132,7 @@
 ;; Display links as the description provided
 (customize-set-variable
  'org-link-descriptive t
- "Display links as the description provided.")
+ "Display links as descriptions rather than raw URLs.")
 
 ;; Visually indent org-mode files to a given header level
 (add-hook 'org-mode-hook #'org-indent-mode)
@@ -115,30 +164,6 @@
 
 (add-hook 'org-mode-hook
           #'crafted-org-enhance-electric-pair-inhibit-predicate)
-
-;; Render latex by default. 
-(setq org-startup-with-latex-preview t)
-;; Set the default format. 
-(setq org-format-latex-header
-"\\documentclass[12pt]{article}    % This sets the default font size to 10pt
-\\usepackage[usenames]{color}
-\\usepackage{xcolor}
-\\usepackage{amsmath}
-\\usepackage{amsfonts}
-\\usepackage{amssymb}
-\\usepackage{graphicx}
-\\usepackage{fontspec}            % fontspec allows us to set the font 
-\\setmainfont{source code pro}    % Set the font to Source Code Pro
-\\usepackage{array}               % for specifying cell format
-\\pagestyle{empty}                % Removes page numbers
-\\color[HTML]{FFFFFF}             % Sets default text color to white")       
-
-;;begin{document}
-
-;; Set the scale of the latex object so it is bigger.
-;;(default makes you squint)
-(setq org-format-latex-options
-      (plist-put org-format-latex-options :scale 0.25))
 
 
 ;; Set up holidays. 
