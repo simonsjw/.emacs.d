@@ -29,3 +29,4 @@ var/**/org/org-roam.db
 var/**/image-dired/
 var/**/eshell/
 var/**/tramp/
+var/**/tramp/persistaency.el
