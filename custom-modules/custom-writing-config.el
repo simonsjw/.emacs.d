@@ -9,6 +9,39 @@
 
 ;; Configures Markdown, LaTeX, and general text editing in Emacs.
 
+(defvar citar-templates)
+(defvar TeX-auto-save)
+(defvar TeX-parse-self)
+(defvar TeX-master)
+(defvar TeX-engine)
+(defvar TeX-PDF-mode)
+(defvar reftex-plug-into-AUCTeX)
+(defvar LaTeX-indent-environment-list)
+(defvar LaTeX-verbatim-environments)
+(defvar LaTeX-verbatim-macros-with-braces)
+(defvar LaTeX-verbatim-macros-with-delims)
+(defvar LaTeX-electric-left-right-brace)
+(defvar TeX-command-default)
+(defvar TeX-electric-sub-and-superscript)
+(defvar TeX-electric-math)
+(defvar TeX-view-program-selection)
+(defvar TeX-view-program-list)
+(defvar TeX-source-correlate-start-server)
+(defvar TeX-output-dir)
+(defvar TeX-command-extra-options)
+(defvar auctex-latexmk-inherit-TeX-PDF-mode)
+(defvar bibtex-dialect)
+
+(declare-function auto-fill-mode "simple")
+(declare-function LaTeX-math-mode "tex")
+(declare-function TeX-source-correlate-mode "tex")
+(declare-function yas-minor-mode-on "yasnippet")
+(declare-function conditionally-turn-on-pandoc "pandoc-mode")
+(declare-function TeX-revert-document-buffer "tex")
+(declare-function pdf-tools-install "pdf-tools")
+(declare-function auctex-latexmk-setup "auctex")
+
+
 ;;; Code:
 
 
@@ -70,21 +103,16 @@ Example usage:
     (customize-set-variable 'whitespace-style
                             '(face empty trailing tab-mark
                                    indentation::space)))
-
   (if use-globally
       (global-whitespace-mode 1)
     (when enabled-modes
       (dolist (mode enabled-modes)
         (add-hook (intern (format "%s-hook" mode))
                   #'whitespace-mode))))
-
   ;; cleanup whitespace
   (customize-set-variable
    'whitespace-action '(cleanup auto-cleanup)))
 
-;;; parentheses
-(electric-pair-mode 1) ; auto-insert matching bracket
-(show-paren-mode 1)    ; turn on paren match highlighting
 
 ;;; configure citar
 (setq citar-templates
@@ -93,107 +121,6 @@ Example usage:
         (preview . "${author editor:%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
         (note . "Notes on ${author editor:%etal}, ${title}")))
 
-;;; LaTeX configuration
-(with-eval-after-load 'tex
-  (customize-set-variable 'TeX-auto-save t)
-  (customize-set-variable 'TeX-parse-self t)
-  (setq-default TeX-master nil)
-
-  ;; This line tells AUCTeX to use LuaTeX engine
-  ;;(setq TeX-engine 'luatex)
-  (customize-set-variable
-   'TeX-engine 'luatex "Use LuaLaTeX as the default LaTeX engine.")
-
-  ;; Ensure AUCTeX generates PDFs by default
-  (setq TeX-PDF-mode t)
-  
-  ;; Enable source correlation to map between source code and PDF viewer.
-  (TeX-source-correlate-mode)
-
-  ;; Custom indentation for specific LaTeX environments.
-  ;; `lstlisting`: Used for code listings.
-  ;; `tikzcd`: Used for commutative diagrams (indentation aligns with tables).
-  ;; `tikzpicture`: Used for TikZ graphics.
-  (add-to-list 'LaTeX-indent-environment-list '("lstlisting" current-indentation))
-  (add-to-list 'LaTeX-indent-environment-list '("tikzcd" LaTeX-indent-tabular))
-  (add-to-list 'LaTeX-indent-environment-list '("tikzpicture" current-indentation))
-
-  ;; Define `verbatim` environments to prevent LaTeX from auto-formatting text.
-  ;; This applies especially to code, ensuring it appears as-is.
-  (add-to-list 'LaTeX-verbatim-environments "lstlisting")
-  (add-to-list 'LaTeX-verbatim-environments "Verbatim")
-  (add-to-list 'LaTeX-verbatim-macros-with-braces "lstinline")
-  (add-to-list 'LaTeX-verbatim-macros-with-delims "lstinline")
-
-
-  ;; Enable electric pairs for sub- and superscripts, braces, and `$` symbols.
-  ;; This makes it easier to enter LaTeX math environments and brackets.
-  (customize-set-variable 'TeX-electric-sub-and-superscript t)
-  (customize-set-variable 'LaTeX-electric-left-right-brace t)
-  (customize-set-variable 'TeX-electric-math (cons "$" "$"))
-
-  ;; Automatically enable `auto-fill-mode` for line wrapping in LaTeX files.
-  ;; Enables `LaTeX-math-mode` for easier input of math symbols.
-  (add-hook 'LaTeX-mode-hook #'auto-fill-mode)
-  (add-hook 'LaTeX-mode-hook #'LaTeX-math-mode)
-
-  ;; Turn on RefTeX, a powerful tool for managing references, citations, and
-  ;; cross-references in LaTeX.
-  ;; Citar and RefTeX
-  (add-hook 'LaTeX-mode-hook #'turn-on-reftex)
-  (add-hook 'LaTeX-mode-hook #'citar-refresh)
-  (customize-set-variable 'reftex-plug-into-AUCTeX t)
-
-  ;; Automatically refresh the PDF buffer after compilation to keep it up-to-date.
-  (add-hook 'TeX-after-compilation-finished-functions
-            #'TeX-revert-document-buffer)
-
-;;; PDF Support when using pdf-tools
-  ;; PDF Tools configuration to replace the default viewer with PDF Tools
-  ;; (if available) for synchronized viewing of the compiled document.
-  (defun my-tex/latex-use-pdf-tools ()
-    "Use PDF Tools instead of docview, requires a build environment
-to compile PDF Tools and on having `pdf-tools'."
-    (require 'pdf-tools nil :noerror)
-    (with-eval-after-load 'tex
-      ;; Select PDF Tools as the default viewer for PDFs.
-      (customize-set-variable 'TeX-view-program-selection '((output-pdf "PDF Tools")))
-      
-      ;; Add PDF Tools to the program list, enabling source sync between TeX and PDF.
-      (customize-set-variable 'TeX-view-program-list '(("PDF Tools" "TeX-pdf-tools-sync-view")))
-      
-      ;; Start the server for source correlation to sync the PDF viewer with LaTeX source.
-      (customize-set-variable 'TeX-source-correlate-start-server t)))
-
-  (when (locate-library "pdf-tools")
-    ;; load pdf-tools when going into doc-view-mode
-    (add-hook 'doc-view-mode-hook #'my-tex/latex-use-pdf-tools)
-
-    ;; when pdf-tools is loaded, apply settings.
-    (with-eval-after-load 'pdf-tools
-      (setq-default pdf-view-display-size 'fit-width)))
-
-  ;; Check if `latex` and `latexmk` executables are available and configure
-  ;; AUCTeX to use `latexmk` for building documents.
-  ;; message the user if the latex executable is not found
-
-  ;; Check for `latex` and `latexmk`, configure AUCTeX to use `latexmk`
-  (defun my-tex/latex-warning-if-no-executable ()
-    "Notify if `latex` executable not found."
-    (unless (executable-find "latex")
-      (message "latex executable not found")))
-
-  (add-hook 'tex-mode-hook #'my-tex/latex-warning-if-no-executable)
-
-  (when (and (executable-find "latex") (executable-find "latexmk"))
-    (when (require 'auctex-latexmk nil 'noerror)
-      (auctex-latexmk-setup)
-      (customize-set-variable 'auctex-latexmk-inherit-TeX-PDF-mode t)
-      ;; Set up Biber as the default for bibliography management
-      (setq TeX-command-list (delete '("Biber" "biber %s" TeX-run-BibTeX nil t :help "Run Biber") TeX-command-list))
-      (add-to-list 'TeX-command-list '("Biber" "biber %s" TeX-run-BibTeX nil t :help "Run Biber"))
-      (setq bibtex-dialect 'biblatex)
-      (setq TeX-command-default "LatexMk"))))
 
 ;;; Markdown support
 (when (fboundp 'markdown-mode)
@@ -206,9 +133,127 @@ to compile PDF Tools and on having `pdf-tools'."
     (customize-set-variable 'markdown-enable-html t)
     (add-hook 'markdown-mode-hook #'conditionally-turn-on-pandoc)))
 
+;; Check for `latex`
+(defun my-lang-tex/latex-warning-if-no-executable ()
+  "Notify if `latex` executable not found."
+  (unless (executable-find "latex")
+    (message "latex executable not found")))
+
+(defun my-lang-tex/latex-setup ()
+  "Configure LaTeX environment for writing and editing."
+  (my-lang-tex/latex-warning-if-no-executable)
+
+  ;; Point latex at the current directory. 
+
+  ;; Delay Corfu drop-downs.
+  (customize-set-variable 'corfu-auto-delay 0.25)
+
+  ;; AUCTeX Settings
+  (setq TeX-auto-save t
+        TeX-parse-self t
+        TeX-master (if (or (buffer-file-name)
+                           (string-match "main\\.tex" (buffer-file-name)))
+                       "main"
+                     nil)
+        TeX-engine 'luatex                                                     ; Use LuaLaTeX as the default LaTeX engine.
+        TeX-PDF-mode t                                                         ; Ensure AUCTeX generates PDFs by default
+        reftex-plug-into-AUCTeX t
+        ;; Set output directory for latexmk or other compilers
+        TeX-output-dir (file-name-directory (buffer-file-name))
+        TeX-command-extra-options
+        (concat "-cd -output-directory="
+                (file-name-directory (buffer-file-name))))
+
+  ;; Automatically refresh the PDF buffer after compilation to keep it up-to-date.
+  (add-hook
+   'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
+
+  ;; Enable useful modes
+  (TeX-source-correlate-mode 1)                                                ; Enable source correlation to map between source code and PDF viewer.
+  (auto-fill-mode 1)                                                           ; Automatically enable `auto-fill-mode` for line wrapping in LaTeX files.
+  (LaTeX-math-mode 1)                                                          ; Enables `LaTeX-math-mode` for easier input of math symbols.
+  (yas-minor-mode-on)
+
+  ;; Turn on RefTeX, a powerful tool for managing references, citations, and
+  ;; cross-references in LaTeX.
+  ;; Citar and RefTeX
+  (when (fboundp 'citar-refresh) (citar-refresh))
+  (turn-on-reftex)
+
+  ;; Custom indentation for specific LaTeX environments.
+  ;; `lstlisting`: Used for code listings.
+  ;; `tikzcd`: Used for commutative diagrams (indentation aligns with tables).
+  ;; `tikzpicture`: Used for TikZ graphics.
+  ;; (add-to-list 'LaTeX-indent-environment-list '("lstlisting" current-indentation))
+  ;; (add-to-list 'LaTeX-indent-environment-list '("tikzcd" LaTeX-indent-tabular))
+  ;; (add-to-list 'LaTeX-indent-environment-list '("tikzpicture" current-indentation))
+  (dolist (env '("lstlisting" "tikzcd" "tikzpicture"))
+      (add-to-list
+      'LaTeX-indent-environment-list (cons env 'current-indentation)))
+
+  ;; Verbatim environments
+  ;; Define `verbatim` environments to prevent LaTeX from auto-formatting text.
+  ;; This applies especially to code, ensuring it appears as-is.
+  ;; (add-to-list 'LaTeX-verbatim-environments "lstlisting")
+  ;; (add-to-list 'LaTeX-verbatim-environments "Verbatim")
+  ;; (add-to-list 'LaTeX-verbatim-macros-with-braces "lstinline")
+  ;; (add-to-list 'LaTeX-verbatim-macros-with-delims "lstinline")
+  (dolist (env '("lstlisting" "Verbatim"))
+   (add-to-list 'LaTeX-verbatim-environments env))
+   (dolist (macro '("lstinline"))
+      (add-to-list 'LaTeX-verbatim-macros-with-braces macro)
+      (add-to-list 'LaTeX-verbatim-macros-with-delims macro))
+
+  ;; parentheses
+  (electric-pair-mode 1) ; auto-insert matching bracket
+  (show-paren-mode 1)    ; turn on paren match highlighting
+
+  ;; Enable electric pairs for sub- and superscripts, braces, and `$` symbols.
+  ;; This makes it easier to enter LaTeX math environments and brackets.
+  (setq TeX-electric-sub-and-superscript t
+        LaTeX-electric-left-right-brace t
+        TeX-electric-math (cons "$" "$"))
+
+  ;; PDF Tools integration if available
+  (when (and (require 'pdf-tools nil 'noerror)
+             (executable-find "pdf-tools"))
+    (setq TeX-view-program-selection '((output-pdf "PDF Tools"))
+          TeX-view-program-list '(("PDF Tools" "TeX-pdf-tools-sync-view"))
+          TeX-source-correlate-start-server t)
+    (pdf-tools-install))
+
+  ;; Check if `latexmk` is executables are available and configure
+  ;; AUCTeX to use `latexmk` for building documents.
+  ;; message the user if the latex executable is not found
+  (when (and (executable-find "latexmk") (require 'auctex-latexmk nil 'noerror))
+    (auctex-latexmk-setup)
+    ;; ("Biber" "biber %s" TeX-run-BibTeX nil t :help "Run Biber")
+
+    (setq TeX-command-default "LatexMk"
+          auctex-latexmk-inherit-TeX-PDF-mode t
+          bibtex-dialect 'biblatex))
+  ;; when pdf-tools is loaded, apply settings.
+  (with-eval-after-load 'pdf-tools
+    (setq-default pdf-view-display-size 'fit-width))
+  )
+
+;; Hook the function to LaTeX mode
+(add-hook 'LaTeX-mode-hook 'my-lang-tex/latex-setup)
+
+
 ;; provide a means of calling a temp org buffer without underlying file.
 ;;(global-set-key (kbd "C-c t") 'my-buffer-tools/open-temp-org-buffer)
 
 (provide 'custom-writing-config)
 ;;; custom-writing-config.el ends here
 
+
+                                        ; LocalWords:  pandoc citar
+                                        ; LocalWords:  whitespace tex
+                                        ; LocalWords:  lstinline TikZ lstlisting
+                                        ; LocalWords:  LatexMk etal
+                                        ; LocalWords:  executables
+                                        ; LocalWords:  tikzpicture
+                                        ; LocalWords:  makefile Biber
+                                        ; LocalWords:  delims auctex
+                                        ; LocalWords:  yasnippet
