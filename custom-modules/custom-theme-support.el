@@ -91,6 +91,21 @@
 
 
 ;; code:
+(defun align-inline-comments ()
+  "Align inline comments to `comment-column`."
+  (interactive)
+  (when (derived-mode-p 'emacs-lisp-mode)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "\\(\\s-*\\);\\(.*\\)$" nil t)
+        (replace-match (concat (make-string (- comment-column (current-column)) ?\s) ";\\2") t t)))))
+
+;; https://github.com/emacsmirror/rainbow-mode/blob/master/rainbow-mode.el
+(use-package rainbow-mode
+  :straight (:type git
+                   :host github
+                   :repo "emacs-straight/rainbow-mode"
+                   :files ("*" (:exclude ".git"))))
 
 ;;; Modus-themes
 ;; https://github.com/protesilaos/modus-themes
@@ -199,25 +214,51 @@
 ;; white        |  #EEEEEC |  #A8ACA4 |
 
 ;; Primary settings based on Gnome dark
-(defvar info-theme-white-grey "#D2D6CE")        (defvar info-theme-dark-grey "#292D48")  ;;""#484D67"
-(defvar info-theme-blue-steel "#61647A")        (defvar info-theme-dark-blue "#1B152D")
-(defvar info-theme-bold-code-green "#169C05")   (defvar info-theme-dark-blue-green "#06313C")
-(defvar info-theme-faded-lime "#859900")        (defvar info-theme-sharp-lime "#A6BE00")
+(defvar info-theme-white-grey              "#D2D6CE")
+(defvar info-theme-dark-grey               "#292D48")
 
-(defvar info-theme-grass "#4F9C02")
-(defvar info-theme-dark-red "#9D1F1F")          (defvar info-theme-dark-orange "#E54512")
-(defvar info-theme-magenta "#EA5BBA")           (defvar info-theme-violet "#8E7BBB")
+(defvar info-theme-blue-steel              "#61647A")
+(defvar info-theme-dark-blue               "#1B152D")
+
+(defvar info-theme-bold-code-green         "#169C05")
+(defvar info-theme-dark-blue-green         "#06313C")
+(defvar info-theme-faded-lime              "#859900")
+(defvar info-theme-sharp-lime              "#A6BE00")
+(defvar info-theme-grass                   "#4F9C02")
+
+(defvar info-theme-dark-red                "#9D1F1F")
+(defvar info-theme-dark-orange             "#E54512")
+
+(defvar info-theme-magenta                 "#EA5BBA")
+(defvar info-theme-violet                  "#8E7BBB")
 
 ;; Tango secondary colours
-(defvar info-theme-light-grey "#989898")        (defvar info-theme-flat-grey "#555753")
-(defvar info-theme-light-red "#EF2929")         (defvar info-theme-flat-red "#CC0000")
-(defvar info-theme-light-orange "#CB4B16")      (defvar info-theme-magenta "#EA5BBA")
-(defvar info-theme-light-green "#8AE234")       (defvar info-theme-flat-green "#4E9A06")
-(defvar info-theme-light-yellow "#FCE94F")      (defvar info-theme-flat-yellow "#D7A13B")
-(defvar info-theme-light-blue "#729FCF")        (defvar info-theme-flat-blue "#3465A4")
-(defvar info-theme-light-purple "#AD7FA8")      (defvar info-theme-flat-purple "#75507B")
-(defvar info-theme-light-cyan "#34E2E2")        (defvar info-theme-flat-cyan "#06989A")
-(defvar info-theme-light-white "#EEEEEC")       (defvar info-theme-flat-white "#A8ACA4")
+(defvar info-theme-light-grey              "#989898")
+(defvar info-theme-flat-grey               "#555753")
+
+(defvar info-theme-light-red               "#EF2929")
+(defvar info-theme-flat-red                "#CC0000")
+
+(defvar info-theme-light-orange            "#CB4B16")
+(defvar info-theme-magenta                 "#EA5BBA")
+
+(defvar info-theme-light-green             "#8AE234")
+(defvar info-theme-flat-green              "#4E9A06")
+
+(defvar info-theme-light-yellow            "#FCE94F")
+(defvar info-theme-flat-yellow             "#D7A13B")
+
+(defvar info-theme-light-blue              "#729FCF")
+(defvar info-theme-flat-blue               "#3465A4")
+
+(defvar info-theme-light-purple            "#AD7FA8")
+(defvar info-theme-flat-purple             "#75507B")
+
+(defvar info-theme-light-cyan              "#34E2E2")
+(defvar info-theme-flat-cyan               "#06989A")
+
+(defvar info-theme-light-white             "#EEEEEC")
+(defvar info-theme-flat-white              "#A8ACA4")
 
 
 (defgroup my-custom-programming-faces nil
@@ -279,11 +320,6 @@
                                 :family "arial"))) t)
 
              )
-
-            (defface my-font-faces/prog-mode-face
-              '((t :inherit fixed-pitch :weight normal :slant normal :height 100))
-              "Prog-mode default face. "
-              :group 'my-custom-programming-faces)
 
             (defface my-font-faces/prog-mode-face
               '((t :inherit fixed-pitch :weight normal :slant normal :height 100))
@@ -428,17 +464,17 @@
  modus-themes-common-palette-overrides
  ;; 5.10. Option for variable-pitch font in UI elements
  ;; modus-themes-variable-pitch-ui t
- ;; 5.11. Option for palette overrides       ; original values
+ ;; 5.11. Option for palette overrides                                         ; original values
  ;; bg: background
  ;; fg: foreground
- `((bg-main ,info-theme-dark-blue)           ; primary background "#0d0e1c"
-   (bg-dim ,info-theme-dark-grey)            ; dimmed background  "#1d2235"
-   (fg-main ,info-theme-white-grey)          ; primary font color "#ffffff"
-   (fg-dim ,info-theme-flat-grey)            ; dimmed font colour  "#989898"
-   (fg-alt ,info-theme-bold-code-green)      ; alt. font colour    "#c6daff"
-   (bg-active ,info-theme-flat-grey)         ; "#042027"
-   (bg-inactive ,info-theme-dark-grey)       ; "#2b3045"
-   (border ,info-theme-white-grey)           ; "#61647a")
+ `((bg-main ,info-theme-dark-blue)                                             ; primary background "#0d0e1c"
+   (bg-dim ,info-theme-dark-grey)                                              ; dimmed background  "#1d2235"
+   (fg-main ,info-theme-white-grey)                                            ; primary font color "#ffffff"
+   (fg-dim ,info-theme-flat-grey)                                              ; dimmed font colour  "#989898"
+   (fg-alt ,info-theme-bold-code-green)                                        ; alt. font colour    "#c6daff"
+   (bg-active ,info-theme-flat-grey)                                           ; "#042027"
+   (bg-inactive ,info-theme-dark-grey)                                         ; "#2b3045"
+   (border ,info-theme-white-grey)                                             ; "#61647a")
 
    ;; Do not alter colour definitions.
    ;; --------------------------------
@@ -510,22 +546,22 @@
    ;; (bg-graph-cyan-0 "#47dfea")
    ;; (bg-graph-cyan-1 "#00808f")
 
-   (bg-completion bg-green-nuanced)          ; "#483d8a" selected completion line
-   (bg-hover bg-green-nuanced)               ; "#859900" example hover over hyper links
-   (bg-hover-secondary bg-yellow-nuanced)    ; "#654a39"
-   (bg-hl-line "#303a6f")                    ; "#303a6f"
+   (bg-completion bg-green-nuanced)                                            ; "#483d8a" selected completion line
+   (bg-hover bg-green-nuanced)                                                 ; "#859900" example hover over hyper links
+   (bg-hover-secondary bg-yellow-nuanced)                                      ; "#654a39"
+   (bg-hl-line "#303a6f")                                                      ; "#303a6f"
 
    ;;  highlight current line
    (global-hl-line-mode 1)
-   (bg-region "#484d67")                     ; "#555a66"
-   (fg-region ,info-theme-white-grey)        ; "#ffffff"
+   (bg-region "#484d67")                                                       ; "#555a66"
+   (fg-region ,info-theme-white-grey)                                          ; "#ffffff"
    (bg-char-0 "#0050af")
    (bg-char-1 "#7f1f7f")
    (bg-char-2 "#625a00")
 
    (bg-mode-line-active ,info-theme-blue-steel)
-   (fg-mode-line-active ,info-theme-white-grey)                     ;"#ffffff")
-   (border-mode-line-active ,info-theme-white-grey)                 ; "#979797"
+   (fg-mode-line-active ,info-theme-white-grey)                                ;"#ffffff")
+   (border-mode-line-active ,info-theme-white-grey)                            ; "#979797"
    (bg-mode-line-inactive ,info-theme-dark-grey)
    (fg-mode-line-inactive ,info-theme-light-grey)
    (border-mode-line-inactive ,info-theme-light-grey)
@@ -569,9 +605,9 @@
    (underline-paren-match unspecified)
 
    (fringe bg-dim)
-   (cursor ,info-theme-sharp-lime)                                   ; magenta-warmer
-   (keybind ,info-theme-flat-cyan)                                   ; blue-cooler
-   (name ,info-theme-bold-code-green)                                ; magenta
+   (cursor ,info-theme-sharp-lime)                                             ; magenta-warmer
+   (keybind ,info-theme-flat-cyan)                                             ; blue-cooler
+   (name ,info-theme-bold-code-green)                                          ; magenta
    (identifier ,info-theme-flat-yellow)
    (err red)
    (warning yellow-warmer)
@@ -587,19 +623,19 @@
    (fg-prominent-note fg-main)
 
    ;; Coding colour formats
-   (builtin ,info-theme-flat-yellow)                                 ; magenta-warmer
-   (comment ,info-theme-flat-green)                                  ; red-faint
-   (constant ,info-theme-violet)                                     ; blue-cooler
-   (docstring ,info-theme-bold-code-green)                           ; cyan-faint
-   (docmarkup ,info-theme-faded-lime)                                ; magenta-faint
-   (fnname ,info-theme-dark-orange)                                  ; magenta
-   (keyword ,info-theme-light-yellow)                                ; magenta-cooler
-   (preprocessor ,info-theme-dark-red)                               ; red-cooler
-   (string ,info-theme-light-blue)                                   ; blue-warmer
-   (type ,info-theme-magenta)                                        ; cyan-cooler
-   (variable ,info-theme-magenta)                                    ; cyan
-   (rx-construct ,info-theme-flat-white)                             ; green-cooler
-   (rx-backslash ,info-theme-flat-grey)                              ; magenta
+   (builtin ,info-theme-flat-yellow)                                           ; magenta-warmer
+   (comment ,info-theme-flat-green)                                            ; red-faint
+   (constant ,info-theme-violet)                                               ; blue-cooler
+   (docstring ,info-theme-bold-code-green)                                     ; cyan-faint
+   (docmarkup ,info-theme-faded-lime)                                          ; magenta-faint
+   (fnname ,info-theme-dark-orange)                                            ; magenta
+   (keyword ,info-theme-light-yellow)                                          ; magenta-cooler
+   (preprocessor ,info-theme-flat-cyan)                                        ; red-cooler
+   (string ,info-theme-light-blue)                                             ; blue-warmer
+   (type ,info-theme-magenta)                                                  ; cyan-cooler
+   (variable ,info-theme-magenta)                                              ; cyan
+   (rx-construct ,info-theme-flat-white)                                       ; green-cooler
+   (rx-backslash ,info-theme-flat-grey)                                        ; magenta
 
    (accent-0 blue-cooler)
    (accent-1 magenta-warmer)
@@ -692,14 +728,14 @@
    (bg-space unspecified)
    (fg-space border)
 
-   (fg-heading-0 fg-main)                                            ; cyan-cooler
+   (fg-heading-0 fg-main)                                                      ; cyan-cooler
    (fg-heading-1 fg-main)
-   (fg-heading-2 fg-main)                                            ; yellow-faint
-   (fg-heading-3 fg-main)                                            ; blue-faint
-   (fg-heading-4 fg-main)                                            ; magenta
-   (fg-heading-5 ,info-theme-bold-code-green)                        ; green-faint
-   (fg-heading-6 ,info-theme-grass)                                  ; red-faint
-   (fg-heading-7 ,info-theme-dark-blue-green)                        ; cyan-faint
+   (fg-heading-2 fg-main)                                                      ; yellow-faint
+   (fg-heading-3 fg-main)                                                      ; blue-faint
+   (fg-heading-4 fg-main)                                                      ; magenta
+   (fg-heading-5 ,info-theme-bold-code-green)                                  ; green-faint
+   (fg-heading-6 ,info-theme-grass)                                            ; red-faint
+   (fg-heading-7 ,info-theme-dark-blue-green)                                  ; cyan-faint
    (fg-heading-8 fg-dim)
    (bg-heading-0 unspecified)
    (bg-heading-1 unspecified)
@@ -731,7 +767,7 @@
  ;; 5.5. Option for font mixinv
  modus-themes-mixed-fonts t
  modus-themes-variable-pitch-ui nil
- modus-themes-custom-auto-reload t             ; Set Option for reloading the theme on custom change
+ modus-themes-custom-auto-reload t                                             ; Set Option for reloading the theme on custom change
  ;; 5.6. Option for command prompt styles
  modus-themes-prompts '(bold intense)
  ;; 5.7. Option for completion framework aesthetics
