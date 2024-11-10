@@ -1,4 +1,4 @@
-personal_ws-1.1 en 44 
+personal_ws-1.1 en 51 
 ARGS
 Backtrace
 Bunnings
@@ -19,25 +19,32 @@ analytics
 aspell
 balancer
 cd
+conda
 config
 csv
 defconst
 defvar
 dir
+el
 flymake
+github
 gitignore
 hdb
 hoc
+https
 ipython
 jdk
 json
 jsonl
 lvl
+mnt
 modeline
 noqa
 odbc
 py
 rlwrap
+setq
+speedbar
 sym
 txt
 usr
