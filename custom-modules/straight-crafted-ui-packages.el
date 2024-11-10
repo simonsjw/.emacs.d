@@ -1,5 +1,4 @@
-;;; crafted-ui-packages.el -*- lexical-binding: t; -*-
-
+;;; crafted-ui-packages.el --- Packages to improve the Emacs UI.  -*- lexical-binding: t; -*-
 ;; Copyright (C) 2022
 ;; SPDX-License-Identifier: MIT
 
@@ -9,51 +8,31 @@
 
 ;; Packages to configure with `crafted-ui-config.el'
 
+;;; Code:
 ;;; packages
-(use-package bookmark+
-  :straight(:type git
-                  :host github
-                  :repo "emacsmirror/bookmark-plus"))
-
-
-(use-package dired+
-  :straight (:type git
-                   :host github
-                   :repo "emacsmirror/dired-plus"))                
-
 
 ;; here we use a direct load of info+.el since use-package
-;; throws up an error. 
-(load (expand-file-name
-       "custom-packages/info+.el" user-emacs-directory))
-
-(use-package imenu-list
-  :straight (:type git
-                   :host github
-                   :repo "bmag/imenu-list"))
-
-(use-package elisp-demos
-  :straight (:type git
-                   :flavor melpa
-                   :files (:defaults "*.org" "elisp-demos-pkg.el")
-                   :host github :repo "xuchunyang/elisp-demos"))
+;; throws up an error.
+;; (load (expand-file-name
+;;        "custom-packages/info+.el" user-emacs-directory))
+(use-package bookmark+)
+(use-package dired+)
+(use-package info+)
+(use-package imenu-list)
+(use-package elisp-demos)
 
 ;; Get Bufler the recursive buffer grouping package
-(use-package bufler
-  :straight (:type git
-                   :host github
-                   :repo "alphapapa/bufler.el"
-                   :files (:defaults (:exclude "helm-bufler.el"))))
+(use-package bufler)
+
+;; docs in windows over code.
+(use-package eldoc-box)
 
 ;; (straight-use-package 'tabspaces)
 ;; This groups whole frames under a tab as opposed to tab-line which
-;; adds a tab to windows with multiple buffers. 
+;; adds a tab to windows with multiple buffers.
 
-;; Burly - save and restore desktop layouts. 
-(use-package burly 
-  :straight (:type git
-                   :host github
-                   :repo "alphapapa/burly.el"))
+;; Burly - save and restore desktop layouts.
+(use-package burly)
 
 (provide 'straight-crafted-ui-packages)
 ;;; straight-crafted-ui-packages.el ends here

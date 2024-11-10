@@ -29,7 +29,7 @@
   (define-key
    projectile-mode-map (kbd "C-c p") 'projectile-command-map))
 
-(use-package consult-projectile 
+(use-package consult-projectile
   :straight (:type git
                    :flavor melpa
                    :host gitlab

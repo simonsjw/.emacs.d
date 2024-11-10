@@ -11,7 +11,13 @@
 ;; We use the no-littering package to keep things neat.
 
 ;;; Declarations and imports.
-(defvar no-littering-var-directory)
+(defvar no-littering-var-directory 'uninitialized
+  "`no-littering-var-directory' set in init.el before this module runs.")
+(when (eq no-littering-var-directory 'uninitialized)
+  (warn
+   "my-important-variable is not set. Please ensure it is set in init.el"))
+
+
 (defvar no-littering-etc-directory)
 
 (defvar custom-info-dir)
@@ -211,7 +217,7 @@
  (directory-files-recursively org-contacts-directory "\\.org$")
  "Load the path to each file in the contacts directory. ")
 
-;; Notes file for org capture. 
+;; Notes file for org capture.
 (setq org-default-notes-file
       (expand-file-name "notes/notes.org" org-directory))
 

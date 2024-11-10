@@ -192,22 +192,6 @@
 ;; database integration and SQL support.
 (require 'custom-db-support)
 
-;; load bookmark+ and dired+ last since they have lots of dependencies.
-(require 'bookmark+) ;; commands usually have a bmkp prefix.
-(log/info :fn 'init
-          :msg "Providing bookmark+."
-          :obj t)
-
-(require 'dired+)    ;; commands usually have a diredp prefix.
-(log/info :fn 'init
-          :msg "Providing dired+."
-          :obj t)
-
-(require 'info+)
-(log/info :fn 'init
-          :msg "Providing info+."
-          :obj t)
-
 (require 'custom-hydra-config)
 (require 'custom-terminal-support)
 (require 'custom-summary-config)

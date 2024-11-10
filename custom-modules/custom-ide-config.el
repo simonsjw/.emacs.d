@@ -24,6 +24,12 @@
 (require 'editorconfig)
 (require 'aggressive-indent)
 
+(declare-function consult-eglot-embark-mode "consult-eglot-embark")
+
+(declare-function eldoc-box-hover-mode "s")
+
+(declare-function s-starts-with? "s")
+(declare-function s-ends-with? "s")
 
 (use-package consult-eglot
   :straight (:type git
@@ -56,21 +62,7 @@
   ;; (add-hook 'after-save-hook 'eglot-format)
   )
 
-;; ;; https://github.com/scop/emacs-ruff-format
-;; (use-package ruff-format
-;;   :straight
-;;   (:type git
-;;          :flavor melpa
-;;          :host github
-;;          :repo "scop/emacs-ruff-format"))
-
-;; ;; https://github.com/scop/emacs-ruff-format
-;; (use-package flymake-ruff
-;;   :straight (flymake-ruff
-;;              :type git
-;;              :host github
-;;              :repo "erickgnavar/flymake-ruff")
-;;   :hook (eglot-managed-mode . flymake-ruff-load))
+;; DAPE installation
 
 ;; Excluding Pyright diagnostic notes
 ;; Pyright has some diagnostic notes that overlap with diagnostics provided by
@@ -99,9 +91,6 @@
 ;; ;; Add the function to the eglot-managed-mode hook
 ;; (add-hook 'eglot-managed-mode-hook 'mp-eglot-eldoc)
 
-;; ensure that scratch is persistent. 
-(persistent-scratch-setup-default)
-
 ;; use eldoc-box-hover-mode. 
 (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t)
 ;; the below stops eldoc-box showing up if not explicitly requested. 
@@ -118,7 +107,7 @@
 
 (defun my-ide/handle-return-in-doc ()
   "Handles return key in a docstring context."
-    (let ((indent (current-indentation)))
+  (let ((indent (current-indentation)))
     (newline)
     (indent-line-to indent)))
 
@@ -130,17 +119,17 @@ newline and indent, and then insert the character found, if any."
   (interactive)
   (let ((char-to-insert nil)
         (indent (current-indentation))
-    ;; Search the current line backward for `"` or `'`
-    (save-excursion
-      (beginning-of-line)
-      (when (re-search-forward "['\"]" (line-end-position) t)
-        (setq char-to-insert (char-after (match-beginning 0)))))
-    ;; Insert newline and indent
-    (newline)
-    (indent-line-to indent)
-    ;; Insert the found character, if any
-    (when char-to-insert
-      (insert char-to-insert)))))
+        ;; Search the current line backward for `"` or `'`
+        (save-excursion
+          (beginning-of-line)
+          (when (re-search-forward "['\"]" (line-end-position) t)
+            (setq char-to-insert (char-after (match-beginning 0)))))
+        ;; Insert newline and indent
+        (newline)
+        (indent-line-to indent)
+        ;; Insert the found character, if any
+        (when char-to-insert
+          (insert char-to-insert)))))
 
 (defun my-ide/handle-return-in-default ()
   "Handles return key in a default context."
@@ -231,3 +220,5 @@ context, in the current active buffer."
 (provide 'custom-ide-config)
 ;;; custom-ide-config.el ends here
 
+
+                                        ; LocalWords:  eglot dape

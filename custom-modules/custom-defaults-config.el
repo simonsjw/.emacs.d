@@ -19,7 +19,8 @@
 ;; Set default coding system.
 (set-default-coding-systems 'utf-8)
 
-(require 'custom-path-support)
+(defvar my-paths/ispell-word-replacement)
+
 (require 'dired)
 (require 'ispell)
 (require 'xref)
@@ -32,13 +33,13 @@
 ;;  #######
 ;; turn off linewrap by default.
 ;; (we use setq-default since this value can be adjusted on a per buffer basis)
-(setq-default truncate-lines t)  
+(setq-default truncate-lines t)
 
 ;; Do not open new frames for new buffers, reuse existing windows
 (setq pop-up-frames nil)
 
 ;; show the path to the sym-link rather than the underlying file
-;; when using sym-link file paths in emacs. 
+;; when using sym-link file paths in emacs.
 (customize-set-variable
  'find-file-visit-truename t
  "Show path to sym-link rather than underlying file when viewing sym-link
@@ -147,7 +148,7 @@ file paths.")
 ;;  ###################
 ;;
 ;; Turn on the best completion-mode available:
-;; - Assume use of vertico 
+;; - Assume use of vertico
 ;;
 
 ;; No matter which completion mode is used:
@@ -194,8 +195,8 @@ file paths.")
 ;;    a list of possible corrections and choose the one that fits.
 ;;    It's a bit like right-clicking a misspelled word in a word
 ;;    processor and seeing a list of suggestions.
-(customize-set-variable 'consult-flyspell-select-function
-                        'flyspell-correct-at-point)
+(customize-set-variable
+ 'consult-flyspell-select-function #'flyspell-correct-at-point)
 
 ;;; Editing
 ;;  #######
