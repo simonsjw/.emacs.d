@@ -10,7 +10,7 @@
 
 ;; Use tabline to manage workspaces
 ;; Define useful functions to manage workspaces.
-;; (tabline is built in). 
+;; (tabline is built in).
 
 ;;; Code:
 (require 'delight)
@@ -21,11 +21,57 @@
 (require 'easymenu)
 (require 'custom-system-tools)
 
-;;; Code:
+(require 'bookmark+) ;; commands usually have a bmkp prefix.
+(require 'dired+)    ;; commands usually have a diredp prefix.
+(require 'info+)
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Dired Buffer title
+
+(defvar rainbow-hexadecimal-colors-font-lock-keywords)
+
+(defvar ediff-window-setup-function)
+
+(defvar ediff-split-window-function)
+(defvar ediff-buffer-A)
+(defvar ediff-buffer-B)
+(defvar ediff-merge-buffer)
+(declare-function ediff-get-file-name "ediff")
+
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Rainbow mode functionality
+;; -------------------
+;; ensure we can see what colours are being used in the themeing.
+(add-to-list 'auto-mode-alist
+             '("custom-theme-support\\.el\\'"
+               . (lambda ()
+                   (emacs-lisp-mode)
+                   (rainbow-mode 1)
+                   (setq rainbow-x-colors nil                                  ; Disable color names like "red"
+                         rainbow-x-colors-font-lock-keywords nil               ; Ensure color names are not highlighted
+                         rainbow-latex-rgb-colors nil                          ; Disable LaTeX rgb colors
+                         rainbow-rgb-colors-font-lock-keywords nil             ; Disable rgb(...) colors
+                         rainbow-hexadecimal-colors-font-lock-keywords         ; Keep only hex colors
+                         '(("#[0-9a-fA-F]\\{6\\}\\|#[0-9a-fA-F]\\{3\\}"
+                            (0 (rainbow-colorize-itself))))
+                         )
+                   )
+               )
+             )
+(with-eval-after-load 'rainbow-mode
+  (setq rainbow-x-colors nil                       ;; Disable color names like "red"
+        rainbow-x-colors-font-lock-keywords nil    ;; Ensure color names are not highlighted
+        rainbow-latex-rgb-colors nil               ;; Disable LaTeX rgb colors
+        rainbow-rgb-colors-font-lock-keywords nil  ;; Disable rgb(...) colors
+        rainbow-hexadecimal-colors-font-lock-keywords
+        '(("#[0-9a-fA-F]\\{6\\}\\|#[0-9a-fA-F]\\{3\\}"
+           (0 (rainbow-colorize-itself))))))       ;; Keep only hex colors
+
+
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Dired functionality
+;; -------------------
+
+;; Buffer title
 (defun my-dired/set-dired-buffer-title ()
   "Set Dired buffer title to 'Dired: <immediate directory>'."
   (when (eq major-mode 'dired-mode)
@@ -40,16 +86,37 @@
 
 (add-hook 'dired-after-readin-hook 'my-dired/set-dired-buffer-title)
 
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Ediff functionality
+;; -------------------
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; (defun my-ediff/rename-buffers ()
+;;   "Rename buffers in Ediff sessions to a custom format."
+;;   (let ((file-a (ediff-get-file-name 'A))
+;;         (file-b (ediff-get-file-name 'B)))
+;;     (with-current-buffer ediff-buffer-A
+;;       (rename-buffer (format "Ediff A: %s" (file-name-nondirectory file-a)) t))
+;;     (with-current-buffer ediff-buffer-B
+;;       (rename-buffer (format "Ediff B: %s" (file-name-nondirectory file-b)) t))
+;;     (when ediff-merge-buffer
+;;       (with-current-buffer ediff-merge-buffer
+;;         (rename-buffer (format "*Ediff Config*") t)))))
+
+;; (add-hook 'ediff-startup-hook 'my-ediff/rename-buffers)
+
+;; (setq ediff-window-setup-function 'ediff-setup-windows-plain)                  ; prevent frame creation.
+;; (setq ediff-split-window-function 'ignore)                                     ; Prevent any window splitting
+
+
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; tabline functionality
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ---------------------
 ;; the below code improves functionality for tab-line-mode.
 ;; It is based on this blog:
 ;; https://andreyor.st/posts/2020-05-10-making-emacs-tabs-look-like-in-atom/
-;; with this: 
+;; with this:
 ;; [[https://github.com/minad/bookmark-view][bookmark-view]]
-;; to allow us to more effectively control layout.  
+;; to allow us to more effectively control layout.
 ;; In addition, customise the tabline and the modeline.
 ;; See:
 ;; [[https://jdhao.github.io/2021/09/30/emacs_custom_tabline/][Customise Tabline]]
@@ -68,9 +135,9 @@
 (defun my-tab-line/tab-line-close-tab-given-buffer (buffer &optional given-window)
   "Close the selected tab for BUFFER.
 
-If BUFFER is presented in another window, close the tab by using the
-`bury-buffer' function. If BUFFER is unique to all existing windows,
-kill the buffer with `kill-buffer' function. Lastly, if no tabs
+If BUFFER is presented in window other than GIVEN-WINDOW, close the tab by
+using the `bury-buffer' function.  If BUFFER is unique to all existing windows,
+kill the buffer with `kill-buffer' function.  Lastly, if no tabs
 are left in the window, it is deleted with `delete-window' function.
 
 This function is used in setting up the IDE."
@@ -78,42 +145,42 @@ This function is used in setting up the IDE."
   (if (not given-window)
       (setq given-window (selected-window)))
   (with-selected-window given-window
-    ;; get a list of the buffers associated with the current window. 
+    ;; get a list of the buffers associated with the current window.
     (let
-        ((tab-list (tab-line-tabs-window-buffers)) 
-            (buffer-list
-             (flatten-list
-              (seq-reduce
-               (lambda (list window)
-                 (select-window window t)
-                 (cons (tab-line-tabs-window-buffers) list))
-               (window-list) nil))))
-      
-        (select-window given-window)
-        (if (> (seq-count (lambda (b) (eq b buffer)) buffer-list) 1)
-            (progn
-              (if (eq buffer (current-buffer))
-                  (bury-buffer)
-                (set-window-prev-buffers
-                 given-window
-                 (assq-delete-all buffer (window-prev-buffers)))
-                (set-window-next-buffers
-                 given-window
-                 (delq buffer (window-next-buffers))))
-              (unless (cdr tab-list)
-                (ignore-errors (delete-window given-window))))
-          (and (kill-buffer buffer)
-               (unless (cdr tab-list)
-                 (ignore-errors (delete-window given-window))))))))
+        ((tab-list (tab-line-tabs-window-buffers))
+         (buffer-list
+          (flatten-list
+           (seq-reduce
+            (lambda (list window)
+              (select-window window t)
+              (cons (tab-line-tabs-window-buffers) list))
+            (window-list) nil))))
+
+      (select-window given-window)
+      (if (> (seq-count (lambda (b) (eq b buffer)) buffer-list) 1)
+          (progn
+            (if (eq buffer (current-buffer))
+                (bury-buffer)
+              (set-window-prev-buffers
+               given-window
+               (assq-delete-all buffer (window-prev-buffers)))
+              (set-window-next-buffers
+               given-window
+               (delq buffer (window-next-buffers))))
+            (unless (cdr tab-list)
+              (ignore-errors (delete-window given-window))))
+        (and (kill-buffer buffer)
+             (unless (cdr tab-list)
+               (ignore-errors (delete-window given-window))))))))
 
 
 (defun my-tab-line/tab-line-close-tab (&optional e)
-  "Close the selected tab.
+  "Close the selected tab. (E  - using mouse)
 
-     If tab is presented in another window, close the tab by using the
-     `bury-buffer' function.  If tab is unique to all existing windows,
-     kill the buffer with `kill-buffer' function.  Lastly, if no tabs
-     left in the window, it is deleted with `delete-window' function."
+If tab is presented in another window, close the tab by using the `bury-buffer'
+function.  If tab is unique to all existing windows, kill the buffer with
+`kill-buffer' function.  Lastly, if no tabs left in the window, it is deleted
+with `delete-window' function."
   (interactive "e")
   (let* ((posnp (event-start e))
          (window (posn-window posnp))
@@ -152,9 +219,9 @@ This function is used in setting up the IDE."
 (defun my-tab-line/tab-line-name-buffer (buffer &rest _buffers)
   "Create name for tab with padding and truncation.
 
-If buffer name is shorter than `tab-line-tab-max-width' it gets
+If BUFFER  name is shorter than `tab-line-tab-max-width' it gets
 centred with spaces, otherwise it is truncated, to preserve equal width for
-all tabs. This function also tries to fit as many tabs in window as possible,
+all tabs.  This function also tries to fit as many tabs in window as possible,
 so if there is no room for tabs with maximum width, it calculates new width
 for each tab and truncates text if needed.
 Minimal width can be set with `tab-line-tab-min-width' variable."
@@ -165,7 +232,8 @@ Minimal width can be set with `tab-line-tab-min-width' variable."
            (tab-amount
             (length (tab-line-tabs-window-buffers)))
            (window-max-tab-width
-            (if (>= (* (+ my-tab-line/tab-max-width 3) tab-amount) window-width)
+            (if (>= (* (+ my-tab-line/tab-max-width 3) tab-amount)
+                    window-width)
                 (/ window-width tab-amount)
               my-tab-line/tab-max-width))
            (tab-width
@@ -174,11 +242,11 @@ Minimal width can be set with `tab-line-tab-min-width' variable."
                      ((< window-max-tab-width my-tab-line/tab-min-width)
                       my-tab-line/tab-min-width)
                      (t window-max-tab-width))
-               3)) ; compensation for ' x ' button
+               3))                                                             ; compensation for ' x ' button
            (buffer-name (string-trim (buffer-name)))
            (name-width (length buffer-name))
            )
-      
+
       (if (>= name-width tab-width)
           (concat  " "
                    (truncate-string-to-width buffer-name (- tab-width 2))
@@ -188,7 +256,7 @@ Minimal width can be set with `tab-line-tab-min-width' variable."
                 (make-string (+ (/ (- tab-width name-width) 2) 1) ?\s))
                (buffer-name (concat padding buffer-name))
                )
-          
+
           (concat buffer-name
                   (make-string (- tab-width (length buffer-name)) ?\s)))))))
 
@@ -202,18 +270,18 @@ Minimal width can be set with `tab-line-tab-min-width' variable."
       tab-line-separator "|"
       tab-line-tab-name-function #'my-tab-line/tab-line-name-buffer
       tab-line-right-button
-      
+
       (propertize (if (char-displayable-p ?▶) " ▶ " " > ")
                   'keymap tab-line-right-map
                   'mouse-face 'tab-line-highlight
                   'help-echo "Click to scroll right")
-      
+
       tab-line-left-button
       (propertize (if (char-displayable-p ?◀) " ◀ " " < ")
                   'keymap tab-line-left-map
                   'mouse-face 'tab-line-highlight
                   'help-echo "Click to scroll left")
-      
+
       tab-line-close-button
       (propertize (if (char-displayable-p ?×) "  ×  " "  x  ")
                   'keymap tab-line-tab-close-map
@@ -221,28 +289,21 @@ Minimal width can be set with `tab-line-tab-min-width' variable."
                   'help-echo "Click to close tab"))
 
 
+
 ;; exclude some buffers from tab-line according to their mode.
 (dolist (mode '(speedbar-mode
                 corfu-mode
-                corfu-popupinfo-mode
-                ;; ediff-mode
-                ;; process-menu-mode
-                ;; term-mode
-                ;; vterm-mode
-                ;; imenu-list-mode
-                ;; dired-mode
-                ;; ibuffer-mode
-                ))
+                corfu-popupinfo-mode))
   (add-to-list 'tab-line-exclude-modes mode))
 
 
-;; exclude all tabs that do not have a name.
-(defvar  my-tab-line/tab-line-sort-by-most-recent nil)
+;; Sort tabs by most recently opened. (NOT IMPLEMENTED YET)
+(defvar my-tab-line/tab-line-sort-by-most-recent nil)
 
 
 ;; Set up exceptions to the rules prohibiting tab-line-mode.
 (defvar my-tab-line/enabled-buffers
-  '("*Async-native-compile-log*" "*Messages*")
+  '("*Async-native-compile-log*" "*Messages*" "*Window Names*")
   "List of buffer names where `tab-line-mode` should always be enabled.")
 
 
@@ -252,9 +313,10 @@ Minimal width can be set with `tab-line-tab-min-width' variable."
 
 
 (defun my-tab-line/enable-tab-line-mode-for-specific-buffers ()
-  "Enable `tab-line-mode` for buffers in `my-tab-line-enabled-buffers`
-or with names starting with any of the prefixes in
-`my-tab-line-enabled-prefixes`."
+  "Enable `tab-line-mode' for particular buffers.
+
+These are buffers specified  in `my-tab-line/enabled-buffers' or with names
+starting with any of the prefixes in `my-tab-line/enabled-prefixes'."
   (let ((buffer-name (buffer-name)))
     (when (or (member buffer-name my-tab-line/enabled-buffers)
               (cl-some (lambda (prefix) (string-prefix-p prefix buffer-name))
@@ -269,7 +331,7 @@ or with names starting with any of the prefixes in
   "Return a list of tabs that should be displayed in the tab line.
 By default returns a list of window buffers excluding buffers without a name,
 i.e. buffers previously shown in the same window where the tab line is
-displayed. This list can be overridden by changing the default value of the
+displayed.  It replaces the built in functionality by using `setq' to override
 variable `tab-line-tabs-function'."
   (let
       ((buflist
@@ -292,23 +354,22 @@ variable `tab-line-tabs-function'."
     (delq nil
           (mapcar
            (lambda (buf)
-             (let ((name (buffer-name buf)))            ; Exclude buffers with 
-               (unless                                  ; names that start 
+             (let ((name (buffer-name buf)))            ; Exclude buffers with
+               (unless                                  ; names that start
                    (or (string-prefix-p                 ; with a space.
-                        " " name)                     
+                        " " name)
                        (string-match-p                  ; Exclude corfu buffer.
-                        "\\` \\*corfu\\*\\'" name)     
+                        "\\` \\*corfu\\*\\'" name)
                        (string-match-p                  ; Exclude Speedbar.
-                        "\\`\\*speedbar\\*\\'" name)    
+                        "\\`\\*speedbar\\*\\'" name)
                        (string-match-p                  ; Exclude marginalia.
-                        "\\`\\*Marginalia\\*\\'" name)) 
+                        "\\`\\*Marginalia\\*\\'" name))
                  buf)))
            buflist))))
 
 
 (setq tab-line-tabs-function
       'my-tab-line/tab-line-tabs-window-buffers--removed-nameless-buffers)
-
 
 (defun my-tab-line/close-specific-buffer (buffer-name)
   "Close BUFFER-NAME from the current window, handling all necessary steps.
@@ -321,10 +382,9 @@ This function is used in setting up the IDE."
       (my-tab-line/tab-line-close-tab-given-buffer buffer))))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; ibuffer mode
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;; ------------
 ;; Make the buffer size human readable.
 ;; (see https://www.emacswiki.org/emacs/IbufferMode)
 ;; Use human readable Size column instead of original one
@@ -340,7 +400,7 @@ This function is used in setting up the IDE."
                       (float
                        (my-strings/human-readable-file-sizes-to-bytes string))
                       total)))
-             (my-strings/bytes-to-human-readable-file-sizes total)))  ; :summarizer nil
+             (my-strings/bytes-to-human-readable-file-sizes total)))           ; :summarizer nil
          )
   (my-strings/bytes-to-human-readable-file-sizes (buffer-size)))
 
@@ -365,13 +425,14 @@ This function is used in setting up the IDE."
          " "
          filename)))
 
-;; define a function to set the font in ibuffer - then add it to a hook.
-(defun my-ibuffer/ibuffer-mode-config-hook ()
-  (face-remap-add-relative 'default  :height 90))
 
+(defun my-ibuffer/ibuffer-mode-config-hook ()
+  "Define a function to set the font in ibuffer."
+  (face-remap-add-relative 'default  :height 90))
+;;  - then add it to a hook.
 (add-hook 'ibuffer-mode-hook 'my-ibuffer/ibuffer-mode-config-hook)
 
-;; handle ensuring minor modes don't crowd the modeline.
+;; Ensure minor modes don't crowd the modeline.
 (delight '((checkdoc-minor-mode nill "checkdoc")
            (eldoc-mode nil "eldoc")
            (flyspell-mode nil "flyspell")
@@ -387,38 +448,45 @@ This function is used in setting up the IDE."
 
 
 ;; Define key maps
-;;CNTRL-SPACE activates any major-mode-hydra defined. 
+;;CNTRL-SPACE activates any major-mode-hydra defined.
 (global-set-key (kbd "C-SPC") #'major-mode-hydra)
 
-;; Manage your change indicators. 
-(defun my-ui/add-change-indicators-right-click-menu()
-  "Add 'Remove Change Indicators' to right-click menu in prog-mode."
-  (easy-menu-define my-prog-mode-menu prog-mode-map
-    "Custom right-click menu for prog-mode."
-    '("Change Indicators"
-      ["Remove Indicators" highlight-changes-remove-highlight t]
-      ["Rotate Indicators" highlight-changes-rotate-faces t]))
-  
-  ;; Bind the custom menu to right-click
-  (define-key prog-mode-map [mouse-3] 'my-prog-mode-menu))
 
-;; Add the function to prog-mode-hook to ensure it's active in prog-mode buffers
-(add-hook 'prog-mode-hook 'my-ui/add-change-indicators-right-click-menu)
+;; set up functionality to reopen a buffer in a new frame here you click on the
+;; modeline with Cntrl pressed and the buffer opens in a new frame.
+;; This is adapted from `tear-off-window' but unlike that package does not
+;; delete the buffer from the window which the new frame is spawned from.
+;; The function my-buffer-tools/copy-buffer-in-new-fram is in
+;; custom-system-tools
+(global-set-key [mode-line C-mouse-1]
+                'my-buffer-tools/copy-buffer-in-new-frame)
 
-;; Define menu items
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Highlight-changes-mode
+;; ----------------------
+;; removed: not worth it since highlighted changes is a bit *intense* to work
+;; with.
 
-;; (with-eval-after-load 'projectile
-;;   (let ((itemPath '("Projectile" "Projects")))
-;;     (progn
-;;       (easy-menu-add-item
-;;        nil itemPath                  ; nil - default to global menu. 
-;;        ["New project frame"          ; text to put in menu
-;;         my-ui/create-project-frame   ; function to run 
-;;         t]                           ; condition when it is shown (t - always)
-;;        "Switch to project")          ; the menu item it is in front of. 
-;;       (easy-menu-add-item
-;;        nil itemPath "--" "New project frame")
-;;       )))
+;; ;; Manage your change indicators.
+;; (defun my-ui/add-change-indicators-right-click-menu()
+;;   "Add 'Remove Change Indicators' to right-click menu in prog-mode."
+;;   (easy-menu-define my-prog-mode-menu prog-mode-map
+;;     "Custom right-click menu for prog-mode."
+;;     '("Change Indicators"
+;;       ["Remove Indicators" highlight-changes-remove-highlight t]
+;;       ["Rotate Indicators" highlight-changes-rotate-faces t]))
+
+;;   ;; Bind the custom menu to right-click
+;;   (define-key prog-mode-map [mouse-3] 'my-prog-mode-menu))
+
+;; ;; Add the function to prog-mode-hook to ensure it's active in prog-mode buffers
+;; (add-hook 'prog-mode-hook 'my-ui/add-change-indicators-right-click-menu)
+;; ----------------------------------------------------------------------------
+
+
 
 (provide 'custom-ui-config)
 ;;; custom-ui-config.el ends here
+
+                                        ; LocalWords:  ibuffer Ediff
+                                        ; LocalWords:  Dired ediff
