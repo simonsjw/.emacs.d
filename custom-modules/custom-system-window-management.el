@@ -54,6 +54,7 @@
                  ("*Help*" . config)
                  ("*info*" . config)
                  ("todos.org" . config)
+                 ("*Ediff Config*" . config)
                  (".gitignore" . vc)
                  ))
     (:regexps . (("^documentation$" . config)     ; exact match for `documentation'
@@ -61,23 +62,28 @@
                  (".*\\.conf$" . config)          ; any number of characters followed by `.conf'.
                  (".*\\.dconf$" . config)         ; any number of characters followed by `.dconf'.
                  ("^\\*Customize.*" . config)     ; strings beginning with `*Customize' followed by any characters.
+                 ("^\\*Ibuffer.*" . config)       ; strings beginning with `*Ibuffer' followed by any characters.
                  ("^magit.*" . vc)                ; strings beginning with `magit' followed by any characters.
                  ("^vc-.*" . vc)                  ; strings beginning with `vc' followed by any characters.
-                 (".*Annotate .*" . vc)           ; strings with `Annotate\ ' somewhere in them. 
-                 (".*ede-proj.*" . vc)            ; strings with `ede-proj'  somewhere in them. 
+                 (".*Annotate .*" . vc)           ; strings with `Annotate\ ' somewhere in them.
+                 (".*ede-proj.*" . vc)            ; strings with `ede-proj'  somewhere in them.
+                 (".*\\.pdf$" . data)             ; any number of characters followed by `.pdf'.
                  ("^\\*Flymake diagnostics.*"
                   . data)                         ; strings beginning with `Flymake-diagnostics' followed by any characters.
-                 ("^flymake-*" . data)            ; strings beginning `flymake'.
+                 ("^flymake-.*" . data)           ; strings beginning `flymake'.
                  (".*cell sheet.*" . data)        ; strings containing `cell\ sheet'.
-                 ("^magit-process:*" . logs)      ; strings beginning `magit-process:'.
-                 ("^\\*EGLOT.*" . logs)           ; strings beginning `*EGLOT'. 
-                 (".*+sterr$" . logs)             ; strings ending `+sterr'. 
-                 (".*\\.log" . logs)              ; strings ending `.log'. 
+                 ("^Ediff A\\:.*" . data)         ; strings beginning `Ediff A:' followed by any characters.
+                 ("^Ediff B\\:.*" . data)         ; strings beginning `Ediff B:' followed by any characters.
+                 ("^magit-process:.*" . logs)     ; strings beginning `magit-process:' followed by any characters.
+                 ("^\\*EGLOT.*" . logs)           ; strings beginning `*EGLOT' followed by any characters.
+                 (".*+sterr$" . logs)             ; strings ending `+sterr'.
+                 (".*\\.log" . logs)              ; strings ending `.log'.
                  (".*-log.*" . logs)              ; strings with `-log' in them. 
                  (".*tramp.*" . logs)             ; strings with `tramp' in them.
-                 ("^\\*ielm*" . terminal)         ; strings beginning `*ielm'.
-                 ;; ("^q-.*" . terminal)             ; strings beginning `q-'.
-                 ("^\\*Q PROC.*" . terminal)      ; strings beginning `*Q PROC'. 
+                 ("^\\*ielm*" . terminal)         ; strings beginning `*ielm' followed by any characters.
+                 ("^\\*Q PROC.*" . terminal)      ; strings beginning `*Q PROC' followed by any characters.
+                 ("^\\*vterm.*" . terminal)       ; strings beginning `*vterm' followed by any characters.
+                 ("^\\*eshell.*" . terminal)      ; strings beginning `*eshell' followed by any characters.
                  ))            
     (:modes   . ((vterm-mode . terminal)
                  (eshell-mode . terminal)
@@ -112,6 +118,10 @@
   )
 
 (defvar my-window-tools/whitelabel-buffers '("*SPEEDBAR*"
+                                             "*dape-repl*"
+                                             "*dape-info Scope*"
+                                             "*dape-info Stack*"
+                                             "*dape-info Breakpoints*"
                                              "logs"
                                              "edit"
                                              "data"
@@ -184,24 +194,35 @@ WINDOW-TAG is the tag describing the window's purpose."
 ;;    This ensures we have the opportunity to have the full function footprint
 ;;    in any testing.
 
+
 (defun my-window-tools/assign-buffer-to-window (buffer &optional output-only)
-  "Main function to assign BUFFER to an appropriate window based on its tag.
+  "Assign BUFFER to an appropriate window based on its tag.
+
 If OUTPUT-ONLY is non-nil, this function will only determine the target window
-without moving the buffer."
+without moving the buffer.  Returns a cons cell (WINDOW . TAG) or nil if no
+assignment is made."
   (let* ((tag (my-window-tools/get-buffer-tag-or-default buffer)))
     (if (not tag)
-        (message "Buffer %s is whitelisted, no window assignment performed."
-                 (buffer-name buffer))
+        (progn
+          (message "Buffer %s is whitelisted, no window assignment performed."
+                   (buffer-name buffer))
+          nil)
       (let* ((window (my-window-tools/get-window-for-tag tag))
              (original-window (get-buffer-window buffer)))
-        ;; Check if a suitable window was found
         (if window
-            ;; Move the buffer to the target window, respecting OUTPUT-ONLY flag
-            (my-window-tools/move-buffer-to-window
-             buffer window original-window output-only)
-          ;; No window found; print message with dynamically generated default tag
-          (message "No window with tag '%s' was found."
-                   my-window-tools/default-tag))))))
+            (progn
+              (unless output-only
+                ;; Move the buffer to the target window
+                (my-window-tools/move-buffer-to-window
+                 buffer window original-window))
+              ;; Return the window and tag as a cons cell
+              (cons window tag))
+          (progn
+            (message "No window with tag '%s' was found."
+                     my-window-tools/default-tag)
+            nil))))))
+
+
 
 (defun my-window-tools/get-buffer-tag-or-default (buffer)
   "Determine and return the tag for BUFFER.
@@ -358,19 +379,24 @@ project."
 ;; (my-window-tools/set-frame-project-root some-frame "/path/to/project")
 ;; (my-window-tools/assign-buffer-to-window (get-buffer "some-buffer"))
 
-(defun my-window-tools/show-window-assignment-for-buffer-name (buffer-name)
-  "Show the window assignment tag for a buffer given its BUFFER-NAME.
 
-The function prompts the user for a buffer name, retrieves the buffer, and
-passes it to `my-window-tools/get-buffer-tag`, returning the tag it produces.
-It is handy for checking you have the right assignment being carried out by
-the window assignment algorithm here."
+(defun my-window-tools/show-window-assignment-for-buffer-name (buffer-name)
+  "Show the window details that a given buffer will be assigned to.
+
+The function prompts the user for a BUFFER-NAME, retrieves the buffer, and
+passes it to `my-window-tools/list-window-tags', returning the tag it
+produces.  It is handy for checking you have the right assignment being carried
+out by the window assignment algorithm here."
   (interactive "BBuffer name: ")
   (let ((buffer (get-buffer buffer-name)))
     (with-current-buffer buffer
-      (my-window-tools/assign-buffer-to-window buffer t))
-    )
-  )
+      (let ((result (my-window-tools/assign-buffer-to-window buffer t)))
+        (if result
+            (let ((window (car result)))
+              (my-window-tools/list-window-tags window))
+          (message
+           "No window assignment found for buffer '%s'" buffer-name))))))
+
 
 (defun my-window-tools/detect-new-non-system-buffer ()
   "Detect if a new non-system buffer has been created and use assignment logic."
@@ -469,29 +495,6 @@ Utility function shows the tag associated with the current selected window."
 ;; ----------------------------------------------------------------------------
 ;; ASSIGN BUFFERS TO A WINDOW USING display-buffer-alist MECHANISM.
 
-
-;; (defun my-window-tools/display-buffer (buffer alist)
-;;   "Display BUFFER in the window matching its tag."
-;;   (let* ((tag (my-window-tools/get-buffer-tag-or-default buffer))
-;;          (window (and tag (my-window-tools/get-window-for-tag tag)))
-;;          (original-window (get-buffer-window buffer)))
-;;     (cond
-;;      ;; If the buffer is whitelisted, do not interfere with its display.
-;;      ((not tag)
-;;       nil)
-;;      ;; If a suitable window is found, display the buffer there.
-;;      ((and window (window-live-p window))
-;;       (progn
-;;         (set-window-buffer window buffer)
-;;         ;; Optionally, close the buffer in the original window if it's different.
-;;         (when (and original-window (not (eq original-window window)))
-;;           (with-selected-window original-window
-;;             (quit-window)))
-;;         ;; Return the window to indicate successful display.
-;;         window))
-;;      ;; If no suitable window is found, fall back to default behavior.
-;;      (t
-;;       nil))))
 
 (defun my-window-tools/display-buffer (buffer alist)
   "Display BUFFER in the appropriate window based on its tag."
