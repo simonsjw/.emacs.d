@@ -49,9 +49,9 @@
 
 (defvar projectile-speedbar-enable)
 
-(declare-function speedbar-refresh speedbar)
-(declare-function speedbar-change-initial-expansion-list speedbar)
-(declare-function speedbar-add-supported-extension speedbar)
+(declare-function speedbar-refresh "speedbar")
+(declare-function speedbar-change-initial-expansion-list "speedbar")
+(declare-function speedbar-add-supported-extension "speedbar")
 ;;; Code:
 
 (use-package sr-speedbar

@@ -15,7 +15,7 @@
 ;; - A Python language server (e.g. pyls or pyright).
 
 ;; Python development environment configuration.  Several python
-;; packages can be installed with `pip'. Many of these are needed by
+;; packages can be installed with `pip'.  Many of these are needed by
 ;; the Emacs packages used in this configuration.
 
 ;; * autopep8      -- automatically formats python code to conform to
@@ -40,6 +40,50 @@
 
 ;;; Packages phase
 (require 'eglot)
+(require 'major-mode-hydra)
+
+
+(defvar dape-configs)  ; list of configs by language for the debugger.
+
+(defvar py-comment-fill-column)
+(defvar py-docstring-fill-column)
+
+(defvar python-indent-offset)
+
+(defvar pyvenv-virtual-env-name)
+
+(defvar python-shell-interpreter)
+(defvar python-mode-map)
+
+(declare-function my-ide/smart-newline "custom-ide-config")
+(declare-function
+ my-programming-mode/set-fill-column-indicator "custom-defaults-config")
+
+(declare-function yas-minor-mode "yasnippet")
+(declare-function treesit-fold-mode "treesit-fold")
+(declare-function treesit-fold-indicators-mode "treesit-fold")
+(declare-function pyvenv-activate pyvenv)
+
+(declare-function python-shell-switch-to-shell "python")
+(declare-function python-shell-send-buffer "python")
+(declare-function python-shell-send-region "python")
+(declare-function python-shell-send-string "python")
+(declare-function python-shell-get-process "python")
+(declare-function python-shell-restart "python")
+(declare-function python-shell-send-defun "python")
+
+
+(declare-function consult-flymake "consult-flymake")
+(declare-function consult-projectile "consult-projectile")
+
+(declare-function projectile-find-references "projectile")
+
+(declare-function anaconda-mode-find-definitions "anaconda-mode")
+(declare-function anaconda-mode-find-references "anaconda-mode")
+(declare-function anaconda-mode-find-assignments "anaconda-mode")
+(declare-function anaconda-mode-show-doc "anaconda-mode")
+
+(declare-function eldoc-box-hover-mode "eldoc-box")
 
 ;; (use-package python-mode
 ;;   :straight (:type git
@@ -58,13 +102,11 @@
                    :host github
                    :repo "pythonic-emacs/pythonic"))
 
-
 (use-package pyvenv
   :straight (:type git
                    :flavor melpa
                    :host github
                    :repo "jorgenschaefer/pyvenv"))
-
 
 (use-package anaconda-mode
   :straight (:type git
@@ -74,14 +116,6 @@
                            "anaconda-mode-pkg.el")
                    :host github
                    :repo "pythonic-emacs/anaconda-mode"))
-
-
-(use-package eldoc-box
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "casouri/eldoc-box"))
-
 
 (use-package numpydoc
   :straight (:type git
@@ -98,22 +132,21 @@
 ;;(setq major-mode-remap-alist
 ;;     '((python-mode . python-ts-mode)))
 
-;;; Code phase:
-(defun my/remove-anaconda-paths (path-list)
+;;; Code:
+(defun my-lang-python/remove-anaconda-paths (path-list)
   "Remove any Anaconda-related paths from PATH-LIST."
-  (remove-if (lambda (path)
-               (let ((conda-home (getenv "CONDA_PREFIX")))
-                 (string-prefix-p (concat conda-home "/") path)))
-             path-list))
+  (cl-remove-if (lambda (path)     ; changed from remove-if
+                  (let ((conda-home (getenv "CONDA_PREFIX")))
+                    (string-prefix-p (concat conda-home "/") path)))
+                path-list))
 
+(defun my-lang-python/update-python-path ()
+  "Dynamically update Emacs the path to python in `exec-path' and PATH.
 
-(defun my/python-update-python-path ()
-  "Dynamically update Emacs' exec-path and PATH environment variable.
-
-This function removes any Anaconda-related paths from exec-path and
+This function removes any Anaconda-related paths from `exec-path' and
 PATH, then adds the path of the currently activated Python
 environment.
-This ensures that exec-path and PATH only contain the path for the
+This ensures that `exec-path' and PATH only contain the path for the
 active environment."
 
   ;; Retrieve the name of the currently activated virtual environment.
@@ -132,9 +165,8 @@ active environment."
           (message "WORKON_HOME environment variable is not set"))))))
 
 
-(defun my/python-start-or-switch-to-shell ()
-  "Start a python process or switch to an existing one if one
-is already present. "
+(defun my-lang-python/start-or-switch-to-python-shell ()
+  "Start a python process or switch to an existing one."
   (unless (python-shell-get-process)
     (run-python python-shell-interpreter t))
   (python-shell-switch-to-shell))
@@ -142,17 +174,14 @@ is already present. "
 ;;; Configuration phase
 
 ;; These defaults for python home environment are set
-;; in serviceEnv.txt. 
+;; in serviceEnv.txt.
 ;; "CONDA_PREFIX"
 ;; "CONDA_DEFAULT_ENV"
 ;; "WORKON_HOME"
 
-;; ensure custom settings are loaded. 
+;; ensure custom settings are loaded.
 (when (and custom-file (file-exists-p custom-file))
   (load custom-file nil :nomessage))
-
-
-
 
 
 ;; Now ensure that pyvenv is pointing at the 'base' environment.
@@ -168,18 +197,23 @@ is already present. "
 (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
 
 ;; settings for python-mode.
-(defun my-lang/python-mode-setup ()
+(defun my-lang-python/python-mode-setup ()
+  "Central function to hook into `python-mode' for python functionality."
   (message
-   "[%s ; DEBUG; my-lang/python-mode-setup]starting loading the defun ; ;"
+   "[%s ; DEBUG; my-lang-python/python-mode-setup]starting loading the defun ; ;"
    (current-time-string))
-  
+
+  (require 'projectile)
+  (require 'treesit-fold)
   (require 'eldoc)
   (require 'pythonic)
   (require 'anaconda-mode)
   (require 'numpydoc)
   (require 'pyvenv)
   (require 'eldoc-box)
-  ;; start up eglot in this mode. 
+  (require 'dape)
+  
+  ;; start up Eglot in this mode.
   (eglot-ensure)
 
   ;; -------
@@ -207,11 +241,11 @@ is already present. "
   ;; Enable isort for Python import sorting
   ;;(python-isort-on-save-mode)
 
-  ;; Enable yasnippets.
+  ;; Enable Ya-snippets.
   (yas-minor-mode)
 
   ;; Add my/update-python-path function to pyvenv activation.
-  (add-hook 'pyvenv-post-activate-hooks 'my/python-update-python-path)
+  (add-hook 'pyvenv-post-activate-hooks 'my-lang-python/update-python-path)
 
   ;; ----------
   ;; IDE layout
@@ -229,8 +263,11 @@ is already present. "
   (setq py-comment-fill-column 88)
   (setq py-docstring-fill-column 88)
 
-  ;; Set the indent for python mode. 
+  ;; Set the indent for python mode.
   (setq python-indent-offset 4)
+
+  ;; Start python interpreter
+  ;;  (my-lang-python/start-or-switch-to-python-shell)
 
   ;; ---------------------
   ;; IDE functionality map
@@ -244,7 +281,7 @@ is already present. "
 
   ;; document thing at point:
   ;; (keymap-set python-ts-mode-map "C-c C-c C-r" #'eldoc)
-  (keymap-set python-mode-map "M-?" #'anaconda-mode-show-doc) 
+  (keymap-set python-mode-map "M-?" #'anaconda-mode-show-doc)
   ;; testing (tbd)
   ;; (keymap-set python-ts-mode-map "C-c C-c C-t"
   ;; #'projectile-test-project)
@@ -262,48 +299,31 @@ is already present. "
   ;; Errors/linting
   ;; --------------
   ;; list errors in buffer
-  (keymap-set python-mode-map "C-c e b"
-              #'flymake-show-buffer-diagnostics)
+  (keymap-set python-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)
   ;; list errors in minibuffer
   (keymap-set python-mode-map "C-c e m" #'consult-flymake)
   ;; formatting errors (not applicable)
   ;; (keymap-set python-ts-mode-map "C-c C-n" )
   ;; go to next error
   (keymap-set python-mode-map "C-c e n" #'flymake-goto-next-error)
-  ;; go to previous error. 
+  ;; go to previous error.
   (keymap-set python-mode-map "C-c e p" #'flymake-goto-prev-error)
 
 
   ;; variable/function references
   ;; ----------------------------
   ;; xref-find-definitions
-  (keymap-set python-mode-map "M-."
-              #'anaconda-mode-find-definitions)
+  (keymap-set python-mode-map "M-." #'anaconda-mode-find-definitions)
   ;; xref-find-references
-  (keymap-set python-mode-map "M-r"
-              #'anaconda-mode-find-references)
+  (keymap-set python-mode-map "M-r" #'anaconda-mode-find-references)
   ;; xref-find-assignments
-  (keymap-set python-mode-map "M-="
-              #'anaconda-mode-find-assignments)
+  (keymap-set python-mode-map "M-=" #'anaconda-mode-find-assignments)
 
 
 
   ;; add-missing-dependencies
-  (keymap-set python-mode-map "C-c i f"
-              #'python-fix-imports)
-  ;;;;;;;;;;;;;;;;;;;
-  ;; Project settings
-  ;; ----------------
-  ;; switch projects
-  (keymap-set python-mode-map "C-c p p" #'consult-projectile)
-  ;; list errors in project
-  (keymap-set python-mode-map "C-c e p"
-              #'flymake-show-project-diagnostics)
-
-  ;; Find all references to the symbol in the current project. 
-  (keymap-set python-mode-map "C-c p ?"
-              #'projectile-find-references)
-
+  (keymap-set python-mode-map "C-c i f" #'python-fix-imports)
+  
 
   ;; "Test"
   ;; (("t" ert "prompt")
@@ -315,19 +335,21 @@ is already present. "
                  (lambda () (interactive) (my-ide/smart-newline "# ")))
 
   (message
-   "[%s ; DEBUG; my/python-mode-setup]finished loading the defun ; ;"
+   "[%s ; DEBUG; my-lang-python/python-mode-setup]finished loading the defun ; ;"
    (current-time-string)))
 
-(add-hook 'python-ts-mode-hook #'my-lang/python-mode-setup)
-;;(add-hook 'python-ts-mode-hook #'my/python-start-or-switch-to-shell)
+(add-hook 'python-ts-mode-hook #'my-lang-python/python-mode-setup)
 
-  ;;;;;;;;;;;;;;;;;;;
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Hydra
 ;; ----------------
-
 (major-mode-hydra-define python-ts-mode
   (:title "Python" :color amaranth :quit-key "q" )
-  ("Eval"
+  ("Tools"
+   (("b" python-fix-imports "fix imports")
+    ("e" python-shell-send-defun "defun")
+    )
+   "Evaluate code"
    (("b" python-shell-send-buffer "buffer")
     ("e" python-shell-send-defun "defun")
     ("r" python-shell-send-region "region")
@@ -347,7 +369,7 @@ is already present. "
    "Project"
    (("j" consult-projectile "switch projects"))
    "Doc"
-   (("d" eldoc-box-hover-mode "thing-at-pt") ; anaconda-mode-show-doc 
+   (("d" eldoc-box-hover-mode "thing-at-pt") ; anaconda-mode-show-doc
     ("q" nil :color blue))))
 
 (provide 'custom-lang-python)
@@ -355,3 +377,17 @@ is already present. "
 
 
 
+
+                                        ; LocalWords:  pyvenv isort
+                                        ; LocalWords:  numpydoc el
+                                        ; LocalWords:  CONDA WORKON
+                                        ; LocalWords:  ENV serviceEnv
+                                        ; LocalWords:  lang keymap
+                                        ; LocalWords:  eldoc defun
+                                        ; LocalWords:  minibuffer
+                                        ; LocalWords:  pycodestyle
+                                        ; LocalWords:  pycomplete
+                                        ; LocalWords:  gitlab melpa
+                                        ; LocalWords:  pythonic dape
+                                        ; LocalWords:  yasnippet
+                                        ; LocalWords:  debugpy adapter

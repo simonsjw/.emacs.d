@@ -11,7 +11,7 @@
 ;; other things.
 ;;; declarations and imports.
 (defvar Info-directory-list)
-(declare-function info-initialize info)
+(declare-function info-initialize "info")
 
 ;;; Code:
 

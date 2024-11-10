@@ -1,14 +1,14 @@
-;; straight-crafted-ide-packages.el -*- lexical-binding: t; -*-
+;;; straight-crafted-ide-packages.el --- packages for IDE functionality -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: System Crafters Community
 
-;; Commentary
+;;; Commentary:
+;; A selection of packages to provide functionality for the UI.
 
-;; Eglot is built-in since
-;; Emacs 29.
+;; Eglot has been built-in since Emacs 29.
 
 ;;; Code:
 
@@ -24,19 +24,16 @@
 (use-package editorconfig
   :delight
   :straight (:type git
-                    :flavor melpa
-                    :host github
-                    :repo "editorconfig/editorconfig-emacs"))
+                   :flavor melpa
+                   :host github
+                   :repo "editorconfig/editorconfig-emacs"))
 
-;; a minor mode to always keep your code indented while editing blocks
-;; of code.
-;;(straight-use-package 'aggressive-indent)
+;; a minor mode to always keep your code indented while editing blocks of code.
 (use-package aggressive-indent
   :straight (:type git
                    :flavor melpa
                    :host github
                    :repo "Malabarba/aggressive-indent-mode"))
-
 
 ;; Jump to the definition of a function. Works using oldskool
 ;; rgrep type approaches. (No fancy tree-sitter here!)
@@ -47,8 +44,7 @@
                    :host github
                    :repo "jacktasia/dumb-jump"))
 
-
-;; Get some yasnippets installed. 
+;; Get some yasnippets installed.
 ;; https://github.com/AndreaCrotti/yasnippet-snippets
 (use-package yasnippet-snippets
   :straight (:type git
@@ -66,3 +62,5 @@
 
 (provide 'straight-crafted-ide-packages)
 ;;; straight-crafted-ide-packages.el ends here
+
+                                        ; LocalWords:  dape cwd fn gud

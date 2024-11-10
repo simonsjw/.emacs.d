@@ -18,13 +18,16 @@
 
 
 ;;; Code:
-(declare-function speedbar-refresh speedbar)
 
-(declare-function sr-speedbar-exist-p sr-speedbar)
-(declare-function sr-speedbar-open sr-speedbar)
-(declare-function sr-speedbar-refresh sr-speedbar)
+(defvar org-link-abbrev-alist)
+(declare-function speedbar-refresh "speedbar")
 
-(declare-function org-link-abbrev-alist ol)
+(declare-function sr-speedbar-exist-p "sr-speedbar")
+(declare-function sr-speedbar-open "sr-speedbar")
+(declare-function sr-speedbar-refresh "sr-speedbar")
+(declare-function image-supported-file-p "image")
+
+(declare-function org-link-abbrev-alist "ol")
 
 (require 'custom-system-objects)
 
@@ -33,9 +36,10 @@
 ;; Emacs Lisp logging helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Define an advice function to be used for implicit logging. 
+;; Define an advice function to be used for implicit logging.
 (defun my-log/advice (log-message &rest args)
-  "Log the action of any function by wrapping with an advice. "
+  "Log the a LOG-MESSAGE of any function by wrapping with an advice.
+Additional ARGS are captured in a secondary field."
   (let ((feature (car args)))
     (log/info :fn 'init
               :msg (concat log-message (symbol-name feature))
@@ -81,7 +85,7 @@
         selected-dir
       (user-error "Not a directory"))))
 
-;; end of Dired tools. 
+;; end of Dired tools.
 ;; ---------------------------
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -90,7 +94,7 @@
 
 (defun my-image-tools/create-image-icon (file &optional width height)
   "Create an image icon from FILE with optional WIDTH and HEIGHT."
-  (let* ((type (image-type-from-file-name file))  ; Automatically detect image type
+  (let* ((type (image-supported-file-p file))  ; Automatically detect image type
          (image (create-image file type nil
                               :width width
                               :height height)))
@@ -129,10 +133,12 @@
 
 
 (defun my-strings/human-readable-file-sizes-to-bytes (string)
-  "Convert a human-readable file size into bytes.
-This is the companion of my-strings/bytes-to-human-readable-file-sizes, a
+  "Convert a human-readable file size so it is expressed in units of bytes.
+
+The original number and the output are encoded as STRING..
+This is the companion of `my-strings/bytes-to-human-readable-file-sizes', a
 function which converts a given amount of bytes into a human readable size as
-a string. "
+a STRING."
   (interactive)
   (cond
    ((string-suffix-p "G" string t)
@@ -150,8 +156,8 @@ a string. "
   )
 
 (defun my-strings/bytes-to-human-readable-file-sizes (bytes)
-  "Convert number of bytes to human-readable file size.
-This is the companion of my-strings/human-readable-file-sizes-to-bytes, a
+  "Convert number of BYTES to human-readable file size.
+This is the companion of `my-strings/human-readable-file-sizes-to-bytes', a
 function which converts a string showing a number as  a human readable size
 into a given amount of bytes."
   (interactive)
@@ -189,7 +195,7 @@ into a given amount of bytes."
 
 
 (defun my-window-tools/mouse-delete-window-confirmation (click)
-  "Ask for confirmation before deleting the window from a mouse event."
+  "Ask for confirmation before deleting the window from a CLICK  mouse event."
 
   (interactive (list last-nonmenu-event))
   (mouse-minibuffer-check click)
@@ -207,7 +213,7 @@ into a given amount of bytes."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun my-buffer-tools/open-temp-org-buffer ()
-  "Open a temporary org-mode buffer."
+  "Open a temporary `org-mode' buffer."
   (interactive)
   (let ((buffer (generate-new-buffer "*temp-org*")))
     (with-current-buffer buffer
@@ -254,8 +260,8 @@ FILE-PATH:  A path to a file (string)"
   "Exit the current \"mode\" (in a generalized sense of the word).
 This command can exit an interactive command such as `query-replace', can
 clear out a prefix argument or a region, can get out of the minibuffer or
-other recursive edit or cancel the use of the current buffer
-(for special-purpose buffers).
+other recursive edit or cancel the use of the current buffer for
+special-purpose buffers.
 
 Unlike the original built in function, it will not go back to just one window
 by deleting all but the selected window. Loading it after the original has the
@@ -276,28 +282,24 @@ This condition and body have been removed:
    (buffer-quit-function (funcall buffer-quit-function))
    ((string-match "^ \\*" (buffer-name (current-buffer))) (bury-buffer))))
 
-(defalias 'keyboard-escape-quit 'my-buffer-tools/keyboard-escape-quit 
+(defalias 'keyboard-escape-quit 'my-buffer-tools/keyboard-escape-quit
   "Use my-tools/keyboard-escape-quit to escape without wrecking the UI layout.")
 
 
-;; keybinding for the below is defined in custom-ui-config.el.
 (defun my-buffer-tools/copy-buffer-in-new-frame (click)
   "Copy the active buffer in a selected window to a new frame.
 CLICK: the mouse event."
-  (interactive (list last-nonmenu-event))
-  (mouse-minibuffer-check click)
-  (let* ((window (posn-window (event-start click)))
-         (buf (window-buffer window)))
-    (message "Selected window: %s" window)
-    (pop-to-buffer buf '((display-buffer-pop-up-frame)))))
+  (interactive (list last-nonmenu-event))                                      ; Enable the function to handle a mouse event.
+  (message "triggered")                                                        ; Give feedback when function is triggered.
+  (mouse-minibuffer-check click)                                               ; Prevent triggering if click is in the minibuffer.
+  (let* ((window (posn-window (event-start click)))                            ; Get the window where click occurred.
+         (buf (window-buffer window))                                          ; Get the buffer from that window.
+         (temp-rule '(".*" (display-buffer-pop-up-frame))))                    ; Temporary display rule for opening in a new frame.
+    (message "Selected window: %s" window)                                     ; Display selected window as feedback.
+    (setq display-buffer-alist (cons temp-rule display-buffer-alist))          ; Temporarily add the new frame rule to `display-buffer-alist`.
+    (display-buffer buf)                                                       ; Display the buffer in a new frame.
+    (setq display-buffer-alist (cdr display-buffer-alist))))                   ; Restore the original `display-buffer-alist`.
 
-
-;; set up functionality to reopen a buffer in a new frame here you click on the
-;; modeline with Cntrl pressed and the buffer opens in a new frame.
-;; This is adapted from `tear-off-window' but unlike that package does not
-;; delete the buffer from the window which the new frame is spawned from.  
-(global-set-key [mode-line C-mouse-1]
-                'my-buffer-tools/copy-buffer-in-new-frame)
 
 
 ;;; TOOLS FOR USE IN BUFFER
@@ -308,10 +310,10 @@ CLICK: the mouse event."
 Details returned are in a list containing line, column, absolute position, and
 the matching bracket character.
 
-The point can be on or next to a bracket to return. If the point is between two
-brackets, the match of the following bracket will be returned.
-Note that behavior is different from show-paren-mode since it will attempt to
-match brackets found on a position next to the cursor as well as
+The point (CURSOR-POSITION) can be on or next to a bracket to return.  If the
+point is between two brackets, the match of the following bracket will be
+returned.  Note that behavior is different from `show-paren-mode' since it will
+attempt to match brackets found on a position next to the cursor as well as
 at the cursor.
 
 Returns a list containing the line number, column number, absolute buffer
@@ -447,8 +449,8 @@ USED-PORTS:  the ports that are not available."
           (push port available-ports))))))
 
 (defun my-os-tools/set-sr-speedbar-directory-to-file-path (file-path)
-  "Set the sr-speedbar directory to `file-path' and refresh it.
-If `sr-speedbar` is not open, open it first."
+  "Set the sr-speedbar directory to FILE-PATH and refresh it.
+If `sr-speedbar' is not open, open it first."
   (interactive "DDirectory: ")
   (let ((expanded-path (expand-file-name file-path)))
     (when (file-directory-p expanded-path)
@@ -495,4 +497,6 @@ If `sr-speedbar` is not open, open it first."
 (provide 'custom-system-tools)
 ;;; custom-system-tools.el ends here
 
-                                        ; LocalWords:  LISTB
+                                        ; LocalWords:  LISTB sr ol
+                                        ; LocalWords:  netstat isn
+                                        ; LocalWords:  minibuffer

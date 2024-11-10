@@ -18,9 +18,13 @@
 ;; straight-base-dir set previously.
 ;;(require 'early-init)
 
-(defvar bootstrap-version)
+(defvar straight-base-dir)
+
+(declare-function straight-use-package "straight")
+
 (let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" straight-base-dir))
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el" straight-base-dir))
       (bootstrap-version 6))
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
@@ -31,7 +35,20 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
+;; Install use-package
+(straight-use-package 'use-package)
 
+;; Configure use-package to use straight.el by default
+(use-package straight
+  :custom
+  (straight-use-package-by-default t))
+
+;; ensure we always ensure! (with use-package)
+
+(require 'use-package-ensure)                               ; This is equivalent to setting :ensure t
+(setq use-package-always-ensure t)
+
+(use-package auto-compile)
 
 
 ;; Configure crafted-emacs to use straight as package manager.

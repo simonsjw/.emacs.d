@@ -10,80 +10,26 @@
 ;; Add completion packages to the list of packages to install.
 
 ;;; Code:
+(declare-function which-key-mode "which-key")
+(declare-function corfu-terminal-mode "corfu-terminal")
 
-(use-package cape
-  :straight  (:type git
-                    :flavor melpa
-                    :host github
-                    :repo "minad/cape"))
-
-(use-package consult
-  :straight  (:type git
-                    :flavor melpa
-                    :host github
-                    :repo "minad/consult"))
-                    
+(use-package cape)
+(use-package consult)
 (use-package embark-consult
-  :straight  (:type git
-                    :flavor melpa
-                    :files ("embark-consult.el" "embark-consult-pkg.el")
-                    :host github :repo "oantolin/embark")
   :hook (embark-collect-mode . consult-preview-at-point-mode))
+(use-package marginalia)
+(use-package corfu)
+(use-package corfu-terminal)
+(use-package embark)
+(use-package orderless)
+(use-package vertico)
+(use-package which-key :config (which-key-mode))
 
-(use-package marginalia
-  :straight  (:type git
-                    :flavor melpa
-                    :host github
-                    :repo "minad/marginalia"))
-(use-package corfu
-  :straight (:type git
-                   :flavor melpa
-                   :files (:defaults "extensions/corfu-*.el" "corfu-pkg.el")
-                   :host github
-                   :repo "minad/corfu"))
-
-(use-package corfu-terminal
-  :straight  (:repo "https://codeberg.org/akib/emacs-corfu-terminal"))
-
-(use-package embark
-  :straight  (:type git
-                    :flavor melpa
-                    :files ("embark.el" "embark-org.el"
-                            "embark.texi" "embark-pkg.el")
-                    :host github
-                    :repo "oantolin/embark"))
-
-(use-package orderless
-  :straight  (:type git
-                    :flavor melpa
-                    :host github
-                    :repo "oantolin/orderless"))
-
-(use-package vertico
-  :straight (:type git
-                   :flavor melpa
-                   :files (:defaults "extensions/vertico-*.el"
-                                     "vertico-pkg.el")))
-
-(use-package which-key
-  :straight (:type git
-                   :flavor melpa
-                   :host github :repo "justbur/emacs-which-key")
-  :config
-  (which-key-mode))
-
-;; Generic interface to access flyspell. 
+;; Generic interface to access flyspell.
 ;; https://github.com/d12frosted/flyspell-correct
-(use-package flyspell-correct
-  :straight (:type git
-                   :flavor melpa
-                   :files ("flyspell-correct.el"
-                           "flyspell-correct-ido.el"
-                           "flyspell-correct-pkg.el")
-                   :host github
-                   :repo "d12frosted/flyspell-correct"))
+(use-package flyspell-correct)
 
-;; Integrate flyspell with consult. 
+;; Integrate flyspell with consult.
 ;; https://gitlab.com/OlMon/consult-flyspell
 ;; (use-package consult-flyspell
 ;;   :straight (:type git

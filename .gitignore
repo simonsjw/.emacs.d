@@ -30,3 +30,4 @@ var/**/image-dired/
 var/**/eshell/
 var/**/tramp/
 var/**/tramp/persistaency.el
+var/**/tramp/persistency.el

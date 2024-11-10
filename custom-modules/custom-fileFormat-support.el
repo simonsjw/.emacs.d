@@ -3,8 +3,8 @@
 ;;; Commentary:
 
 ;;;Declare functions and imports
-(declare-function treesit-fold-mode treesit-fold)
-(declare-function treesit-fold-indicators-mode treesit-fold-indicators)
+(declare-function treesit-fold-mode "treesit-fold")
+(declare-function treesit-fold-indicators-mode "treesit-fold-indicators")
 
 ;;; Code:
 

@@ -1,5 +1,4 @@
-;;; early-init.el --- Emacs early initialization for Crafted Emacs  -*- lexical-binding: t; -*-
-
+;;; early-init.el --- Emacs early initialization for Crafted Emacs  -*- lexical-binding: t; no-byte-compile: t -*-
 ;;; Commentary:
 ;;  Work that is done before Emacs can be initialised.
 ;;  Mainly setting up the packagemanagement process (with straight) and
@@ -31,39 +30,26 @@
 
 (defvar no-littering-var-directory nil "Create the path `no-littering-var-directory`.")
 (setq no-littering-var-directory
-  (expand-file-name (concat "var/"  envvar/SYSTEM_NAME "/")
-    		    user-emacs-directory))
+      (expand-file-name (concat "var/"  envvar/SYSTEM_NAME "/")
+    		        user-emacs-directory))
 
 
 (defvar no-littering-etc-directory nil "Create the path `no-littering-etc-directory`.")
 (setq no-littering-etc-directory
-  (expand-file-name (concat "etc/"  envvar/SYSTEM_NAME "/")
-    		    user-emacs-directory))
+      (expand-file-name (concat "etc/"  envvar/SYSTEM_NAME "/")
+    		        user-emacs-directory))
 
-;; set the eln cache early. 
+;; Set up the eln-cache
+;; --------------------
 (defvar my-filepaths/eln-cache nil)
-;; set the eln cache early. 
 (setq my-filepaths/eln-cache
-  (expand-file-name
-   "eln-cache/" no-littering-etc-directory))
-
-;; Ensure the eln-cache directory exists
-(make-directory my-filepaths/eln-cache t)
-
-(startup-redirect-eln-cache my-filepaths/eln-cache)
-
-;; force the loadpath as the starup-redirect thing
-;; seems to fail sometimes. 
-(setq native-comp-eln-load-path
-      (list my-filepaths/eln-cache
-    	    "/usr/local/lib/emacs/29.2/native-lisp/"))
-
-;; Set the cache directory for compiled files
-(setq comp-eln-load-path (list my-filepaths/eln-cache))
+      (expand-file-name
+       "eln-cache/" no-littering-etc-directory))
+(make-directory my-filepaths/eln-cache t)                                     ; Ensure the eln-cache directory exists
+(startup-redirect-eln-cache my-filepaths/eln-cache)                           ; Set the cache directory for compiled files
 
 ;; set up logging
 ;; --------------
-
 (load (expand-file-name
        "custom-modules/custom-logging-config.el" user-emacs-directory))
 (require 'custom-logging-config)
@@ -147,8 +133,13 @@
 ;; custom.el
 (defvar custom-file nil "Set location of custom.el")
 (setq custom-file
- (expand-file-name "custom.el" no-littering-etc-directory))
+      (expand-file-name "custom.el" no-littering-etc-directory))
 
+;; user packages
+(setq package-user-dir 
+ (expand-file-name "custom-packages/" user-emacs-directory))
+
+;; user modules
 (add-to-list
  'load-path
  (expand-file-name "custom-modules/" user-emacs-directory))
@@ -159,14 +150,17 @@
 (add-to-list 'load-path my-filepaths/eln-cache)
 
 ;; With straight-base-dir defined, ensure our straight.el setup is loaded.
-(load (expand-file-name
-       "custom-modules/straight-early-init.el" user-emacs-directory))
+(require 'straight-early-init)
+;; (load (expand-file-name
+;;        "custom-modules/straight-early-init.el" user-emacs-directory))
 
 (let
     ((obj
-      (concat "\n   (" (replace-regexp-in-string
+      (concat "\n   ("
+              (replace-regexp-in-string
     			";" ";\n      "
-    			(mapconcat 'identity load-path ";")) ")" )))
+                            (mapconcat 'identity load-path ";")) ")"
+                            )))
   (log/debug :fn 'early-init
     	     :msg "Added custom-modules to load-path."
     	     :obj obj))
@@ -185,10 +179,6 @@
 (defvar gc-cons-threshold nil "Increase the GC threshold for faster startup. The default is 800 kilobytes.  Measured in bytes.")
 (setq  gc-cons-threshold (* 50 1000 1000))
 
-;;; Emacs lisp source/compiled preference
-;; Prefer loading newest compiled .el file
-(defvar load-prefer-newer nil "loading preference")
-(setq load-prefer-newer t)
 
 ;; Record the filepath settings in the log. 
 (let
@@ -211,33 +201,22 @@
     		  package-user-dir
     		  straight-base-dir
     		  native-comp-eln-load-path-string)))
-(eval-when-compile
-  (require 'use-package))
 
-;; ensure we always ensure! (with use-package)
-(require 'use-package-ensure)                               ; This is equivalent to setting :ensure t
-(setq use-package-always-ensure t)
+
+
+;;; Emacs lisp source/compiled preference
+;; Prefer loading newest compiled .el file
+(defvar load-prefer-newer nil "loading preference")
+(setq load-prefer-newer t)
+(require 'auto-compile)
+(auto-compile-on-load-mode)
+(auto-compile-on-save-mode)
 
 ;; delight enables us to manage mode interactions with the modeline via
 ;; use-package and the :delight key. 
-(use-package delight
-  :straight (:type git
-    		   :host github
-    		   :repo "emacs-straight/delight"
-    		   :files ("*" (:exclude ".git"))))
-
-(use-package bind-key
-  :straight (:type git
-                   :flavor melpa
-                   :files ("bind-key.el" "bind-key-pkg.el")
-                   :host github
-                   :repo "jwiegley/use-package"))
-
-(use-package helpful
-  :straight (:type git
-  		   :flavor melpa
-  		   :host github
-  		   :repo "Wilfred/helpful"))
+(use-package delight :straight t)
+(use-package bind-key :straight t)
+(use-package helpful :straight t)
 
 (require 'delight)                                          ; if you use :delight
 (require 'bind-key)                                         ; if you use any :bind variant

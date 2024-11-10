@@ -22,25 +22,19 @@
 (defvar sql-product)
 (defvar sqlformat-command)
 (defvar sqlformat-args)
+
 ;;;;;;;;;;;;;;;;;;;;
 ;;; Package phase
 ;;  -------------
 
 ;; An Emacs 25 module for accessing PostgreSQL via the pq client library.
 ;; https://github.com/emacs-straight/pq
-(use-package pq
-  :straight ( :type git
-              :host github
-              :repo "emacs-straight/pq"
-              :files ("*" (:exclude ".git"))))
+(use-package pq)
 
 ;; use pgformatter - A PostgreSQL SQL syntax beautifier that can work
 ;;  as a console program or as a CGI.
 ;; On-line demo site at http://sqlformat.darold.net/
-(use-package sqlformat
-  :straight ( :type git
-              :host github
-              :repo "purcell/sqlformat"))
+(use-package sqlformat)
 
 ;;(require 'sqlformat)
 ;;(require 'pq)
@@ -57,17 +51,14 @@ This function uses an environment variable for the password if available."
   ;; Check if the environment variable is set
   (let ((password (getenv "POSTGRES_U_DC_PW")))
     (if password
-        ;; If the environment variable is set, temporarily override the sql-password parameter
-        (let ((sql-postgres-password password))
+        (let ((sql-postgres-password password)) ; If the environment variable is set, temporarily override the sql-password parameter
           (sql-postgres))
-      ;; If the environment variable is not set, just call sql-postgres as usual
-      (sql-postgres))))
+      (sql-postgres)))) ; If the environment variable is not set, just call sql-postgres as usual
 
 (defun my/capture-sql-output ()
-  "Capture the last SQL query output and put it in a new buffer
-called *SQL Results*."
+  "Capture the last SQL query output and put it in a  buffer *SQL Results*."
   (interactive)
-  ;; Ensure we're in the *SQL* buffer
+                                                                               ; Ensure we're in the *SQL* buffer
   (unless (string= (buffer-name) "*SQL: Postgres*")
     (error "This function must be run from the *SQL* buffer"))
   ;; Find the start of the last SQL output

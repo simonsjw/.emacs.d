@@ -1,4 +1,4 @@
-;;; custom-path-support.el - path configuration for emacs  -*- lexical-binding: t; -*-
+;;; custom-path-support.el --- path configuration for emacs  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022
 ;; SPDX-License-Identifier: MIT
@@ -39,9 +39,9 @@
 (defvar recentf-exclude)
 
 (defvar org-contacts-files nil
-  "Load the path to each file in the contacts directory. ")
+  "Load the path to each file in the contacts directory.")
 
-;; Notes file for org capture. 
+;; Notes file for org capture.
 (defvar org-default-notes-file nil
   "Path to the Emacs notes file for org notes functionality.")
 
@@ -49,14 +49,16 @@
 (defvar diary-file nil
   "Path to the Emacs diary file for built in diary functionality.")
 
+(defvar my-paths/q-load-balancer-folder)
+
 (defvar my-paths/ispell-word-replacement)
 (defvar ispell-personal-dictionary)
 
 
 (declare-function
- my-on-disk-tools/ensure-directory-exists custom-system-tools)
+ my-on-disk-tools/ensure-directory-exists "custom-system-tools")
 
-(declare-function  recentf-expand-file-name recentf)
+(declare-function recentf-expand-file-name "recentf")
 
 ;;; Packages:
 
@@ -65,9 +67,6 @@
                    :flavor melpa
                    :host github
                    :repo "emacscollective/no-littering"))
-
-
-
 
 ;;; Code:
 
@@ -264,6 +263,10 @@
 ;; "Store pretty-speedbar-icons in the etc/images/pretty-speedbar-icons folder. This is located in the user's default Emacs directory.") 
 ;;)
 
+;; define a path to the q custom package
+(setq my-paths/q-load-balancer-folder
+      (concat user-emacs-directory "custom-packages/q-loadbalancer/"))
+
 
 ;;; Recent Files
 ;; Don't store visits to these files in the recent file history
@@ -285,3 +288,5 @@
 ;;; custom-path-support.el ends here
 
                                         ; LocalWords:  pws prepl
+                                        ; LocalWords:  recentf
+                                        ; LocalWords:  loadbalancer

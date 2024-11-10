@@ -13,47 +13,15 @@
 
 ;;; Suggested additional keybindings
 
-
 ;;; customization
 (require 'straight)
 
-;; (use-package tree-sitter-langs
-;;  :straight
-;;  (:type git
-;;         :flavor melpa
-;;         :files (:defaults "queries" "tree-sitter-langs-pkg.el")
-;;         :branch "release"
-;;         :host github
-;;         :repo "emacs-tree-sitter/tree-sitter-langs"))
-
-
-(use-package tree-sitter-indent
-  :straight (:type git
-                   :flavor melpa
-                   :host codeberg
-                   :repo "FelipeLema/tree-sitter-indent.el"))
-
-(use-package tree-sitter-ispell
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "erickgnavar/tree-sitter-ispell.el"))
-
-(use-package treesit-fold
- :straight (:type git
-                  :host github
-                  :repo "emacs-tree-sitter/treesit-fold"))
-
-(use-package combobulate
-  :straight (:type git
-                   :host github
-                   :repo "mickeynp/combobulate"))
+(use-package tree-sitter-indent)
+(use-package tree-sitter-ispell)
+(use-package treesit-fold)
+(use-package combobulate)
 
 (use-package treesit-auto
- :straight (:host github
-                  :repo "renzmann/treesit-auto"
-                  :type git
-                 :flavor melpa)
  :custom
  (treesit-auto-install 'prompt)
  :config
@@ -61,22 +29,7 @@
  (global-treesit-auto-mode))
 
 
-;; this is a hack to cope with the misnamed files in tree-sitter-langs.
-;; see 
-;; (let ((prefix "libtree-sitter-")
-;;       (directory  (concat straight-base-dir "straight/" straight-build-dir
-;;                           "/" "tree-sitter-langs/bin/")))
-;;   (let ((files (directory-files directory t "\\.so\\'")))
-;;     (dolist (file files)
-;;       (unless (string-prefix-p prefix (file-name-nondirectory file))
-;;         (let ((new-name (concat directory prefix
-;;                                 (file-name-nondirectory file))))
-;;           (rename-file file new-name)
-;;           (log/info :fn 'init
-;;                     :msg (format "Renamed '%s' to '%s'" file new-name)
-;;                     :obj t))))))
 
-;; (require 'tree-sitter-langs)
 ;; (require 'tree-sitter-indent)
 ;; (require 'tree-sitter-ispell)
 (require 'treesit-fold)

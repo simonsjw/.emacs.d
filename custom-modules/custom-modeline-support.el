@@ -15,18 +15,18 @@
 (defvar matching-bracket)
 
 (declare-function
- my-in-buffer-tools/get-matching-bracket-position custom-system-tools)
+ my-in-buffer-tools/get-matching-bracket-position "custom-system-tools")
 (declare-function
- my-window-tools/get-tag-given-window custom-system-window-management)
+ my-window-tools/get-tag-given-window "custom-system-window-management")
 
 (declare-function
- doom-modeline--active doom-modeline-core)
+ doom-modeline--active "doom-modeline-core")
 (declare-function
- doom-modeline-def-segment doom-modeline-core)
+ doom-modeline-def-segment "doom-modeline-core")
 (declare-function
- doom-modeline-def-modeline doom-modeline-core)
+ doom-modeline-def-modeline "doom-modeline-core")
 (declare-function
- doom-modeline-set-modeline doom-modeline-core)
+ doom-modeline-set-modeline "doom-modeline-core")
 
 
 ;;; Packages

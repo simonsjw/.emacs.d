@@ -8,15 +8,15 @@
 
 ;;; Commentary:
 
-;; manage term ansi-term and the rest here. 
+;; manage term ansi-term and the rest here.
 
 ;;; Imports
 (defvar vterm-mode-map)
 (defvar vterm-send-key)
 
-(declare-function vterm-undo vterm)
-(declare-function vterm-send-string vterm)
-(declare-function vterm-send-key vterm)
+(declare-function vterm-undo "vterm")
+(declare-function vterm-send-string "vterm")
+(declare-function vterm-send-key "vterm")
 
 ;;; Packages
 
@@ -62,16 +62,21 @@ It defaults to xterm-256color.")  ;; use eterm-color to support eterm-256color-m
 (setq vterm-term-environment-variable "xterm-256color")
 
 (defvar vterm-shell
-  "/bin/bash"
-  "Shell to run in a new vterm. It defaults to $SHELL.")
+  "/bin/bash" "Shell to run in a new vterm.  It defaults to $SHELL.")
+
 (setq vterm-shell "/bin/bash")
 ;;(setq vterm-shell "/bin/bash --login -i")
 
 (defun vterm-counsel-yank-pop-action (orig-fun &rest args)
-  "Make counsel use the correct function to yank in vterm buffers."
+  "Make counsel use the correct function to yank in vterm buffers.
+
+Take the original function ORIG-FUN and introduce a new implementation of
+`insert-for-yank'.  Other ARGS are unchanged."
   (if (equal major-mode 'vterm-mode)
       (let ((inhibit-read-only t)
-            (yank-undo-function (lambda (_start _end) (vterm-undo))))
+            (yank-undo-function
+             (lambda (_start _end) (vterm-undo))))
+        
         (cl-letf (((symbol-function 'insert-for-yank)
                    (lambda (str) (vterm-send-string str t))))
           (apply orig-fun args)))
@@ -81,8 +86,8 @@ It defaults to xterm-256color.")  ;; use eterm-color to support eterm-256color-m
   "Unset the flags for .bashrc and .bash_profile.
 
 This ensures the files are loaded when called from a new shell spawned from a
-parent that has already run them (and so set these flags to 1). Note that
-NOECHO is set to t to avoid this statement showing in the console. "
+parent that has already run them (and so set these flags to 1).  Note that
+NOECHO is set to t to avoid this statement showing in the console."
 
   (vterm-send-string
    "unset BASHRC_SOURCED_IN_INTERACTIVE_SHELL > /dev/null 2>&1; unset BASH_PROFILE_SOURCED_IN_INTERACTIVE_SHELL > /dev/null 2>&1; clear; source ~/.bashrc\n"

@@ -20,24 +20,27 @@
 ;;   (define-key pyvenv-mode-map (kbd "C-c p d") #'pyvenv-deactivate)
 ;;   (define-key pyvenv-mode-map (kbd "C-c p w") #'pyvenv-workon))
 
+
+(defvar straight-base-dir)
+(defvar straight-build-dir)
+(defvar my-paths/q-load-balancer-folder)
+
+(declare-function
+ my-programming-mode/set-fill-column-indicator "custom-defaults-config")
+
 ;;; Packages:
 
-;; (use-package q-mode
-;;   :straight ( :type git
-;;               :host github
-;;               :repo "psaris/q-mode"))
+(add-to-list 'load-path my-paths/q-load-balancer-folder)
 
-(load-file
- (expand-file-name
-  "custom-packages/q-loadbalancer/q-loadbalancer.el" user-emacs-directory))
+(require 'q-loadbalancer)
 
-(load-file
- (expand-file-name
-  "custom-packages/q-loadbalancer/process-groups.el" user-emacs-directory))
+;; (use-package q-loadbalancer
+;;   :straight (:local-repo "q-loadbalancer")
+;;   ;; :config
+;;   ;; Optional configuration here
+;;   )
 
-(load-file
- (expand-file-name
-  "custom-packages/q-loadbalancer/q-parse.el" user-emacs-directory))
+
 
 ;;; Code:
 
@@ -46,13 +49,16 @@
 (add-to-list 'auto-mode-alist '("\\.[kq]\\'" . q-script-mode))
 
 
-;; Set default port. 
-(customize-set-variable 'q-init-port 6060
-                        "set the default port to run kdb/q. ")
+;; Set default port.
+;; (customize-set-variable 'q-init-port 6060
+;;                         "set the default port to run kdb/q. ")
 
-(defun my-lang/q-script-mode-setup ()
+(defun my-lang-q/mode-setup ()
+  "The setup function hooked to be loaded on opening a .q or .k file."
+
+
   (message
-   "[%s ; DEBUG; my-lang/q-script-mode-setup]starting loading the defun ; ;"
+   "[%s ; DEBUG; my-lang-q/mode-setup]starting loading the defun ; ;"
    (current-time-string))
 
   (my-programming-mode/set-fill-column-indicator 140)
@@ -72,11 +78,12 @@
 ;; Hooks
 (add-hook 'ess-mode-hook 'remove-ess-q-extn)
 (add-hook 'inferior-ess-mode-hook 'remove-ess-q-extn)
-(add-hook 'q-script-mode-hook #'my-lang/q-script-mode-setup)
+(add-hook 'q-script-mode-hook #'my-lang-q/mode-setup)
 
-(require 'custom-logging-config)
 
 
 ;;; Provision
 (provide 'custom-lang-q)
 ;;; custom-lang-q.el ends here
+
+                                        ; LocalWords:  loadbalancer

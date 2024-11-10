@@ -1,13 +1,11 @@
-;;; custom-defaults.el -*- lexical-binding: t; -*-
+;;; custom-defaults-config.el --- Defaults for the Emacs setup config  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023
 ;; SPDX-License-Identifier: MIT
 
-;; Author: System Crafters Community
+;; Author: Simon Watson
 
-;; Commentary
-
-;; General Crafted Emacs endorsed defaults
+;;; Commentary:
 ;;
 ;; Some of these settings were inspired by the following:
 ;; - Charles Choi: "Surprise and Emacs Defaults"
@@ -18,9 +16,10 @@
 
 ;;; Code:
 
-;; Set default coding system (especially for Windows)
+;; Set default coding system.
 (set-default-coding-systems 'utf-8)
 
+(require 'custom-path-support)
 (require 'dired)
 (require 'ispell)
 (require 'xref)
@@ -329,10 +328,6 @@ also enables undo functionality if the window layout changes."
 ;;  #############
 ;;
 
-;; Load source (.el) or the compiled (.elc or .eln) file whichever is
-;; newest
-(customize-set-variable 'load-prefer-newer t)
-
 ;; Make shebang (#!) file executable when saved
 (add-hook 'after-save-hook
           #'executable-make-buffer-file-executable-if-script-p)
@@ -365,7 +360,10 @@ If COLUMN is not provided, use 80 as the default value."
       (setq-local compilation-ask-about-save nil)))
 
   ;; Set programming modes to pick up the custom prog-mode face.
-  (face-remap-add-relative 'default 'my-font-faces/prog-mode-face)
+  ;; (after custom-theme-support has defined the face.)
+  (when (facep 'my-font-faces/prog-mode-face)
+    (face-remap-add-relative 'default 'my-font-faces/prog-mode-face))
+
 
   (setq display-line-numbers-type 'absolute)
   (display-line-numbers-mode)           ; activate line numbers.
@@ -384,7 +382,7 @@ If COLUMN is not provided, use 80 as the default value."
   (display-fill-column-indicator-mode)
 
   ;; ensure changes are visible in the buffer. 
-  ;;(highlight-changes-mode)
+  ;; (highlight-changes-mode)
   
   ;; (setq yas-use-menu 'abbreviate)  ;; show only the snippets for the mode of the buffer.
   ;; activate yas mode.
@@ -395,7 +393,6 @@ If COLUMN is not provided, use 80 as the default value."
   ;; (setq fci-rule-color "darkgrey")
   
   (setq truncate-lines t))               ; deactivate line-wrapping.
-
 
 ;; Hooks
 

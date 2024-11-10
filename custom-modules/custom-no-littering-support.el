@@ -46,8 +46,8 @@
 ;; gnupg
 (customize-set-variable 'package-gnupghome-dir (expand-file-name "gnupg" no-littering-etc-directory))
 
-;; eln-cache
-(add-to-list 'native-comp-eln-load-path (expand-file-name "eln-cache/" no-littering-etc-directory))
+;; eln-cache ALREADY DONE.
+;;(add-to-list 'native-comp-eln-load-path (expand-file-name "eln-cache/" no-littering-etc-directory))
 
 ;; Set the backuplocation using built in emacs functionality.
 ;; https://www.gnu.org/software/emacs/manual/html_node/emacs/Backup.html

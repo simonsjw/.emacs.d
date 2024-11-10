@@ -23,15 +23,29 @@
 (require 'custom-system-window-management)
 (require 'custom-ui-config)
 (require 'custom-system-tools)
-(require 'dired)
-(require 'speedbar)
-(require 'sr-speedbar)
-(require 'projectile)
-(require 'projectile-speedbar)
-(require 'magit)
-(require 'bufler)
-(require 'vterm)
-(require 'cell-mode)
+
+(defvar magit-display-buffer-function)
+(defvar magit-display-buffer-noselect)
+
+(declare-function speedbar "speedbar")
+
+(declare-function sr-speedbar-exist-p "sr-speedbar")
+(declare-function sr-speedbar-close "sr-speedbar")
+
+(declare-function sr-speedbar-select-window "sr-speedbar")
+(declare-function sr-speedbar-open "sr-speedbar")
+(declare-function sr-speedbar "sr-speedbar")
+
+(declare-function projectile "projectile")
+(declare-function projectile-speedbar "projectile-speedbar")
+
+(declare-function magit "magit")
+(declare-function magit-status-setup-buffer "magit")
+
+(declare-function bufler "bufler")
+(declare-function vterm "vterm")
+(declare-function dired "dired")
+(declare-function cell-sheet-create "cell-mode")
 
 
 (defun my-ui/create-project-frame (given-project-path)
@@ -261,6 +275,7 @@ created."
           ;; Bottom windows: bottom left
           (with-selected-window bottom-left
             (find-file ide-init/default-log-file)
+            (view-echo-area-messages)
             (my-tab-line/close-specific-buffer "*scratch*"))
 
           ;;  (with-selected-window top-left
@@ -277,8 +292,9 @@ created."
           )
         )
       ;; clean up the start-up frame.
-      (let ((startup-frame (my-frame-tools/get-frame-by-name "startup")))
-        (if startup-frame (delete-frame startup-frame)))
+      ;; (let ((startup-frame (my-frame-tools/get-frame-by-name "startup")))
+      ;; (if startup-frame (delete-frame startup-frame))
+      ;;  )
       )
     )
   )
@@ -302,12 +318,11 @@ closed as a result of this action."
 ;; Use the function on startup
 (add-hook 'emacs-startup-hook 'my-ui/startup-layout)
 
-;; Override display-buffer to use the custom display function
-;;(setq display-buffer-alist
-;; '((".*" . (my-ui/display-buffer . nil))))
 
 (provide 'custom-startup-config)
 ;;; custom-startup-config.el ends here
 
 
-; LocalWords:  speedbar
+                                        ; LocalWords:  speedbar dired
+                                        ; LocalWords:  magit bufler
+                                        ; LocalWords:  sr vc

@@ -21,6 +21,14 @@
 ;;           (lambda ()
 ;;             (add-hook 'after-save-hook #'org-babel-tangle-config)))
 
+;; Re-initialise your eln-cache location. 
+;; (setq native-comp-eln-load-path
+;;       (copy-sequence (list my-filepaths/eln-cache
+;;     	    "/usr/local/lib/emacs/29.2/native-lisp/")))
+;; ;; remove all mention of the original loadpath. 
+;; (setq startup--original-eln-load-path
+;;         (copy-sequence native-comp-eln-load-path))
+
 
 ;;; imports and declarations
 (require 'custom-logging-config)
@@ -40,6 +48,33 @@
 (log/info :fn 'init
           :msg "----Begin init.el processing----"
           :obj t)
+
+(let
+    ((native-comp-eln-load-path-string
+      (mapconcat 'identity native-comp-eln-load-path ";\n      "))
+     (eln-cache-fp-payload
+      "\n   custom eln-cache: %s;")
+     (user-dir-payload
+      "\n   (package-user-dir: %s;")
+     (straight-dir-payload
+      "\n   straight-base-dir: %s;")
+     (eln-dir-list-payloads
+      "\n   native-comp-eln-load-path-strings:\n      %s")
+     (eln-dir-list-ending-payload ")"))
+
+  (log/info :fn 'init
+    	    :msg "check values of  package-user-dir, eln-cache directory and straight-base-dir."
+    	    :obj (format
+    		  (concat
+    		   user-dir-payload
+                   straight-dir-payload
+                   eln-cache-fp-payload
+    		   eln-dir-list-payloads
+                   eln-dir-list-ending-payload)
+    		  package-user-dir
+    		  straight-base-dir
+                  my-filepaths/eln-cache
+    		  native-comp-eln-load-path-string)))
 
 ;;; Load current environmental variables
 (defun load-environment-variables-from-file (file-path)
@@ -129,6 +164,9 @@
 
 ;; Base IDE configuration.
 (require 'custom-ide-config)
+
+;; Debugger support
+(require 'custom-debugger-support)
 
 ;; Handle writing config (Latex and the like)
 (require 'custom-org-config)
