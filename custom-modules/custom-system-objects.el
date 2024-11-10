@@ -9,16 +9,15 @@
 ;;; Commentary:
 
 ;; This module contains code to 'grease the wheels' in delivering functionality
-;; for the Emacs Lisp object model. It is similar to `custom-system-tools' but
-;; here the focus is on functionality to access and use Emacs lisp objects
+;; for the Emacs Lisp object model.  It is similar to `custom-system-tools' but
+;; here the focus is on functionality to access and use Emacs LISP objects
 ;; rather than the deployment of those objects to achieve higher level tasks.
 ;;
 ;; As a rule of thumb - if the functionality relies on additional modules
-;; then it is probably at home here in `custom-system-objects'. 
-;; 
+;; then it is probably at home here in `custom-system-objects'.
+;;
 ;; Perhaps the division into these two modules isn't always straightforward.
 ;; In those cases, consult these docs!
-
 
 ;;; Code:
 
@@ -34,7 +33,7 @@
 (defun my-hash-tools/define-hash-table
     (table-name cons-list &optional idx-name item-name)
   "Define a hash table and populate it with records.
-  
+
 TABLE-NAME is the name of the hash table to be created.
 CONS-LIST is a list of cons cells, where the car of each cons cell is the index
 and the cdr is a list of item data.
@@ -74,7 +73,7 @@ If not supplied, the default names `idx' and `item' are used."
   (let ((found nil))  ; Track if we found the frame
     (dolist (frame (frame-list))
       (when (string= (frame-parameter frame 'name) frame-name)
-        
+
         (setq found t)
         (setq frame-object frame)
         (message "found frame named '%s'." frame-name)))
@@ -172,7 +171,7 @@ If FRAME is nil, use the current frame."
     (cdr (assoc attribute my-buffer-attributes))))
 
 (defun my-buffer-tools/get-window-with-tag (tag)
-  "Get a window by its tag.
+  "Get a window by its TAG.
 Used with my-buffer-tools/display-given-buffer to provide functionality to
 my-buffer-tools/display-buffer-by-name-and-tag"
   (catch 'window
