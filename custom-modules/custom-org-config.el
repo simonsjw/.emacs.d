@@ -147,7 +147,7 @@
   (add-hook 'org-mode-hook 'org-appear-mode))
 
 ;; Disable auto-pairing of "<" in org-mode with electric-pair-mode
-(defun crafted-org-enhance-electric-pair-inhibit-predicate ()
+(defun org-enhance-electric-pair-inhibit-predicate ()
   "Disable auto-pairing of \"<\" in `org-mode' using `electric-pair-mode'."
   (when (and electric-pair-mode (eql major-mode #'org-mode))
     (setq-local electric-pair-inhibit-predicate
@@ -160,10 +160,10 @@
 ;; This ensures org-mode buffers don't behave weirdly,
 ;; no matter when electric-pair-mode is activated.
 (add-hook 'electric-pair-mode-hook
-          #'crafted-org-enhance-electric-pair-inhibit-predicate)
+          #'org-enhance-electric-pair-inhibit-predicate)
 
 (add-hook 'org-mode-hook
-          #'crafted-org-enhance-electric-pair-inhibit-predicate)
+          #'org-enhance-electric-pair-inhibit-predicate)
 
 
 ;; Set up holidays. 
