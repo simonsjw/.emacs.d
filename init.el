@@ -1,12 +1,12 @@
 ;;; init.el -- Simon's Crafted Emacs user customization file -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; This file is generated from config.org. If you want to edit the
+;; This file is generated from config.org.  If you want to edit the
 ;; configuration, DO NOT edit init.el, edit config.org, instead.
 ;; Note that by default, init.el is the target of the tangle as
 ;; specified by #+PROPERTY in line 3.
 
-    ;;; Code:
+;;; Code:
 ;; Tangle the code blocks if this file is config.org and it is in the
 ;; user-emacs-directory.
 ;;(defun org-babel-tangle-config ()
@@ -21,11 +21,11 @@
 ;;           (lambda ()
 ;;             (add-hook 'after-save-hook #'org-babel-tangle-config)))
 
-;; Re-initialise your eln-cache location. 
+;; Re-initialise your eln-cache location.
 ;; (setq native-comp-eln-load-path
 ;;       (copy-sequence (list my-filepaths/eln-cache
 ;;     	    "/usr/local/lib/emacs/29.2/native-lisp/")))
-;; ;; remove all mention of the original loadpath. 
+;; ;; remove all mention of the original loadpath.
 ;; (setq startup--original-eln-load-path
 ;;         (copy-sequence native-comp-eln-load-path))
 
