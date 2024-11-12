@@ -1,17 +1,31 @@
-;;; q-parse.el --- Manage KDB/Q processes via Emacs Lisp
+;;; q-parse.el --- Syntax highlighting and modes for KDB/Q
 
 ;; Author: Simon Watson
 ;; Version: 0.9
-;; Keywords: KDB, Q, process management, Emacs Lisp
-;; Package-Requires: ((emacs "24.3") (q-mode "1.0"))
+;; Keywords: KDB, Q, syntax highlighting
+;; URL: https://github.com/simonsjw/q-loadbalancer
+;; Package-Requires: (Emacs "24.3")
 
 ;;; Commentary:
+
+;; This package provides syntax highlighting and mode definitions for editing Q scripts.
 ;;
 ;; This package provides functionality to parse q code for font locking.
+;; There are two modes:
+;; *   q-script-mode
+;;     This mode is to be used for all buffers which show Q script
 ;;
+;; *   q-loadbalancer-mode
+;;     This mode is to be used on buffers which connect to a Q process.
+;;
+;; Functionality for creating groups of attached processes is provided in
+;; q-loadbalancer.el
+;;
+;; The connection details to be used with q-loadbalancer.el are stored in
+;; process-groups.el.
 
-
-
+;;; Code:
+(require 'comint)
 (defvar comint-prompt-regexp)
 
 ;;  Additional faces for font-locking.
@@ -24,6 +38,34 @@
   "Faces for highlighting q log messages."
   :group 'faces)
 
+;; Define custom faces for different log levels
+(unless (facep 'q-log-level-err-face)
+  (defface q-log-level-err-face
+    '((t :foreground "#9D1F1F")
+      )
+    "Face for ERROR log level."
+    :group 'q-log-faces))
+(unless (facep 'q-log-level-warn-face)
+  (defface q-log-level-warn-face
+    '((t :foreground "#CB4B16"))
+    "Face for WARN log level."
+    :group 'q-log-faces)
+  )
+
+(unless (facep 'q-log-level-info-face)
+  (defface q-log-level-info-face
+    '((t :foreground "#729FCF"))
+    "Face for INFO log level."
+    :group 'q-log-faces)
+  )
+
+(unless (facep 'q-log-level-debug-face)
+  (defface q-log-level-debug-face
+    '((t :foreground "#3465A4"))
+    "Face for DEBUG log level."
+    :group 'q-log-faces)
+  )
+
 ;; Define faces for log highlighting
 (unless (facep 'q-log-delimiter-face)
   (defface q-log-delimiter-face
@@ -34,28 +76,30 @@
 
 (unless (facep 'q-log-datetime-face)
   (defface q-log-datetime-face
-    '((t :foreground "dark green"))
+    '((t :foreground "#859900"))
     "Face for log date and time components."
     :group 'q-log-faces)
   )
 
-(unless (facep 'q-log-level-face)
-  (defface q-log-level-face
-    '((t :foreground "deep pink"))
-    "Face for log date and time components."
-    :group 'q-log-faces)
-  )
+
 
 (unless (facep 'q-log-process-face)
   (defface q-log-process-face
-    '((t :foreground "purple"))
+    '((t :foreground "#A6BE00"))
     "Face for log process information."
     :group 'q-log-faces)
   )
 
 (unless (facep 'q-log-message-face)
   (defface q-log-message-face
-    '((t :foreground "yellow"))
+    '((t :foreground "#4F9C02"))
+    "Face for the main log message."
+    :group 'q-log-faces)
+  )
+
+(unless (facep 'q-log-object-face)
+  (defface q-log-object-face
+    '((t :foreground "#61647A"))
     "Face for the main log message."
     :group 'q-log-faces)
   )
@@ -168,7 +212,7 @@
      "\\_>"))                                                                  ; Match the end of a symbol or word (word boundary), ensuring complete words are matched
   "Regular expression for highlighting built-in functions in q.k.
    
-   This variable defines a regex pattern to match built-in keywords 
+   This variable defines a regex pattern to match built-in keywords
    from the `q` programming language.  The pattern is optimized for 
    performance using `regexp-opt` and supports matching optional 
    `.q.` prefixes.  It ensures that only whole words or symbols are 
@@ -319,36 +363,109 @@ Includes optional seconds and fractional seconds.
            ))
   "More highlighting expressions for q mode.")
 
+(defvar q-font-lock-keywords-1
+  (append q-font-lock-keywords
+          (list
+           ;; Files
+           `(,(rx "`:"
+                  (0+ (or wordchar (any "/:._"))))                             ; Backtick followed by ':' and any word or file path characters
+             . font-lock-preprocessor-face)
 
-(defvar q-font-lock-keywords-2                                                 ; keywords & literals
+           ;; Attributes
+           `(,(rx (group "`"
+                         (or "g" "p" "s" "u")
+                         "#"))                                                 ; Backtick, attribute letter, then '#'
+             1 font-lock-type-face nil)
+
+           ;; Errors
+           `(,(rx line-start
+                  "'"
+                  (0+ not-newline)                                             ; Single quote followed by any content up to end of line
+                  line-end)
+             0 font-lock-warning-face nil)
+
+           ;; Signals
+           `(,(rx (or ";" " ")
+                  (group "`" (0+ word)))                                       ; Semicolon or space, followed by a backtick and word characters
+             1 font-lock-warning-face nil)
+
+           ;; Symbols
+           `(,(rx "`"
+                  (optional (seq (or wordchar ".")
+                                 (0+ (or symbol-start wordchar "_")))))        ; Optional backtick, optional symbols/word
+             . font-lock-constant-face)
+
+           ;; IO/IPC
+           `(,(rx word-boundary
+                  (char "0-2")                                                 ; Digits 0, 1, or 2
+                  ":")
+             . font-lock-preprocessor-face)
+
+           ;; q-type-words, q-keywords, q-builtin-words
+           `(,q-type-words 1 font-lock-type-face nil)
+           `(,q-keywords . font-lock-keyword-face)
+           `(,q-builtin-words . font-lock-builtin-face)))
+  "More highlighting expressions for q mode.")
+
+
+(defvar q-font-lock-keywords-2
   (append q-font-lock-keywords-1
           (list
-           (cons q-constant-words 'font-lock-constant-face)                    ; .z.* ; constants
-           (list q-variable-regex 1 'font-lock-variable-name-face nil)         ; variables
+           ;; Constants
+           (cons q-constant-words 'font-lock-constant-face)
 
-           ;; Use the defined regex variables with explicit list notation
-           (cons q-datetime-regex 'font-lock-constant-face)                    ; Apply the month/date/datetime face
-           (cons q-timespan-timestamp-regex 'font-lock-constant-face)          ; timespan/timestamp
-           (cons q-guid-regex 'font-lock-constant-face)                        ; GUID
-           (cons q-time-regex 'font-lock-constant-face)                        ; time
+           ;; Variables
+           (list q-variable-regex 1 'font-lock-variable-name-face nil)
 
-           '("\\<[0-9]*[0-9.][0-9]*\\(?:[eE][+-]?[0-9]+\\)?[ef]?\\>"
-             . font-lock-constant-face)                                        ; Match float/real numbers (e.g., `123.45`, `1.2e3`)
+           ;; Date, time, and GUID regexes
+           (cons q-datetime-regex 'font-lock-constant-face)
+           (cons q-timespan-timestamp-regex 'font-lock-constant-face)
+           (cons q-guid-regex 'font-lock-constant-face)
+           (cons q-time-regex 'font-lock-constant-face)
 
-           '("\\_<[0-9]+[cefhijnptuv]?\\_>"
-             . font-lock-constant-face)                                        ; Match char/real/float/short/int/long/time-types (e.g., `42f`, `100h`)
+           ;; Floating point and real numbers
+           `(,(rx word-start
+                  (0+ digit)
+                  (optional ".")
+                  (0+ digit)
+                  (optional (char "eE") (optional (char "+-")) (1+ digit))
+                  (optional (char "ef"))
+                  word-end)
+             . font-lock-constant-face)
 
-           '("\\_<[01]+b\\_>"
-             . font-lock-constant-face)                                        ; Match boolean values (e.g., `0b`, `1b`)
+           ;; Char, real, float, short, int, long, time-type suffixes
+           `(,(rx word-start
+                  (1+ digit)
+                  (optional (char "cefhijnptuv"))
+                  word-end)
+             . font-lock-constant-face)
 
-           '("\\_<0x[0-9a-fA-F]+\\_>"
-             . font-lock-constant-face)                                        ; Match byte values in hexadecimal (e.g., `0x1A3F`)
+           ;; Boolean values
+           `(,(rx word-start
+                  (char "01")
+                  (char "b")
+                  word-end)
+             . font-lock-constant-face)
 
-           '("\\_<0[nNwW][cefghijmndzuvtp]?\\_>"
-             . font-lock-constant-face)                                        ; Match null/infinity representations (e.g., `0n`, `0w`, `0N`)
+           ;; Byte values in hexadecimal
+           `(,(rx word-start
+                  "0x"
+                  (1+ hex-digit)
+                  word-end)
+             . font-lock-constant-face)
 
-           '("\\(?:TODO\\|NOTE\\)\\:?" 0 font-lock-warning-face t)             ; Highlight TODO-like comments (e.g., `TODO`, `NOTE:`)
-           ))
+           ;; Null and infinity representations
+           `(,(rx word-start
+                  "0"
+                  (char "nNwW")
+                  (optional (char "cefghijmndzuvtp"))
+                  word-end)
+             . font-lock-constant-face)
+
+           ;; Highlight TODO-like comments
+           `(,(rx (or "TODO" "NOTE") (optional ":"))
+             0 font-lock-warning-face t)))
+
   "Most highlighting expressions for q mode.
 
    This list defines regular expressions used for highlighting key
@@ -382,7 +499,7 @@ Includes optional seconds and fractional seconds.
 
 ;; syntax table
 
-(defvar q-mode-syntax-table
+(defvar q-loadbalancer-mode-syntax-table
   (let ((table (make-syntax-table)))
     (modify-syntax-entry ?\" ".  " table)                                      ; treat " as punctuation
     (modify-syntax-entry ?\/ ".  " table)                                      ; treat / as punctuation
@@ -404,82 +521,31 @@ Includes optional seconds and fractional seconds.
     (modify-syntax-entry ?\| ".  " table)                                      ; treat | as punctuation
     (modify-syntax-entry ?\` "_  " table)                                      ; treat ` as symbol
     table)
-  "Syntax table for `q-mode'.")
+  "Syntax table for `q-script-mode'.")
 
+(defun my-show-paren-ignore-q-prompt ()
+  "Ignore `q)` as a matching parenthesis in show-paren-mode."
+  (let ((pos (point)))
+    (save-excursion
+      (beginning-of-line)
+      (if (looking-at "^q)")  ; Match `q)` at the start of the line
+          ;; Do nothing (return nil to ignore this match)
+          nil
+        ;; Otherwise, use the default behavior
+        (show-paren--default)))))
 
-(define-derived-mode q-shell-mode comint-mode "Q-Shell"
-  "Major mode for interacting with a q interpreter."
-  :syntax-table q-mode-syntax-table
-  (add-hook (make-local-variable 'comint-output-filter-functions) 'comint-strip-ctrl-m)
-  (setq comint-prompt-regexp "^\\(q)+\\|[^:]*:[0-9]+>\\)")
-  (setq font-lock-defaults q-font-lock-defaults)
-  (set (make-local-variable 'comint-process-echoes) nil)
-  (set (make-local-variable 'comint-password-prompt-regexp) "[Pp]assword")
-  
-  ;; Add the logging font-lock keywords
-  ;; (font-lock-add-keywords
-  ;;  nil                                                                         ; Apply to the current buffer
-  ;;  `((,(concat
-  ;;       "\\(\\[\\)"                                                            ; 1. Opening bracket
-  ;;       "\\([0-9]\\{4\\}\\)"                                                   ; 2. Year
-  ;;       "\\(\\.\\)"                                                            ; 3. Dot
-  ;;       "\\([0-9]\\{2\\}\\)"                                                   ; 4. Month
-  ;;       "\\(\\.\\)"                                                            ; 5. Dot
-  ;;       "\\([0-9]\\{2\\}\\)"                                                   ; 6. Day
-  ;;       "\\(D\\)"                                                              ; 7. Literal 'D'
-  ;;       "\\([0-9]\\{2\\}\\)"                                                   ; 8. Hours
-  ;;       "\\(:\\)"                                                              ; 9. Colon
-  ;;       "\\([0-9]\\{2\\}\\)"                                                   ; 10. Minutes
-  ;;       "\\(:\\)"                                                              ; 11. Colon
-  ;;       "\\([0-9]\\{2\\}\\)"                                                   ; 12. Seconds
-  ;;       "\\(\\.\\)"                                                            ; 13. Dot
-  ;;       "\\(\\([0-9]+\\)\\)"                                                   ; 14. Milliseconds
-  ;;       "\\(\\;\\)"                                                            ; 15. Semicolon
-  ;;       "\\([^;]+\\)"                                                          ; 16. Section up to first semicolon
-  ;;       "\\(\\;\\)"                                                            ; 17. Semicolon
-  ;;       "\\([^;]+\\)"                                                          ; 18. process: Section up to second semicolon
-  ;;       "\\(\\;\\)"                                                            ; 19. Semicolon
-  ;;       "\\([^;]+\\)"                                                          ; 20. log level: Section up to third semicolon
-  ;;       "\\(\\]\\)"                                                            ; 21. Closing bracket
-  ;;       ;; "\\(\\.\\)"                                                            ; 22. Catch-all at the end
-  ;;       )
-  ;;     ;; Highlighting groups
-  ;;     (1 'q-log-delimiter-face t)                                                ; Opening bracket
-  ;;     (2 'q-log-datetime-face t)                                                   ; Year
-  ;;     (3 'q-log-datetime-face t)        
-  ;;     (4 'q-log-datetime-face t)                                                 ; Month
-  ;;     (5 'q-log-datetime-face t)        
-  ;;     (6 'q-log-datetime-face t)                                                 ; Day
-  ;;     (7 'q-log-datetime-face t)       
-  ;;     (8 'q-log-datetime-face t)                                                 ; Hours
-  ;;     (9 'q-log-datetime-face t)        
-  ;;     (10 'q-log-datetime-face t)                                                ; Minutes
-  ;;     (11 'q-log-datetime-face t)        
-  ;;     (12 'q-log-datetime-face t)                                                ; Seconds
-  ;;     (13 'q-log-datetime-face t)        
-  ;;     (14 'q-log-datetime-face t)                                                ; Milliseconds
-  ;;     (15 'q-log-datetime-face t)   
-  ;;     (16 'q-log-datetime-face t)                                                   ; log level: Section after date, e.g., process name
-  ;;     (17 'q-log-datetime-face t) 
-  ;;     (18 'q-log-datetime-face t)                                                 ; process
-  ;;     (19 'q-log-datetime-face t) 
-  ;;     (20 'q-log-datetime-face t)                                                  ; log message
-  ;;     (21 'q-log-datetime-face t)      
-  ;;     ;;  (22 'q-log-message-face t)                                                 ; log object
-  ;;     )))
-  )
+(defun q-paren-ignore ()
+  "Set `show-paren-data-function` to ignore `q)` prompts in comint."
+  (setq-local show-paren-data-function #'my-show-paren-ignore-q-prompt))
 
-(define-derived-mode q-script-mode prog-mode "Q-Script"
-  "Major mode for editing Q scripts."
-  :syntax-table q-mode-syntax-table
-  (setq font-lock-defaults q-font-lock-defaults)
-  ;; Any additional setup can go here
-  )
 
 (provide 'q-parse)
 
 ;;; q-parse.el ends here
 
-                                        ; LocalWords:  cefhijnptuv
+                                        ; LocalWords:  cefhijnptuv ij
                                         ; LocalWords:  assword concat
                                         ; LocalWords:  cefghijmndzuvtp
+                                        ; LocalWords:  xgroup msum mins signum xlog pj
+                                        ; LocalWords:  loadbalancer
+                                        ; LocalWords:  loadBalancer
