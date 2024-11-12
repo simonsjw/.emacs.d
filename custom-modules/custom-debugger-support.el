@@ -1,0 +1,213 @@
+;;; custom-debugger-support.el --- Provide Dape debugging -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2023
+;; SPDX-License-Identifier: MIT
+
+;; Author: Simon Watson
+
+;;; Commentary:
+
+;; Provide Dape debugging with customisation.
+;; General Configuration:
+;; ----------------------
+;; dape-adapter-dir: Directory for adapter files.
+;; dape-configs: Defines configurations for various adapters or debug sessions.
+;; dape-command: Base command used to start the debug adapter.
+
+;; User Interface:
+;; ---------------
+;; dape-display-source-buffer-action: Controls how source buffers are displayed.
+;; dape-buffer-window-arrangement: Manages window arrangement for dape buffers.
+;; dape-info-buffer-window-groups: Manages grouping for info buffers.
+
+;; Info Buffer Customisation:
+;; -------------------------
+;; dape-info-variable-table-aligned                 : Controls alignment in variable tables.
+;; dape-info-variable-table-row-config              : Configures rows in variable tables.
+;; dape-info-thread-buffer-verbose-names            : Customize the appearance and information displayed in thread buffers.
+;; dape-info-thread-buffer-locations                : Customize the appearance and information displayed in thread buffers.
+;; dape-info-thread-buffer-addresses                : Customise the appearance and information displayed in thread buffers.
+;; dape-info-stack-buffer-locations                 : Similar settings for stack buffers.
+;; dape-info-stack-buffer-modules                   : Similar settings for stack buffers.
+;; dape-info-stack-buffer-addresses                 : Similar settings for stack buffers.
+;; dape-info-buffer-variable-format                 : Formatting options for variables in the info buffer.
+
+;; REPL Settings:
+;; ---------------------
+;; dape-repl-use-shorthand                          : Enables shorthand commands in the REPL.
+;; dape-repl-commands                               : Define custom commands available in the REPL.
+
+;; Memory View Customisation:
+;; -------------------------
+;; dape-memory-page-size                            : Page size for memory views.
+;; dape-info-hide-mode-line                         : Hides the mode line in specific buffers.
+
+;; Miscellaneous Options:
+;; ----------------------
+;; dape-breakpoint-margin-string                    : Sets the string for breakpoints.
+;; dape-request-timeout                             : Timeout for requests to the debugger.
+;; dape-debug                                       : Enables debugging for dape itself.
+;; dape-inlay-hints                                 : Enables inlay hints in code views.
+
+;; Hooks
+;; -----
+;; dape provides various hooks that you can use to add custom behaviors:
+
+;; Debug Session Hooks:
+;; dape-start-hook                                  : Runs when a debug session starts.
+;; dape-stopped-hook                                : Runs when a debug session stops.
+;; dape-update-ui-hook                              : Runs when the UI updates (e.g., on new data or view refreshes).
+;; dape-display-source-hook                         : Executes before displaying a source buffer.
+
+;; UI and Completion:
+;; completion-at-point-functions                    : Several instances in dape where this hook is used to handle in-buffer completion.
+
+;; managing buffers and file operations
+;; kill-buffer-hook
+;; find-file-hook
+
+;; Keymaps
+;; -------
+;; The dape package defines several keymaps, with the primary ones being:
+
+;; dape-memory-mode-map                             ; Keybindings specific to the memory viewing mode.
+;; dape-info-watch-mode-map                         : Keybindings for managing watched variables.
+
+;; Suggested additional keybindings
+;; (with-eval-after-load "prog-mode"
+;;   (keymap-set prog-mode-map "C-c e n" #'flymake-goto-next-error)
+;;   (keymap-set prog-mode-map "C-c e p" #'flymake-goto-prev-error))
+
+;;; Code:
+
+(defvar dape-configs)
+(declare-function dape "dape")
+
+;; (defun my-dape/setup (config)
+;;   "Initialize Dape using CONFIG without issues from `display-buffer-alist'."
+;;   (interactive
+;;    (list
+;;     (intern
+;;      (completing-read "Choose dape config: " (mapcar #'car dape-configs))))
+;;    )
+;;   (setq debug-on-error t)
+;;   (let ((display-buffer-alist nil))  ;; Temporarily clear
+;;     (dape config)))
+
+;; (defun my-dape/setup ()
+;;   "Initialize Dape using CONFIG without issues from `display-buffer-alist'."
+
+;;   (setq debug-on-error t)
+;;   (let ((display-buffer-alist nil))  ;; Temporarily clear
+;;     (dape "debugpy")))
+
+
+(defun my-dape/setup (config-symbol)
+  "Initialize Dape using CONFIG-SYMBOL without issues from `display-buffer-alist'."
+  (interactive
+   (list
+    (intern
+     (completing-read "Choose dape config: " (mapcar #'car dape-configs)))))
+  (let ((display-buffer-alist nil))  ;; Temporarily clear
+    ;; Retrieve the full plist configuration for the chosen symbol
+    (let ((config (alist-get config-symbol dape-configs)))
+      (unless config
+        (error "Configuration not found for %s" config-symbol))
+      ;; Pass the full plist to `dape`
+      (dape config))))
+
+;; (defun my-dape/setup (config-symbol)
+;;   "Initialize Dape using CONFIG-SYMBOL without issues from `display-buffer-alist'.
+;; Stores the chosen configuration in `my-dape-last-config` for inspection."
+;;   (interactive
+;;    (list (intern (completing-read "Choose dape config: " (mapcar #'car dape-configs)))))
+;;   (let ((display-buffer-alist nil))  ;; Temporarily clear
+;;     ;; Retrieve the full plist configuration for the chosen symbol
+;;     (let ((config (alist-get config-symbol dape-configs)))
+;;       (setq my-dape-last-config config)  ;; Save for later inspection
+;;       (unless config
+;;         (error "Configuration not found for %s" config-symbol))
+;;       ;; Display the configuration for inspection
+;;       (message "Dape configuration: %S" config)
+;;       ;; Pass the full plist to `dape`
+;;       (dape config))))
+
+;; The latest version of jsonrpc is needed.
+;; (use-package jsonrpc :straight t :demand t)
+
+
+;;(straight-pull-all)
+;;(straight-rebuild-all)
+;; https://github.com/emacs-straight/dape
+(use-package dape
+  ;;:preface
+  ;; By default dape shares the same keybinding prefix as `gud'
+  ;; If you do not want to use any prefix, set it to nil.
+  ;; (setq dape-key-prefix "\C-x\C-a")
+
+  ;;  :hook
+  ;; Save breakpoints on quit
+  ;; ((kill-emacs . dape-breakpoint-save)
+  ;; Load breakpoints on startup
+  ;;  (after-init . dape-breakpoint-load))
+
+  :config
+  ;; Turn on global bindings for setting breakpoints with mouse
+  (dape-breakpoint-global-mode)
+
+  ;; Timeout is 30 seconds.
+  (setq dape-request-timeout 30)
+
+  ;; Info buffers to the right
+  (setq dape-buffer-window-arrangement 'right)
+
+  ;; Info buffers like gud (gdb-mi)
+  ;; (setq dape-buffer-window-arrangement 'gud)
+  ;; (setq dape-info-hide-mode-line nil)
+
+  ;; Pulse source line (performance hit)
+  ;; (add-hook 'dape-display-source-hook 'pulse-momentary-highlight-one-line)
+
+  ;; Showing inlay hints
+  ;; (setq dape-inlay-hints t)
+
+  ;; Save buffers on startup, useful for interpreted languages
+  ;; (add-hook 'dape-start-hook (lambda () (save-some-buffers t t)))
+
+  ;; Kill compile buffer on build success
+  ;; (add-hook 'dape-compile-hook 'kill-buffer)
+
+  ;; Projectile users
+  (setq dape-cwd-fn 'projectile-project-root))
+
+;; add dape config for python (debugging)
+;; note debugpy must be installed in the environment in use.
+;; Add custom configurations to `dape-configs` after loading `dape`
+
+;; (with-eval-after-load 'dape
+;;   ;; Ensure only one `debugpy` entry in `dape-configs`
+;;   (assq-delete-all 'debugpy dape-configs)
+
+;;   ;; Add a properly formatted `debugpy` entry
+;;   (add-to-list 'dape-configs
+;;                `(debugpy
+;;                  modes (python-ts-mode python-mode)
+;;                  command ,(or "python" (error "Command not set"))
+;;                  command-args ["-m" "debugpy.adapter"]
+;;                  :type "python" ;;"executable"
+;;                  :request "launch"
+;;                  :cwd dape-cwd-fn
+;;                  :program (lambda () (buffer-file-name)) )))
+
+(add-hook 'dape-start-hook
+          (lambda ()
+            ;; Ensure all necessary settings are in place
+            (when (not (assoc 'debugpy dape-configs))
+              (message "debugpy configuration missing in dape-configs"))))
+
+;; (straight-rebuild-package "dape")
+(provide 'custom-debugger-support)
+;;; custom-debugger-support.el ends here
+
+                                        ; LocalWords:  Keymaps dape
+                                        ; LocalWords:  repl
