@@ -15,10 +15,14 @@
   "`no-littering-var-directory' set in init.el before this module runs.")
 (when (eq no-littering-var-directory 'uninitialized)
   (warn
-   "my-important-variable is not set. Please ensure it is set in init.el"))
+   "no-littering-var-directory is not set. Please ensure it is set in init.el"))
 
+(defvar no-littering-etc-directory 'uninitialized
+  "`no-littering-etc-directory' set in init.el before this module runs.")
+(when (eq no-littering-etc-directory 'uninitialized)
+  (warn
+   "no-littering-etc-directory is not set. Please ensure it is set in init.el"))
 
-(defvar no-littering-etc-directory)
 
 (defvar custom-info-dir)
 (defvar undo-tree-history-directory-alist)
@@ -36,6 +40,8 @@
 
 (defvar bookmark-default-file)
 (defvar bmkp-desktop-default-directory)
+
+(defvar dape-default-breakpoints-file)
 
 (defvar org-directory)
 (defvar org-contacts-directory)
@@ -205,11 +211,22 @@
    ;; Default search path if the environment variable is not set
    '(("~/" . 3))))
 
+
+;; Dape
+;; ----
+;; Set location of saved breakpoints.
+(setq dape-default-breakpoints-file
+      (expand-file-name "dape/dape-breakpoints" no-littering-var-directory)
+      )
+(my-on-disk-tools/ensure-directory-exists
+ (expand-file-name "dape" no-littering-var-directory)
+ )
+
 ;; Org Mode
 ;; --------
 (setq org-directory "~/Documents/org") ; Path to org data.
 
-(setq org-contacts-directory ; Path to the Emacs contacts file for org contacts functionality.
+(setq org-contacts-directory                                                   ; Path to the Emacs contacts file for org contacts functionality.
       (expand-file-name  "contacts/" org-directory))
 
 (customize-set-variable
@@ -261,7 +278,7 @@
 (setq save-sql-history-dir
       (expand-file-name "sql-history/" no-littering-var-directory))
 
-;; keep the pretty-speedbar-icons in the icon stash. 
+;; keep the pretty-speedbar-icons in the icon stash.
 ;;(with-eval-after-load 'pretty-speedbar-icons
 ;; (defconst pretty-speedbar-icons-dir
 ;;   (expand-file-name
