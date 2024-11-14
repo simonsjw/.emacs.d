@@ -1,4 +1,4 @@
-;;; q-parse.el --- Syntax highlighting and modes for KDB/Q
+;;; q-parse.el --- Syntax highlighting and modes for KDB/Q -*- lexical-binding: t; -*-
 
 ;; Author: Simon Watson
 ;; Version: 0.9
@@ -76,12 +76,10 @@
 
 (unless (facep 'q-log-datetime-face)
   (defface q-log-datetime-face
-    '((t :foreground "#859900"))
+    '((t :foreground "#5A6800"))
     "Face for log date and time components."
     :group 'q-log-faces)
   )
-
-
 
 (unless (facep 'q-log-process-face)
   (defface q-log-process-face

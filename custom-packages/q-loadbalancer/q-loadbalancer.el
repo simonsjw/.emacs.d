@@ -1,4 +1,4 @@
-;;; q-loadbalancer.el --- Manage KDB/Q processes via Emacs Lisp
+;;; q-loadbalancer.el --- Manage KDB/Q processes via Emacs Lisp -*- lexical-binding: t; -*-
 
 ;; Author: Simon Watson
 ;; Version: 1.2
@@ -78,8 +78,8 @@ Returns t if the PORT is already in use, nil otherwise."
                                            :noquery t)))
         (when process
           (delete-process process))
-        nil) ;; Port is not in use
-    (file-error t))) ;; Port is in use
+        nil)                                                                   ; Port is not in use
+    (file-error t)))                                                           ; Port is in use
 
 
 
@@ -244,10 +244,13 @@ the new parameters."
         (file-name-directory (expand-file-name loadBalancer-file-name)))
        )
   (message loadBalancerPackageDirectory)
-  (load-file (concat loadBalancerPackageDirectory "q-parse.el"))
-  (load-file (concat loadBalancerPackageDirectory "process-groups.el")))
 
+  (load-file (concat loadBalancerPackageDirectory "q-parse.el"))
+  (load-file (concat loadBalancerPackageDirectory "process-groups.el"))
+  (load-file (concat loadBalancerPackageDirectory "q-modeline.el"))
+  (load-file (concat loadBalancerPackageDirectory "q-ibuffer.el")))
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 ;;; Define Menu and keymaps:
 ;; Define the common menu and key bindings available for both `q-script-mode'
 ;; and `q-loadbalancer-mode'.
@@ -303,6 +306,7 @@ the new parameters."
   :keymap q-loadbalancer-menu-map
   :syntax-table q-loadbalancer-mode-syntax-table
   (setq font-lock-defaults q-font-lock-defaults))
+
 ;; Hook in the default menu and keymaps.
 (add-hook 'q-script-mode-hook 'q-loadbalancer-mode/setup-menu)
 
@@ -314,7 +318,7 @@ the new parameters."
 ;;   :syntax-table q-loadbalancer-mode-syntax-table
 ;;   (setq font-lock-defaults q-font-lock-defaults))
 
-(define-derived-mode q-loadbalancer-mode comint-mode "Q-loadBalancer"
+(define-derived-mode q-loadbalancer-mode comint-mode "q-loadbalancer"
   "Major mode for interacting with a q interpreter via the load balancer."
   :syntax-table q-loadbalancer-mode-syntax-table
   (add-hook

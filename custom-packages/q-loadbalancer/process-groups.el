@@ -1,4 +1,4 @@
-;;; process-groups.el --- Manage KDB/Q processes via Emacs Lisp
+;;; process-groups.el --- Manage KDB/Q processes via Emacs Lisp -*- lexical-binding: t; -*-
 
 ;; Author: Simon Watson
 ;; Version: 1.2
