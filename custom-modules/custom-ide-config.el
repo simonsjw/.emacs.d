@@ -31,21 +31,8 @@
 (declare-function s-starts-with? "s")
 (declare-function s-ends-with? "s")
 
-(use-package consult-eglot
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "mohkale/consult-eglot"))
-
-(use-package consult-eglot-embark
- :straight
- (:type git
-        :flavor melpa
-        :files
-        ("extensions/consult-eglot-embark/consult-eglot-embark*.el"
-         "consult-eglot-embark-pkg.el")
-        :host github
-        :repo "mohkale/consult-eglot"))
+(use-package consult-eglot)
+(use-package consult-eglot-embark)
 
 (with-eval-after-load 'embark
   (with-eval-after-load 'consult-eglot
@@ -62,8 +49,9 @@
   ;; (add-hook 'after-save-hook 'eglot-format)
   )
 
-;; DAPE installation
-
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; eglot setup
+;; -----------
 ;; Excluding Pyright diagnostic notes
 ;; Pyright has some diagnostic notes that overlap with diagnostics provided by
 ;; ruff. These diagnostic notes can't be disabled via Pyright's config, but
@@ -82,22 +70,27 @@
 (advice-add 'eglot--report-to-flymake
             :filter-args #'my-filter-eglot-diagnostics)
 
-;; (defun mp-eglot-eldoc ()
-;;   "Set `eldoc-documentation-strategy` to
-;; `eldoc-documentation-compose-eagerly`."
-;;   (setq eldoc-documentation-strategy
-;;         'eldoc-documentation-compose-eagerly))
+(defun my-eglot/mp-eglot-eldoc ()
+  "Set `eldoc-documentation-strategy` - `eldoc-documentation-compose-eagerly`."
+  (setq eldoc-documentation-strategy
+        'eldoc-documentation-compose-eagerly))
 
-;; ;; Add the function to the eglot-managed-mode hook
-;; (add-hook 'eglot-managed-mode-hook 'mp-eglot-eldoc)
+;; Add the function to the eglot-managed-mode hook
+(add-hook 'eglot-managed-mode-hook #'my-eglot/mp-eglot-eldoc)
 
-;; use eldoc-box-hover-mode. 
+;; use eldoc-box-hover-mode.
 (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t)
-;; the below stops eldoc-box showing up if not explicitly requested. 
+;; the below stops eldoc-box showing up if not explicitly requested.
 (add-to-list 'eglot-ignored-server-capabilites :hoverProvider)
 
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Handle returns in comments.
+;; ---------------------------
+;; Make the return more intelligent.
 (defun my-ide/handle-return-in-comment (char)
-  "Handles return key in a comment context."
+  "Handle the return key in a comment context.
+
+CHAR denotes the character used for delimiting the comment."
   (let ((indent (current-indentation)))
     (newline)
     (indent-line-to indent)
@@ -154,8 +147,9 @@ COMMENT-ESCAPE is the string used to escape a comment (e.g., '# ')."
       (my-ide/handle-return-in-default)))))
 
 (defun my-debug/smart-newline ()
-  "Executes different newline handling functions based on the syntax
-context, in the current active buffer."
+  "Execute various newline handling functions based on the syntax context.
+
+This function assumes the buffer is the current active buffer."
   (interactive)
   ;; Make sure to switch to the correct buffer (if not already in it)
   ;;(with-current-buffer (other-buffer (current-buffer) 1)
@@ -163,54 +157,97 @@ context, in the current active buffer."
     (message "current face: %s" current-face)))
 
 
-(defvar-local align-comment-prefix nil
-  "Buffer-local variable to store the comment prefix for align-eol-comments.")
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; tab inline comments to comment-column
+;; -------------------------------------
+;; Get better formatting of inline comments.
+;; * `my-ide/comment-delimiter-char' must be set to provide the comment
+;; character.
+;; * my-ide/conditional-align-inline-comment aligns individual inline-comments.
+;; * my-ide/align-comments-in-buffer aligns inline-comments buffer wide.
+
+(defvar my-ide/comment-delimiter-char nil
+  "Character delimiting a comment - used for inline comment alignment.")
+
+(defun my-ide/align-comments-to-fill-column ()
+  "Align single-line comments to fill column after code on the same line.
+
+This function requires `my-ide/comment-delimiter-char' to get the character
+use for comments (for example, ?# for Python, ?; for Emacs Lisp).
+Aligns the comment to `fill-column` if it follows code on the same line,
+without overwriting code."
+  (let ((comment-char (or my-ide/comment-delimiter-char
+                          (setq my-ide/comment-delimiter-char
+                                (read-char "Enter the comment character: ")))))
+    (save-excursion  ; Preserve cursor position
+      (goto-char (line-beginning-position))  ; Start at the beginning of the line
+      (when
+          (and
+           (re-search-forward
+            (concat "[^[:space:]]" (char-to-string comment-char))
+            (line-end-position) t)
+           (< (current-column) fill-column))  ; Ensure code doesn't reach `fill-column`
+        (move-to-column fill-column t)))))  ; Align comment to `fill-column` if safe
 
 
-(defvar-local align-comment-prefix nil
-  "Buffer-local variable to store the comment prefix for align-eol-comments.")
+(defun my-ide/conditional-align-inline-comment ()
+  "Align comment delimiters to fill column where code precedes the comment.
 
-
-;; (defun align-eol-comments ()
-;;   "Align end-of-line comments to the fill column using `align-comment-prefix`.
-;; If called with an active region, align comments within the region.
-;; If no region is active, align comments on the current line.
-;; If called without a region or line, align comments in the entire buffer.
-
-;; Only aligns comments that are not in a string, and that follow other characters
-;; on the same line.
-
-;; Does not align comments that start with repeated COMMENT-PREFIX.
-
-;; Example usage for aligning across the buffer:
-;;    (align-eol-comments)"
-;;   (interactive)
-;;   (unless align-comment-prefix
-;;     (error "align-comment-prefix is not set. Please set it using a mode-specific hook.")) ; Ensure comment prefix is defined
-;;   (save-excursion
-;;     (let (
-;;           (comment-regex
-;;            (concat
-;;             "\\([^" (substring align-comment-prefix 0 1) "]\\)"                ; Match any character not starting with the prefix
-;;             "\\(\\s-*\\)"                                                      ; Match and capture optional whitespace before the comment
-;;             (regexp-quote align-comment-prefix)                                ; Match the actual comment prefix
-;;             "\\s-*"))                                                          ; Match any following whitespace after the comment prefix
-
-;;           (start (if (use-region-p) (region-beginning) (point-min)))           ; Determine the start point (region or whole buffer)
-;;           (end (if (use-region-p) (region-end) (point-max))))                  ; Determine the end point (region or whole buffer)
-
-;;       (goto-char start)                                                        ; Start searching from the determined position
-;;       (while (re-search-forward comment-regex end t)                           ; Search for matches of the comment pattern
-;;         (let ((comment-start (match-beginning 2)))                             ; Capture where the comment starts
-;;           (unless (nth 3 (syntax-ppss))                                        ; Ensure we are not inside a string
-;;             (goto-char comment-start)                                          ; Move to the start of the comment
-;;             (unless (looking-at " ")                                           ; Ensure there's at least one space before the comment
-;;               (insert " "))                                                    ; Insert a space if none is present
-;;             (move-to-column fill-column t)                                     ; Move cursor to the `fill-column` for alignment
-;;             (insert (match-string 3))))))))                                    ; Reinsert the matched comment part at the new column position
+This function requires `my-ide/comment-delimiter-char' to get the character
+used for comments (for example, ?# for Python, ?; for Emacs Lisp).
+If there is no code before the comment, if the line is blank, or if code
+reaches `fill-column`, use default TAB functionality."
+  (interactive)
+  ;; Ensure `my-ide/comment-delimiter-char` is set, prompting if not
+  (let ((comment-char (or my-ide/comment-delimiter-char
+                          (setq my-ide/comment-delimiter-char
+                                (read-char "Enter the comment character: ")))))
+    (let ((line-has-code-before-comment
+           (save-excursion
+             (goto-char (line-beginning-position))  ; Move to the beginning of the line
+             (and
+              (re-search-forward "[^[:space:]]" (point) t)  ; Check for code (non-whitespace) on the line
+              (search-forward (char-to-string comment-char) (line-end-position) t)))))  ; Look for comment char after code
+      (if (and line-has-code-before-comment
+               (< (current-column) fill-column))  ; Ensure code doesn't reach `fill-column`
+          (my-ide/align-comments-to-fill-column)  ; Align if there's code before the comment and space available
+        (indent-for-tab-command)))))  ; Otherwise, use default TAB behaviour
 
 
 
+(defun my-ide/align-comments-in-buffer ()
+  "Align in-line comments in the current buffer to fill column on code lines.
+
+This function requires `my-ide/comment-delimiter-char' to get the character used
+for comments (for example, ?# for Python, ?; for Emacs Lisp).
+This applies the alignment only if there is code before the comment and if it
+won't overwrite existing code."
+  (interactive "cEnter the comment character: ")  ; Prompt for the comment character
+  (save-excursion  ; Preserve the cursor position after running the function
+    (goto-char (point-min))  ; Start at the beginning of the buffer
+    (while (not (eobp))  ; Loop until the end of the buffer
+      (let
+          ((line-has-code-before-comment
+            (save-excursion
+              (goto-char (line-beginning-position))  ; Move to the start of the line
+              (and
+               (re-search-forward "[^[:space:]]" (point) t)  ; Check for code before the comment
+               (search-forward
+                (char-to-string my-ide/comment-delimiter-char)
+                (line-end-position) t)))))  ; Locate comment char
+        (when (and line-has-code-before-comment
+                   (< (current-column) fill-column))  ; Ensure code doesn't reach `fill-column`
+          (my-ide/align-comments-to-fill-column)))  ; Align the comment if conditions are met
+      (forward-line 1))))  ; Move to the next line
+
+
+;; Example: Bind this function to the TAB key in programming modes only
+;; (add-hook
+;;  'prog-mode-hook
+;;  (lambda ()
+;;    (local-set-key (kbd "TAB") (lambda ()
+;;                                 (interactive)
+;;                                 (conditional-align-or-tab ?\;)))))
 
 ;; turn on editorconfig if it is available
 (when (require 'editorconfig nil :noerror)
@@ -221,4 +258,5 @@ context, in the current active buffer."
 ;;; custom-ide-config.el ends here
 
 
-                                        ; LocalWords:  eglot dape
+                                        ; LocalWords:  eglot dape ide
+                                        ; LocalWords:  cEnter
