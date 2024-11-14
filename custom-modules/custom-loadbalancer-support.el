@@ -468,8 +468,6 @@ KDB/Q process."
 ;; To stop the process, call
 ;; (stop-process "loadBalancer")
 
-(require 'custom-logging-config)
-
 
 (provide 'custom-loadbalancer-support)
 ;;; custom-loadbalancer-support.el ends here

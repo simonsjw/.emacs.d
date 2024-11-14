@@ -9,22 +9,9 @@
 ;;; Code:
 
 ;; JSON
-(use-package json-snatcher
-  :straight ( :type git
-              :flavor melpa
-              :host github
-              :repo "Sterlingg/json-snatcher"))
-
-(use-package json-mode
-  :straight ( :type git
-              :flavor melpa
-              :host github
-              :repo "json-emacs/json-mode"))
-(use-package csv-mode
-  :straight ( :type git
-              :host github
-              :repo "emacs-straight/csv-mode"
-              :files ("*" (:exclude ".git"))))
+(use-package json-snatcher)
+(use-package json-mode)
+(use-package csv-mode)
 
 
 ;; CSV

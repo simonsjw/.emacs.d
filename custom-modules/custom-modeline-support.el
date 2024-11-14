@@ -8,7 +8,9 @@
 
 ;;; Commentary:
 
-;; This package handles the doom-emacs modeline
+;; This package handles the doom-emacs modeline with some generic 
+;; customisation. Note that there is specific customisation for 
+;; q-loadbalancer-mode in the package itself. 
 
 ;;; Declarations and imports
 (defvar my-window-tag)
@@ -33,11 +35,6 @@
 
 ;; https://github.com/seagle0128/doom-modeline
 (use-package doom-modeline
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "seagle0128/doom-modeline")
-  :ensure t
   :hook (after-init . doom-modeline-mode))
 
 ;;; code:
@@ -53,21 +50,32 @@
                             'mode-line-inactive)) ; Face for the inactive mode-line
       "")))
 
+(defun q-loadbalancer-buffer-list-segment ()
+  "Display buffers with names starting with '*Q PROC:' in q-loadbalancer-mode."
+  (let ((buffers (seq-filter (lambda (buf)
+                               (string-prefix-p "*Q PROC:" (buffer-name buf)))
+                             (buffer-list))))
+    (mapconcat (lambda (buf) (buffer-name buf)) buffers " | ")))
+
+
 (with-eval-after-load 'doom-modeline
+
+  ;; ##########################################################################
+  ;; CUSTOM SEGMENTS.
+  ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  ;; Window tag name
   (doom-modeline-def-segment my-window-tag
     "Display the tag of the current window in the modeline."
     (my-segment/window-tag))
-
-  ;;
+  
+  ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ;; Matching Bracket Segment
-  ;;
-
   (doom-modeline-def-segment matching-bracket
     "Displays the matching bracket information if the cursor is on or next to a bracket.
 
 If the cursor is not on or next to a bracket, displays an empty string."
     (let* ((match-info
-            (my-in-buffer-tools/get-matching-bracket-position (point)))  ; Get matching bracket information
+            (my-in-buffer-tools/get-matching-bracket-position (point)))        ; Get matching bracket information
            (display-info
             (if match-info
                 ;; If match-info is available, format the bracket details
@@ -80,7 +88,8 @@ If the cursor is not on or next to a bracket, displays an empty string."
       ;; Return the formatted string or an empty string
       display-info))
 
-
+  ;; ##########################################################################
+  ;; END OF CUSTOM SEGMENTS.
   
   (doom-modeline-def-modeline 'main
     '(eldoc my-window-tag workspace-name window-number modals matches
@@ -163,10 +172,8 @@ If the cursor is not on or next to a bracket, displays an empty string."
                     matching-bracket)
     '(misc-info minor-modes major-mode process))
 
-
   ;; Set the custom modeline as the default
   (doom-modeline-set-modeline 'my-modeline 'main))
-
 
 
 ;; Delete window using modeline:
@@ -174,7 +181,6 @@ If the cursor is not on or next to a bracket, displays an empty string."
 ;; from the modeline. 
 (global-set-key [mode-line mouse-3]
                 'my-window-tools/delete-window-confirmation)
-
 
 
 (provide 'custom-modeline-support)

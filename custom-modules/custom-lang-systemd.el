@@ -24,14 +24,10 @@
 ;;; Code:
 
 ;;; Packages phase
-(straight-use-package
- '(systemd-mode :type git :host github :repo "holomorph/systemd-mode"))
+(use-package systemd-mode)
 
 ;;; Configuration phase
 ;; (non - can add company-mode hooks if you use company though.)
-
-(require 'custom-logging-config)
-
 
 (provide 'custom-lang-systemd)
 ;;; custom-lang-systemd.el ends here

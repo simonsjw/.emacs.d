@@ -15,17 +15,11 @@
 
 ;; base docker commands.
 ;; https://github.com/Silex/docker.el
-(use-package docker
-  :straight ( :type git
-              :host github
-              :repo "Silex/docker.el"))
+(use-package docker)
 
 ;; completions for editing docker compose files.
 ;; https://github.com/meqif/docker-compose-mode
-(use-package docker-compose-mode
-  :straight ( :type git
-              :host github
-              :repo "meqif/docker-compose-mode"))
+(use-package docker-compose-mode)
 
 ;;; Configuration phase
 (defvar docker-run-as-root)

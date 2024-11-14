@@ -16,27 +16,13 @@
 
 ;;; Package phase
 
-(use-package transient
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "magit/transient"))
+(use-package transient)
 
 (require 'transient)                    ; this is a temporary workaround to manage the below error:
                                         ;     https://emacs.stackexchange.com/questions/50592/whats-this-slot-missing-invalid-slot-name-transient-prefix-transient-pref/50781#50781
                                         ;     ⛔ Error (use-package): forge/:catch: Invalid slot name: "#<transient-prefix transient-prefix-16feca7769a6>", :transient-switch-frame
 
-(use-package magit
-  :straight (:type git
-                   :flavor melpa
-                   :files ("lisp/magit*.el"
-                           "lisp/git-*.el"
-                           "docs/magit.texi"
-                           "docs/AUTHORS.md"
-                           "LICENSE"
-                           "magit-pkg.el"
-                           (:exclude "lisp/magit-section.el") "magit-pkg.el")
-                   :host github :repo "magit/magit"))
+(use-package magit)
 
 
 ;; Ensure github functionality is activated in magit. 
@@ -48,18 +34,10 @@
 
 ;; git-modes
 ;; support for git configuration files.
-(use-package git-modes
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "magit/git-modes"))
+(use-package git-modes)
 
 ;; Support todos and similar with git in Magit. 
 (use-package magit-todos
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "alphapapa/magit-todos")
   :after magit
   :config (magit-todos-mode 1))
 

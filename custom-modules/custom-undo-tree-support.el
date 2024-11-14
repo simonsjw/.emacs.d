@@ -17,11 +17,7 @@
 
 ;; Undo-tree package
 ;; https://gitlab.com/tsc25/undo-tree/-/blob/master/undo-tree.el
-(use-package undo-tree
-  :straight (:type git
-                   :host github
-                   :repo "emacs-straight/undo-tree"
-                   :files ("*" (:exclude ".git"))))
+(use-package undo-tree)
 
 (require 'undo-tree)
 (global-undo-tree-mode)

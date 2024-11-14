@@ -13,52 +13,21 @@
 ;;; Code:
 
 (use-package which-key
-  :straight (:type git
-                   :flavor melpa
-                   :host github :repo "justbur/emacs-which-key")
   :config
   (which-key-mode))
 
 ;; editorconfig is a cross-editor/ide configuration tool to control
 ;; indentation, spaces vs tabs, etc.
-(use-package editorconfig
-  :delight
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "editorconfig/editorconfig-emacs"))
-
+(use-package editorconfig)
 ;; a minor mode to always keep your code indented while editing blocks of code.
-(use-package aggressive-indent
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "Malabarba/aggressive-indent-mode"))
-
+(use-package aggressive-indent)
 ;; Jump to the definition of a function. Works using oldskool
 ;; rgrep type approaches. (No fancy tree-sitter here!)
 ;; https://github.com/jacktasia/dumb-jump
-(use-package dumb-jump
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "jacktasia/dumb-jump"))
-
+(use-package dumb-jump)
 ;; Get some yasnippets installed.
 ;; https://github.com/AndreaCrotti/yasnippet-snippets
-(use-package yasnippet-snippets
-  :straight (:type git
-                   :flavor melpa
-                   :files ("*.el" "snippets" ".nosearch"
-                           "yasnippet-snippets-pkg.el")
-                   :host github
-                   :repo "AndreaCrotti/yasnippet-snippets"))
-
-(use-package persistent-scratch
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "Fanael/persistent-scratch"))
+(use-package yasnippet-snippets)
 
 (provide 'straight-crafted-ide-packages)
 ;;; straight-crafted-ide-packages.el ends here

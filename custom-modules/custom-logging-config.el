@@ -249,9 +249,6 @@ ARGS:
      :logFile log/init-log :fn fn :msg msg :obj obj
      :lvl log/lvl-INFO)))
 
-;; (log/debug :fn 'custom-logging-config
-;;            :msg "Providing custom-logging-config."
-;;            :obj t)
 
 (provide 'custom-logging-config)
 ;;; custom-logging-config.el ends here

@@ -34,31 +34,30 @@
 ;;   * geiser-stklos
 
 (require 'custom-system-tools)
-(require 'straight)  ;; If `straight-use-package` is part of another package
 (require 'eldoc)
 (require 'yasnippet)
 (require 'yasnippet-snippets)
 
 ;; Emacs Lisp
 ;; https://codeberg.org/ideasman42/emacs-elisp-autofmt
-(straight-use-package 'elisp-autofmt)
+(use-package elisp-autofmt)
 
 ;; Common Lisp
-(straight-use-package 'sly)
-(straight-use-package 'sly-asdf)
-(straight-use-package 'sly-quicklisp)
-(straight-use-package 'sly-repl-ansi-color)
+(use-package sly)
+(use-package sly-asdf)
+(use-package sly-quicklisp)
+(use-package sly-repl-ansi-color)
 
 ;; Clojure
-(straight-use-package 'cider)
-(straight-use-package 'clj-refactor)
-(straight-use-package 'clojure-mode)
-(straight-use-package 'flycheck-clojure)
+(use-package cider)
+(use-package clj-refactor)
+(use-package clojure-mode)
+(use-package flycheck-clojure)
 
 ;; Scheme and Racket
-(straight-use-package 'geiser)
-(straight-use-package 'geiser-guile)
-(straight-use-package 'geiser-racket)
+(use-package geiser)
+(use-package geiser-guile)
+(use-package geiser-racket)
 
 ;;; Code:
 
@@ -160,8 +159,15 @@
 
   ;;; IDE layout
   ;;  ----------
-  ;; set preferred buffer width
-  (my-programming-mode/set-fill-column-indicator 79)
+  (my-programming-mode/set-fill-column-indicator 79)                          ; set preferred buffer width
+
+  (my-programming-mode/set-inline-comment-column 81)                          ; set the preferred start of inline comments. 
+  (setq my-ide/comment-delimiter-char ?\;)
+
+
+  (local-set-key (kbd "TAB") (lambda ()
+                               (interactive)
+                               (conditional-align-or-tab)))
 
 
   ;;; IDE functionality map

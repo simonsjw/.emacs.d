@@ -74,11 +74,7 @@
 
 ;;; Packages:
 
-(use-package no-littering
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "emacscollective/no-littering"))
+(use-package no-littering)
 
 ;;; Code:
 

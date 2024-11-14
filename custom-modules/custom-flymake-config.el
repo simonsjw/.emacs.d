@@ -19,7 +19,6 @@
 ;; flymake configuration
 ;; ---------------------
 (use-package flymake
-  :ensure nil
   :custom
   (flymake-mode-line-lighter "ERR")
   ;;(flymake-mode-line-format

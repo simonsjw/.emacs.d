@@ -20,22 +20,7 @@
 
 ;;; Packages
 
-(use-package vterm
-  :straight (:type git
-                   :flavor melpa
-                   :files ("CMakeLists.txt"
-                           "elisp.c"
-                           "elisp.h"
-                           "emacs-module.h"
-                           "etc"
-                           "utf8.c"
-                           "utf8.h"
-                           "vterm.el"
-                           "vterm-module.c"
-                           "vterm-module.h"
-                           "vterm-pkg.el")
-                   :host github
-                   :repo "akermu/emacs-libvterm"))
+(use-package vterm)
 
 ;; (use-package eterm-256color
 ;;   :straight (:type git

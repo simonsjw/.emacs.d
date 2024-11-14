@@ -12,11 +12,8 @@
 
 ;;; Code:
 
-(straight-use-package
- '(cell-mode :type git
-             :host gitlab
-             :repo "dto/cell-mode")) 
 
+(load-file "~/.emacs.d/custom-packages/cell-mode/cell-mode.el")
 (require 'cell-mode)
 
 ;;; Look & Feel

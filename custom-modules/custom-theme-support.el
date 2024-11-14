@@ -101,32 +101,20 @@
         (replace-match (concat (make-string (- comment-column (current-column)) ?\s) ";\\2") t t)))))
 
 ;; https://github.com/emacsmirror/rainbow-mode/blob/master/rainbow-mode.el
-(use-package rainbow-mode
-  :straight (:type git
-                   :host github
-                   :repo "emacs-straight/rainbow-mode"
-                   :files ("*" (:exclude ".git"))))
+(use-package rainbow-mode)
 
 ;;; Modus-themes
 ;; https://github.com/protesilaos/modus-themes
-(use-package modus-themes
-  :straight
-  (:type git :host github :repo "protesilaos/modus-themes"))
+(use-package modus-themes)
 
 ;;; Solaire mode
 ;; make background of virtual buffers slighly different to real (file based) ones.
 ;; https://github.com/hlissner/emacs-solaire-mode
-(use-package solaire-mode
-  :straight
-  (:type git :host github :repo "hlissner/emacs-solaire-mode"))
+(use-package solaire-mode)
 
 
 ;; https://github.com/rainstormstudio/nerd-icons.el
 (use-package nerd-icons
-  :straight (:type git
-                   :flavor melpa
-                   :files (:defaults "data" "nerd-icons-pkg.el")
-                   :host github :repo "rainstormstudio/nerd-icons.el")
   :custom
   ;; The Nerd Font you want to use in GUI
   ;; "Symbols Nerd Font Mono" is the default and is recommended
@@ -135,30 +123,18 @@
 
 (use-package nerd-icons-completion
   :after marginalia
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "rainstormstudio/nerd-icons-completion")
   :config
   (nerd-icons-completion-mode)
   (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
 
 ;; https://github.com/rainstormstudio/nerd-icons-dired
 (use-package nerd-icons-dired
-  :straight(:type git
-                  :flavor melpa
-                  :host github
-                  :repo "rainstormstudio/nerd-icons-dired")
   :hook
   (dired-mode . nerd-icons-dired-mode))
 
 ;; https://github.com/LuigiPiucco/nerd-icons-corfu
 (use-package nerd-icons-corfu
   :after corfu
-  :straight(:type git
-                  :flavor melpa
-                  :host github
-                  :repo "LuigiPiucco/nerd-icons-corfu")
   :config
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 
@@ -173,10 +149,6 @@
 
 ;; https://github.com/seagle0128/nerd-icons-ibuffer
 (use-package nerd-icons-ibuffer
-  :straight(:type git
-                  :flavor melpa
-                  :host github
-                  :repo "seagle0128/nerd-icons-ibuffer")
   :hook (ibuffer-mode . nerd-icons-ibuffer-mode))
 
 ;; Ensure org-src is loaded for fontification
@@ -222,7 +194,7 @@
 
 (defvar info-theme-bold-code-green         "#169C05")
 (defvar info-theme-dark-blue-green         "#06313C")
-(defvar info-theme-faded-lime              "#859900")
+(defvar info-theme-faded-lime              "#5A6800")
 (defvar info-theme-sharp-lime              "#A6BE00")
 (defvar info-theme-grass                   "#4F9C02")
 

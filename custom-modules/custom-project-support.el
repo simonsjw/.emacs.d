@@ -13,33 +13,14 @@
 ;; code:
 
 ;;; Packages phase
-(use-package csv-mode
-  :straight (:type git
-                   :host github
-                   :repo "emacs-straight/csv-mode"
-                   :files ("*" (:exclude ".git"))))
-
 (use-package projectile
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "bbatsov/projectile")
   :config
   (projectile-mode +1)
   (define-key
    projectile-mode-map (kbd "C-c p") 'projectile-command-map))
 
-(use-package consult-projectile
-  :straight (:type git
-                   :flavor melpa
-                   :host gitlab
-                   :repo "OlMon/consult-projectile"))
-
-(use-package ibuffer-projectile
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "purcell/ibuffer-projectile"))
+(use-package consult-projectile)
+(use-package ibuffer-projectile)
 
 ;;; Configuration phase
 

@@ -16,11 +16,7 @@
 
 ;;; Packages phase
 
-(use-package flymake-shellcheck
-  :straight ( :type git
-              :flavor melpa
-              :host github
-              :repo "federicotdn/flymake-shellcheck"))
+(use-package flymake-shellcheck)
 
 (require 'sh-script)
 
@@ -83,7 +79,7 @@
 ;; (add-hook 'bash-ts-mode-hook 'flymake-shellcheck-load)
 
 ;; save the file automatically. 
-;; (add-hook 'bash-ts-mode-hook 'my/auto-save-hook) 
+;; (add-hook 'bash-ts-mode-hook 'my-programming-mode/auto-save-hook) 
 
 ;; Configuration for bash-ts-mode
 ;; (add-hook 'bash-ts-mode-hook

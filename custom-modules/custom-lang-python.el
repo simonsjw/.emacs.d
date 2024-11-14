@@ -95,34 +95,10 @@
 ;;                    :host gitlab
 ;;                    :repo "python-mode-devs/python-mode"))
 
-
-(use-package pythonic
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "pythonic-emacs/pythonic"))
-
-(use-package pyvenv
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "jorgenschaefer/pyvenv"))
-
-(use-package anaconda-mode
-  :straight (:type git
-                   :flavor melpa
-                   :files (:defaults
-                           "anaconda-mode.py"
-                           "anaconda-mode-pkg.el")
-                   :host github
-                   :repo "pythonic-emacs/anaconda-mode"))
-
-(use-package numpydoc
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "douglasdavis/numpydoc.el"))
-
+(use-package pythonic)
+(use-package pyvenv)
+(use-package anaconda-mode)
+(use-package numpydoc)
 
 ;; Although this setup uses the tree sitter mode (python-ts-mode) for
 ;; Python language buffers, we still want to have the official

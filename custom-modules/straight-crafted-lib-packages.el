@@ -12,21 +12,14 @@
 ;;; Code:
 
 ;; dash.el: A modern list API for Emacs. No 'cl required.
-(use-package dash
-  :straight (:type git :host github :repo "magnars/dash.el"))
+(use-package dash)
 
 ;; The long lost Emacs string manipulation library.
-(use-package s
-  :straight (:type git :host github :repo "magnars/s.el"))
+(use-package s)
 
-;; (use-package pkg-info
-;;   :straight (:type git
-;;                    :flavor melpa
-;;                    :host github
-;;                    :repo "emacsorphanage/pkg-info"))
+;; (use-package pkg-info)
 
-(use-package jump
-  :straight (:type git :host github :repo "eschulte/jump.el"))
+(use-package jump)
 
 (provide 'straight-crafted-lib-packages)
 ;;; straight-crafted-lib-packages.el ends here

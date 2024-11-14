@@ -37,16 +37,16 @@
 (defvar info-theme-white-grey)
 
 (defvar pretty-speedbar-font)
-(defvar pretty-speedbar-icons-dir)          ;; Icon location storage folder.
+(defvar pretty-speedbar-icons-dir)                                             ; Icon location storage folder.
 (defvar pretty-speedbar-icon-size)
-(defvar pretty-speedbar-icon-fill)          ;; Fill color for all non-folder icons.
-(defvar pretty-speedbar-icon-stroke)        ;; Stroke color for all non-folder icons.
-(defvar pretty-speedbar-icon-folder-fill)   ;; Fill color for all folder icons.
-(defvar pretty-speedbar-icon-folder-stroke) ;; Stroke color for all folder icons.
-(defvar pretty-speedbar-about-fill)         ;; Fill color for all icons placed to the right of the file name, including checks and locks.
-(defvar pretty-speedbar-about-stroke)       ;; Stroke color for all icons placed to the right of the file name, including checks and locks.
-(defvar pretty-speedbar-signs-fill)         ;; Fill color for plus and minus signs used on non-folder icons.
-
+(defvar pretty-speedbar-icon-fill)          ; Fill color for all non-folder icons.
+(defvar pretty-speedbar-icon-stroke)        ; Stroke color for all non-folder icons.
+(defvar pretty-speedbar-icon-folder-fill)   ; Fill color for all folder icons.
+(defvar pretty-speedbar-icon-folder-stroke) ; Stroke color for all folder icons.
+(defvar pretty-speedbar-about-fill)         ; Fill color for all icons placed to the right of the file name, including checks and locks.
+(defvar pretty-speedbar-about-stroke)       ; Stroke color for all icons placed to the right of the file name, including checks and locks.
+(defvar pretty-speedbar-signs-fill)         ; Fill color for plus and minus signs used on non-folder icons.
+;; test
 (defvar projectile-speedbar-enable)
 
 (declare-function speedbar-refresh "speedbar")
@@ -54,28 +54,11 @@
 (declare-function speedbar-add-supported-extension "speedbar")
 ;;; Code:
 
-(use-package sr-speedbar
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "emacsorphanage/sr-speedbar"))
-
-(use-package projectile-speedbar
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "anshulverma/projectile-speedbar"))
-
-;; Note:  pretty-speedbar-icons-dir has been redefined in custom-file-support
-;; to point to a directory in the icon stash. 
-(use-package pretty-speedbar
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "kcyarn/pretty-speedbar"))
+(use-package sr-speedbar)
+(use-package projectile-speedbar)
+(use-package pretty-speedbar)                                                  ; pretty-speedbar-icons-dir has been redefined in custom-file-support to point to a directory in the icon stash. 
 
 ;;; Look & Feel
-
 (setq pretty-speedbar-icons-dir
       (expand-file-name
        (concat user-emacs-directory "etc/images/pretty-speedbar-icons"))

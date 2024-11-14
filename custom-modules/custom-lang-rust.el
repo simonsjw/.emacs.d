@@ -20,57 +20,24 @@
 ;;; Packages phase
 
 (use-package rust-mode
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "rust-lang/rust-mode")
   :init
   (setq rust-mode-treesitter-derive t))
+(use-package cargo)
+(use-package cargo-mode)
+(use-package cargo-transient)
 
-
-(use-package cargo
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "kwrooijen/cargo.el"))
-
-
-(use-package cargo-mode
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "ayrat555/cargo-mode"))
-
-
-(use-package cargo-transient
-  :straight (:type git
-                   :flavor melpa
-                   :host github
-                   :repo "peterstuart/cargo-transient"))
-
-
-;; use Rustic for Rust mode 
+;; use Rustic for Rust mode
 ;; https://github.com/brotzeit/rustic
 ;; https://github.com/rust-lang/rust-mode
 ;; (installed as a dependency by package manager installing rustic.)
-(use-package rustic
-  :straight ( :type git
-              :host github
-              :repo "brotzeit/rustic"))
+(use-package rustic)
 
 
 (when (and custom-file
 	   (file-exists-p custom-file))
-  (load custom-file nil :nomessage))
+(load custom-file nil :nomessage))
 
 ;; (add-hook 'some-mode-hook #'eglot-ensure)
-
-;; Automatically save
-(defun rustic-mode-auto-save-hook ()
-  "Enable auto-saving in rustic-mode buffers."
-  (when buffer-file-name
-    (setq-local compilation-ask-about-save nil)))
-(add-hook 'rustic-mode-hook 'rustic-mode-auto-save-hook)
 
 ;; Set path to rust-analyzer
 (setq rustic-analyzer-command '("~/.cargo/bin/rust-analyzer"))
@@ -142,6 +109,9 @@
   (add-hook 'eglot--managed-mode-hook (lambda () (flymake-mode -1)))
   ;; (add-hook 'rust-mode-hook 'eglot-ensure)  - not used in rustic
   (setq rustic-lsp-client 'eglot)
+
+  ;; Auto-save
+  (my-programming-mode/auto-save-hook)
 
 
   ;; You will probably want to tweak this variable, it determines how
