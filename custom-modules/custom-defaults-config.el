@@ -16,8 +16,11 @@
 
 ;;; Code:
 
-;; Set default coding system.
-(set-default-coding-systems 'utf-8)
+
+;;; Global Settings
+;;  ---------------
+(setq-default lexical-binding t)                                               ; set variable scoping to be within the functions called by default as per modern languages. 
+(set-default-coding-systems 'utf-8)                                            ; set default coding system.
 
 (defvar my-paths/ispell-word-replacement)
 
@@ -343,11 +346,17 @@ also enables undo functionality if the window layout changes."
 ;; Provide a function to set the fill column indicator.
 ;; This has a default of 80 but can be set on a per mode basis.
 (defun my-programming-mode/set-fill-column-indicator (&optional column)
-  "Set the preferred fill-column indicator for the current mode.
+  "Set the preferred fill column indicator for the current mode.
 If COLUMN is not provided, use 80 as the default value."
   (setq display-fill-column-indicator-column (or column 80)) ; Use COLUMN or 80 if COLUMN is nil
   (display-fill-column-indicator-mode 1))
 
+;; Provide a function to set the fill column indicator.
+;; This has a default of 80 but can be set on a per mode basis.
+(defun my-programming-mode/set-inline-comment-column (&optional column)
+  "Set the preferred inline-comment-column starting point for the current mode.
+If COLUMN is not provided, use 80 as the default value."
+  (setq comment-column (or column 82))) ; Use COLUMN or 80 if COLUMN is nil
 
 ;; Configuration for all programming modes.
 (defun my-programming-mode/programming-mode-config-hook ()
@@ -355,7 +364,7 @@ If COLUMN is not provided, use 80 as the default value."
   (interactive)
 
   ;; Provide an autosave hook.
-  (defun my/auto-save-hook ()
+  (defun my-programming-mode/auto-save-hook ()
     "Enable auto-saving in prog-mode buffers."
     (when buffer-file-name
       (setq-local compilation-ask-about-save nil)))
@@ -364,7 +373,6 @@ If COLUMN is not provided, use 80 as the default value."
   ;; (after custom-theme-support has defined the face.)
   (when (facep 'my-font-faces/prog-mode-face)
     (face-remap-add-relative 'default 'my-font-faces/prog-mode-face))
-
 
   (setq display-line-numbers-type 'absolute)
   (display-line-numbers-mode)           ; activate line numbers.
