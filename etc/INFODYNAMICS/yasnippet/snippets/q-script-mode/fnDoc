@@ -1,0 +1,30 @@
+# -*- mode: snippet -*-
+# name: function docstring
+# key: fndoc
+# --
+// @kind function
+// @fileoverview ${1:fnName} returns the sum of two numbers as an integer.
+// @author
+// @todo This task needs to be done
+// @todo This task also needs to be completed
+// @param x {long} First parameter 
+// @param y {long} Second parameter
+// @param z {(symbol;long; byte)}  This is the description of parameter z
+// @param a {table (a:long; b:char)}  Description of parameter a
+// @param b {dict (a:long; b:char)}  Description of the dictionary parameter b.
+// @param c {float[]}  Description of the vector parameter c
+// @return {int} Sum of the parameters
+// @see .some.other.fn
+// @example Bar
+// // This is a long description of how the example should work.
+// // Long descriptions can be multiple lines
+//
+// foo `AAPL`GOOG`MSFT`AMZN
+// /=> "AAPL"
+// /=> "GOOG"
+// /=> "MSFT"
+// /=> "AMZN"
+//
+${1}:{...
+};
+

@@ -1,0 +1,21 @@
+# -*- mode: snippet -*-
+# name: Namespace Documentation with a sub namespace domain also specified. 
+# key: nsDocWSub
+# --
+// @kind readme
+// @name .${1:foo}/README.md
+// @category ${1}
+// @author
+// @todo This task needs to be done
+// @todo This task also needs to be completed
+// @see .bat.quaz
+// @see baz
+// # Foo
+// This a readme for the .foo namespace. 
+// It contains the following items:
+//      - .${1}.ADD
+//      - .${1}.PI
+// 
+// end
+
+// Followed by code ...
