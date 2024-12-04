@@ -13,13 +13,20 @@
 ;; efficient matching of buffers to the appropriate frame and window.
 ;;
 
+
+(declare-function sr-speedbar-window "sr-speedbar")
+(declare-function sr-speedbar-close "sr-speedbar")
+
 (require 'custom-system-objects)
 (require 'custom-ui-config)
+
+
 
 ;;; Code:
 
 (defvar my-window-tools/buffer-window-map
-  '((:names   . (("*scratch*" . terminal)
+  '((:names   . (("*dape-shell*" . terminal)
+                 ("*scratch*" . terminal)
                  ("*SQL Results*" . data)
                  ("*Backtrace*" . data)
                  ("*grep*" . data)
@@ -47,6 +54,7 @@
                  ("*projectile-files-errors*". logs)
                  ("*Async-native-compile-log*". logs)
                  ("*elisp-flymake-byte-compile*" . logs)
+                 ("*RE-Builder*" . config)
                  ("*Anaconda*". config)
                  ("conf.org" . config)
                  ("*eldoc*" . config)
@@ -122,13 +130,14 @@
                                              "*dape-info Scope*"
                                              "*dape-info Stack*"
                                              "*dape-info Breakpoints*"
+                                             "*dape-shell*"
                                              "logs"
                                              "edit"
                                              "data"
                                              "terminal"
                                              "config"
                                              "vc")
-  "A list of buffers to be excluded from the matching process.")
+  "A list of buffers to be excluded from the window matching process.")
 
 (defvar my-window-tools/window-hash (make-hash-table :test 'equal)
   "Hash table to store window references keyed by window-tag.")
@@ -145,6 +154,22 @@
 
 ;; Add this function to `kill-buffer-hook`
 (add-hook 'kill-buffer-hook #'my-window-tools/update-known-buffers-on-kill)
+
+(defun my-close-sr-speedbar-on-frame-delete (frame)
+  "Close sr-speedbar if it's in the FRAME being deleted.
+
+This function is needed since sr-speedbar has a timer that allows it to
+periodically refresh the speedbar.  The issue here is that it tries to refresh
+speedbar when the window that contains it no longer exists."
+  (when (and (frame-live-p frame)
+             (window-live-p (frame-selected-window frame)))
+    (let ((speedbar-window (sr-speedbar-window)))
+      (when (and speedbar-window
+                 (eq (window-frame speedbar-window) frame))
+        (sr-speedbar-close)))))
+
+(add-hook 'delete-frame-functions #'my-close-sr-speedbar-on-frame-delete)
+
 
 (defconst my-window-tools/default-tag 'edit
   "The default tag assigned to non-system buffers when no tag is found.")
@@ -214,7 +239,7 @@ assignment is made."
               (unless output-only
                 ;; Move the buffer to the target window
                 (my-window-tools/move-buffer-to-window
-                 buffer window original-window))
+                 buffer window original-window output-only))
               ;; Return the window and tag as a cons cell
               (cons window tag))
           (progn
@@ -414,7 +439,7 @@ out by the window assignment algorithm here."
         (my-window-tools/assign-buffer-to-window buffer)))))
 
 (defun my-window-tools/reassign-buffer-to-default-window (buffer)
-  "Reassign BUFFER to its default window based the value it has in `tag',
+  "Reassign a BUFFER to a window based the value in `tag',
 
   It is also removed from the original window and the tab-line is updated."
   (my-window-tools/assign-buffer-to-window buffer))
@@ -497,7 +522,10 @@ Utility function shows the tag associated with the current selected window."
 
 
 (defun my-window-tools/display-buffer (buffer alist)
-  "Display BUFFER in the appropriate window based on its tag."
+  "Display BUFFER in the appropriate window based on its tag.
+
+ALIST is a dummy variable to make the function conform to the expected
+signature."
   (let* ((tag (my-window-tools/get-buffer-tag-or-default buffer))
          (window (and tag (my-window-tools/get-window-for-tag tag)))
          (original-window (get-buffer-window buffer)))
