@@ -132,8 +132,8 @@
 ;;       ;; Pass the full plist to `dape`
 ;;       (dape config))))
 
-;; The latest version of jsonrpc is needed.
-;; (use-package jsonrpc :straight t :demand t)
+;; The latest version of jsonrpc is needed. You need to swap it in the
+;; existing Emacs files then rebuild. This issue will be resolved in Emacs 30.
 
 
 ;;(straight-pull-all)
@@ -145,11 +145,11 @@
   ;; If you do not want to use any prefix, set it to nil.
   ;; (setq dape-key-prefix "\C-x\C-a")
 
-  ;;  :hook
+  ;;:hook
   ;; Save breakpoints on quit
-  ;; ((kill-emacs . dape-breakpoint-save)
+  ;;((kill-emacs . dape-breakpoint-save)
   ;; Load breakpoints on startup
-  ;;  (after-init . dape-breakpoint-load))
+  ;; (after-init . dape-breakpoint-load))
 
   :config
   ;; Turn on global bindings for setting breakpoints with mouse
@@ -166,10 +166,16 @@
   ;; (setq dape-info-hide-mode-line nil)
 
   ;; Pulse source line (performance hit)
-  ;; (add-hook 'dape-display-source-hook 'pulse-momentary-highlight-one-line)
+  (add-hook 'dape-display-source-hook 'pulse-momentary-highlight-one-line)
+
+  ;; Save breakpoints on quit
+  (add-hook 'kill-emacs-hook 'dape-breakpoint-save)
+  
+  ;; Load breakpoints on startup
+  (add-hook 'after-init-hook 'dape-breakpoint-load)
 
   ;; Showing inlay hints
-  ;; (setq dape-inlay-hints t)
+  (setq dape-inlay-hints t)
 
   ;; Save buffers on startup, useful for interpreted languages
   ;; (add-hook 'dape-start-hook (lambda () (save-some-buffers t t)))
@@ -204,6 +210,7 @@
             ;; Ensure all necessary settings are in place
             (when (not (assoc 'debugpy dape-configs))
               (message "debugpy configuration missing in dape-configs"))))
+
 
 ;; (straight-rebuild-package "dape")
 (provide 'custom-debugger-support)
