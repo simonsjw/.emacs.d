@@ -1,5 +1,5 @@
 # -*- mode: snippet -*-
-# name: Namespace Documentation with a sub namespace domain also specified. 
+# name: Namespace & sub Doc 
 # key: nsDocWSub
 # --
 // @kind readme
