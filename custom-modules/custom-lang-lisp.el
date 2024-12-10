@@ -60,6 +60,7 @@
 (use-package geiser-racket)
 
 ;;; Code:
+(declare-function aggressive-indent-mode "aggressive-indent-mode")
 
 ;; Global defaults
 ;;(require 'eldoc)
@@ -156,20 +157,20 @@
   ;; Enable Ielm
   ;;(projectile-run-ielm)
 
-
+  
   ;;; IDE layout
   ;;  ----------
-  (my-programming-mode/set-fill-column-indicator 79)                          ; set preferred buffer width
-
-  (my-programming-mode/set-inline-comment-column 81)                          ; set the preferred start of inline comments. 
-  (setq my-ide/comment-delimiter-char ?\;)
-
-
-  (local-set-key (kbd "TAB") (lambda ()
-                               (interactive)
-                               (conditional-align-or-tab)))
-
-
+  ;; Provide a function to set the fill column indicator.
+  ;; This has a default of 80 but can be set on a per mode basis.
+  ;; Set the preferred fill column indicator for the mode and activate it.
+  
+  (setq display-fill-column-indicator-column 80)                                  ; comment inde
+  (setq fill-column  80)                                                          ; Column beyond which line wrapping occurs if it is activated. 
+  (setq comment-fill-column 260)                                                  ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead. 
+  (setq comment-column 82)                                                        ; Column to indent right-margin comments to. 
+  (display-fill-column-indicator-mode 1)
+  
+  
   ;;; IDE functionality map
   ;;  ---------------------
   ;; compiling the code (Not applicable)

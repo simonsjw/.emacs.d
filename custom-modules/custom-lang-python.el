@@ -53,11 +53,7 @@
 (defvar pyvenv-virtual-env-name)
 
 (defvar python-shell-interpreter)
-(defvar python-mode-map)
-
-(declare-function my-ide/smart-newline "custom-ide-config")
-(declare-function
- my-programming-mode/set-fill-column-indicator "custom-defaults-config")
+(defvar python-ts-mode-map)
 
 (declare-function yas-minor-mode "yasnippet")
 (declare-function treesit-fold-mode "treesit-fold")
@@ -188,9 +184,19 @@ active environment."
   (require 'pyvenv)
   (require 'eldoc-box)
   (require 'dape)
+
+  ;; enable eldoc-mode.
+  (eldoc-mode 1)
   
   ;; start up Eglot in this mode.
   (eglot-ensure)
+
+  ;; enable python anaconda env management.
+  (pyvenv-mode)
+  (my-lang-python/update-python-path)
+  
+  ;; switch on hover at point mode.
+  (eldoc-box-hover-at-point-mode 1)
 
   ;; -------
   ;; Folding
@@ -223,24 +229,27 @@ active environment."
   ;; Add my/update-python-path function to pyvenv activation.
   (add-hook 'pyvenv-post-activate-hooks 'my-lang-python/update-python-path)
 
-  ;; ----------
-  ;; IDE layout
-  ;; ----------
-  ;; set preferred buffer width
-  (my-programming-mode/set-fill-column-indicator 88)
+  ;;; IDE layout
+  ;;  ----------
+  ;; Provide a function to set the fill column indicator.
+  ;; This has a default of 80 but can be set on a per mode basis.
+  ;; Set the preferred fill column indicator for the mode and activate it.
+  
+  (setq display-fill-column-indicator-column 88)                                  ; comment inde
+  (setq fill-column  88)                                                          ; Column beyond which line wrapping occurs if it is activated. 
+  (setq comment-fill-column 270)                                                  ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead. 
+  (setq py-comment-fill-column 270)
+  (setq comment-column 90)                                                        ; Column to indent right-margin comments to. 
+  (setq py-docstring-fill-column 88)                                              ; Set docstrings to have same fill column as code. 
+  (setq python-indent-offset 4)                                                   ; Set the indent for python mode.
+
+  (display-fill-column-indicator-mode 1)
 
   ;; Note that pycodestyle is set via file in directory specified by
   ;; export XDG_CONFIG_HOME="/home/simon/.emacs.d/etc/config/"
   ;; called pycodestyle with the following content:
   ;; [pycodestyle]
   ;; max-line-length = 88
-
-  ;;(setq blacken-line-length 88)
-  (setq py-comment-fill-column 88)
-  (setq py-docstring-fill-column 88)
-
-  ;; Set the indent for python mode.
-  (setq python-indent-offset 4)
 
   ;; Start python interpreter
   ;;  (my-lang-python/start-or-switch-to-python-shell)
@@ -257,58 +266,54 @@ active environment."
 
   ;; document thing at point:
   ;; (keymap-set python-ts-mode-map "C-c C-c C-r" #'eldoc)
-  (keymap-set python-mode-map "M-?" #'anaconda-mode-show-doc)
+  ;;  (keymap-set python-ts-mode-map "M-?" #'anaconda-mode-show-doc)
   ;; testing (tbd)
   ;; (keymap-set python-ts-mode-map "C-c C-c C-t"
   ;; #'projectile-test-project)
 
   ;; running the code
-  (keymap-set python-mode-map "C-c r b" #'eval-buffer)
+  (keymap-set python-ts-mode-map "C-c r b" #'eval-buffer)
 
   ;; run an inferior python process
-  (keymap-set python-mode-map "C-c r p" #'run-python)
+  (keymap-set python-ts-mode-map "C-c r p" #'run-python)
 
   ;; formatting
-  ;; (keymap-set python-mode-map "C-c C-f b" #'blacken-buffer)
-  ;;  (keymap-set python-mode-map "C-c C-f r" #'blacken-buffer)
+  ;; (keymap-set python-ts-mode-map "C-c C-f b" #'blacken-buffer)
+  ;;  (keymap-set python-ts-mode-map "C-c C-f r" #'blacken-buffer)
 
   ;; Errors/linting
   ;; --------------
   ;; list errors in buffer
-  (keymap-set python-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)
+  (keymap-set python-ts-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)
   ;; list errors in minibuffer
-  (keymap-set python-mode-map "C-c e m" #'consult-flymake)
+  (keymap-set python-ts-mode-map "C-c e m" #'consult-flymake)
   ;; formatting errors (not applicable)
   ;; (keymap-set python-ts-mode-map "C-c C-n" )
   ;; go to next error
-  (keymap-set python-mode-map "C-c e n" #'flymake-goto-next-error)
+  (keymap-set python-ts-mode-map "C-c e n" #'flymake-goto-next-error)
   ;; go to previous error.
-  (keymap-set python-mode-map "C-c e p" #'flymake-goto-prev-error)
+  (keymap-set python-ts-mode-map "C-c e p" #'flymake-goto-prev-error)
 
 
   ;; variable/function references
   ;; ----------------------------
   ;; xref-find-definitions
-  (keymap-set python-mode-map "M-." #'anaconda-mode-find-definitions)
+  ;; (keymap-set python-ts-mode-map "M-." #'anaconda-mode-find-definitions)
   ;; xref-find-references
-  (keymap-set python-mode-map "M-r" #'anaconda-mode-find-references)
+  ;;  (keymap-set python-ts-mode-map "M-r" #'anaconda-mode-find-references)
   ;; xref-find-assignments
-  (keymap-set python-mode-map "M-=" #'anaconda-mode-find-assignments)
+  ;;  (keymap-set python-ts-mode-map "M-=" #'anaconda-mode-find-assignments)
 
 
 
   ;; add-missing-dependencies
-  (keymap-set python-mode-map "C-c i f" #'python-fix-imports)
+  (keymap-set python-ts-mode-map "C-c i f" #'python-fix-imports)
   
 
   ;; "Test"
   ;; (("t" ert "prompt")
   ;;  ("T" (ert t) "all")
   ;;  ("F" (ert :failed) "failed"))))
-
-  ;; Bind intelligent return to RET key
-  (local-set-key (kbd "RET")
-                 (lambda () (interactive) (my-ide/smart-newline "# ")))
 
   (message
    "[%s ; DEBUG; my-lang-python/python-mode-setup]finished loading the defun ; ;"
@@ -319,51 +324,65 @@ active environment."
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Hydra
 ;; ----------------
+
 (major-mode-hydra-define python-ts-mode
-  (:title "Python" :color amaranth :quit-key "q" )
+  (:title (concat
+           (nerd-icons-devicon "nf-dev-python"
+                               :height 1.2 :v-adjust -0.1)
+           " Python")
+          :color amaranth :quit-key "q")
   ("Tools"
-   (("b" python-fix-imports "fix imports")
-    ("e" python-shell-send-defun "defun")
-    )
+   (("i" python-fix-imports "fix imports"))
    "Evaluate code"
-   (("b" python-shell-send-buffer "buffer")
-    ("e" python-shell-send-defun "defun")
-    ("r" python-shell-send-region "region")
-    ("s" python-shell-send-string "string")
-    ("S" python-shell-restart "restart shell"))
+   (("vb" python-shell-send-buffer "eval buffer")
+    ("." python-shell-send-defun "eval fn")
+    ("vr" python-shell-send-region "eval region")
+    ("vs" python-shell-send-string "eval string")
+    ("vx" python-shell-restart "restart shell"))
    "Errors/Linting"
    (("e" flymake-show-buffer-diagnostics "list errors")
     ("E" flymake-show-project-diagnostics "list project errors")
     ("m" consult-flymake "defun")
     ("n" flymake-goto-next-error "next")
-    ("p" flymake-goto-prev-error "previous"))
+    ("l" flymake-goto-prev-error "previous"))
    "References"
-   (("f" anaconda-mode-find-references "find reference")
-    ("F" projectile-find-references "find all references")
-    ("d" anaconda-mode-find-definitions "find definition")
-    ("a" anaconda-mode-find-assignments "find assignment"))
+   (("rf" anaconda-mode-find-references "find reference")
+    ("rF" projectile-find-references "find all references")
+    ("rd" anaconda-mode-find-definitions "find definition")
+    ("ra" anaconda-mode-find-assignments "find assignment"))
    "Project"
    (("j" consult-projectile "switch projects"))
    "Doc"
-   (("d" eldoc-box-hover-mode "thing-at-pt") ; anaconda-mode-show-doc
-    ("q" nil :color blue))))
+   (("dp" eldoc-box-help-at-point "thing-at-pt")
+    ("<up>" eldoc-box-scroll-up "scroll up")
+    ("<down>" eldoc-box-scroll-down "scroll down")
+    ("x" eldoc-box-hide "close eldoc"))
+   "Debugging"
+   (("bd" dape "start debugging")
+    ("bb" dape-breakpoint-toggle "toggle breakpoint")
+    ("bc" dape-continue "continue")
+    ("bn" dape-next "next")
+    ("bi" dape-step-in "step in")
+    ("bo" dape-step-out "step out")
+    ("bq" dape-disconnect "disconnect"))))
+
 
 (provide 'custom-lang-python)
 ;;; custom-lang-python.el ends here
 
+;; eldoc-box-help-at-point
 
 
-
-                                        ; LocalWords:  pyvenv isort
-                                        ; LocalWords:  numpydoc el
-                                        ; LocalWords:  CONDA WORKON
-                                        ; LocalWords:  ENV serviceEnv
-                                        ; LocalWords:  lang keymap
-                                        ; LocalWords:  eldoc defun
-                                        ; LocalWords:  minibuffer
-                                        ; LocalWords:  pycodestyle
-                                        ; LocalWords:  pycomplete
-                                        ; LocalWords:  gitlab melpa
-                                        ; LocalWords:  pythonic dape
-                                        ; LocalWords:  yasnippet
-                                        ; LocalWords:  debugpy adapter
+                                                                                 ; LocalWords:  pyvenv isort
+                                                                                 ; LocalWords:  numpydoc el
+                                                                                 ; LocalWords:  CONDA WORKON
+                                                                                 ; LocalWords:  ENV serviceEnv
+                                                                                 ; LocalWords:  lang keymap
+                                                                                 ; LocalWords:  eldoc defun
+                                                                                 ; LocalWords:  minibuffer
+                                                                                 ; LocalWords:  pycodestyle
+                                                                                 ; LocalWords:  pycomplete
+                                                                                 ; LocalWords:  gitlab melpa
+                                                                                 ; LocalWords:  pythonic dape
+                                                                                 ; LocalWords:  yasnippet
+                                                                                 ; LocalWords:  debugpy adapter

@@ -139,8 +139,7 @@
   ;;;;;;;;;;;;;
   ;; IDE layout
   ;; ----------
-  ;; set preferred buffer width
-  (my-programming-mode/set-fill-column-indicator 140)
+
 
   ;;;;;;;;;;;;;;;;;;;;;;;;
   ;; IDE functionality map

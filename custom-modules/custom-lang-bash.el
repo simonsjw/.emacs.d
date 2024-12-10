@@ -98,28 +98,28 @@
 ;; (with-eval-after-load 'bash-ts-mode
 ;;   ;; Here you can define keybindings or functionalities specific to bash-ts-mode
 ;;   ;; Example: (define-key bash-ts-mode-map (kbd "YOUR-KEYBINDING") 'SOME-FUNCTION)
-  
+
 ;;   ;;;;;;;;;;;;;
 ;;   ;; IDE layout
 ;;   ;; ----------
 ;;   ;; set preferred buffer width
-;;   (my-programming-mode/set-fill-column-indicator 140)
+
 
 ;;   ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;   ;; IDE functionality map
 ;;   ;; ---------------------
 ;;   ;; compiling the code
 ;;   ;; (keymap-set rust-ts-mode-map "C-c C-c C-u" #'rust-compile)
-  
+
 ;;   ;; checking the code
 ;;   ;; (keymap-set rust-ts-mode-map "C-c C-c C-k" #'rust-check)
-  
+
 ;;   ;; testing
 ;;   ;; (keymap-set rust-ts-mode-map "C-c C-c C-t" #'rust-test)
-  
+
 ;;   ;; running the code
 ;;   ;; (keymap-set rust-ts-mode-map "C-c C-c C-r" #'rust-run)
-  
+
 ;; linting
 
 ;;  formatting
