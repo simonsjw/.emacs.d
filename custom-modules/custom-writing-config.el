@@ -248,12 +248,4 @@ Example usage:
 ;;; custom-writing-config.el ends here
 
 
-                                        ; LocalWords:  pandoc citar
-                                        ; LocalWords:  whitespace tex
-                                        ; LocalWords:  lstinline TikZ lstlisting
-                                        ; LocalWords:  LatexMk etal
-                                        ; LocalWords:  executables
-                                        ; LocalWords:  tikzpicture
-                                        ; LocalWords:  makefile Biber
-                                        ; LocalWords:  delims auctex
-                                        ; LocalWords:  yasnippet
+                                                                                  ; LocalWords:  pandoc citar whitespace tex lstinline TikZ lstlisting LatexMk etal executables tikzpicture makefile Biber delims auctex yasnippet
