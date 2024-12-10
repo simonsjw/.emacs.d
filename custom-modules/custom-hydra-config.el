@@ -34,7 +34,7 @@
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;;; Hydras: flyspell
 ;;  ------------------------------
-(defhydra hydra-flyspell (:color amaranth
+(defhydra hydra-flyspell (:color pink
                                  :body-pre
                                  (progn
                                    (when mark-active
@@ -55,7 +55,7 @@
   ("d" ispell-change-dictionary)
   ("u" undo-tree-undo)
   ("q" nil :color blue)
-  ("C-/" undo-tree-undo)
+  ("C-/" undo-tree-undo :color red)
 
   ("c" my/flyspell-correct-at-point-maybe-next)
   ("n" my/flyspell-goto-next-error)
@@ -276,7 +276,7 @@ lower-cased."
   (get-buffer "*undo-tree*"))
 
 (pretty-hydra-define hydra-undo-tree
-  (:color amaranth
+  (:color pink
           :quit-key "q"
           :title hydra-undo-tree--title)
   ("Actions"
@@ -286,7 +286,7 @@ lower-cased."
    "Navigation"
    (("h" undo-tree-undo "undo")
     ("j" undo-tree-redo "redo"))
-   "Visualization"
+   "Visualisation"
    (("v" undo-tree-visualize "visualize tree"
      :toggle (my/undo-tree-visualizer-open-p))
     ("d" my-toggle/undo-tree-visualizer-timestamps "show timestamps"
@@ -296,14 +296,51 @@ lower-cased."
 
 ;; END Hydras: Undo-tree ------------------------------
 
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;;; Hydras: treesit-fold
+;;  ------------------------------
+
+(defvar hydra-treesit-fold--title
+  (concat
+   (nerd-icons-mdicon "nf-md-family_tree" :height 1.2 :v-adjust 0.0)
+   " Treesit Fold"))
+
+(pretty-hydra-define hydra-tree-fold
+  (:color pink
+          :quit-key "q"
+          :title hydra-treesit-fold--title)
+  ("All"
+   (("ao" treesit-fold-open-all "open all")
+    ("ac" treesit-fold-close-all "close all"))
+   "Point"
+   (("t" treesit-fold-toggle "toggle")
+    ("o" treesit-fold-open "open")
+    ("c" treesit-fold-close "close"))
+   "Settings"
+   (("i" treesit-fold-indicators-mode "indicators" :toggle t)
+    ("c" treesit-fold-line-comment-mode "comments" :toggle t))
+   )
+  )
+
+;; END Hydras: treesit-fold  ------------------------------
+
+
 
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Now bring all the globally useful hydras together. 
-(defhydra hydra-of-hydras ()
-  ("s" hydra-flyspell/body "flyspell" :color blue)
-  ("u" hydra-undo-tree/body "undo-tree" :color blue)
-  ("h" hydra-helpful/body "helpful" :color blue)
-  ("q" nil "Quit" :color blue))
+(pretty-hydra-define hydra-of-hydras
+  (:color teal
+          :quit-key "q"
+          :title "MENUS")
+  ("Navigate"
+   (("f" hydra-tree-fold/body "tree-fold" :color blue)
+    ("u" hydra-undo-tree/body "undo-tree" :color blue))
+   "Docs"
+   (("h" hydra-helpful/body "helpful" :color blue))
+   "Tools"
+   (("s" hydra-flyspell/body "flyspell" :color blue))
+   )
+  )
 
 (global-set-key (kbd "C-<tab>") 'hydra-of-hydras/body)
 
