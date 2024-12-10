@@ -343,21 +343,6 @@ also enables undo functionality if the window layout changes."
 ;; keys, typing, or pressing ESC three times.
 (repeat-mode 1)
 
-;; Provide a function to set the fill column indicator.
-;; This has a default of 80 but can be set on a per mode basis.
-(defun my-programming-mode/set-fill-column-indicator (&optional column)
-  "Set the preferred fill column indicator for the current mode.
-If COLUMN is not provided, use 80 as the default value."
-  (setq display-fill-column-indicator-column (or column 80)) ; Use COLUMN or 80 if COLUMN is nil
-  (display-fill-column-indicator-mode 1))
-
-;; Provide a function to set the fill column indicator.
-;; This has a default of 80 but can be set on a per mode basis.
-(defun my-programming-mode/set-inline-comment-column (&optional column)
-  "Set the preferred inline-comment-column starting point for the current mode.
-If COLUMN is not provided, use 80 as the default value."
-  (setq comment-column (or column 82))) ; Use COLUMN or 80 if COLUMN is nil
-
 ;; Configuration for all programming modes.
 (defun my-programming-mode/programming-mode-config-hook ()
   "Set useful layout tweeks for programming modes."
