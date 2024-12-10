@@ -123,6 +123,13 @@
 ;;              (concat straight-base-dir "straight/" straight-build-dir "/"
 ;;                      "tree-sitter-langs/bin/"))
 
+;; (setq my-paths/tree-sitter-lib
+;;       (expand-file-name (concat no-littering-etc-directory
+;;                                 "tree-sitter/")))
+;; (my-on-disk-tools/ensure-directory-exists my-paths/tree-sitter-lib)
+
+;; (setq tree-sitter-load-path (list my-paths/tree-sitter-lib))
+
 
 ;; Bookmark+
 ;; ---------
