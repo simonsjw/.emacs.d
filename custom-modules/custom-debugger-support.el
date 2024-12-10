@@ -153,7 +153,7 @@
 
   :config
   ;; Turn on global bindings for setting breakpoints with mouse
-  (dape-breakpoint-global-mode)
+  ;;(dape-breakpoint-global-mode)
 
   ;; Timeout is 30 seconds.
   (setq dape-request-timeout 30)
