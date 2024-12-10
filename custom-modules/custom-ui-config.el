@@ -57,6 +57,7 @@
                    )
                )
              )
+
 (with-eval-after-load 'rainbow-mode
   (setq rainbow-x-colors nil                       ;; Disable color names like "red"
         rainbow-x-colors-font-lock-keywords nil    ;; Ensure color names are not highlighted
@@ -293,7 +294,13 @@ Minimal width can be set with `tab-line-tab-min-width' variable."
 ;; exclude some buffers from tab-line according to their mode.
 (dolist (mode '(speedbar-mode
                 corfu-mode
-                corfu-popupinfo-mode))
+                corfu-popupinfo-mode
+                dape-info-threads-mode
+                dape-info-stack-mode
+                dape-info-sources-mode
+                dape-info-scope-mode
+                dape-repl-mode
+                dape-info-breakpoints-mode))
   (add-to-list 'tab-line-exclude-modes mode))
 
 
