@@ -70,6 +70,19 @@
 (setq treesit-fold-indicators-fringe 'left-fringe)
 (setq treesit-fold-indicators-priority 30)
 
+(defun my-treesit-fold/state-at-point ()
+  "Return the fold state at the current point in tree-sitter-fold.
+
+Useful for implementing toggles for the mode in hydras."
+  (interactive)
+  (setq fold-state nil)
+  (let* ((node (treesit-fold--foldable-node-at-pos))
+         (overlay (when node (treesit-fold-overlay-at node))))
+    (if (and overlay (overlay-get overlay 'invisible))
+        (setq fold-state 'folded)
+      (setq fold-state 'unfolded)))
+  (message "fold-state: %s" fold-state))
+
 (when (locate-library "combobulate")
   ;; perhaps too gross of an application, but the *-ts-modes
   ;; eventually derive from this mode.
@@ -77,7 +90,6 @@
 
 (defun my-treesitter/add-treesit-fold-to-context-menu ()
   "Add treesit-fold-toggle to the right-click context menu.
-
 
 This function can be added to a hook when treesitter fold is active or
 alternatively as a function called inside a collection of other functions
