@@ -55,6 +55,7 @@
 (defvar python-shell-interpreter)
 (defvar python-ts-mode-map)
 
+(declare-function reformatter-define "reformatter")
 (declare-function yas-minor-mode "yasnippet")
 (declare-function treesit-fold-mode "treesit-fold")
 (declare-function treesit-fold-indicators-mode "treesit-fold")
@@ -184,6 +185,7 @@ active environment."
   (require 'pyvenv)
   (require 'eldoc-box)
   (require 'dape)
+  (require 'reformatter)
 
   ;; enable eldoc-mode.
   (eldoc-mode 1)
@@ -197,6 +199,12 @@ active environment."
   
   ;; switch on hover at point mode.
   (eldoc-box-hover-at-point-mode 1)
+
+
+  (reformatter-define python-format
+    :program "ruff"
+    :args '("format")
+    :lighter " PF")
 
   ;; -------
   ;; Folding
@@ -236,7 +244,7 @@ active environment."
   ;; Set the preferred fill column indicator for the mode and activate it.
   
   (setq display-fill-column-indicator-column 88)                                  ; comment inde
-  (setq fill-column  88)                                                          ; Column beyond which line wrapping occurs if it is activated. 
+  (setq fill-column 88)                                                          ; Column beyond which line wrapping occurs if it is activated.
   (setq comment-fill-column 270)                                                  ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead. 
   (setq py-comment-fill-column 270)
   (setq comment-column 90)                                                        ; Column to indent right-margin comments to. 
@@ -325,11 +333,13 @@ active environment."
 ;; Hydra
 ;; ----------------
 
+;; (concat
+;;  (nerd-icons-devicon "nf-dev-python"
+;;                      :height 1.2 :v-adjust -0.1)
+;;  " Python")
+
 (major-mode-hydra-define python-ts-mode
-  (:title (concat
-           (nerd-icons-devicon "nf-dev-python"
-                               :height 1.2 :v-adjust -0.1)
-           " Python")
+  (:title (major-mode-hydra-title-generator)
           :color amaranth :quit-key "q")
   ("Tools"
    (("i" python-fix-imports "fix imports"))

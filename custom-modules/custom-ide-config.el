@@ -28,9 +28,11 @@
 (declare-function eldoc-box-hover-mode "eldoc-box-hover-mode")
 
 
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; eglot setup
-;; -----------
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; eglot setup ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (with-eval-after-load 'eglot
   (with-eval-after-load 'embark
@@ -51,12 +53,18 @@
         (assq-delete-all 'python-ts-mode eglot-server-programs))
 
   ;; Add the new configuration explicitly for python modes
+  ;; (add-to-list 'eglot-server-programs
+  ;;              '((python-mode python-ts-mode)
+  ;;                "basedpyright-langserver" "--stdio"))
+
+  ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("ruff" "server")))
+  ;;  (add-hook 'python-ts-mode 'eglot-ensure)
   (add-to-list 'eglot-server-programs
-               '((python-mode python-ts-mode)
-                 "basedpyright-langserver" "--stdio"))
+               '(python-ts-mode . ("basedpyright-langserver" "--stdio")))
+  
 
 
-  ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ;; Documentation/help setup
   ;; -----------
   ;; use eldoc-box-hover-mode.
@@ -67,38 +75,11 @@
   ;; (add-hook 'after-save-hook 'eglot-format)
   )
 
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; TAB control for comments
-;; -----------
 
-(defun my-ide/tab-for-comments ()
-  "Enhanced TAB behavior for handling comments.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;; editorconfig setup. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:
 
-Runs `comment-indent` when the cursor is on a line with a comment.
-Otherwise, delegates to the default TAB behavior for the active mode."
-  (interactive)
-  (if (save-excursion
-        (let ((line-end (line-end-position)))
-          (comment-search-forward line-end t)))
-      ;; If a comment is found on this line, use `comment-indent`
-      (comment-indent)
-    ;; Otherwise, fall back to the default TAB command
-    (let ((command (key-binding (kbd "TAB"))))
-      (if (and command (not (eq command 'my-tab-adaptive)))
-          (call-interactively command)
-        (indent-for-tab-command)))))
-
-
-;; Apply this function to specific modes or globally if desired
-(defun my-ide/tab-for-comments-setup ()
-  "Set up enhanced TAB behavior for programming modes."
-  (local-set-key (kbd "TAB") 'my-ide/tab-for-comments))
-
-;;(add-hook 'prog-mode-hook #'my-ide/tab-for-comments-setup)
-
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; editorconfig setup.
-;; -----------
 
 ;; turn on editorconfig if it is available
 (when (require 'editorconfig nil :noerror)
