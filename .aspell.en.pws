@@ -1,10 +1,11 @@
-personal_ws-1.1 en 53 
+personal_ws-1.1 en 55 
 ARGS
 Backtrace
 Bunnings
 DDirectory
 Eglot
 KDB
+LocalWords
 Maroubra
 NLP
 OPTARG
@@ -52,3 +53,4 @@ txt
 usr
 vterm
 ws
+yasnippet
