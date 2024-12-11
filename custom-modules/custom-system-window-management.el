@@ -15,6 +15,8 @@
 
 
 (declare-function sr-speedbar-window "sr-speedbar")
+;; TODO:understand why sr-speedbar-get-window causes window to open up between sr-speedbar and edit window.
+
 (declare-function sr-speedbar-close "sr-speedbar")
 
 (require 'custom-system-objects)
@@ -50,10 +52,12 @@
                  ("*Warnings*" . logs)
                  ("*blacken-error*" . logs)
                  ("*straight-process*" . logs)
+                 ("*ruff-format errors*" . logs)
                  ("*straight-byte-compilation*" . logs)
                  ("*projectile-files-errors*". logs)
                  ("*Async-native-compile-log*". logs)
                  ("*elisp-flymake-byte-compile*" . logs)
+                 ("pyproject.toml" . config)
                  ("*RE-Builder*" . config)
                  ("*Anaconda*". config)
                  ("conf.org" . config)
