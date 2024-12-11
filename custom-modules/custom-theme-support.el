@@ -91,14 +91,7 @@
 
 
 ;; code:
-(defun align-inline-comments ()
-  "Align inline comments to `comment-column`."
-  (interactive)
-  (when (derived-mode-p 'emacs-lisp-mode)
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward "\\(\\s-*\\);\\(.*\\)$" nil t)
-        (replace-match (concat (make-string (- comment-column (current-column)) ?\s) ";\\2") t t)))))
+
 
 ;; https://github.com/emacsmirror/rainbow-mode/blob/master/rainbow-mode.el
 (use-package rainbow-mode)
