@@ -216,5 +216,4 @@
 (provide 'custom-debugger-support)
 ;;; custom-debugger-support.el ends here
 
-                                        ; LocalWords:  Keymaps dape
-                                        ; LocalWords:  repl
+                                                                                  ; LocalWords:  Keymaps dape repl
