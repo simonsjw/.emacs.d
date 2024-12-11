@@ -324,6 +324,36 @@ lower-cased."
 
 ;; END Hydras: treesit-fold  ------------------------------
 
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;;; Hydras: newcomment.el
+;;  ------------------------------
+
+(defvar hydra-comment-format--title
+  "#/; Comment format")
+
+(pretty-hydra-define hydra-comment-format
+  (:color pink
+          :quit-key "q"
+          :title hydra-comment-format--title)
+  ("Format Comment"
+   (("a" comment-indent "align comment")
+    ("f" fill-comment-paragraph "fill comment paragraph")
+    ("bf" my-in-buffer-tools/comment-box-filled "add filled box around comment")
+    ("b" comment-box "add box around comment")
+    ("sc" ispell-comment-or-string-at-point "check current comment spellings")
+    ("sa" checkdoc-ispell-comments "check comment spellings in buffer")
+    ("cc" set-comment-set-column "set comment column to cursor"))
+   "Make Comment"
+   ((";" comment-dwim "toggle/tab comment as needed")
+    ("cl" comment-line "comment line")
+    ("cr" comment-region "comment region")
+    ("ur" uncomment-region "uncomment region")
+    ("uk" comment-kill "kill comment")
+    ("i" comment-indent-new-line "break line at point and indentation"))
+   )
+  )
+
+;; END Hydras: treesit-fold  ------------------------------
 
 
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -335,10 +365,11 @@ lower-cased."
   ("Navigate"
    (("f" hydra-tree-fold/body "tree-fold" :color blue)
     ("u" hydra-undo-tree/body "undo-tree" :color blue))
+   "Tools"
+   (("c" hydra-comment-format/body "comments" :color blue)
+    ("s" hydra-flyspell/body "flyspell" :color blue))
    "Docs"
    (("h" hydra-helpful/body "helpful" :color blue))
-   "Tools"
-   (("s" hydra-flyspell/body "flyspell" :color blue))
    )
   )
 
