@@ -348,6 +348,51 @@ position, and the matching bracket character if found, otherwise returns nil."
               (list line column match-pos char))))))))
 
 
+(defun my-in-buffer-tools/length-longest-line-in-region (beg end)
+  "Determine the length of the longest line in the region from BEG to END.
+
+Note that `r' in the interactive expression means read beg end from the current
+buffer.  This differs from `*r' since `*r' checks to ensure the buffer is
+read/write.  We don't do that here as we don't attempt to write anything to
+buffer."
+  (interactive "r")
+  (let ((max-length 0))
+    (save-excursion
+      ;; Narrow to the region to avoid processing outside lines
+      (narrow-to-region beg end)
+      (goto-char (point-min))
+      ;; Iterate over each line in the region
+      (while (not (eobp))
+        (let ((line-length (save-excursion
+                             (end-of-line)
+                             (- (point) (line-beginning-position)))))
+          (setq max-length (max max-length line-length)))
+        (forward-line 1))
+      ;; Restore the full buffer view
+      (widen))
+    (if (called-interactively-p 'interactive)
+        (message "Longest line length in the region: %d" max-length))
+    max-length))
+
+
+(defun my-in-buffer-tools/comment-box-filled (beg end)
+  "Comment out the BEG .. END region, inside a box extended to `fill-column'.
+
+Note that `*r' in the interactive expression means read beg end from the current
+buffer and ensure the buffer is writable or else exit.  This differs from `r'
+since `r' does not check to ensure the buffer is writable.  Since we do write
+to buffer here, the check needs to be made."
+  (interactive "*r")
+  (let* ((max-length
+          (my-in-buffer-tools/length-longest-line-in-region beg end))
+         (even-max-length (+ max-length (% max-length 2)))
+         (pad (max 1
+                   (round
+                    (/
+                     (float (- fill-column even-max-length)) 2)))))
+    (comment-box beg end (- pad 2))))
+
+
 ;;; TOOLS FOR THE FILE SYSTEM
 ;;  -------------------------
 ;; Function to ensure directory exists
