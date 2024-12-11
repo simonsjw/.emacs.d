@@ -16,6 +16,12 @@
   :config
   (which-key-mode))
 
+;; use packages for formatting code without lsp/eglot.
+(use-package reformatter)
+
+;; use ruff for python formatting.
+(use-package ruff-format)
+
 ;; editorconfig is a cross-editor/ide configuration tool to control
 ;; indentation, spaces vs tabs, etc.
 (use-package editorconfig)
