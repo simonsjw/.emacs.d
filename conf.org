@@ -1,4 +1,4 @@
-#+title: Simon's Emacs Configuration File
+v#+title: Simon's Emacs Configuration File
 #+PROPERTY: header-args:emacs-lisp :tangle /home/simon/.emacs.d/init.el :mkdirp yes
 
 All that follows is based on the wonderful work of System Crafters. Stuff that works is due to them. Stuff that doesn't work is due to me.
@@ -72,8 +72,11 @@ Make sure you have the following external dependencies:
 | bash-language-server | snap install         | bash-ts-mode         | LSP for bash-ts-mode    |
 |                      | bash-language-server | shell-script-mode    | with eglot.             |
 |----------------------+----------------------+----------------------+-------------------------|
-| ruff                 | snap install ruff    | python-ts-mode       | Python language server  |
-|                      |                      |                      | ruff server             |
+| ruff        (1 of 2) | pip install ruff     | python-ts-mode       | Python language server  |
+|                      |                      |                      | (linting/ formatting)   |
+|----------------------+----------------------+----------------------+-------------------------|
+| basedpyright(2 of 2) | pip install          | python-ts-mode       | Python language server  |
+|                      | basedpyright         |                      | (docs/ navigation)      |
 |----------------------+----------------------+----------------------+-------------------------|
 | vega                 | npm install -g vega  | vega-view            | allows edit and         |
 |                      | vega-lite vega-cli   |                      | generation of vega      |
