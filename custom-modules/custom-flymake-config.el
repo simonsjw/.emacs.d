@@ -130,6 +130,14 @@
 ;; CURRENT VALUE:
 ;; t
 
+;; Ensure that wrapped flymake diagnostics messages begin at the
+;; start of the message column and do not cover the prior columns.
+(add-hook 'flymake-diagnostics-buffer-mode-hook
+          (lambda ()
+            (setq wrap-prefix "                            ")
+            (visual-line-mode t))) ; Adjust indentation size as needed
+
+
 (provide 'custom-flymake-config)
 ;;; custom-flymake-config.el ends here
 
