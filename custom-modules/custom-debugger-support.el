@@ -161,6 +161,21 @@
   ;; Info buffers to the right
   (setq dape-buffer-window-arrangement 'right)
 
+  ;; Automatically enable dape-breakpoint-global-mode with dape-active-mode
+  (add-hook 'dape-active-mode-hook #'dape-breakpoint-global-mode)
+
+  ;; Disable dape-breakpoint-global-mode when dape-active-mode is turned off
+  (add-hook 'dape-active-mode-hook
+            (lambda ()
+              (add-hook 'kill-buffer-hook
+                        (lambda ()
+                          (when (derived-mode-p 'dape-active-mode)
+                            (dape-breakpoint-global-mode -1)))
+                        nil t)))
+
+  ;; ensure the dape menu is active.
+  ;;(add-hook 'dape-active-mode-hook '(lambda ()(easy-menu-add dape-menu)))
+
   ;; Info buffers like gud (gdb-mi)
   ;; (setq dape-buffer-window-arrangement 'gud)
   ;; (setq dape-info-hide-mode-line nil)
@@ -210,6 +225,7 @@
             ;; Ensure all necessary settings are in place
             (when (not (assoc 'debugpy dape-configs))
               (message "debugpy configuration missing in dape-configs"))))
+
 
 
 ;; (straight-rebuild-package "dape")
