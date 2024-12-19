@@ -28,7 +28,60 @@
 ;;
 ;;; Code:
 
-(declare-function q-loadbalancer-mode/setup-process-group "q-loadbalancer")
+(message "loading process-groups.el")
+
+(defvar q-process-group-list '()
+  "List of configurations for KDB/Q process groups.
+
+Each entry in the list represents a KDB/Q process group configuration with the
+following fields:
+- Group Name: A string representing the name of the process group.
+- Q Init File: A file path to an initialization file for the Q processes in
+  the group.
+- Garbage Collect: A boolean indicating whether garbage collection should be
+  enabled.
+- Start Port: An integer specifying the starting port for the group.
+- Number of Slaves: An integer specifying the number of slave processes to
+  start per process.
+- Workspace Limit: An integer specifying the workspace limit for the Q
+  processes.
+- Conda Environment: A string specifying the conda environment to activate
+  before starting the Q processes (default is `base').
+- Process Count: An integer specifying the number of processes in the group.
+
+Ports for each process in the group are generated in intervals of 10, starting
+from the Start Port.")
+
+(defun q-loadbalancer-mode/setup-process-group (group-name
+                                                init-file
+                                                garbage-collect
+                                                start-port slaves
+                                                workspace conda-env
+                                                process-count)
+  "Programmatically add/update a KDB/Q process group in `q-process-group-list'.
+
+GROUP-NAME is the name of the process group.
+INIT-FILE is the path to the Q initialization file.
+GARBAGE-COLLECT is a boolean indicating if garbage collection should be
+enabled.
+START-PORT is the starting port number for the Q processes in the group.
+SLAVES is the number of slave processes to start per process.
+WORKSPACE is the workspace limit for the Q processes.
+CONDA-ENV is the conda environment to activate before starting the Q processes.
+PROCESS-COUNT is the number of processes in the group.
+
+If a group with the same GROUP-NAME already exists, it will be updated with
+the new parameters."
+  (let ((existing (assoc group-name q-process-group-list)))
+    (if existing
+        (setf (cdr existing) (list init-file garbage-collect start-port slaves
+                                   workspace conda-env process-count))
+      (setq-default q-process-group-list
+                    (append q-process-group-list
+                            (list (list group-name init-file
+                                        garbage-collect start-port
+                                        slaves workspace conda-env
+                                        process-count)))))))
 
 ;; define the loadbalancer.
 (let ((process-name "loadbalancer")
@@ -223,6 +276,7 @@
    conda-environment
    process-count))
 
+(message "finished loading process-groups.el")
 (provide 'process-groups)
 
 ;;; process-groups.el ends here

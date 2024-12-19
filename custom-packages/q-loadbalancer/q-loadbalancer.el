@@ -19,43 +19,145 @@
 (require 'easymenu)
 (require 'cl-lib)
 
-(defgroup q-loadbalancer nil
-  "Manage multiple KDB/Q processes."
-  :group 'q-script-mode
-  :prefix "q-process-")
+(defvar comint-prompt-regexp)
+(defvar q-script-mode-syntax-table)
+(defvar q-process-group-list)
+(defvar q-font-lock-defaults)
 
-(defcustom q-process-group-list '()
-  "List of configurations for KDB/Q process groups.
+(declare-function comint-mode "comint")
+(declare-function q-script-mode-syntax-setup "q-parse")
+(declare-function q-paren-ignore "q-parse")
+(declare-function q-setup-log-output-font-lock "q-parse")
+(declare-function q-syntax-propertize "q-parse")
 
-Each entry in the list represents a KDB/Q process group configuration with the
-following fields:
-- Group Name: A string representing the name of the process group.
-- Q Init File: A file path to an initialization file for the Q processes in
-  the group.
-- Garbage Collect: A boolean indicating whether garbage collection should be
-  enabled.
-- Start Port: An integer specifying the starting port for the group.
-- Number of Slaves: An integer specifying the number of slave processes to
-  start per process.
-- Workspace Limit: An integer specifying the workspace limit for the Q
-  processes.
-- Conda Environment: A string specifying the conda environment to activate
-  before starting the Q processes (default is `base').
-- Process Count: An integer specifying the number of processes in the group.
+(setq debug-on-error t)
 
-Ports for each process in the group are generated in intervals of 10, starting
-from the Start Port."
-  :type '(repeat (list :tag "KDB/Q Process Group"
-                       (string :tag "Group Name")
-                       (file :tag "Q Init File" :must-match t)
-                       (boolean :tag "Garbage Collect")
-                       (integer :tag "Start Port" :value 6060)
-                       (integer :tag "Number of Slaves")
-                       (integer :tag "Workspace Limit")
-                       (string :tag "Conda Environment" :value "base")
-                       (integer :tag "Process Count")))
-  :group 'q-loadbalancer)
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Load up the scripts to provide functionality.
+(let* ((loadBalancer-file-name (or load-file-name buffer-file-name))
+       (loadBalancerPackageDirectory
+        (file-name-directory (expand-file-name loadBalancer-file-name)))
+       )
+  (message loadBalancerPackageDirectory)
 
+  (load-file (concat loadBalancerPackageDirectory "q-parse.el"))
+  (load-file (concat loadBalancerPackageDirectory "process-groups.el"))
+  (load-file (concat loadBalancerPackageDirectory "q-modeline.el"))
+  (load-file (concat loadBalancerPackageDirectory "q-ibuffer.el")))
+
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Define the q-script Menus, keys and major mode.
+(defvar q-script-mode-map
+  (let ((map (make-sparse-keymap)))
+    ;; Define keybindings here
+    map)
+  "Keymap for `q-script-mode'.")
+
+;; Add a test menu to q-shared-mode-map
+;; (easy-menu-define q-test-menu q-script-mode-map "Test Menu."
+;;   '("Test Menu"
+;;     ["Test Item" (message "Test item selected")]))
+
+;;Define and attach the menu to `q-shared-mode-map`
+(easy-menu-define q-script-menu q-script-mode-map "Q Processes Menu."
+  `("Q Process Management"
+    ("Add Process Group:"
+     ,@(mapcar (lambda (group)
+                 (let ((group-name (car group)))
+                   `[,(format "%s" group-name)
+                     (lambda () (interactive)
+                       (q-start-process-group ',group))]))
+               q-process-group-list))
+    ("Add Process:"
+     ,@(mapcar (lambda (group)
+                 (let ((group-name (car group)))
+                   `[,(format "%s" group-name)
+                     (lambda () (interactive)
+                       (q-start-single-process ',group))]))
+               q-process-group-list))))
+
+;; Ensure that `q-shared-mode-map` is used as the keymap for both modes
+(define-derived-mode q-script-mode prog-mode "Q-Script"
+  "Major mode for editing Q scripts."
+  :keymap q-script-mode-map
+  :syntax-table q-script-mode-syntax-table
+  ;;(set-syntax-table q-script-mode-syntax-table)
+  ;;(use-local-map q-script-mode-map)
+  
+  ;; Use the syntax-propertize function for context-sensitive parsing
+  (setq-local syntax-propertize-function #'q-syntax-propertize)
+  ;; Comment variables
+  ;; (setq-local comment-start "/ ")
+  ;; (setq-local comment-end "")
+  ;; (setq-local comment-start-skip "\\(?:^\\|\\s-\\)/+\\s-*")
+  ;;(setq-local comment-use-syntax t)  - this is obsolete and has been set to constant to stop people setting it. 
+  ;; Comment column for alignment
+  ;; (setq-local comment-column 60)
+  ;; Use default comment indentation function
+  ;; (setq-local comment-indent-function #'comment-indent-default)
+  ;; Ensure that comment commands work properly
+  ;; (comment-normalize-vars)
+  (setq font-lock-defaults q-font-lock-defaults)
+  )
+
+
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Define the q-loadbalancer menus, keys and major mode.
+
+(defvar q-loadbalancer-mode-map
+  (let ((map (make-sparse-keymap)))
+    ;; Define keybindings here
+    map)
+  "Keymap for `q-script-mode'.")
+
+;;Define and attach the menu to `q-shared-mode-map`
+(easy-menu-define q-loadbalancer-menu  q-loadbalancer-mode-map "Q Processes Menu."
+  `("Q Process Management"
+    ("Add Process Group:"
+     ,@(mapcar (lambda (group)
+                 (let ((group-name (car group)))
+                   `[,(format "%s" group-name)
+                     (lambda () (interactive)
+                       (q-start-process-group ',group))]))
+               q-process-group-list))
+    ("Add Process:"
+     ,@(mapcar (lambda (group)
+                 (let ((group-name (car group)))
+                   `[,(format "%s" group-name)
+                     (lambda () (interactive)
+                       (q-start-single-process ',group))]))
+               q-process-group-list))))
+
+(define-derived-mode q-loadbalancer-mode comint-mode "Q-LoadBalancer"
+  "A major mode for interacting with a Q interpreter."
+  :keymap  q-loadbalancer-mode-map
+  :syntax-table q-script-mode-syntax-table
+  ;; (use-local-map q-loadbalancer-mode-map)
+
+  ;; Use the syntax-propertize-function for context-sensitive parsing
+  (setq-local syntax-propertize-function #'q-syntax-propertize)
+  
+  (add-hook
+   (make-local-variable 'comint-output-filter-functions) 'comint-strip-ctrl-m)
+  (setq comint-prompt-regexp "^\\(q)+\\|[^:]*:[0-9]+>\\)")
+  (setq font-lock-defaults q-font-lock-defaults)
+  (set (make-local-variable 'comint-process-echoes) nil)
+  (set (make-local-variable 'comint-password-prompt-regexp) "[Pp]assword")
+  (q-paren-ignore)
+  ;; Add the logging font-lock keywords
+  ;;(q-setup-log-output-font-lock)
+  )
+
+
+;; (defgroup q-loadbalancer nil
+;;   "Manage multiple KDB/Q processes."
+;;   :group 'q-script-mode
+;;   :prefix "q-process-")
+
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Q-Process creation functionality
+;; Having created the modes, now provide the functionality needed when using
+;; them.
 
 (defun q-find-next-available-port (start-port increment)
   "Find the next available port starting from START-PORT.
@@ -80,7 +182,6 @@ Returns t if the PORT is already in use, nil otherwise."
           (delete-process process))
         nil)                                                                   ; Port is not in use
     (file-error t)))                                                           ; Port is in use
-
 
 
 (defun q-start-process (name init-file garbage-collect port slaves workspace
@@ -125,7 +226,6 @@ CONDA-ENV is the conda environment to activate before starting the Q process."
     (display-buffer process-buffer)                                            ; Display the buffer in a window
     (message "Buffer created for process: %s" name)))
 
-
 (defun q-start-single-process (group)
   "Start a single process for a given GROUP from `q-process-group-list'.
 
@@ -164,8 +264,6 @@ conda-env: %s"
                      workspace
                      conda-env)))
 
-
-
 (defun q-start-process-group (group)
   "Start all processes for a given GROUP from `q-process-group-list'.
 
@@ -200,213 +298,16 @@ conda-env: %s"
                                    (nth 6 group))))))
 
 
-(defun q-loadbalancer-mode/setup-process-group (group-name
-                                                init-file
-                                                garbage-collect
-                                                start-port slaves
-                                                workspace conda-env
-                                                process-count)
-  "Programmatically add/update a KDB/Q process group in `q-process-group-list'.
-
-GROUP-NAME is the name of the process group.
-INIT-FILE is the path to the Q initialization file.
-GARBAGE-COLLECT is a boolean indicating if garbage collection should be
-enabled.
-START-PORT is the starting port number for the Q processes in the group.
-SLAVES is the number of slave processes to start per process.
-WORKSPACE is the workspace limit for the Q processes.
-CONDA-ENV is the conda environment to activate before starting the Q processes.
-PROCESS-COUNT is the number of processes in the group.
-
-If a group with the same GROUP-NAME already exists, it will be updated with
-the new parameters."
-  (let ((existing (assoc group-name q-process-group-list)))
-    (if existing
-        (setf (cdr existing) (list init-file garbage-collect start-port slaves
-                                   workspace conda-env process-count))
-      (setq q-process-group-list
-            (append q-process-group-list
-                    (list (list group-name init-file
-                                garbage-collect start-port
-                                slaves workspace conda-env
-                                process-count)))))))
-
-;; Example usage of q-loadbalancer-mode/setup-process-group to add or update a
-;; process group.
-;; (q-loadbalancer-mode/setup-process-group
-;;    "Equities" "/path_to_equities/equities_deployment.q" t 6170 3 0 "base" 2)
-
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; with the functionality needed now in place, load up the other scripts in the
-;; package that will use it.
-(let* ((loadBalancer-file-name (or load-file-name buffer-file-name))
-       (loadBalancerPackageDirectory
-        (file-name-directory (expand-file-name loadBalancer-file-name)))
-       )
-  (message loadBalancerPackageDirectory)
-
-  (load-file (concat loadBalancerPackageDirectory "q-parse.el"))
-  (load-file (concat loadBalancerPackageDirectory "process-groups.el"))
-  (load-file (concat loadBalancerPackageDirectory "q-modeline.el"))
-  (load-file (concat loadBalancerPackageDirectory "q-ibuffer.el")))
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-;;; Define Menu and keymaps:
-;; Define the common menu and key bindings available for both `q-script-mode'
-;; and `q-loadbalancer-mode'.
-;;
-;; As a point of principle, we use the same menu and key map for the
-;; `q-script-mode' and the `q-loadbalancer-mode'.  This means that
-;; functionality specific to the `q-loadbalancer-mode' must have provision to
-;; allow for reasonable defaults to capture similar behaviour from a buffer
-;; under `q-script-mode'.
-;; (for instance remembering the last process buffer used under
-;; `q-loadbalancer-mode' and sending commands to that since `q-script-mode'
-;; buffers do not have direct access to a q process).
-
-(defvar q-script-mode-map
-  (let ((map (make-sparse-keymap)))
-    ;; Define additional key bindings if needed here
-    map)
-  "Keymap for `q-script-mode' and `q-loadbalancer-mode'.")
-
-
-;; Attach the menu to both q-script-mode and q-loadbalancer-mode
-(defun q-loadbalancer-mode/setup-menu ()
-  "Setup Q Processes menu for `q-script-mode'."
-  (easy-menu-define q-loadbalancer-menu q-script-mode-map "Q Processes Menu"
-    `("Q Process Management"
-      ("Add Process Group:"
-       ,@(mapcar (lambda (group)
-                   (let ((group-name (car group)))
-                     `[,(format "%s" group-name)
-                       (lambda () (interactive)
-                         (q-start-process-group ',group))]))
-                 q-process-group-list))
-      ("Add Process:"
-       ,@(mapcar (lambda (group)
-                   (let ((group-name (car group)))
-                     `[,(format "%s" group-name)
-                       (lambda () (interactive)
-                         (q-start-single-process ',group))]))
-                 q-process-group-list)))))
-
-
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;;; Define Modes:
-;; Define major modes for q-scripts and q-process buffers.
-
-(defvar q-loadbalancer-mode-syntax-table)
-(defvar q-font-lock-defaults)
-(declare-function comint-mode "cominit")
-
-;; This is the mode for q script buffers.
-(define-derived-mode q-script-mode prog-mode "Q-Script"
-  "Major mode for editing Q scripts."
-  :keymap q-loadbalancer-menu-map
-  :syntax-table q-loadbalancer-mode-syntax-table
-  (setq font-lock-defaults q-font-lock-defaults))
-
-;; Hook in the default menu and keymaps.
-(add-hook 'q-script-mode-hook 'q-loadbalancer-mode/setup-menu)
-
-
-;; This is the mode for q process buffers.
-;; (define-derived-mode q-loadbalancer-mode comint-mode "Q-LoadBalancer"
-;;   "Major mode for interacting with a Q interpreter."
-;;   :keymap q-loadbalancer-menu-map
-;;   :syntax-table q-loadbalancer-mode-syntax-table
-;;   (setq font-lock-defaults q-font-lock-defaults))
-
-(define-derived-mode q-loadbalancer-mode comint-mode "q-loadbalancer"
-  "Major mode for interacting with a q interpreter via the load balancer."
-  :syntax-table q-loadbalancer-mode-syntax-table
-  (add-hook
-   (make-local-variable 'comint-output-filter-functions) 'comint-strip-ctrl-m)
-  (setq comint-prompt-regexp "^\\(q)+\\|[^:]*:[0-9]+>\\)")
-  (setq font-lock-defaults q-font-lock-defaults)
-  (set (make-local-variable 'comint-process-echoes) nil)
-  (set (make-local-variable 'comint-password-prompt-regexp) "[Pp]assword")
-  (q-paren-ignore)
-
-  ;; Add the logging font-lock keywords
-  (font-lock-add-keywords
-   nil                                                                         ; Apply to the current buffer
-   `(
-     (,
-      (rx (group "[")                                                          ;  1: Opening bracket
-          (group (= 4 digit))                                                  ;  2: Four-digit year
-          (group ".")                                                          ;  3: Dot separator
-          (group (= 2 digit))                                                  ;  4: Two-digit month
-          (group ".")                                                          ;  5: Dot separator
-          (group (= 2 digit))                                                  ;  6: Two-digit day
-          (group "D")                                                          ;  7: `D' character
-          (group (= 2 digit))                                                  ;  8: Two-digit hour
-          (group ":")                                                          ;  9: Colon separator
-          (group (= 2 digit))                                                  ; 10: Two-digit minute
-          (group ":")                                                          ; 11: Colon separator
-          (group (= 2 digit))                                                  ; 12: Two-digit second
-          (group ".")                                                          ; 13: Dot separator
-          (group (+ digit))                                                    ; 14: One or more digits (fractional seconds)
-          (group ";")                                                          ; 15: Semicolon separator
-          (group (+ (not (any ";"))))                                          ; 16: First field (non-semicolon characters)
-          (group ";")                                                          ; 17: Semicolon separator
-          (group (+ (not (any ";"))))                                          ; 18: Second field (non-semicolon characters)
-          (group ";")                                                          ; 19: Semicolon separator
-          (group (+ (not (any "]"))))                                          ; 20: Third field (non-closing-bracket characters)
-          (group "]:")                                                         ; 21: Closing bracket and colon
-          (group (+ (not (any ";"))))                                          ; 22: Fourth field (non-semicolon characters)
-          (group ";")                                                          ; 23: Semicolon separator
-          (group (0+ any) line-end))                                           ; 24: Everything from here to the end of the line
-
-      ;; Highlighting groups
-      (1 'q-log-delimiter-face t)                                              ;  1: Opening bracket
-      (2 'q-log-datetime-face t)                                               ;  2: Four-digit year
-      (3 'q-log-datetime-face t)                                               ;  3: Dot separator
-      (4 'q-log-datetime-face t)                                               ;  4: Two-digit month
-      (5 'q-log-datetime-face t)                                               ;  5: Dot separator
-      (6 'q-log-datetime-face t)                                               ;  6: Two-digit day
-      (7 'q-log-datetime-face t)                                               ;  7: `D' character
-      (8 'q-log-datetime-face t)                                               ;  8: Two-digit hour
-      (9 'q-log-datetime-face t)                                               ;  9: Colon separator
-      (10 'q-log-datetime-face t)                                              ; 10: Two-digit minute
-      (11 'q-log-datetime-face t)                                              ; 11: Colon separator
-      (12 'q-log-datetime-face t)                                              ; 12: Two-digit second
-      (13 'q-log-datetime-face t)                                              ; 13: Dot separator
-      (14 'q-log-datetime-face t)                                              ; 14: One or more digits (fractional seconds)
-      (15 'q-log-delimiter-face t)                                             ; 15: Semicolon separator
-      (16 'q-log-process-face t)                                               ; 16: Process (non-semicolon characters)
-      (17 'q-log-delimiter-face t)                                             ; 17: Semicolon separator
-      (18 (let ((log-level (match-string 18)))                                 ; 18: Log Level (non-semicolon characters) - Conditional face based on text content
-            (cond
-             ((or (string= log-level "ERROR") (string= log-level "FATAL"))
-              'q-log-level-err-face)
-             ((string= log-level "WARN") 'q-log-level-warn-face)
-             ((or (string= log-level "INFO") (string= log-level "DEBUG")
-                  (string= log-level "SILENT"))
-              'q-log-level-info-face)))
-          t)
-      (19 'q-log-delimiter-face t)                                             ; 19: Semicolon separator
-      (20 'q-log-process-face t)                                               ; 20: Current function (non-closing-bracket characters)
-      (21 'q-log-delimiter-face t)                                             ; 21: Closing bracket and colon
-      (22 'q-log-message-face t)                                               ; 22: Fourth field (non-semicolon characters)
-      (23 'q-log-delimiter-face t)                                             ; 23: Semicolon separator
-      (24 'q-log-object-face t))                                               ; 24: Everything from here to the end of the line
-     )
-   )
-  )
-
-;; Hook in the default menu and keymaps.
-(add-hook 'q-loadbalancer-mode-hook 'q-loadbalancer-mode/setup-menu)
-(add-hook 'q-script-mode-hook 'q-loadbalancer-mode/setup-menu)
 
 (provide 'q-loadbalancer)
 
 ;;; q-loadbalancer.el ends here
-
-                                        ; LocalWords:  cefhijnptuv
-                                        ; LocalWords:  loadbalancer
-                                        ; LocalWords:  simonsjw
-                                        ; LocalWords:  LoadBalancer
-                                        ; LocalWords:  keymaps
-                                        ; LocalWords:  cominit
+                                                                                 ; LocalWords:  cefhijnptuv
+                                                                                 ; LocalWords:  loadbalancer
+                                                                                 ; LocalWords:  simonsjw
+                                                                                 ; LocalWords:  LoadBalancer
+                                                                                 ; LocalWords:  keymaps
+                                                                                 ; LocalWords:  cominit
+                                                                                 ; LocalWords:  assword
+                                                                                 ; LocalWords:  defgroup
+                                                                                 ; LocalWords:  comint

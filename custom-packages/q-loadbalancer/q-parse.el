@@ -25,11 +25,14 @@
 ;; process-groups.el.
 
 ;;; Code:
+(require 'cl-lib)
+(require 'cl-seq)
 (require 'comint)
 (defvar comint-prompt-regexp)
+(defvar q-font-lock-keywords)
 
 ;;  Additional faces for font-locking.
-
+(message "loading q-parse.el")
 ;;; Parsing/Font locking
 ;;  --------------------
 
@@ -103,6 +106,25 @@
   )
 
 
+
+(defvar q-comments-single-line-regex
+  "[[:space:]]/+.*\\|^/+.*"
+  "Regex for single line comments starting / or // and allows preceding code.")
+
+(defvar q-comments-multi-line-regex
+  "\\(?:^/[[:space:]]*\n\\)\\(?:[^\\]\\|\n\\)*\\(?:^\\\\\\)"
+  "Regex for multi line comments starting /and finishing \.")  ;; wip - this can be ended by \ at any point in comment at present.
+
+(defvar q-comments-tag
+  (eval-when-compile
+    (concat
+     "\\_<"                                                                    ; Match the beginning of a symbol or word (word boundary)
+     (regexp-opt                                                               ; Key words that can be active in comments.
+      '("todo" "TODO" "note" "NOTE"))
+     "\\_>"))
+  "These key words can be used in comments."
+  )
+
 ;; single line regex.
 ;; "\\_<\\([.]?[a-zA-Z]\\(?:\\s_\\|\\w\\|_\\)*\\s-*\\)::?\\s-*\\(?:{\\|'\\s-*\\[\\|[^;{\n]*?\\(?:::\\|[-.~=!@#$%^&*_+|,<>?/\\:']\\)\\s-*\\(?:\\s<\\|$\\|;\\)\\)"
 (defvar q-function-regex
@@ -117,7 +139,7 @@
    "\\(?:::\\|[-.~=!@#$%^&*_+|,<>?/\\:']\\)\\s-*"                              ; Handle operators or `::`, followed by optional white-space
    "\\(?:\\s<\\|$\\|;\\)\\)"                                                   ; End with comments, end-of-line, or semicolon
    )
-  
+
   "Regular expression used to find function declarations.
 
    This regex matches a variety of function declarations in `q`, supporting:
@@ -125,33 +147,11 @@
    - Functions declared using `{}' or parameter lists
    - Handles both global (`::') and local functions
    - Ends cleanly at comments, newlines, or semicolons.
-  
+
    Examples:
    - function: `myFunc::\ {x+y}'
    - `.ns.myFunc\ {x*y}'
    - `sum::\[x\;y\]\ x+y'")
-
-
-;; (defvar q-variable-regex
-;;   (concat
-;;    "\\_<"                                                                      ; Match the start of a symbol or word (word boundary)
-;;    "\\([.]?[a-zA-Z]"                                                           ; Match an optional dot followed by a letter, indicating a namespace or identifier
-;;    "\\(?:\\s_\\|\\w\\|_\\)*"                                                   ; Followed by any combination of symbol characters, word characters, or underscores
-;;    "\\s-*"                                                                     ; Optional whitespace after the identifier
-;;    "\\)[-.~=!@#$%^&*_+|,<>?]?"                                                 ; Optionally match operators such as `-`, `~`, `=`, `!`, and more
-;;    "::?")                                                                      ; Match optional `::`, allowing both local and global variable declarations
-;;   "Regular expression used to find variable declarations.
-
-;;    This regex matches a variety of variable declarations in `q', supporting:
-;;    - Namespaced variables
-;;    - Variables that may include operators in their assignment (e.g., `+=')
-;;    - Handles both global (`::') and local variables.
-
-;;    Examples:
-;;    - `myVar::\ 42'
-;;    - `.config.setting::\ 'enabled'
-;;    - `counter\ +=\ 1'")
-
 
 
 
@@ -159,85 +159,94 @@
   "\\_<\\([.]?[a-zA-Z]\\(?:\\s_\\|\\w\\|_\\)*\\s-*\\)[-.~=!@#$%^&*_+|,<>?]?::?"
   "Regular expression used to find variable declarations.")
 
-(defvar q-keywords
-  (eval-when-compile
-    (regexp-opt
-     '("abs" "acos" "asin" "atan" "avg" "bin" "binr" "by" "cor" "cos" "cov"
-       "dev" "delete" "div" "do" "enlist" "exec" "exit" "exp" "from" "getenv"
-       "hopen" "if" "in" "insert" "last" "like" "log" "max" "min" "prd"
-       "select" "setenv" "sin" "sqrt" "ss" "sum" "tan" "update" "var" "wavg"
-       "while" "within" "wsum" "xexp")
-     `words)
-    )
-  "Keywords for q mode.")
+(defvar q-data-types
+  (concat
+   "\\_<"                                                                      ; Match the beginning of a symbol or word (word boundary)
+   (regexp-opt                                                                 ; Use `regexp-opt` to create an efficient regex pattern that matches any of the built-in keywords
+    '(
+      "boolean" "byte" "short" "long" "real" "int" "float" "char" "symbol"
+      "month" "date" "datetime" "minute" "second" "time" "timespan" "timestamp"
+      "year" "mm" "dd" "hh" "uu" "ss" "week"
+      ))
+   "\\_>")
+  "Regular expression for highlighting data types in q.k.
 
-(defvar q-type-words
-  (eval-when-compile
-    (concat "\\(`"
-            (regexp-opt '("boolean" "byte" "short" "long" "real" "int" "float" "char" "symbol"
-                          "month" "date" "datetime" "minute" "second" "time" "timespan" "timestamp"
-                          "year" "mm" "dd" "hh" "uu" "ss" "week")
-                        t)
-            "\\)\\s-*[$]")
-    )
-  "Types for q mode.")
+The pattern is optimized for performance using `regexp-opt`.
+It ensures that only whole words or symbols are matched, not sub-strings.
 
-(defvar q-builtin-words
-  (eval-when-compile
-    (concat
-     "\\_<"                                                                    ; Match the beginning of a symbol or word (word boundary)
-     "\\(?:[.]q[.]\\)?"                                                        ; Optional: Match `.q.` prefix, allowing for functions like `.q.someBuiltin`
-
-     (regexp-opt                                                               ; Use `regexp-opt` to create an efficient regex pattern that matches any of the built-in keywords
-      '( "aj" "aj0" "ajf" "ajf0" "all" "and" "any" "asc" "asof" "attr"
-         "avgs" "ceiling" "cols" "count" "cross" "csv" "cut" "deltas"
-         "desc" "differ" "distinct" "dsave" "each" "ej" "ema" "eval"
-         "except" "fby" "fills" "first" "fkeys" "flip" "floor" "get"
-         "group" "gtime" "hclose" "hcount" "hdel" "hsym" "iasc" "idesc"
-         "ij" "ijf" "inter" "inv" "key" "keys" "lj" "ljf" "load"
-         "lower" "lsq" "ltime" "ltrim" "mavg" "maxs" "mcount" "md5"
-         "mdev" "med" "meta" "mins" "mmax" "mmin" "mmu" "mod" "msum"
-         "neg" "next" "not" "null" "or" "over" "parse" "peach" "pj"
-         "prds" "prior" "prev" "rand" "rank" "ratios" "raze" "read0"
-         "read1" "reciprocal" "reval" "reverse" "rload" "rotate"
-         "rsave" "rtrim" "save" "scan" "scov" "sdev" "set" "show"
-         "signum" "ssr" "string" "sublist" "sums" "sv" "svar" "system"
-         "tables" "til" "trim" "type" "uj" "ujf" "ungroup" "union"
-         "upper" "upsert" "value" "view" "views" "vs" "where" "wj"
-         "wj1" "ww" "xasc" "xbar" "xcol" "xcols" "xdesc" "xgroup"
-         "xkey" "xlog" "xprev" "xrank"))
-
-     "\\_>"))                                                                  ; Match the end of a symbol or word (word boundary), ensuring complete words are matched
-  "Regular expression for highlighting built-in functions in q.k.
-   
-   This variable defines a regex pattern to match built-in keywords
-   from the `q` programming language.  The pattern is optimized for 
-   performance using `regexp-opt` and supports matching optional 
-   `.q.` prefixes.  It ensures that only whole words or symbols are 
-   matched, not sub-strings.
-
-   For example, this regex will match:
-   - `aj', `each', `count' (built-in functions)
-   - `.q.save', `.q.load' (prefixed built-in functions)"
+For example, this regex will match:
+   - `byte', `long', `char' but not `gigabyte', `longjohn' or `character'."
   )
 
 
-(defvar q-constant-words
-  (eval-when-compile
-    (regexp-opt '(".z.D" ".z.K" ".z.T" ".z.Z" ".z.N" ".z.P" ".z.a" ".z.b"
-                  ".z.d" ".z.exit" ".z.f" ".z.h" ".z.i" ".z.k" ".z.l" ".z.o"
-                  ".z.pc" ".z.pg" ".z.ph" ".z.pi" ".z.po" ".z.pp" ".z.ps"
-                  ".z.pw" ".z.s" ".z.t" ".z.ts" ".z.u" ".z.vs" ".z.w" ".z.x"
-                  ".z.z" ".z.n" ".z.p" ".z.ws" ".z.bm")
-                `words))
-  "Constants for q mode.")
+(defvar q-standalone-operators
+  "[~!@#$%^&*_+=|:'<,>.?/-]"                                                   ; note inside an alternative block ^ can't be at the start and - must be at the end.
+  "Regular expression for matching standalone Q operators.")
 
-(defvar q-font-lock-keywords
-  (list '("^\\\\\\_<.*?$" 0 font-lock-constant-face keep)                      ; lines starting with a '\' are compile time
-        (list q-function-regex 1 font-lock-function-name-face nil)             ; functions
-        )
-  "Minimal highlighting expressions for q mode.")
+(defvar q-standalone-operators-space-prefix
+  "\\(?:[[:space:]]\\|[)\\]}]\\)[_]")
 
+(defvar q-standalone-operators-space-prefix-suffix
+  "\\(?:[[:space:]]\\|[])}]\\)\\([.]\\)\\(?:[[:space:]]\\|[[({]\\)")
+
+(defvar q-built-in-namespaces
+  "\\(?:[.]q[.]\\|[.]Q[.]\\|[.]j[.]\\|[.]z[.]\\|[.]m[.]\\)[[:word:]]*"
+  "Regular expression to match built-in namespaces.
+
+   This regex matches the Q, j, z, and m namespaces to a depth of 1:
+       .Q.foo
+       .j.k
+       .z.bar
+       .m.x
+   It will not match .Q.foo.bar.")
+
+(defvar q-attributes-and-syntactic-sugar
+  (concat
+   "\\_<"                                                                      ; Match the beginning of a symbol or word (word boundary)
+   (regexp-opt                                                                 ; Use `regexp-opt` to create an efficient regex pattern that matches any of the built-in keywords
+    '("g" "p" "s" "u"                                                          ; attributes
+      "aj" "aj0" "ajf" "ajf0" "all" "and" "any" "asc" "asof" "attr"            ; syntactic sugar
+      "avgs" "ceiling" "cols" "count" "cross" "csv" "cut" "deltas"
+      "desc" "differ" "distinct" "dsave" "each" "ej" "ema" "eval"
+      "except" "fby" "fills" "first" "fkeys" "flip" "floor" "get"
+      "group" "gtime" "hclose" "hcount" "hdel" "hsym" "iasc" "idesc"
+      "ij" "ijf" "inter" "inv" "key" "keys" "lj" "ljf" "load"
+      "lower" "lsq" "ltime" "ltrim" "mavg" "maxs" "mcount" "md5"
+      "mdev" "med" "meta" "mins" "mmax" "mmin" "mmu" "mod" "msum"
+      "neg" "next" "not" "null" "or" "over" "parse" "peach" "pj"
+      "prds" "prior" "prev" "rand" "rank" "ratios" "raze" "read0"
+      "read1" "reciprocal" "reval" "reverse" "rload" "rotate"
+      "rsave" "rtrim" "save" "scan" "scov" "sdev" "set" "show"
+      "signum" "ssr" "string" "sublist" "sums" "sv" "svar" "system"
+      "tables" "til" "trim" "type" "uj" "ujf" "ungroup" "union"
+      "upper" "upsert" "value" "view" "views" "vs" "where" "wj"
+      "wj1" "ww" "xasc" "xbar" "xcol" "xcols" "xdesc" "xgroup"
+      "xkey" "xlog" "xprev" "xrank"
+      "abs" "acos" "asin" "atan" "avg" "bin" "binr" "by" "cor" "cos" "cov"
+      "dev" "delete" "div" "do" "enlist" "exec" "exit" "exp" "from" "getenv"
+      "hopen" "if" "in" "insert" "last" "like" "log" "max" "min" "prd"
+      "select" "setenv" "sin" "sqrt" "ss" "sum" "tan" "update" "var" "wavg"
+      "while" "within" "wsum" "xexp"))
+   "\\_>")
+  "Regular expression for highlighting built-in functions in q.k.
+
+   This variable defines a regex pattern to match built-in keywords
+   from the `q` programming language.  The pattern is optimized for
+   performance using `regexp-opt`.
+   It ensures that only whole words or symbols are matched, not sub-strings.
+
+   For example, this regex will match:
+   - `aj', `each', `count' (built-in functions)"
+  )
+
+
+
+
+;; (defvar q-font-lock-keywords
+;;   (list '("^\\\\\\_<.*?$" 0 font-lock-constant-face keep)                      ; lines starting with a '\' immediately followed by text  compile time functions
+;;         (list q-function-regex 1 font-lock-function-name-face nil)
+;;         )
+;;   "Minimal highlighting expressions for q mode.")
 
 (defvar q-datetime-regex
   (concat
@@ -336,214 +345,277 @@ Includes optional seconds and fractional seconds.
    - `12:00:00.123`"
   )
 
+(defun q-setup-log-output-font-lock ()
+  "Setup font-lock rules for Q log entries.
 
+Assumes form of
+    [datetime; process; log-level;function]:message; object (as text)"
+  (font-lock-add-keywords
+   nil                                                                         ; Apply to the current buffer
+   `(
+     (,
+      (rx (group "[")                                                          ;  1: Opening bracket
+          (group (= 4 digit))                                                  ;  2: Four-digit year
+          (group ".")                                                          ;  3: Dot separator
+          (group (= 2 digit))                                                  ;  4: Two-digit month
+          (group ".")                                                          ;  5: Dot separator
+          (group (= 2 digit))                                                  ;  6: Two-digit day
+          (group "D")                                                          ;  7: `D' character
+          (group (= 2 digit))                                                  ;  8: Two-digit hour
+          (group ":")                                                          ;  9: Colon separator
+          (group (= 2 digit))                                                  ; 10: Two-digit minute
+          (group ":")                                                          ; 11: Colon separator
+          (group (= 2 digit))                                                  ; 12: Two-digit second
+          (group ".")                                                          ; 13: Dot separator
+          (group (+ digit))                                                    ; 14: One or more digits (fractional seconds)
+          (group ";")                                                          ; 15: Semicolon separator
+          (group (+ (not (any ";"))))                                          ; 16: First field (non-semicolon characters)
+          (group ";")                                                          ; 17: Semicolon separator
+          (group (+ (not (any ";"))))                                          ; 18: Second field (non-semicolon characters)
+          (group ";")                                                          ; 19: Semicolon separator
+          (group (+ (not (any "]"))))                                          ; 20: Third field (non-closing-bracket characters)
+          (group "]:")                                                         ; 21: Closing bracket and colon
+          (group (+ (not (any ";"))))                                          ; 22: Fourth field (non-semicolon characters)
+          (group ";")                                                          ; 23: Semicolon separator
+          (group (0+ any) line-end))                                           ; 24: Everything from here to the end of the line
 
-(defvar q-font-lock-keywords-1                                                 ; types
-  (append q-font-lock-keywords
-          (list
-           '("`:\\(?:\\w\\|[/:._]\\)*"                                         ; Match a `\`:' prefix followed by word characters or [`/:._']
-             . font-lock-preprocessor-face)                                    ; files        - Examples: `:file/path', `:user.name'
-           '("\\(`\\_<[gpsu]\\)#"                                              ; Match '` followed by `g`, `p', `s', or `u', and a `'
-             1 font-lock-type-face nil)                                        ; attributes   - Examples: `g\#', `s\#'
-           '("^'.*?$"                                                          ; Match a line starting with a single quote and ending anywhere (lazy match)
-             0 font-lock-warning-face nil)                                     ; error        - Examples: `\'UnexpectedError', `\'SomeMessage'
-           '("[; ]\\('`\\w*\\)"                                                ; Match a semicolon or space, followed by a backtick and word characters
-             1 font-lock-warning-face nil)                                     ; signal       - Examples: `;\`backtickWord', `\ \`backtickError'
-           '("`\\(?:\\(?:\\w\\|[.]\\)\\(?:\\s_\\|\\w\\|_\\)*\\)?"              ; Match backtick, optionally followed by word or dot characters, then word or symbol characters
-             . font-lock-constant-face)                                        ; symbols      - Examples: `\`symbol', `\`s.1'
-           '("\\b[0-2]:"                                                       ; Match word boundary followed by digits 0, 1, or 2, and a colon
-             . font-lock-preprocessor-face)                                    ; IO/IPC       - Examples: `0:', `2:'
-           
-           (list q-type-words                                                  ; Highlight words defined in `q-type-words` with a type face
-                 1 font-lock-type-face nil)                                    ; `minute`year - Examples: `\`minute', `\`year'
-           (cons q-keywords 'font-lock-keyword-face)                           ; select from  - Examples: `\`select', `\`from'
-           (cons q-builtin-words 'font-lock-builtin-face)                      ; q.k          - Examples: `\`q.k', `\`q.system'
-           ))
-  "More highlighting expressions for q mode.")
-
-(defvar q-font-lock-keywords-1
-  (append q-font-lock-keywords
-          (list
-           ;; Files
-           `(,(rx "`:"
-                  (0+ (or wordchar (any "/:._"))))                             ; Backtick followed by ':' and any word or file path characters
-             . font-lock-preprocessor-face)
-
-           ;; Attributes
-           `(,(rx (group "`"
-                         (or "g" "p" "s" "u")
-                         "#"))                                                 ; Backtick, attribute letter, then '#'
-             1 font-lock-type-face nil)
-
-           ;; Errors
-           `(,(rx line-start
-                  "'"
-                  (0+ not-newline)                                             ; Single quote followed by any content up to end of line
-                  line-end)
-             0 font-lock-warning-face nil)
-
-           ;; Signals
-           `(,(rx (or ";" " ")
-                  (group "`" (0+ word)))                                       ; Semicolon or space, followed by a backtick and word characters
-             1 font-lock-warning-face nil)
-
-           ;; Symbols
-           `(,(rx "`"
-                  (optional (seq (or wordchar ".")
-                                 (0+ (or symbol-start wordchar "_")))))        ; Optional backtick, optional symbols/word
-             . font-lock-constant-face)
-
-           ;; IO/IPC
-           `(,(rx word-boundary
-                  (char "0-2")                                                 ; Digits 0, 1, or 2
-                  ":")
-             . font-lock-preprocessor-face)
-
-           ;; q-type-words, q-keywords, q-builtin-words
-           `(,q-type-words 1 font-lock-type-face nil)
-           `(,q-keywords . font-lock-keyword-face)
-           `(,q-builtin-words . font-lock-builtin-face)))
-  "More highlighting expressions for q mode.")
-
-
-(defvar q-font-lock-keywords-2
-  (append q-font-lock-keywords-1
-          (list
-           ;; Constants
-           (cons q-constant-words 'font-lock-constant-face)
-
-           ;; Variables
-           (list q-variable-regex 1 'font-lock-variable-name-face nil)
-
-           ;; Date, time, and GUID regexes
-           (cons q-datetime-regex 'font-lock-constant-face)
-           (cons q-timespan-timestamp-regex 'font-lock-constant-face)
-           (cons q-guid-regex 'font-lock-constant-face)
-           (cons q-time-regex 'font-lock-constant-face)
-
-           ;; Floating point and real numbers
-           `(,(rx word-start
-                  (0+ digit)
-                  (optional ".")
-                  (0+ digit)
-                  (optional (char "eE") (optional (char "+-")) (1+ digit))
-                  (optional (char "ef"))
-                  word-end)
-             . font-lock-constant-face)
-
-           ;; Char, real, float, short, int, long, time-type suffixes
-           `(,(rx word-start
-                  (1+ digit)
-                  (optional (char "cefhijnptuv"))
-                  word-end)
-             . font-lock-constant-face)
-
-           ;; Boolean values
-           `(,(rx word-start
-                  (char "01")
-                  (char "b")
-                  word-end)
-             . font-lock-constant-face)
-
-           ;; Byte values in hexadecimal
-           `(,(rx word-start
-                  "0x"
-                  (1+ hex-digit)
-                  word-end)
-             . font-lock-constant-face)
-
-           ;; Null and infinity representations
-           `(,(rx word-start
-                  "0"
-                  (char "nNwW")
-                  (optional (char "cefghijmndzuvtp"))
-                  word-end)
-             . font-lock-constant-face)
-
-           ;; Highlight TODO-like comments
-           `(,(rx (or "TODO" "NOTE") (optional ":"))
-             0 font-lock-warning-face t)))
-
-  "Most highlighting expressions for q mode.
-
-   This list defines regular expressions used for highlighting key
-   syntactic elements in `q` code, including:
-   - Constants, variables, dates, times, GUIDs, and numeric types
-   - TODO markers for comments or annotations
-
-   Examples of matches:
-   - Date: `2023.10m`, `2023.10.12T15:30`
-   - Timespan/Timestamp: `2023.10.12D`, `12:34:56.789`
-   - GUID: `123e4567-e89b-12d3-a456-426614174000`
-   - Float: `1.23e-4`, `42.5f`
-   - Boolean: `1b`, `0b`
-   - Byte: `0x1A3F`
-   - Null/Infinity: `0N`, `0n`, `0w`
-   - TODO: `TODO`, `NOTE:`"
+      ;; Highlighting groups
+      (1 'q-log-delimiter-face t)                                              ;  1: Opening bracket
+      (2 'q-log-datetime-face t)                                               ;  2: Four-digit year
+      (3 'q-log-datetime-face t)                                               ;  3: Dot separator
+      (4 'q-log-datetime-face t)                                               ;  4: Two-digit month
+      (5 'q-log-datetime-face t)                                               ;  5: Dot separator
+      (6 'q-log-datetime-face t)                                               ;  6: Two-digit day
+      (7 'q-log-datetime-face t)                                               ;  7: `D' character
+      (8 'q-log-datetime-face t)                                               ;  8: Two-digit hour
+      (9 'q-log-datetime-face t)                                               ;  9: Colon separator
+      (10 'q-log-datetime-face t)                                              ; 10: Two-digit minute
+      (11 'q-log-datetime-face t)                                              ; 11: Colon separator
+      (12 'q-log-datetime-face t)                                              ; 12: Two-digit second
+      (13 'q-log-datetime-face t)                                              ; 13: Dot separator
+      (14 'q-log-datetime-face t)                                              ; 14: One or more digits (fractional seconds)
+      (15 'q-log-delimiter-face t)                                             ; 15: Semicolon separator
+      (16 'q-log-process-face t)                                               ; 16: Process (non-semicolon characters)
+      (17 'q-log-delimiter-face t)                                             ; 17: Semicolon separator
+      (18 (let ((log-level (match-string 18)))                                 ; 18: Log Level (non-semicolon characters) - Conditional face based on text content
+            (cond
+             ((or (string= log-level "ERROR") (string= log-level "FATAL"))
+              'q-log-level-err-face)
+             ((string= log-level "WARN") 'q-log-level-warn-face)
+             ((or (string= log-level "INFO") (string= log-level "DEBUG")
+                  (string= log-level "SILENT"))
+              'q-log-level-info-face)))
+          t)
+      (19 'q-log-delimiter-face t)                                             ; 19: Semicolon separator
+      (20 'q-log-process-face t)                                               ; 20: Current function (non-closing-bracket characters)
+      (21 'q-log-delimiter-face t)                                             ; 21: Closing bracket and colon
+      (22 'q-log-message-face t)                                               ; 22: Fourth field (non-semicolon characters)
+      (23 'q-log-delimiter-face t)                                             ; 23: Semicolon separator
+      (24 'q-log-object-face t))                                               ; 24: Everything from here to the end of the line
+     )
+   )
   )
 
 
-(defvar q-font-lock-defaults
-  '((q-font-lock-keywords q-font-lock-keywords-1 q-font-lock-keywords-2)
-    nil nil nil nil
-    (font-lock-syntactic-keywords
-     . (("^\\(\/\\)\\s-*$"     1 "< b")                                        ; begin multiline comment /
-        ("^\\(\\\\\\)\\s-*$"   1 "> b")                                        ; end multiline comment   \
-        ("\\(?:^\\|[ \t]\\)\\(\/\\)"    1 "<  ")                               ; comments start flush left or after white space
-        ("\\(\"\\)\\(?:[^\"\\\\]\\|\\\\.\\)*?\\(\"\\)" (1 "\"") (2 "\""))
-        )))
-  "List of font lock keywords to properly highlight q syntax.")
-
-
 ;; syntax table
-
-(defvar q-loadbalancer-mode-syntax-table
+(defvar q-script-mode-syntax-table
   (let ((table (make-syntax-table)))
-    (modify-syntax-entry ?\" ".  " table)                                      ; treat " as punctuation
-    (modify-syntax-entry ?\/ ".  " table)                                      ; treat / as punctuation
-    (modify-syntax-entry ?\n ">  " table)                                      ; comments are ended by a new line
-    (modify-syntax-entry ?\r ">  " table)                                      ; comments are ended by a new line
-    (modify-syntax-entry ?\. "_  " table)                                      ; treat . as a symbol
-    (modify-syntax-entry ?\_ ".  " table)                                      ; treat _ as punctuation
-    (modify-syntax-entry ?\\ ".  " table)                                      ; treat \ as punctuation
-    (modify-syntax-entry ?\$ ".  " table)                                      ; treat $ as punctuation
-    (modify-syntax-entry ?\% ".  " table)                                      ; treat % as punctuation
-    (modify-syntax-entry ?\& ".  " table)                                      ; treat & as punctuation
-    (modify-syntax-entry ?\+ ".  " table)                                      ; treat + as punctuation
-    (modify-syntax-entry ?\, ".  " table)                                      ; treat , as punctuation
-    (modify-syntax-entry ?\- ".  " table)                                      ; treat - as punctuation
-    (modify-syntax-entry ?\= ".  " table)                                      ; treat < as punctuation
-    (modify-syntax-entry ?\* ".  " table)                                      ; treat * as punctuation
-    (modify-syntax-entry ?\< ".  " table)                                      ; treat < as punctuation
-    (modify-syntax-entry ?\> ".  " table)                                      ; treat > as punctuation
-    (modify-syntax-entry ?\| ".  " table)                                      ; treat | as punctuation
-    (modify-syntax-entry ?\` "_  " table)                                      ; treat ` as symbol
+
+    ;; String delimiter
+    (modify-syntax-entry ?\" "\"" table) ; String quote
+
+    ;; white-space
+    (modify-syntax-entry ?\; " " table)  ; semi-colon as white-space allows us to define single character operators as punctuation and so handle font-locking based on syntax for them. 
+    
+    ;; prefixes
+    (modify-syntax-entry ?\` "'" table)  ; Treat the back-tick as part of an expression if it appears next to it.
+
+    ;; Comments (comment start handled in syntax-propertize-function
+    (modify-syntax-entry ?/ "<" table)   ; Treat / (slash) as comment block start
+    (modify-syntax-entry ?\n ">" table)  ; Newline as whitespace and comment end
+    (modify-syntax-entry ?\r ">" table)  ; Newline as whitespace and comment end
+
+    ;; Word constituent
+    ;; numbers as part of words (variable names) (cons uses functionality in
+    ;; modify-syntax-entry to apply the class to the elements between the two
+    ;; values in the car and cdr positions.)
+    (modify-syntax-entry (cons ?0 ?9) "w" table)
+    (modify-syntax-entry ?_ "w" table)
+    (modify-syntax-entry ?. "w" table)
+    
+    ;; Punctuation characters
+    (modify-syntax-entry ?$ "." table)
+    (modify-syntax-entry ?% "." table)
+    (modify-syntax-entry ?& "." table)
+    (modify-syntax-entry ?+ "." table)
+    (modify-syntax-entry ?= "." table)
+    (modify-syntax-entry ?* "." table)
+    (modify-syntax-entry ?< "." table)
+    (modify-syntax-entry ?> "." table)
+    (modify-syntax-entry ?| "." table)
+    (modify-syntax-entry ?, "." table)
+    (modify-syntax-entry ?- "." table)
+    (modify-syntax-entry ?\\ "." table)
+    (modify-syntax-entry ?# "." table)
+    (modify-syntax-entry ?: "." table)
+    (modify-syntax-entry ?' "." table)
+    (modify-syntax-entry ?^ "." table)
+    (modify-syntax-entry ?! "." table)
+    (modify-syntax-entry ?@ "." table)
+    (modify-syntax-entry ?* "." table)
+    (modify-syntax-entry ?| "." table)
+    (modify-syntax-entry ?? "." table)
+    (modify-syntax-entry ?~ "." table)
+
+    
+    ;; Bracket matching
+    ;; Parentheses and brackets the element after ? is the character
+    ;; the first element in the string is either ( or ) denoting it as an open
+    ;;  or close
+    ;; the second element in the string is the opposite kind of bracket
+    ;;  (so matching close for an open or matching open for a close).
+    (modify-syntax-entry ?\( "()" table)
+    (modify-syntax-entry ?\) ")(" table)
+    (modify-syntax-entry ?\[ "(]" table)
+    (modify-syntax-entry ?\] ")[" table)
+    (modify-syntax-entry ?{ "(}" table)
+    (modify-syntax-entry ?} "){" table)
+
+    ;;  syntax-propertize-function used for:
+    ;;   `      beginning a word denotes the object name is a symbol, alone it is a null or symbol type.
+    ;;              (prefix here by default)
+    ;;   .      word, name space, index object.
+    ;;              (set as word here by default)
+    ;;   /      comment block start and over.
+    ;;              (set as comment block start here by default)
+    ;;   \      comment block end, script end, scan, terminal command (set as scan here by default).
+    ;;   _      word, cut (set as word here by default)
+    ;;   -      word, minus (set as minus here by default)
     table)
   "Syntax table for `q-script-mode'.")
 
+
+
+
+
+
+;;  syntax-propertize-function used for:
+;;   `      beginning a word denotes the object name is a symbol, alone it is a null or symbol type.
+;;              (prefix here by default)
+;;   .      word, name space, index object.
+;;              (set as word here by default)
+;;   /      comment block start and over.
+;;              (set as comment block start here by default)
+;;   \      comment block end, script end, scan, terminal command (set as scan here by default).
+;;   _      word, cut (set as word here by default)
+;;   -      word, minus (set as minus here by default)
+(defun q-syntax-propertize (start end)
+  "Set syntax properties in the region between START and END for `q-mode`."
+  (goto-char start)
+  (let ((patterns
+         `(
+           ;; comments
+           (,q-comments-single-line-regex . q-comment)
+           ;;(,q-comments-multi-line-regex . q-comment)
+           ;; (,q-comments-tag . q-comment-tag)
+           
+           ;; operators
+           ;;  (,q-standalone-operators . q-function)                            ; q-standalone-operators
+           ;;  (,q-standalone-operators-space-prefix . q-function)               ; q-standalone-operators-space-prefix for `_'        (default word)
+           ;;  (,q-standalone-operators-space-prefix-suffix . q-function)        ; q-standalone-operators-space-prefix-suffix for `.' (default word)
+
+           ;; name-spaces
+           ;;  (,q-built-in-namespaces . q-function)                             ; q-built-in-name-spaces
+
+           ;; symbols
+           ;;  ("\\(?:[[:space:]]\\)[[:alnum:].]+" . q-symbol)                   ; New case for `q-symbol'
+
+           ;; attributes and syntactic sugar. 
+           ;;  (,q-attributes-and-syntactic-sugar . q-function)                  ; q-built-in-functions
+
+           ;; data types
+           ;;  (,q-data-types . q-data-types)
+
+           )))                                                     
+    
+    (while (re-search-forward
+            (mapconcat #'car patterns "\\|") ;; Combine all patterns into a single regex
+            end t)
+      (let* ((match (match-string 0))
+             (property (cdr (cl-assoc-if (lambda (regex) (string-match-p regex match)) patterns))))
+        (when property
+          (put-text-property (match-beginning 0) (match-end 0) property t))))))
+
+
+
+(defvar q-font-lock-defaults
+  `(
+    ;; Match text with the 'q-comment' property and apply font-lock-comment-face.
+    (,(lambda (limit)
+        (let ((pos (text-property-any (point) limit 'q-comment t)))
+          (when pos
+            ;; Find the end of the region with the 'q-comment' property.
+            (let ((end (next-single-property-change pos 'q-comment nil limit)))
+              (set-match-data (list pos end))
+              (goto-char end)  ;; Move point to end of match.
+              t))))
+     . 'font-lock-comment-face)
+
+    ;; Match text with the 'q-function' property and apply font-lock-constant-face.
+    (,(lambda (limit)
+        (let ((pos (text-property-any (point) limit 'q-function t)))
+          (when pos
+            (let ((end (next-single-property-change pos 'q-function nil limit)))
+              (set-match-data (list pos end))
+              (goto-char end)
+              t))))
+     . 'font-lock-constant-face)
+
+    ;; Match text with the 'q-data-types' property and apply font-lock-preprocessor-face.
+    (,(lambda (limit)
+        (let ((pos (text-property-any (point) limit 'q-data-types t)))
+          (when pos
+            (let ((end (next-single-property-change pos 'q-data-types nil limit)))
+              (set-match-data (list pos end))
+              (goto-char end)
+              t))))
+     . 'font-lock-preprocessor-face))
+  "Font-lock keywords for `q-mode`, using `q-syntax-propertize`.")
+
+
+(defvar q-font-lock-defaults
+  '(
+    (q-font-lock-keywords q-font-lock-keywords-1 q-font-lock-keywords-2)       ; Key words  
+    nil                                                                        ; key words only 
+    nil                                                                        ; case fold
+    nil                                                                        ; syntax-alist  (replaces syntax table if defined)
+    nil                                                                        ; OTHER VARS
+    (font-lock-syntactic-keywords . (("^\\(\/\\)\\s-*$"     1 "< b") ;            begin multiline comment /
+                                     ("^\\(\\\\\\)\\s-*$"   1 "> b") ; end multiline comment   \
+                                     ("\\(?:^\\|[ \t]\\)\\(\/\\)"    1 "<  ") ; comments start flush left or after white space
+                                     ("\\(\"\\)\\(?:[^\"\\\\]\\|\\\\.\\)*?\\(\"\\)" (1 "\"") (2 "\""))
+                                     )))
+  "List of font lock keywords to properly highlight q syntax.")
+
 (defun my-show-paren-ignore-q-prompt ()
-  "Ignore `q)` as a matching parenthesis in show-paren-mode."
+  "Ignore `q)` as a matching parenthesis in `show-paren-mode'."
   (let ((pos (point)))
     (save-excursion
       (beginning-of-line)
       (if (looking-at "^q)")  ; Match `q)` at the start of the line
           ;; Do nothing (return nil to ignore this match)
           nil
-        ;; Otherwise, use the default behavior
+        ;; Otherwise, use the default behaviour
         (show-paren--default)))))
 
 (defun q-paren-ignore ()
-  "Set `show-paren-data-function` to ignore `q)` prompts in comint."
+  "Set `show-paren-data-function` to ignore the `q)' prompt in comint."
   (setq-local show-paren-data-function #'my-show-paren-ignore-q-prompt))
 
-
+(message "finished loading q-parse.el")
 (provide 'q-parse)
 
 ;;; q-parse.el ends here
 
-                                        ; LocalWords:  cefhijnptuv ij
-                                        ; LocalWords:  assword concat
-                                        ; LocalWords:  cefghijmndzuvtp
-                                        ; LocalWords:  xgroup msum mins signum xlog pj
-                                        ; LocalWords:  loadbalancer
-                                        ; LocalWords:  loadBalancer
+                                                                                 ; LocalWords:  cefhijnptuv ij assword concat cefghijmndzuvtp xgroup msum mins signum xlog pj loadbalancer paren
+                                                                                 ; LocalWords:  xexp
