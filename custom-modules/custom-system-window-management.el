@@ -14,120 +14,127 @@
 ;;
 
 
-(declare-function sr-speedbar-window "sr-speedbar")
-;; TODO:understand why sr-speedbar-get-window causes window to open up between sr-speedbar and edit window.
+(defvar sr-speedbar-window) ; variable defined in sr-speedbar - the current window of sr-speedbar.
 
+;; (declare-function sr-speedbar-get-window "sr-speedbar")
+;; TODO:understand why sr-speedbar-get-window seems to cause windows to open up between sr-speedbar and edit window.
+
+(declare-function sr-speedbar-exist-p "sr-speedbar")
+(declare-function sr-speedbar-refresh-turn-off "sr-speedbar")
 (declare-function sr-speedbar-close "sr-speedbar")
 
-(require 'custom-system-objects)
 (require 'custom-ui-config)
 
 
 
 ;;; Code:
 
-(defvar my-window-tools/buffer-window-map
-  '((:names   . (("*dape-shell*" . terminal)
-                 ("*scratch*" . terminal)
-                 ("*SQL Results*" . data)
-                 ("*Backtrace*" . data)
-                 ("*grep*" . data)
-                 ("*xref*" . data)
-                 ("*Org Agenda*" . data)
-                 ("*docker-images*" . data)
-                 ("*docker-contexts*" . data)
-                 ("*docker-networks*" . data)
-                 ("*docker-containers*" . data)
-                 ("*docker-volumes*" . data)
-                 ("*Crafted Emacs*" . edit)
-                 ("config.el" . edit)
-                 ("early-config.el" . edit)
-                 (".bashrc" . edit)
-                 (".bash_history" . edit)
-                 (".bashrc_profile" . edit)
-                 (".LESS_TERMCAP" . edit)
-                 (".profile" . edit)
-                 (".zshrc" . edit)
-                 ("*Messages*" . logs)
-                 ("*Warnings*" . logs)
-                 ("*blacken-error*" . logs)
-                 ("*straight-process*" . logs)
-                 ("*ruff-format errors*" . logs)
-                 ("*straight-byte-compilation*" . logs)
-                 ("*projectile-files-errors*". logs)
-                 ("*Async-native-compile-log*". logs)
-                 ("*elisp-flymake-byte-compile*" . logs)
-                 ("pyproject.toml" . config)
-                 ("*RE-Builder*" . config)
-                 ("*Anaconda*". config)
-                 ("conf.org" . config)
-                 ("*eldoc*" . config)
-                 ("*EGLOT workspace configuration*" . config)
-                 ("*Help*" . config)
-                 ("*info*" . config)
-                 ("todos.org" . config)
-                 ("*Ediff Config*" . config)
-                 (".gitignore" . vc)
-                 ))
-    (:regexps . (("^documentation$" . config)     ; exact match for `documentation'
-                 ("^README.*" . config)           ; strings beginning upper or lower case `README'.
-                 (".*\\.conf$" . config)          ; any number of characters followed by `.conf'.
-                 (".*\\.dconf$" . config)         ; any number of characters followed by `.dconf'.
-                 ("^\\*Customize.*" . config)     ; strings beginning with `*Customize' followed by any characters.
-                 ("^\\*Ibuffer.*" . config)       ; strings beginning with `*Ibuffer' followed by any characters.
-                 ("^magit.*" . vc)                ; strings beginning with `magit' followed by any characters.
-                 ("^vc-.*" . vc)                  ; strings beginning with `vc' followed by any characters.
-                 (".*Annotate .*" . vc)           ; strings with `Annotate\ ' somewhere in them.
-                 (".*ede-proj.*" . vc)            ; strings with `ede-proj'  somewhere in them.
-                 (".*\\.pdf$" . data)             ; any number of characters followed by `.pdf'.
-                 ("^\\*Flymake diagnostics.*"
-                  . data)                         ; strings beginning with `Flymake-diagnostics' followed by any characters.
-                 ("^flymake-.*" . data)           ; strings beginning `flymake'.
-                 (".*cell sheet.*" . data)        ; strings containing `cell\ sheet'.
-                 ("^Ediff A\\:.*" . data)         ; strings beginning `Ediff A:' followed by any characters.
-                 ("^Ediff B\\:.*" . data)         ; strings beginning `Ediff B:' followed by any characters.
-                 ("^magit-process:.*" . logs)     ; strings beginning `magit-process:' followed by any characters.
-                 ("^\\*EGLOT.*" . logs)           ; strings beginning `*EGLOT' followed by any characters.
-                 (".*+sterr$" . logs)             ; strings ending `+sterr'.
-                 (".*\\.log" . logs)              ; strings ending `.log'.
-                 (".*-log.*" . logs)              ; strings with `-log' in them. 
-                 (".*tramp.*" . logs)             ; strings with `tramp' in them.
-                 ("^\\*ielm*" . terminal)         ; strings beginning `*ielm' followed by any characters.
-                 ("^\\*Q PROC.*" . terminal)      ; strings beginning `*Q PROC' followed by any characters.
-                 ("^\\*vterm.*" . terminal)       ; strings beginning `*vterm' followed by any characters.
-                 ("^\\*eshell.*" . terminal)      ; strings beginning `*eshell' followed by any characters.
-                 ))            
-    (:modes   . ((vterm-mode . terminal)
-                 (eshell-mode . terminal)
-                 (shell-mode . terminal)
-                 (term-mode . terminal)
-                 (dired-mode . terminal)
-                 (ielm-mode . terminal)
-                 (calendar-mode . data)
-                 (diary-mode . data)
-                 (clojure-mode . edit)
-                 (lisp-mode . edit)
-                 (python-mode . edit)
-                 (q-script-mode . edit)
-                 (rust-mode . edit)
-                 (scheme-mode . edit)
-                 (systemd-mode . config)
-                 (toml-mode . config)
-                 (XML-mode . config)
-                 (nXML-mode . config)
-                 (json-mode . config)
-                 (org-mode . config)
-                 (csv-mode . config)
-                 (ibuffer-mode . config)
-                 (bufler-list-mode . config)
-                 (bookmark-menu . config)
-                 (imenu-list-mode . config)
-                 (help-mode . config)
-                 (helpful-mode . config)
-                 (compilation-mode . logs)
-                 (debugger-mode . logs)))
-    )
-  )
+(defvar my-window-tools/buffer-window-map nil
+  "Create the map of buffers to windows.")
+
+(setq my-window-tools/buffer-window-map
+      '((:names   . (("*dape-shell*" . terminal)
+                     ("*scratch*" . terminal)
+                     ("*SQL Results*" . data)
+                     ("*Backtrace*" . data)
+                     ("*grep*" . data)
+                     ("*xref*" . data)
+                     ("*Org Agenda*" . data)
+                     ("*docker-images*" . data)
+                     ("*docker-contexts*" . data)
+                     ("*docker-networks*" . data)
+                     ("*docker-containers*" . data)
+                     ("*docker-volumes*" . data)
+                     ("*Crafted Emacs*" . edit)
+                     ("config.el" . edit)
+                     ("early-config.el" . edit)
+                     (".bashrc" . edit)
+                     (".bash_history" . edit)
+                     (".bashrc_profile" . edit)
+                     (".LESS_TERMCAP" . edit)
+                     (".profile" . edit)
+                     (".zshrc" . edit)
+                     ("*Messages*" . logs)
+                     ("*Warnings*" . logs)
+                     ("*blacken-error*" . logs)
+                     ("*straight-process*" . logs)
+                     ("*ruff-format errors*" . logs)
+                     ("*straight-byte-compilation*" . logs)
+                     ("*projectile-files-errors*". logs)
+                     ("*Async-native-compile-log*". logs)
+                     ("*elisp-flymake-byte-compile*" . logs)
+                     ("*RE-Builder*" . config)
+                     ("*Anaconda*". config)
+                     ("conf.org" . config)
+                     ("*eldoc*" . config)
+                     ("*EGLOT workspace configuration*" . config)
+                     ("*Help*" . config)
+                     ("*info*" . config)
+                     ("todos.org" . config)
+                     ("*Ediff Config*" . config)
+                     ("*Ilist*" .config)
+                     (".gitignore" . vc)
+                     ))
+        (:regexps . (("^documentation$" . config)                                     ; exact match for `documentation'
+                     ("^README.*" . config)                                           ; strings beginning upper or lower case `README'.
+                     (".*\\.conf$" . config)                                          ; any number of characters followed by `.conf'.
+                     (".*\\.dconf$" . config)                                         ; any number of characters followed by `.dconf'.
+                     ("^\\*Customize.*" . config)                                     ; strings beginning with `*Customize' followed by any characters.
+                     ("^\\*Ibuffer.*" . config)                                       ; strings beginning with `*Ibuffer' followed by any characters.
+                     ("^magit.*" . vc)                                                ; strings beginning with `magit' followed by any characters.
+                     ("^vc-.*" . vc)                                                  ; strings beginning with `vc' followed by any characters.
+                     (".*Annotate .*" . vc)                                           ; strings with `Annotate\ ' somewhere in them.
+                     (".*ede-proj.*" . vc)                                            ; strings with `ede-proj'  somewhere in them.
+                     (".*\\.pdf$" . data)                                             ; any number of characters followed by `.pdf'.
+                ;;     ("^\\*Flymake diagnostics.*" . data)                             ; strings beginning with `Flymake-diagnostics' followed by any characters.
+                     ("^flymake-.*" . data)                                           ; strings beginning `flymake'.
+                     (".*cell sheet.*" . data)                                        ; strings containing `cell\ sheet'.
+                     ("^Ediff A\\:.*" . data)                                         ; strings beginning `Ediff A:' followed by any characters.
+                     ("^Ediff B\\:.*" . data)                                         ; strings beginning `Ediff B:' followed by any characters.
+                     ("^magit-process:.*" . logs)                                     ; strings beginning `magit-process:' followed by any characters.
+                     ("^\\*EGLOT.*" . logs)                                           ; strings beginning `*EGLOT' followed by any characters.
+                     (".*+sterr$" . logs)                                             ; strings ending `+sterr'.
+                     (".*\\.log" . logs)                                              ; strings ending `.log'.
+                     (".*-log.*" . logs)                                              ; strings with `-log' in them.
+                     (".*tramp.*" . logs)                                             ; strings with `tramp' in them.
+                     ("^\\*ielm*" . terminal)                                         ; strings beginning `*ielm' followed by any characters.
+                     ("^\\*Q PROC.*" . terminal)                                      ; strings beginning `*Q PROC' followed by any characters.
+                     ("^\\*vterm.*" . terminal)                                       ; strings beginning `*vterm' followed by any characters.
+                     ("^\\*eshell.*" . terminal)                                      ; strings beginning `*eshell' followed by any characters.
+                     ))
+        (:modes   . ((vterm-mode . terminal)
+                     (eshell-mode . terminal)
+                     (shell-mode . terminal)
+                     (term-mode . terminal)
+                     (dired-mode . terminal)
+                     (ielm-mode . terminal)
+                     (inferior-python-mode . terminal)
+                     (flymake-diagnostics-buffer-mode . data)
+                     (calendar-mode . data)
+                     (diary-mode . data)
+                     (clojure-mode . edit)
+                     (lisp-mode . edit)
+                     (python-ts-mode . edit)
+                     (q-script-mode . edit)
+                     (rust-mode . edit)
+                     (scheme-mode . edit)
+                     (systemd-mode . config)
+                     (toml-ts-mode . config)
+                     (XML-mode . config)
+                     (nXML-mode . config)
+                     (json-mode . config)
+                     (org-mode . config)
+                     (csv-mode . config)
+                     (ibuffer-mode . config)
+                     (bufler-list-mode . config)
+                     (bookmark-menu . config)
+                     (imenu-list-mode . config)
+                     (help-mode . config)
+                     (helpful-mode . config)
+                     (compilation-mode . logs)
+                     (debugger-mode . logs)))
+        )
+      )
 
 (defvar my-window-tools/whitelabel-buffers '("*SPEEDBAR*"
                                              "*dape-repl*"
@@ -149,7 +156,7 @@
 (defvar my-window-tools/known-buffers nil
   "List of buffers known to the system.  Used to detect newly created buffers.")
 
-;; ensure that our buffer list is updated when a buffer is killed. 
+;; ensure that our buffer list is updated when a buffer is killed.
 (defun my-window-tools/update-known-buffers-on-kill ()
   "Update `my-window-tools/known-buffers` when a non-system buffer is killed."
   (unless (string-prefix-p " " (buffer-name))
@@ -159,24 +166,11 @@
 ;; Add this function to `kill-buffer-hook`
 (add-hook 'kill-buffer-hook #'my-window-tools/update-known-buffers-on-kill)
 
-(defun my-close-sr-speedbar-on-frame-delete (frame)
-  "Close sr-speedbar if it's in the FRAME being deleted.
-
-This function is needed since sr-speedbar has a timer that allows it to
-periodically refresh the speedbar.  The issue here is that it tries to refresh
-speedbar when the window that contains it no longer exists."
-  (when (and (frame-live-p frame)
-             (window-live-p (frame-selected-window frame)))
-    (let ((speedbar-window (sr-speedbar-window)))
-      (when (and speedbar-window
-                 (eq (window-frame speedbar-window) frame))
-        (sr-speedbar-close)))))
-
-(add-hook 'delete-frame-functions #'my-close-sr-speedbar-on-frame-delete)
-
-
 (defconst my-window-tools/default-tag 'edit
   "The default tag assigned to non-system buffers when no tag is found.")
+
+(defconst my-window-tools/tag-list '(edit logs config data terminal vc)
+  "The tags assigned to non-system buffers.")
 
 (defun my-window-tools/add-window (window window-tag)
   "Add WINDOW with WINDOW-TAG to the hash table.
@@ -186,6 +180,7 @@ WINDOW-TAG is the tag describing the window's purpose."
   (let ((key window-tag))
     (message "Adding window with key: %s" key) ; Add this line
     (puthash key window my-window-tools/window-hash)))
+
 
 (defun my-window-tools/get-project-root (buffer)
   "Get the project root directory for BUFFER using the project.el package."
@@ -200,8 +195,28 @@ WINDOW-TAG is the tag describing the window's purpose."
     (or (my-window-tools/get-project-root buffer)
         (buffer-local-value 'default-directory buffer))))
 
-;; ############################################################################
-;;; Buffer assignment to windows
+(defun my-window-tools/close-sr-speedbar-on-frame-delete (frame)
+  "Close sr-speedbar if it's in the FRAME being deleted.
+
+This function is needed since sr-speedbar has a timer that allows it to
+periodically refresh the speedbar.  The issue here is that it tries to refresh
+speedbar when the window that contains it no longer exists."
+  (when (sr-speedbar-exist-p)
+    (when (eq (window-frame sr-speedbar-window) frame)
+      (sr-speedbar-refresh-turn-off)
+      (sr-speedbar-close))))
+
+;; close sr-speedbar when a frame is deleted.
+;; This function is needed since sr-speedbar has a timer that allows it to
+;; periodically refresh the speedbar.  The issue here is that it tries to
+;; refresh speedbar when the window that contains it no longer exists.
+(add-hook
+ 'delete-frame-functions #'my-window-tools/close-sr-speedbar-on-frame-delete)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;; Buffer assignment to windows ;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ----------------------------------------------------------------------------
 ;; Here we implement the mechanics that, when given a buffer, can determine
 ;; the appropriate window for that buffer and move it if necessary.
@@ -213,7 +228,7 @@ WINDOW-TAG is the tag describing the window's purpose."
 ;;    Use the function  my-window-tools/get-buffer-tag-or-default. If a tag
 ;;    is needed, it will proceed to step 2
 ;; 3) find the correct tag for the window.
-;;    Use function my-window-tools/get-buffer-tag. 
+;;    Use function my-window-tools/get-buffer-tag.
 ;; 4) having found a tag for the buffer, find the window that matches the tag.
 ;;    Use function my-window-tools/get-window-for-tag. (If the tag has no
 ;;    match, then the default window is selected.)
@@ -231,51 +246,48 @@ If OUTPUT-ONLY is non-nil, this function will only determine the target window
 without moving the buffer.  Returns a cons cell (WINDOW . TAG) or nil if no
 assignment is made."
   (let* ((tag (my-window-tools/get-buffer-tag-or-default buffer)))
-    (if (not tag)
-        (progn
-          (message "Buffer %s is whitelisted, no window assignment performed."
-                   (buffer-name buffer))
-          nil)
-      (let* ((window (my-window-tools/get-window-for-tag tag))
-             (original-window (get-buffer-window buffer)))
-        (if window
+    (if tag                                                                       ; If there is no tag, the buffer is whitelisted so no window assignment performed."
+        (let* ((window (my-window-tools/get-window-for-tag tag))
+               (original-window (get-buffer-window buffer)))
+          (if window
+              (progn
+                (unless output-only
+                  ;; Move the buffer to the target window
+                  (my-window-tools/move-buffer-to-window
+                   buffer window original-window output-only))
+                ;; Return the window and tag as a cons cell
+                (cons window tag))
             (progn
-              (unless output-only
-                ;; Move the buffer to the target window
-                (my-window-tools/move-buffer-to-window
-                 buffer window original-window output-only))
-              ;; Return the window and tag as a cons cell
-              (cons window tag))
-          (progn
-            (message "No window with tag '%s' was found."
-                     my-window-tools/default-tag)
-            nil))))))
-
+              (message "No window with tag '%s' was found."
+                       my-window-tools/default-tag)
+              nil))))))
 
 
 (defun my-window-tools/get-buffer-tag-or-default (buffer)
-  "Determine and return the tag for BUFFER.
+"Determine and return the tag for BUFFER.
 
 This function uses the default tag if unassigned.  If the buffer is
 whitelisted, no tag will be assigned, and no window assignment will occur."
-  (let ((buffer-name-text (buffer-name buffer)))
-    ;; Check if the buffer is whitelisted (skip assignment if true)
-    (if (member buffer-name-text my-window-tools/whitelabel-buffers)
-        (progn
-          (message "Buffer %s is whitelisted, no window assignment performed."
-                   buffer-name-text)
-          nil)
-      ;; Get the tag for the buffer, defaulting to `my-window-tools/default-tag` if `no-tag`
-      (let ((tag (with-current-buffer buffer
-                   (my-window-tools/get-buffer-tag buffer))))
-        (if (eq tag 'no-tag)
-            ;; If no tag found, assign the default tag and log the action
-            (progn
-              (message "Buffer %s does not map to a tag. Assigned to default tag '%s."
-                       buffer-name-text my-window-tools/default-tag)
-              my-window-tools/default-tag)
-          ;; Return the found tag if it is not 'no-tag'
-          tag)))))
+(let ((buffer-name-text (buffer-name buffer)))
+  ;; Check if the buffer is whitelisted (skip assignment if true)
+  (if (member buffer-name-text my-window-tools/whitelabel-buffers)
+      (progn
+        (message "Buffer %s is whitelisted, no window assignment performed."
+                 buffer-name-text)
+        nil)
+    ;; Get the tag for the buffer, defaulting to
+    ;; `my-window-tools/default-tag` if `no-tag`
+    (let ((tag (with-current-buffer buffer
+                 (my-window-tools/get-buffer-tag buffer))))
+      (if (eq tag 'no-tag)
+          ;; If no tag found, assign the default tag and log the action
+          (progn
+            (message
+             "Buffer %s does not map to a tag. Assigned to default tag '%s."
+             buffer-name-text my-window-tools/default-tag)
+            my-window-tools/default-tag)
+        ;; Return the found tag if it is not 'no-tag'
+        tag)))))
 
 (defun my-window-tools/get-buffer-tag (buffer)
   "Get the tag for the given BUFFER.
@@ -309,14 +321,14 @@ by name, regexp or mode."
               (setq tag (cdr mode)))))
 
         ;; Return the final tag value in the case where the buffer
-        ;; does not begin with a space. 
+        ;; does not begin with a space.
         tag))))
 
 (defun my-window-tools/get-window-for-tag (tag)
   "Retrieve a window associated with TAG.
 
 If no live window exists with TAG, check for a window with the default tag.
-(Found in `my-window-tools/default-tag`).  Return nil if neither is available."
+ (Found in `my-window-tools/default-tag').  Return nil if neither is available."
   (let ((window (gethash tag my-window-tools/window-hash)))
     (cond
      ;; Return the window if it's live
@@ -326,7 +338,8 @@ If no live window exists with TAG, check for a window with the default tag.
                                      my-window-tools/window-hash)))
         (if (and default-window (window-live-p default-window))
             default-window
-          ;; Return nil if neither a window for TAG nor for the default tag exists
+          ;; Return nil if neither a window for TAG nor for the default tag
+          ;; exists
           nil))))))
 
 (defun my-window-tools/move-buffer-to-window (buffer window original-window
@@ -334,7 +347,7 @@ If no live window exists with TAG, check for a window with the default tag.
   "Assign BUFFER to WINDOW.
 
 if ORIGINAL-WINDOW is the same as WINDOW then the window does not need to be
-moved. 
+moved.
 
 If OUTPUT-ONLY is non-nil, only log the target window without moving the
 buffer."
@@ -345,7 +358,7 @@ buffer."
     (if (eq window original-window)
         ;; If so, log a message and do nothing further
         (message
-         "Target window is the window the buffer is already in. No changes made.")
+         "Target window is the buffer's current window. No changes made.")
       ;; Otherwise, assign the buffer to the window and activate necessary modes
       (progn
         ;; Set the buffer in the target window
@@ -360,7 +373,7 @@ buffer."
                  (buffer-name buffer) window)))))
 
 ;; ----------------------------------------------------------------------------
-;; END OF Buffer assignment to windows 
+;; END OF Buffer assignment to windows
 ;; ############################################################################
 
 
@@ -368,11 +381,11 @@ buffer."
 ;; (defun my-window-tools/assign-buffer-to-window (buffer &optional output-only)
 ;;   "Assign BUFFER to the appropriate window based on its purpose.
 
-;; This function assigns the buffer to the window tagged with the
-;; appropriate purpose.  If the tag is `no-tag, and the buffer is a system buffer,
+;; This function assigns the buffer to the window tagged with the appropriate
+;; purpose.  If the tag is `no-tag, and the buffer is a system buffer,
 ;; a message is printed and the buffer is not assigned to any window.  Note that
 ;; system buffers are matched to a tag using the buffer name directly or via
-;; regexp.  Unlike standard buffers, they are not matched by mode.  
+;; regexp.  Unlike standard buffers, they are not matched by mode.
 
 ;; Unmatched buffers that are not system buffers are assigned to the value
 ;; defined by `my-window-tools/default-tag'.
@@ -443,7 +456,7 @@ out by the window assignment algorithm here."
         (my-window-tools/assign-buffer-to-window buffer)))))
 
 (defun my-window-tools/reassign-buffer-to-default-window (buffer)
-  "Reassign a BUFFER to a window based the value in `tag',
+  "This function reassigns a BUFFER to a window based the value in `tag',
 
   It is also removed from the original window and the tab-line is updated."
   (my-window-tools/assign-buffer-to-window buffer))
@@ -505,13 +518,13 @@ Utility function shows the tag associated with the current selected window."
                  (when (equal value current-window)
                    (throw 'tag key)))
                my-window-tools/window-hash)
-      nil))) 
+      nil)))
 
 
 ;; ---------------------------
 ;; Magit window assignments
 ;; ---------------------------
-;; The two functions below are used to set up magit to open in the vc buffer. 
+;; The two functions below are used to set up magit to open in the vc buffer.
 (defun my-window-tools/magit-display-buffer (buffer)
   "Display Magit BUFFER in a window with the tag `vc'."
   (let ((window (my-window-tools/get-window-with-tag 'vc)))
@@ -548,24 +561,107 @@ signature."
      (t
       nil))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Other window tools  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar my-window-tools/window-state nil
+  "Saved window state including custom properties.")
+
+(defun my-window-tools/save-window-state-with-properties ()
+  "Save the current window state along with custom properties."
+  (interactive)
+  (setq
+   my-window-tools/window-state
+   (list
+    :state (window-state-get nil t)
+    :properties (mapcar (lambda (win)
+                          (list :window (window-parameter win 'window-id)
+                                :name (buffer-name (window-buffer win))))
+                        (window-list))))
+  (message "Window state with properties saved."))
 
 
-;; Configure display-buffer-alist
-(setq display-buffer-alist
-      `(
-        ;; Specific rule for *Dictionary* buffer (Show dictionary definition on the left)
-        ("^\\*Dictionary\\*"
-         (display-buffer-in-side-window)
-         (side . left)
-         (window-width . 70)  ; change to 0.5 to make it half the size of the buffer it is next to. 
-         (window-parameters . ((no-delete-other-windows . t)))
-         )
-        ;; General rule using your custom function
-        (".*" . (my-window-tools/display-buffer))))
+(defun my-window-tools/mouse-delete-window-confirmation (click)
+  "Ask for confirmation before deleting the window from a CLICK  mouse event."
+
+  (interactive (list last-nonmenu-event))
+  (mouse-minibuffer-check click)
+  ;;(interactive "e")  ; The 'e' here tells Emacs this function expects a mouse event.
+  (let ((window (posn-window (event-start click))))
+    (when (and (windowp window)  ; Checks if the target is a window.
+               (y-or-n-p "Are you sure you want to delete this window?"))
+      (delete-window window))))
+
+(defun my-window-tools/list-window-names ()
+  "List all windows and their names."
+  (interactive)
+  (let ((output-buffer (get-buffer-create "*Window Names*")))                     ; Create or get the buffer
+    (with-current-buffer output-buffer
+      (erase-buffer)  ; Clear the previous contents
+      (insert "List of all window names:\n\n"))
+    (walk-windows
+     (lambda (w)
+       (let ((name (window-parameter w 'name)))
+         (with-current-buffer output-buffer
+           (insert (format "Window: %s, name: %s\n" w
+                           (or name "unnamed"))))))
+     nil 'visible)
+    (display-buffer output-buffer)))
 
 
-;; BACKTRACE AND MESSAGES HANDLED BY WINDOW MANAGEMENT FUNCTIONS NOW.
-;; THESE ARE KEPT TO SHOW HOW DISPLAY-BUFFER-ALIST CAN BE USED. 
+(defun my-window-tools/rebuild-window-hash ()
+  "Rebuild the hash table `my-window-tools/window-hash'.
+
+This table contains the windows used in the IDE layout for Emacs."
+  (interactive)
+  (clrhash my-window-tools/window-hash)                                          ; Clear existing hash table entries
+  (walk-windows
+   (lambda (w)
+     (let ((window-tag (window-parameter w 'tag)))
+       (my-window-tools/add-window w window-tag)))))
+
+
+(defun my-window-tools/find-window-by-name (name)
+  "Find the window with the 'Name' parameter equal to NAME."
+  (let ((found-window nil))
+    (walk-windows
+     (lambda (window)
+       (when (equal (window-parameter window 'name) name)
+         (setq found-window window)))
+     nil t)
+    found-window))
+
+(defun my-window-tools/list-window-tags (window)
+  "List all tags (parameters) for the given WINDOW."
+  (let ((params (window-parameters window)))
+    (mapcar (lambda (param)
+              (message "Tag: %s, Value: %s" (car param) (cdr param)))
+            params)))
+
+(defun my-window-tools/select-window-by-name (name)
+  "Select the window with a custom `\'name' parameter matching NAME."
+  (let ((target-window (my-window-tools/find-window-by-name name)))
+    (when target-window
+      (select-window target-window))))
+
+(defun my-window-tools/set-current-window-tag (tag-name)
+  "Set a TAG-NAME for the current active window.
+
+The tag name must be one of `my-window-tools/tag-list`."
+  (interactive
+   (list (completing-read "Select tag: " my-window-tools/tag-list nil t)))
+  (let ((window-to-tag (selected-window)))
+    (set-window-parameter window-to-tag 'tag tag-name)
+    (my-window-tools/add-window window-to-tag tag-name)
+    (get-buffer-create (symbol-name tag-name))
+    (with-current-buffer (symbol-name tag-name) (tab-line-mode 1))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; BACKTRACE AND MESSAGES HANDLED BY WINDOW MANAGEMENT FUNCTIONS NOW. ;;
+;; THESE ARE KEPT TO SHOW HOW DISPLAY-BUFFER-ALIST CAN BE USED.       ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (add-to-list 'display-buffer-alist
 ;;              '("^\\*Messages\\*"
 ;;                (display-buffer-reuse-window
@@ -581,9 +677,27 @@ signature."
 ;;                (window-height . 0.3)))
 ;; ----------------------------------------------------------------------------
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;; Configure display-buffer-alist ;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; the below object controls how new buffers are assigned to windows in Emacs.
+;; This is central to managing the relationship between buffers and windows.
+(setq display-buffer-alist
+      `(;; Rule for *Dictionary* and *Ilist* buffers
+        ;; (Show dictionary definition on the left)
+        ("^\\*\\(Dictionary\\|Ilist\\)\\*"
+         (display-buffer-in-side-window)
+         (side . right)
+         (window-width . 50)                                                      ; change to 0.5 to make it half the size of the buffer it is next to.
+         (window-parameters . ((no-delete-other-windows . t))))
+        ;; General rule using your custom function
+        (".*" . (my-window-tools/display-buffer))))
+
 (provide 'custom-system-window-management)
 
 ;;; custom-system-window-management.el ends here
 
-                                        ; LocalWords:  Customize vc
-                                        ; LocalWords:  elisp
+                                                                                  ; LocalWords:  Customize vc repl
+                                                                                  ; LocalWords:  elisp
