@@ -65,6 +65,7 @@
 
 (setq completion-in-region-function #'consult-completion-in-region)
 
+
 ;;; Orderless
 ;; Set up Orderless for better fuzzy matching
 (customize-set-variable 'completion-styles '(orderless basic))
@@ -76,7 +77,10 @@
 (keymap-global-set "C-." 'embark-act)
 
 ;; Use Embark to show bindings in a key prefix with `C-h`
-(setq prefix-help-command #'embark-prefix-help-command)
+;; (setq prefix-help-command #'embark-prefix-help-command)
+;; alternatively, show them in a separate help buffer.
+(setq prefix-help-command #'describe-prefix-bindings)
+
 
 (with-eval-after-load 'embark-consult
   (add-hook 'embark-collect-mode-hook #'consult-preview-at-point-mode))
