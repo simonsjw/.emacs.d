@@ -1,4 +1,4 @@
-;;; straight-crafted-hydra-packages.el -*- lexical-binding: t; -*-
+;;; straight-crafted-hydra-packages.el --- packages for implementing hydras -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022
 ;; SPDX-License-Identifier: MIT
