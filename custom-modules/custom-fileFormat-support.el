@@ -35,7 +35,7 @@
 (defun my-fileFormat-support/json-ts-mode-setup ()
   "Custom configurations for json-ts-mode."
 
-  (json-mode 1)
+  (json-mode)
 
   ;; Remove the fill column indicator.
   (display-fill-column-indicator-mode -1)
@@ -61,8 +61,11 @@
 (defun my-fileFormat-support/toml-ts-mode-setup ()
   "Custom configurations for toml-ts-mode."
 
-  ;; Remove the fill column indicator.
-  (display-fill-column-indicator-mode -1)
+  (setq display-fill-column-indicator-column 50)                                 ; Edge 
+  (setq fill-column 50)                                                          ; Column beyond which line wrapping occurs if it is activated.
+  (setq comment-fill-column 270)                                                 ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
+  (setq comment-column 52)                                                       ; Column to indent right-margin comments to.
+  (display-fill-column-indicator-mode 1)                                         ; show fill column indicator 
   
   ;; Set the fringe mode specifically for json-ts-mode
   (set-fringe-mode '(12 . 5))
@@ -74,7 +77,7 @@
   (treesit-fold-indicators-mode 1))
 
 ;; Add the custom setup to toml-ts-mode-hook
-(add-hook 'json-ts-mode-hook #'my-fileFormat-support/toml-ts-mode-setup)
+(add-hook 'toml-ts-mode-hook #'my-fileFormat-support/toml-ts-mode-setup)
 
 (provide 'custom-fileFormat-support)
 ;;; custom-fileFormat-support.el ends here
