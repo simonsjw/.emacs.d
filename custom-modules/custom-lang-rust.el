@@ -182,9 +182,6 @@
   ;; switch projects
   (keymap-set rustic-mode-map "C-c p p" #'consult-projectile)
 
-  ;;;;;;;;;;;;;;;;;;;
-  ;; Hydra
-  ;; ----------------
   
   )
 

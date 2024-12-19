@@ -323,6 +323,7 @@ closed as a result of this action."
 ;;; custom-startup-config.el ends here
 
 
-                                        ; LocalWords:  speedbar dired
-                                        ; LocalWords:  magit bufler
-                                        ; LocalWords:  sr vc
+                                                                                  ; LocalWords:  speedbar dired
+                                                                                  ; LocalWords:  magit bufler
+                                                                                  ; LocalWords:  sr vc
+
