@@ -24,6 +24,21 @@
 
 (defvar my-paths/ispell-word-replacement)
 
+(declare-function comment-indent "newcomment")
+(declare-function fill-comment-paragraph "newcomment")
+(declare-function my-in-buffer-tools/comment-box-filled "custom-system-tools")
+(declare-function comment-box "newcomment")
+(declare-function checkdoc-ispell-comments "newcomment")
+(declare-function ispell-comment-or-string-at-point "newcomment")
+(declare-function set-comment-set-column "newcomment")
+(declare-function comment-dwim "newcomment")
+(declare-function comment-line  "newcomment")
+(declare-function comment-region "newcomment")
+(declare-function uncomment-region  "newcomment")
+(declare-function comment-kill "newcomment")
+(declare-function comment-indent-new-line "newcomment")
+
+;;(require 'easy-menu)
 (require 'dired)
 (require 'ispell)
 (require 'xref)
@@ -385,7 +400,7 @@ also enables undo functionality if the window layout changes."
 
   ;; (setq fci-rule-width 1)
   ;; (setq fci-rule-color "darkgrey")
-  
+
   (setq truncate-lines t))               ; deactivate line-wrapping.
 
 ;; Hooks
@@ -393,5 +408,91 @@ also enables undo functionality if the window layout changes."
 ;; add the programming mode config to prog-mode
 (add-hook 'prog-mode-hook 'my-programming-mode/programming-mode-config-hook)
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; Set comment shortcuts and build menu for prog-mode ;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Define the keymap for 'comments' related commands
+(defvar my-key-maps/prog-mode-comment-map (make-sparse-keymap)
+  "Keymap for comment commands in programming modes.")
+
+(defgroup custom-comment-keymaps '()
+  "Window related configuration for Custom Emacs."
+  :tag "Custom comment formatting"
+  :group 'custom)
+
+(defcustom my-custom-prefix-keys/comment "C-c d"
+  "Key prefix for comment formatting functions.
+
+These are available in prog-mode."
+  :group 'custom-comment-keymaps 
+  :type 'string)
+
+;; Activate the menu and keymap in programming modes
+(add-hook 'prog-mode-hook
+          (lambda ()
+            
+            (define-prefix-command 'my-key-maps/prog-mode-comment-map)
+            
+            ;; Add keybindings and menu entries
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map "a" 'comment-indent)
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map "f" 'fill-comment-paragraph)
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map "B" 'my-in-buffer-tools/comment-box-filled)
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map "b" 'comment-box)
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map "s" 'checkdoc-ispell-comments)
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map "p" 'ispell-comment-or-string-at-point)
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map "x" 'set-comment-set-column)
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map ";" 'comment-dwim)
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map "l" 'comment-line )
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map "r" 'comment-region)
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map "u" 'uncomment-region)
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map "k" 'comment-kill)
+            (keymap-set
+             'my-key-maps/prog-mode-comment-map "<RET>" 'comment-indent-new-line)
+            
+            (keymap-local-set my-custom-prefix-keys/comment 'custom-windows-key-map)
+
+            ;; Define the 'Comments' menu for programming modes
+            ;; Define a structured menu with sections
+            (easy-menu-define my-menus/prog-mode-comment-menu  my-key-maps/prog-mode-comment-map
+              "Comments menu for programming modes."
+              '("Comments" ;; Top-level menu title
+                ;; First section: Format Comment
+                ("Format Comment"
+                 ["Align Comment" comment-indent :help "Align comment"]
+                 ["Fill Comment Paragraph" fill-comment-paragraph :help "Fill comment paragraph"]
+                 ["Add Filled Box Around Comment" my-in-buffer-tools/comment-box-filled :help "Add filled box around comment"]
+                 ["Add Box Around Comment" comment-box :help "Add box around comment"]
+                 ["Check Comment Spellings in Buffer" checkdoc-ispell-comments :help "Check comment spellings in buffer"]
+                 ["Check Comment Spellings at Point" ispell-comment-or-string-at-point :help "Check comment spellings at point"]
+                 ["Set Comment Column to Cursor" set-comment-set-column :help "Set comment column to cursor"])
+                "---" ;; Separator
+                ;; Second section: Make Comment
+                ("Make Comment"
+                 ["Toggle/Tab Comment as Needed" comment-dwim :help "Toggle/tab comment as needed"]
+                 ["Comment Line" comment-line :help "Comment whole cursor line"]
+                 ["Comment Region" comment-region :help "Comment selected region"]
+                 ["Uncomment Region" uncomment-region :help "Uncomment selected region"]
+                 ["Kill Comment" comment-kill :help "Kill full comment"]
+                 ["Break Line at Point and Indent" comment-indent-new-line :help "Break line at point and indentation"])))
+            ))
+
 (provide 'custom-defaults-config)
 ;;; custom-defaults-config.el ends here
+
+                                                                                  ; LocalWords:  newcomment
+                                                                                  ; LocalWords:  RET
