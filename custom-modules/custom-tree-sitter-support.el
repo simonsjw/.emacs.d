@@ -22,19 +22,26 @@
 (use-package combobulate)
 
 (use-package treesit-auto
- :custom
- (treesit-auto-install 'prompt)
- :config
- (treesit-auto-add-to-auto-mode-alist 'all)
- (global-treesit-auto-mode))
+  :custom
+  (treesit-auto-install 'prompt)
+  :config
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
 
 
+(defvar treesit-fold-indicators-fringe)
+(defvar treesit-fold-indicators-priority)
+(defvar fold-state)
+(declare-function treesit-fold-mode "treesit-fold")
+(declare-function combobulate-mode "combobulate")
 
 ;; (require 'tree-sitter-indent)
 ;; (require 'tree-sitter-ispell)
 (require 'treesit-fold)
 (require 'combobulate)
 (require 'treesit-auto)
+
+
 
 ;; tree-sitter-load-path is set in early-init.el.
 ;; path is added to load-path in custom-path-support.el.
@@ -67,8 +74,12 @@
 ;; |treesit-fold-open-all 	       | open all folded syntax nodes in the current buffer.
 ;; |treesit-fold-toggle 	       | toggle the syntax node at `point'.
 
-(setq treesit-fold-indicators-fringe 'left-fringe)
+(setq treesit-fold-indicators-fringe 'right-fringe)
 (setq treesit-fold-indicators-priority 30)
+
+(with-eval-after-load 'treesit-fold-indicators
+  (define-key treesit-fold-indicators-mode-map [left-fringe mouse-1] nil))       ; ensure only the right fringe captures events for fold. The left is needed elsewhere!
+
 
 (defun my-treesit-fold/state-at-point ()
   "Return the fold state at the current point in tree-sitter-fold.
