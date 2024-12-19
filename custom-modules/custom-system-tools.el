@@ -29,12 +29,12 @@
 
 (declare-function org-link-abbrev-alist "ol")
 
-(require 'custom-system-objects)
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Emacs Lisp logging helpers
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;; Emacs Lisp logging helpers ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; Define an advice function to be used for implicit logging.
 (defun my-log/advice (log-message &rest args)
@@ -74,9 +74,39 @@ Additional ARGS are captured in a secondary field."
                (apply 'my-log/advice "use-package: " args))))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Dired tools
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; Hash table management ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; utility for creating a hash table.
+(defun my-hash-tools/define-hash-table
+    (table-name cons-list &optional idx-name item-name)
+  "Define a hash table and populate it with records.
+
+TABLE-NAME is the name of the hash table to be created.
+CONS-LIST is a list of cons cells, where the car of each cons cell is the index
+and the cdr is a list of item data.
+IDX-NAME and ITEM-NAME are optional names for the hash table columns.
+If not supplied, the default names `idx' and `item' are used."
+  (let ((idx-column (or idx-name :idx))
+        (item-column (or item-name :item)))
+    (set table-name (make-hash-table :test 'equal))
+    (dolist (log cons-list)
+      (let ((idx (car log))
+            (item (cdr log)))
+        (puthash idx
+                 (list idx-column idx item-column (cadr item) :active nil)
+                 (symbol-value table-name))))))
+
+;; end of hash table management
+;; ---------------------------
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Dired tools ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun my-interactive-tools/select-directory-using-dired ()
   "Open a Dired buffer for directory selection and return the selected path."
   (interactive)
@@ -88,9 +118,10 @@ Additional ARGS are captured in a secondary field."
 ;; end of Dired tools.
 ;; ---------------------------
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Image processing
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Image processing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun my-image-tools/create-image-icon (file &optional width height)
   "Create an image icon from FILE with optional WIDTH and HEIGHT."
@@ -106,9 +137,10 @@ Additional ARGS are captured in a secondary field."
 ;; ---------------------------
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; String processing
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; String processing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun my-strings/ensure-directory-path (path)
   "Ensure the directory PATH ends with a '/'."
   (if (string-suffix-p "/" path)
@@ -173,44 +205,60 @@ into a given amount of bytes."
 ;; end of String processing
 ;; ---------------------------
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Window management
+;; Frame management
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar my-window-tools/window-state nil
-  "Saved window state including custom properties.")
+(defun my-frame-tools/delete-frame-by-name (frame-name)
+  "Delete a frame by its name FRAME-NAME."
+  (interactive "sEnter frame name to delete: ")  ; Prompt for frame name
+  (let ((found nil))  ; Track if we found the frame
+    (dolist (frame (frame-list))
+      (when (string= (frame-parameter frame 'name) frame-name)
+        (delete-frame frame)
+        (setq found t)
+        (message "Deleted frame named '%s'." frame-name)))
+    (unless found
+      (message "No frame named '%s' found." frame-name))))
 
-(defun my-window-tools/save-window-state-with-properties ()
-  "Save the current window state along with custom properties."
-  (interactive)
-  (setq
-   my-window-tools/window-state
-   (list
-    :state (window-state-get nil t)
-    :properties (mapcar (lambda (win)
-                          (list :window (window-parameter win 'window-id)
-                                :name (buffer-name (window-buffer win))))
-                        (window-list))))
-  (message "Window state with properties saved."))
+(defun my-frame-tools/get-frame-by-name (frame-name)
+  "Get a frame object when given its name FRAME-NAME."
+  (defvar frame-object nil)
+  (let ((found nil))  ; Track if we found the frame
+    (dolist (frame (frame-list))
+      (when (string= (frame-parameter frame 'name) frame-name)
+
+        (setq found t)
+        (setq frame-object frame)
+        (message "found frame named '%s'." frame-name)))
+    (unless found
+      (message "No frame named '%s' found." frame-name))
+    frame-object))
 
 
-(defun my-window-tools/mouse-delete-window-confirmation (click)
-  "Ask for confirmation before deleting the window from a CLICK  mouse event."
 
-  (interactive (list last-nonmenu-event))
-  (mouse-minibuffer-check click)
-  ;;(interactive "e")  ; The 'e' here tells Emacs this function expects a mouse event.
-  (let ((window (posn-window (event-start click))))
-    (when (and (windowp window)  ; Checks if the target is a window.
-               (y-or-n-p "Are you sure you want to delete this window?"))
-      (delete-window window))))
+(defun my-frame-tools/set-current-frame-name (name)
+  "Set the name of the current frame to NAME."
+  (interactive "sEnter new frame name: ")                                         ; Prompt for the frame name interactively
+  (set-frame-name name))
 
-;; end of Window management
+
+(defun my-frame-tools/close-all-windows-except-first (&optional frame)
+  "Close all windows in FRAME except the first window.
+If FRAME is nil, use the current frame."
+  (let* ((target-frame (or frame (selected-frame)))
+         (first-window (frame-first-window target-frame)))
+    (select-window first-window) ; Select the first window
+    (with-selected-frame target-frame
+      (delete-other-windows)))) ; Close all other windows
+
+
+;; end of Frame management
 ;; ---------------------------
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; BUFFER management
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; BUFFER management ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun my-buffer-tools/open-temp-org-buffer ()
   "Open a temporary `org-mode' buffer."
@@ -289,21 +337,51 @@ This condition and body have been removed:
 (defun my-buffer-tools/copy-buffer-in-new-frame (click)
   "Copy the active buffer in a selected window to a new frame.
 CLICK: the mouse event."
-  (interactive (list last-nonmenu-event))                                      ; Enable the function to handle a mouse event.
-  (message "triggered")                                                        ; Give feedback when function is triggered.
-  (mouse-minibuffer-check click)                                               ; Prevent triggering if click is in the minibuffer.
-  (let* ((window (posn-window (event-start click)))                            ; Get the window where click occurred.
-         (buf (window-buffer window))                                          ; Get the buffer from that window.
-         (temp-rule '(".*" (display-buffer-pop-up-frame))))                    ; Temporary display rule for opening in a new frame.
-    (message "Selected window: %s" window)                                     ; Display selected window as feedback.
-    (setq display-buffer-alist (cons temp-rule display-buffer-alist))          ; Temporarily add the new frame rule to `display-buffer-alist`.
-    (display-buffer buf)                                                       ; Display the buffer in a new frame.
-    (setq display-buffer-alist (cdr display-buffer-alist))))                   ; Restore the original `display-buffer-alist`.
+  (interactive (list last-nonmenu-event))                                         ; Enable the function to handle a mouse event.
+  (message "triggered")                                                           ; Give feedback when function is triggered.
+  (mouse-minibuffer-check click)                                                  ; Prevent triggering if click is in the minibuffer.
+  (let* ((window (posn-window (event-start click)))                               ; Get the window where click occurred.
+         (buf (window-buffer window))                                             ; Get the buffer from that window.
+         (temp-rule '(".*" (display-buffer-pop-up-frame))))                       ; Temporary display rule for opening in a new frame.
+    (message "Selected window: %s" window)                                        ; Display selected window as feedback.
+    (setq display-buffer-alist (cons temp-rule display-buffer-alist))             ; Temporarily add the new frame rule to `display-buffer-alist`.
+    (display-buffer buf)                                                          ; Display the buffer in a new frame.
+    (setq display-buffer-alist (cdr display-buffer-alist))))                      ; Restore the original `display-buffer-alist`.
+
+;; Define the customizable variable at the top level
+(defcustom my-buffer-attributes nil
+  "The attributes associated with the buffer."
+  :local t
+  :type '(alist :key-type symbol :value-type sexp)
+  :group 'my-system-objects)
 
 
+(defun my-buffer-tools/set-buffer-attribute (buffer attribute value)
+  "Set an ATTRIBUTE with VALUE for the given BUFFER."
+  (with-current-buffer buffer
+    (setq my-buffer-attributes
+          (assoc-delete-all attribute my-buffer-attributes))
+    (add-to-list 'my-buffer-attributes (cons attribute value))))
 
-;;; TOOLS FOR USE IN BUFFER
-;;  -----------------------
+(defun my-buffer-tools/get-buffer-attribute (buffer attribute)
+  "Given a BUFFER, get the value of ATTRIBUTE for it."
+  (with-current-buffer buffer
+    (cdr (assoc attribute my-buffer-attributes))))
+
+(defun my-buffer-tools/get-window-with-tag (tag)
+  "Get a window by its TAG.
+Used with my-buffer-tools/display-given-buffer to provide functionality to
+my-buffer-tools/display-buffer-by-name-and-tag"
+  (catch 'window
+    (dolist (win (window-list))
+      (when (equal (window-parameter win 'tag) tag)
+        (throw 'window win)))
+    nil))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;; TOOLS FOR USE IN BUFFER ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun my-in-buffer-tools/get-matching-bracket-position (cursor-position)
   "Given a bracket at point in a buffer, return the matching bracket position.
 
@@ -392,9 +470,10 @@ to buffer here, the check needs to be made."
                      (float (- fill-column even-max-length)) 2)))))
     (comment-box beg end (- pad 2))))
 
-
-;;; TOOLS FOR THE FILE SYSTEM
-;;  -------------------------
+;; ---end of TOOLS FOR THE FILE SYSTEM---
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;TOOLS FOR THE FILE SYSTEM ;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Function to ensure directory exists
 (defun my-on-disk-tools/ensure-directory-exists (dir)
   "Ensure the directory DIR exists, create it if it does not."
@@ -402,11 +481,11 @@ to buffer here, the check needs to be made."
     (message "creating %s" dir)
     (make-directory dir t)))
 
-;; ---end of TOOLS FOR THE FILE SYSTEM---
+;; ---end of TOOLS FOR USE IN BUFFER---
 
-
-;;; TOOLS FOR THEME SUPPORT
-;;  -----------------------
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;; TOOLS FOR THEME SUPPORT ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun my-theme-support/tone-down-fringes ()
   "Set the buffer fringes to be invisible.
@@ -424,8 +503,10 @@ LEFT is the left margin width, and RIGHT is the right margin width (optional)."
 
 ;; ---end of TOOLS FOR THEME SUPPORT---
 
-;;; TOOLS USING ORG-MODE
-;;  ------------------
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;; TOOLS USING ORG-MODE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; Create abbreviations
 (defun my-org/org-link-abbreviations-create ()
   "Replace all long form links in current file.
@@ -513,8 +594,10 @@ If `sr-speedbar' is not open, open it first."
 
 ;; ---end of TOOLS USING THE OS---
 
-;; TOOLS FOR LANGUAGE & DICTIONARIES
-;; ---------------------------------
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;; TOOLS FOR LANGUAGE & DICTIONARIES ;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun my-dictionary/use-american ()
   "Switch to American English dictionary."
   (interactive)
