@@ -115,57 +115,6 @@ Make sure you have the following external dependencies:
 |                      |                      |                      |                         |
 |----------------------+----------------------+----------------------+-------------------------|
 
-# ;; \\usepackage[usenames]{color}
-# ;; \\usepackage{xcolor}
-# ;; \\usepackage{amsmath}
-# ;; \\usepackage{amsfonts}
-# ;; \\usepackage{amssymb}
-# ;; \\usepackage{graphicx}
-# ;; \\usepackage{fontspec}            % fontspec allows us to set the font 
-# ;; \\setmainfont{source code pro}    % Set the font to Source Code Pro
-# ;; \\usepackage{array}               % for specifying cell format
-# ;; \\pagestyle{empty}                % Removes page numbers
-# ;; \\color[HTML]{FFFFFF}             % Sets default text color to white") default-frame-alist
-# \begin{table}[ht]
-# \centering
-# \begin{tabular}{|l|r|c|r|}
-# \hline
-# Dependency & Install expression & associated mode & additional info \\
-# \hline
-# image-magik & sudo apt install imagemagik & & Convert image files and other goodies*  \\
-# silversearcher & sudo apt install silversearcher-ag & projectile & fast search tool for text files. \\
-# bash-language-server & & &  \\
-# pyright & conda install pyright & python-mode & Language server for python environment \\
-# https://www.emacswiki.org/ & \begin{tabular}[c]{@{}l@{}}cd .crafted-emacs\\ git clone\\ https://github.com/emacsmirror/emacswiki.org.git\end{tabular} & & The emacs wiki is full of useful functionality. \\
-# \hline
-# \end{tabular}
-# \caption{Dependencies}
-# \label{tab:Dependencies}
-# \end{table}
-
-#+BEGIN_SRC latex :results output file link replace :file ukkonen-minimal-cost-paths.png :buffer no :headers '("\\usepackage{tikz}" "\\usetikzlibrary{tikzmark}")
-  \begin{table}[htbp]
-  \caption{minimal cost paths}
-  \centering
-  \begin{tabular}{lrrrrrrr}
-   &  & p & a & p & l & e & t\\[0pt]
-  \hline
-    & 0\tikzmark{a} & 2\tikzmark{b} & 4 & 6 & 8 & 10 & 12\\[0pt]
-  a & 2\tikzmark{c} & 3 & 2\tikzmark{d} & 4 & 6 & 8 & 10\\[0pt]
-  p & 4 & 2\tikzmark{e} & 4\tikzmark{f} & 2\tikzmark{g} & 4 & 6 & 8\\[0pt]
-  p & 6 & 4 & 5 & 4\tikzmark{h} & 5 & 7 & 9\\[0pt]
-  l & 8 & 6 & 7 & 6 & 4\tikzmark{i} & 6 & 7\\[0pt]
-  e & 10 & 8 & 6 & 8 & 6 & 4\tikzmark{j} & 6\tikzmark{k}\\[0pt]
-  \end{tabular}
-  \end{table}
-
-  \begin{tikzpicture}[remember picture, overlay]
-  \draw[->] ([xshift=0.5ex, yshift=0.75ex] pic cs:a) -- ([xshift=-1.5ex, yshift=0.75ex] pic cs:b);   % horiz
-  \draw[->] ([xshift=-0.5ex, yshift=0.0ex] pic cs:a) -- ([xshift=-0.5ex, yshift=1.75ex] pic cs:c);   % vert
-  % ... many more
-  \end{tikzpicture}
-#+END_SRC
-
 ** Image magik security policy update.
 Remember to change the security policies in image magik to allow production of pdfs.
 The security policy file is located somewhere like:  /etc/ImageMagick-6/ or /etc/ImageMagick/
@@ -251,9 +200,6 @@ Define settings for =early-init.el=.
   (load (expand-file-name
          "custom-modules/custom-logging-config.el" user-emacs-directory))
   (require 'custom-logging-config)
-  (load (expand-file-name
-         "custom-modules/custom-system-objects.el" user-emacs-directory))
-  (require 'custom-system-objects)
   (load (expand-file-name
          "custom-modules/custom-system-tools.el" user-emacs-directory))
   (require 'custom-system-tools)
@@ -419,6 +365,7 @@ Define settings for =early-init.el=.
   (require 'delight)                                          ; if you use :delight
   (require 'bind-key)                                         ; if you use any :bind variant
 
+
   ;;; UI configuration
   ;;  ----------------
   ;; Remove some unneeded UI elements
@@ -426,7 +373,11 @@ Define settings for =early-init.el=.
   (setq inhibit-startup-message t)
 
   (push '(tool-bar-lines . nil) default-frame-alist)
-  ;; (push '(menu-bar-lines . nil) default-frame-alist)
+  ;; Turn off Menu-Bar and then bind it to C-TAB (Ctrl + <TAB>) to toggle on if needed.
+  (menu-bar-mode -1)
+  (define-key input-decode-map [C-tab] [control-tab])
+  (global-set-key [control-tab] 'menu-bar-mode)
+  
   ;; (push '(vertical-scroll-bars) default-frame-alist)
   ;; (push '(mouse-color . "white") default-frame-alist)
 
@@ -648,7 +599,7 @@ This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
   ;; IDE configuration.
-  (require 'straight-crafted-hydra-packages)
+  ;; (require 'straight-crafted-hydra-packages)
   (require 'straight-crafted-ide-packages)
   (require 'custom-tree-sitter-support)
   (require 'custom-undo-tree-support)
@@ -835,7 +786,7 @@ These links take you to the languages set up with Emacs.
 
 Load the summary page code then set up the startup configuration.  finalize the init log and profile the startup time.
 
-[[file:./custom-modules/custom-hydra-support.el][Packages and configuration for Hydras]]
+[[file:./custom-modules/custom-hydra-support.el][Packages and configuration for Hydras]] (DEPRECIATED)
 -  [[https://github.com/abo-abo/hydra][hydra]]:                         Tie related commands into a family of short bindings with a common prefix and menu.
 -  [[https://github.com/jerrypnz/major-mode-hydra.el][major-mode-hydra]]:              Build a hydra for each major mode consistently. 
 -  [[https://github.com/jerrypnz/major-mode-hydra.el/blob/master/pretty-hydra.el][pretty-hydra]]:                  Make hydras pretty. (part of major-mode-hydra but can be used with other hydras.)
@@ -845,11 +796,12 @@ Load the summary page code then set up the startup configuration.  finalize the 
 -  [[file:./custom-modules/custom-startup-config.el][Custom Startup configs]]:        Load the IDE on startup. 
 
 #+begin_src emacs-lisp :tangle ./init.el
-  (require 'custom-hydra-config)
+  ;;(require 'custom-hydra-config)
   (require 'custom-terminal-support)
   (require 'custom-summary-config)
   (require 'custom-system-window-management)
   (require 'custom-startup-config)
+  (require 'custom-menus-config)
 
   ;; These additional packages are not currently used:
   ;; custom-package-config.el ;
@@ -895,6 +847,7 @@ Show the loading time via a the emacs-startup-hook.
   (add-hook
    'emacs-startup-hook #'crafted-startup-example/display-startup-time)
 
+  
   ;; start the server if its not already running.
   ;; To shutdown the server use the below: 
   ;;   M-x server-edit
