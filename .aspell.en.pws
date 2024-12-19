@@ -1,9 +1,10 @@
-personal_ws-1.1 en 55 
+personal_ws-1.1 en 62 
 ARGS
 Backtrace
 Bunnings
 DDirectory
 Eglot
+HOTMAIL
 KDB
 LocalWords
 Maroubra
@@ -20,6 +21,7 @@ alist
 analytics
 aspell
 balancer
+basedpyright
 cd
 conda
 config
@@ -27,18 +29,22 @@ csv
 defconst
 defvar
 dir
+docstrings
 el
 flymake
 github
 gitignore
+gmail
 hdb
 hoc
 https
 ipython
 jdk
+joinpath
 json
 jsonl
 lvl
+md
 mnt
 modeline
 noqa
@@ -46,6 +52,7 @@ odbc
 prog
 py
 rlwrap
+scipy
 setq
 speedbar
 sym
