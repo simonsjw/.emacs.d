@@ -14,12 +14,11 @@
 
 ;;; Code:
 (require 'delight)
-(require 'hydra)
-(require 'major-mode-hydra)
+;; (require 'hydra)
+;; (require 'major-mode-hydra)
 (require 'tab-line)  ;; (tab-line is built in)
 (require 'ibuffer)
 (require 'easymenu)
-(require 'custom-system-tools)
 
 (require 'bookmark+) ;; commands usually have a bmkp prefix.
 (require 'dired+)    ;; commands usually have a diredp prefix.
@@ -456,7 +455,7 @@ This function is used in setting up the IDE."
 
 ;; Define key maps
 ;;CNTRL-SPACE activates any major-mode-hydra defined.
-(global-set-key (kbd "C-SPC") #'major-mode-hydra)
+;; (global-set-key (kbd "C-SPC") #'major-mode-hydra)
 
 
 ;; set up functionality to reopen a buffer in a new frame here you click on the
