@@ -261,23 +261,23 @@
              
              ;; Now generate the modus themes faces. 
              `(modus-themes-heading-0
-               ((t (:foreground ,info-theme-white-grey  :weight regular :height 300
+               ((t (:foreground ,info-theme-white-grey  :weight Bold :height 150
                                 :family "Impact"))) t)
 
              `(modus-themes-heading-1
-               ((t (:foreground ,info-theme-white-grey :weight regular  :height 200
-                                :family "Impact"))) t)
+               ((t (:foreground ,info-theme-white-grey :weight Bold  :height 140
+                                :family "arial"))) t)
 
              `(modus-themes-heading-2
-               ((t (:foreground ,info-theme-white-grey :weight Bold :height 180
+               ((t (:foreground ,info-theme-white-grey :weight Bold :height 130
                                 :family "arial"))) t)
 
              `(modus-themes-heading-3
-               ((t (:foreground ,info-theme-white-grey :weight Bold :height 160
+               ((t (:foreground ,info-theme-white-grey :weight Bold :height 120
                                 :family "arial"))) t)
 
              `(modus-themes-heading-4
-               ((t (:foreground ,info-theme-white-grey :weight regular :height 140
+               ((t (:foreground ,info-theme-white-grey :weight regular :height 120
                                 :family "arial"))) t)
 
              `(modus-themes-heading-5
