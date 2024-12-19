@@ -44,7 +44,9 @@
 
         
 (defun my/add-projects-from-csv (csv-file)
-  "Add projects to Projectile from a CSV file where the first column contains the project paths."
+  "Add projects to Projectile from a CSV-FILE path.
+
+The first column of the CSV contains the project paths."
   (interactive "fCSV File: ")
   (with-temp-buffer
     (insert-file-contents csv-file)
