@@ -40,18 +40,14 @@
 
 ;;; Packages phase
 (require 'eglot)
-(require 'major-mode-hydra)
+;; (require 'major-mode-hydra)
 
 
-(defvar dape-configs)  ; list of configs by language for the debugger.
-
+(defvar dape-configs)                                                             ; list of configs by language for the debugger.
 (defvar py-comment-fill-column)
 (defvar py-docstring-fill-column)
-
 (defvar python-indent-offset)
-
 (defvar pyvenv-virtual-env-name)
-
 (defvar python-shell-interpreter)
 (defvar python-ts-mode-map)
 
@@ -195,6 +191,7 @@ active environment."
 
   ;; enable python anaconda env management.
   (pyvenv-mode)
+  
   (my-lang-python/update-python-path)
   
   ;; switch on hover at point mode.
@@ -210,7 +207,7 @@ active environment."
   ;; Folding
   ;; -------
   ;; Set the fringe mode for python-ts-mode folding.
-  (set-fringe-mode '(12 . 0))
+  (set-fringe-mode '(12 . 12))
   ;; Enable ts-fold-mode
   (treesit-fold-mode 1)
   ;; Enable treesit-fold-indicators-mode
@@ -244,7 +241,7 @@ active environment."
   ;; Set the preferred fill column indicator for the mode and activate it.
   
   (setq display-fill-column-indicator-column 88)                                  ; comment inde
-  (setq fill-column 88)                                                          ; Column beyond which line wrapping occurs if it is activated.
+  (setq fill-column 88)                                                           ; Column beyond which line wrapping occurs if it is activated.
   (setq comment-fill-column 270)                                                  ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead. 
   (setq py-comment-fill-column 270)
   (setq comment-column 90)                                                        ; Column to indent right-margin comments to. 
@@ -252,6 +249,8 @@ active environment."
   (setq python-indent-offset 4)                                                   ; Set the indent for python mode.
 
   (display-fill-column-indicator-mode 1)
+
+  (dape-active-mode)                                                              ; ensure dape mode is active.
 
   ;; Note that pycodestyle is set via file in directory specified by
   ;; export XDG_CONFIG_HOME="/home/simon/.emacs.d/etc/config/"
@@ -333,48 +332,55 @@ active environment."
 ;; Hydra
 ;; ----------------
 
-;; (concat
-;;  (nerd-icons-devicon "nf-dev-python"
-;;                      :height 1.2 :v-adjust -0.1)
-;;  " Python")
+;; set the python blue colour. 
+;; (defface nerd-icons-python-blue-face
+;;   '((t (:foreground "#306998")))  ;; Python blue
+;;   "Face to provide the blue associated with Python."
+;;   :group 'nerd-icons-faces)
 
-(major-mode-hydra-define python-ts-mode
-  (:title (major-mode-hydra-title-generator)
-          :color amaranth :quit-key "q")
-  ("Tools"
-   (("i" python-fix-imports "fix imports"))
-   "Evaluate code"
-   (("vb" python-shell-send-buffer "eval buffer")
-    ("." python-shell-send-defun "eval fn")
-    ("vr" python-shell-send-region "eval region")
-    ("vs" python-shell-send-string "eval string")
-    ("vx" python-shell-restart "restart shell"))
-   "Errors/Linting"
-   (("e" flymake-show-buffer-diagnostics "list errors")
-    ("E" flymake-show-project-diagnostics "list project errors")
-    ("m" consult-flymake "defun")
-    ("n" flymake-goto-next-error "next")
-    ("l" flymake-goto-prev-error "previous"))
-   "References"
-   (("rf" anaconda-mode-find-references "find reference")
-    ("rF" projectile-find-references "find all references")
-    ("rd" anaconda-mode-find-definitions "find definition")
-    ("ra" anaconda-mode-find-assignments "find assignment"))
-   "Project"
-   (("j" consult-projectile "switch projects"))
-   "Doc"
-   (("dp" eldoc-box-help-at-point "thing-at-pt")
-    ("<up>" eldoc-box-scroll-up "scroll up")
-    ("<down>" eldoc-box-scroll-down "scroll down")
-    ("x" eldoc-box-hide "close eldoc"))
-   "Debugging"
-   (("bd" dape "start debugging")
-    ("bb" dape-breakpoint-toggle "toggle breakpoint")
-    ("bc" dape-continue "continue")
-    ("bn" dape-next "next")
-    ("bi" dape-step-in "step in")
-    ("bo" dape-step-out "step out")
-    ("bq" dape-disconnect "disconnect"))))
+;; (major-mode-hydra-define python-ts-mode
+;;   (:title  (concat
+;;             (nerd-icons-mdicon "nf-md-language-python"
+;;                                :height 1.2
+;;                                :v-adjust 0.0
+;;                                :face 'nerd-icons-python-blue-face)
+;;             " Python")
+;;            :color amaranth
+;;            :quit-key "q")
+;;   ("Tools"
+;;    (("i" python-fix-imports "fix imports"))
+;;    "Evaluate code"
+;;    (("vb" python-shell-send-buffer "eval buffer")
+;;     ("." python-shell-send-defun "eval fn")
+;;     ("vr" python-shell-send-region "eval region")
+;;     ("vs" python-shell-send-string "eval string")
+;;     ("vx" python-shell-restart "restart shell"))
+;;    "Errors/Linting"
+;;    (("e" flymake-show-buffer-diagnostics "list errors")
+;;     ("E" flymake-show-project-diagnostics "list project errors")
+;;     ("m" consult-flymake "defun")
+;;     ("n" flymake-goto-next-error "next")
+;;     ("l" flymake-goto-prev-error "previous"))
+;;    "References"
+;;    (("rf" anaconda-mode-find-references "find reference")
+;;     ("rF" projectile-find-references "find all references")
+;;     ("rd" anaconda-mode-find-definitions "find definition")
+;;     ("ra" anaconda-mode-find-assignments "find assignment"))
+;;    "Project"
+;;    (("j" consult-projectile "switch projects"))
+;;    "Doc"
+;;    (("dp" eldoc-box-help-at-point "thing-at-pt")
+;;     ("<up>" eldoc-box-scroll-up "scroll up")
+;;     ("<down>" eldoc-box-scroll-down "scroll down")
+;;     ("x" eldoc-box-hide "close eldoc"))
+;;    "Debugging"
+;;    (("bd" dape "start debugging")
+;;     ("bb" dape-breakpoint-toggle "toggle breakpoint")
+;;     ("bc" dape-continue "continue")
+;;     ("bn" dape-next "next")
+;;     ("bi" dape-step-in "step in")
+;;     ("bo" dape-step-out "step out")
+;;     ("bq" dape-disconnect "disconnect"))))
 
 
 (provide 'custom-lang-python)
