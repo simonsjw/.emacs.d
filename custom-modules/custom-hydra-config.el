@@ -20,17 +20,6 @@
 ;;(require 'custom-logging-config)
 ;; (require 'custom-system-tools)
 
-
-;; set a variable that can be set to generate a title for pretty-hydras.
-(setq major-mode-hydra-title-generator
-      '(lambda (mode)
-         (s-concat "\n"
-                   (s-repeat 10 " ")
-                   (nerd-icons-icon-for-mode mode :v-adjust 0.05)
-                   " "
-                   (symbol-name mode)
-                   " commands")))
-
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;;; Hydras: flyspell
 ;;  ------------------------------
@@ -77,7 +66,7 @@
 
 
 (defun my/flyspell-error-p (&optional position)
-  "Return non-nil if at a flyspell misspelling, and nil otherwise."
+  "Return non-nil if POSITION is a flyspell misspelling, and nil otherwise."
   ;; The check technique comes from 'flyspell-goto-next-error'.
   (let* ((pos (or position (point)))
          (ovs (overlays-at pos))
@@ -275,24 +264,23 @@ lower-cased."
   "Check if the undo-tree visualizer is currently open."
   (get-buffer "*undo-tree*"))
 
-(pretty-hydra-define hydra-undo-tree
-  (:color pink
-          :quit-key "q"
-          :title hydra-undo-tree--title)
-  ("Actions"
-   (("s" undo-tree-save-history "save history")
-    ("l" undo-tree-load-history "load history")
-    ("o" hydra-of-hydras/body "top level hydra" :color blue))
-   "Navigation"
-   (("h" undo-tree-undo "undo")
-    ("j" undo-tree-redo "redo"))
-   "Visualisation"
-   (("v" undo-tree-visualize "visualize tree"
-     :toggle (my/undo-tree-visualizer-open-p))
-    ("d" my-toggle/undo-tree-visualizer-timestamps "show timestamps"
-     :toggle t)
-    ("p" my-toggle/undo-tree-visualizer-diff "view diff"
-     :toggle t))))
+
+(defvar my-hydras/undo-tree-heads
+  '(("Actions"
+     (("s" undo-tree-save-history "save history")
+      ("l" undo-tree-load-history "load history")
+      ("o" hydra-of-hydras/body "top level hydra" :color blue))
+     "Navigation"
+     (("h" undo-tree-undo "undo")
+      ("j" undo-tree-redo "redo"))
+     "Visualisation"
+     (("v" undo-tree-visualize "visualize tree"
+       :toggle (my/undo-tree-visualizer-open-p))
+      ("d" my-toggle/undo-tree-visualizer-timestamps "show timestamps"
+       :toggle t)
+      ("p" my-toggle/undo-tree-visualizer-diff "view diff"
+       :toggle t)))))
+
 
 ;; END Hydras: Undo-tree ------------------------------
 
