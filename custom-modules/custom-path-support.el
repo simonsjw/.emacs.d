@@ -130,6 +130,14 @@
 
 ;; (setq tree-sitter-load-path (list my-paths/tree-sitter-lib))
 
+;; (defvar treesit-extra-load-path nil)
+;; (defvar treesit-load-path '())
+;; (setq tree-sitter-load-path (list (expand-file-name "~/.emacs.d/tree-sitter/")))
+;; (setq tree-sitter-load-path (list (expand-file-name "~/.emacs.d/tree-sitter/")))
+;; (add-to-list 'tree-sitter-load-path "~/.emacs.d/tree-sitter/")
+;; (add-to-list 'load-path  (expand-file-name "~/.emacs.d/tree-sitter/"))
+;; (add-to-list 'treesit-load-path  (expand-file-name "~/.emacs.d/tree-sitter/"))
+;; (add-to-list 'treesit-extra-load-path  (expand-file-name "~/.emacs.d/tree-sitter/"))
 
 ;; Bookmark+
 ;; ---------
@@ -282,12 +290,16 @@
       (expand-file-name "sql-history/" no-littering-var-directory))
 
 ;; keep the pretty-speedbar-icons in the icon stash.
-;;(with-eval-after-load 'pretty-speedbar-icons
-;; (defconst pretty-speedbar-icons-dir
+;; (defvar pretty-speedbar-icons-dir
 ;;   (expand-file-name
 ;;    (concat user-emacs-directory "etc/images/pretty-speedbar-icons/"))
-;; "Store pretty-speedbar-icons in the etc/images/pretty-speedbar-icons folder. This is located in the user's default Emacs directory.") 
-;;)
+;;   "Store pretty-speedbar-icons in the etc/images/pretty-speedbar-icons folder.
+
+;; This is located in the user's default Emacs directory.")
+;; (setq pretty-speedbar-icons-dir
+;;       (expand-file-name
+;;        (concat user-emacs-directory "etc/images/pretty-speedbar-icons/")))
+
 
 ;; define a path to the q custom package
 (setq my-paths/q-load-balancer-folder
