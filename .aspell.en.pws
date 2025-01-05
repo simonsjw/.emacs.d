@@ -1,4 +1,4 @@
-personal_ws-1.1 en 62 
+personal_ws-1.1 en 66 
 ARGS
 Backtrace
 Bunnings
@@ -31,13 +31,16 @@ defvar
 dir
 docstrings
 el
+elpa
 flymake
+flyspell
 github
 gitignore
 gmail
 hdb
 hoc
 https
+ipynb
 ipython
 jdk
 joinpath
@@ -56,6 +59,7 @@ scipy
 setq
 speedbar
 sym
+tmp
 txt
 usr
 vterm
