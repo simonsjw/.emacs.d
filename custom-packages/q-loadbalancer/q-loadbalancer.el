@@ -42,7 +42,7 @@
 
   (load-file (concat loadBalancerPackageDirectory "q-parse.el"))
   (load-file (concat loadBalancerPackageDirectory "process-groups.el"))
-  (load-file (concat loadBalancerPackageDirectory "q-modeline.el"))
+ ;; (load-file (concat loadBalancerPackageDirectory "q-modeline.el"))
   (load-file (concat loadBalancerPackageDirectory "q-ibuffer.el")))
 
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
