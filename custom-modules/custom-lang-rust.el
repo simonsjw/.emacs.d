@@ -110,10 +110,6 @@
   ;; (add-hook 'rust-mode-hook 'eglot-ensure)  - not used in rustic
   (setq rustic-lsp-client 'eglot)
 
-  ;; Auto-save
-  (my-programming-mode/auto-save-hook)
-
-
   ;; You will probably want to tweak this variable, it determines how
   ;; quickly the completion prompt provides LSP suggestions when
   ;; typing. Be careful if you set it to 0 in a large project!
