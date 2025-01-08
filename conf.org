@@ -1,8 +1,7 @@
 v#+title: Simon's Emacs Configuration File
 #+PROPERTY: header-args:emacs-lisp :tangle /home/simon/.emacs.d/init.el :mkdirp yes
 
-All that follows is based on the wonderful work of System Crafters. Stuff that works is due to them. Stuff that doesn't work is due to me.
-
+All that follows is based on the wonderful work of System Crafters. 
 Whenever you edit =config.org= in Emacs and save it, it updates files in your .emacs.d directory.
 
 See the [[https://orgmode.org/manual/Extracting-Source-Code.html][Org Manual]] for details and alternatives.
@@ -181,27 +180,38 @@ Define settings for =early-init.el=.
       		        user-emacs-directory))
 
 
-  (defvar no-littering-etc-directory nil "Create the path `no-littering-etc-directory`.")
+  (defvar no-littering-etc-directory nil "Create the path `no-littering-etc-directory'.")
   (setq no-littering-etc-directory
         (expand-file-name (concat "etc/"  envvar/SYSTEM_NAME "/")
       		        user-emacs-directory))
 
+  ;; (add-to-list 'load-path package-gnupghome-dir)  ; not needed since we are not using package.el
+  ;; Define and add directories to load-path
+  (mapc (lambda (dir)
+          (make-directory dir t)                                     ; Ensure the eln-cache directory exists.
+          (add-to-list 'load-path dir))
+        (list
+         (setq modules-user-dir (expand-file-name "custom-modules/" user-emacs-directory))
+         (setq tools-user-dir (expand-file-name "system-tools/" modules-user-dir))
+         (setq package-user-dir (expand-file-name "custom-packages/" user-emacs-directory))
+         (setq straight-base-dir no-littering-etc-directory)
+         (setq my-filepaths/eln-cache
+               (expand-file-name
+                "eln-cache/" no-littering-etc-directory))
+         )
+        )
+
   ;; Set up the eln-cache
   ;; --------------------
-  (defvar my-filepaths/eln-cache nil)
-  (setq my-filepaths/eln-cache
-        (expand-file-name
-         "eln-cache/" no-littering-etc-directory))
-  (make-directory my-filepaths/eln-cache t)                                     ; Ensure the eln-cache directory exists
-  (startup-redirect-eln-cache my-filepaths/eln-cache)                           ; Set the cache directory for compiled files
+  (startup-redirect-eln-cache my-filepaths/eln-cache)                           ; Set the cache directory for compiled files.
 
   ;; set up logging
   ;; --------------
-  (load (expand-file-name
-         "custom-modules/custom-logging-config.el" user-emacs-directory))
+  ;; (load (expand-file-name
+  ;;        "custom-modules/custom-logging-config.el" user-emacs-directory))
   (require 'custom-logging-config)
-  (load (expand-file-name
-         "custom-modules/custom-system-tools.el" user-emacs-directory))
+  ;; (load (expand-file-name
+  ;;        "custom-modules/custom-system-tools.el" user-emacs-directory))
   (require 'custom-system-tools)
 
   (log/debug :fn 'early-init
@@ -226,7 +236,7 @@ Define settings for =early-init.el=.
   (defvar my/REPO_LIST nil "The path to a list of git projects on the system.")
   (setq my/REPO_LIST (getenv "REPO_LIST"))
 
-  ;; Use this to rebuild packages with straight
+  ;; Use this to rebuild packages with straight.
   ;;(straight-rebuild-package "tree-sitter-langs")
 
   ;; This is the way we define a custom variable and add it to a group.
@@ -239,59 +249,12 @@ Define settings for =early-init.el=.
       	   :msg "no-littering etc directory set"
       	   :obj no-littering-etc-directory)
 
-  ;; Set up package management paths
-  ;; -------------------------------
-  ;; ** NOT NEEDED NOW AS THIS DIRECTORY IS USED TO DOWNLOAD AND
-  ;; VARIFY PACKAGES FROM GNUELPA BY PACKAGE.EL **
-  ;; Set the gnupg directory path needed for package management.
-  ;; (defconst package-gnupghome-dir
-  ;;   (expand-file-name
-  ;;    "gnupg/" no-littering-etc-directory)
-  ;;   "Define the package management directory.")
-
-  ;; Set the elpa directory needed for package management.
-  ;; ** NOT NEEDED NOW AS THIS DIRECTORY IS USED TO STORE
-  ;; DOWNLOADED PACKAGES BY PACKAGE.EL *
-  ;; (setq package-user-dir
-  ;;       (expand-file-name
-  ;;        "elpa/" no-littering-etc-directory))
-
   (defvar straight-base-dir nil "Define the straight directory so compilation is in the right location.")
-  (setq straight-base-dir no-littering-etc-directory)
-
-  ;; treesitter scripts
-  ;; (defconst tree-sitter-load-path
-  ;;   (list (concat straight-base-dir
-  ;;     		"/straight/build/tree-sitter-langs/bin/"))
-  ;;   "Define the location of treesitter language grammars.
-
-  ;;     		      At present, emacs insists on checking in the .emacs.d home directory so I have
-  ;;     		      a shortcut to allow this directory to be in two places at once. ")
-
-  ;; ;; elpaca not used
-  ;; now but maybe will be ??
-  ;;(defconst elpaca-directory
-  ;;  (expand-file-name "elpaca/" no-littering-etc-directory))
-
 
   ;; custom.el
   (defvar custom-file nil "Set location of custom.el")
   (setq custom-file
         (expand-file-name "custom.el" no-littering-etc-directory))
-
-  ;; user packages
-  (setq package-user-dir 
-   (expand-file-name "custom-packages/" user-emacs-directory))
-
-  ;; user modules
-  (add-to-list
-   'load-path
-   (expand-file-name "custom-modules/" user-emacs-directory))
-
-  ;; (add-to-list 'load-path package-gnupghome-dir)  ; not needed since we are not using package.el
-  (add-to-list 'load-path package-user-dir)
-  (add-to-list 'load-path straight-base-dir)
-  (add-to-list 'load-path my-filepaths/eln-cache)
 
   ;; With straight-base-dir defined, ensure our straight.el setup is loaded.
   (require 'straight-early-init)
@@ -302,9 +265,9 @@ Define settings for =early-init.el=.
       ((obj
         (concat "\n   ("
                 (replace-regexp-in-string
-      			";" ";\n      "
-                              (mapconcat 'identity load-path ";")) ")"
-                              )))
+      	       ";" ";\n      "
+                 (mapconcat 'identity load-path ";")) ")"
+                )))
     (log/debug :fn 'early-init
       	     :msg "Added custom-modules to load-path."
       	     :obj obj))
@@ -313,7 +276,7 @@ Define settings for =early-init.el=.
   ;;  -----------------------------
 
   ;; 
-  (defvar comp-speed nil "set native compilation")
+  (defvar comp-speed nil "set native compilation.")
   (setq comp-speed 1)
 
   (defvar package-native-compile)
@@ -349,8 +312,8 @@ Define settings for =early-init.el=.
 
 
   ;;; Emacs lisp source/compiled preference
-  ;; Prefer loading newest compiled .el file
-  (defvar load-prefer-newer nil "loading preference")
+  ;; Prefer loading newest compiled .el file.
+  (defvar load-prefer-newer nil "loading preference.")
   (setq load-prefer-newer t)
   (require 'auto-compile)
   (auto-compile-on-load-mode)
@@ -358,18 +321,16 @@ Define settings for =early-init.el=.
 
   ;; delight enables us to manage mode interactions with the modeline via
   ;; use-package and the :delight key. 
-  (use-package delight :straight t)
   (use-package bind-key :straight t)
   (use-package helpful :straight t)
 
-  (require 'delight)                                          ; if you use :delight
   (require 'bind-key)                                         ; if you use any :bind variant
 
 
   ;;; UI configuration
   ;;  ----------------
   ;; Remove some unneeded UI elements
-  ;;(the user can turn back on anything they wish)
+  ;;(the user can turn back on anything they wish.)
   (setq inhibit-startup-message t)
 
   (push '(tool-bar-lines . nil) default-frame-alist)
@@ -377,7 +338,7 @@ Define settings for =early-init.el=.
   (menu-bar-mode -1)
   (define-key input-decode-map [C-tab] [control-tab])
   (global-set-key [control-tab] 'menu-bar-mode)
-  
+
   ;; (push '(vertical-scroll-bars) default-frame-alist)
   ;; (push '(mouse-color . "white") default-frame-alist)
 
@@ -420,33 +381,21 @@ This means all variables with external origins in emacs are specified here.
   ;; Note that by default, init.el is the target of the tangle as
   ;; specified by #+PROPERTY in line 3.
 
-      ;;; Code:
-  ;; Tangle the code blocks if this file is config.org and it is in the
-  ;; user-emacs-directory.
-  ;;(defun org-babel-tangle-config ()
-  ;;  (when (string-equal (buffer-file-name)
-  ;;                      (expand-file-name
-  ;;                         "config.org" user-emacs-directory))
-  ;; Dynamic scoping to the rescue
-  ;;     (let ((org-confirm-babel-evaluate nil))
-  ;;       (org-babel-tangle))))
-
-  ;; (add-hook 'org-mode-hook
-  ;;           (lambda ()
-  ;;             (add-hook 'after-save-hook #'org-babel-tangle-config)))
-
-  ;; Re-initialise your eln-cache location. 
-  ;; (setq native-comp-eln-load-path
-  ;;       (copy-sequence (list my-filepaths/eln-cache
-  ;;     	    "/usr/local/lib/emacs/29.2/native-lisp/")))
-  ;; ;; remove all mention of the original loadpath. 
-  ;; (setq startup--original-eln-load-path
-  ;;         (copy-sequence native-comp-eln-load-path))
-
+  ;;; Code
 
   ;;; imports and declarations
   (require 'custom-logging-config)
   (require 'recentf)
+  (require 'custom-path-support)
+  (require 'elisp-packages)
+
+  ;; ensure the correct org-mode is sourced.
+  ;; install the org package before it is used - otherwise it causes conflict.
+  ;; (add-to-list
+  ;;  'load-path
+  ;;  (expand-file-name "custom-modules/org-support.el" user-emacs-directory))
+  (require 'org-support)
+
 
   ;; ensure tangling functionality is set up with org mode.
   (add-hook
@@ -455,9 +404,6 @@ This means all variables with external origins in emacs are specified here.
      (add-hook 'after-save-hook 'org-babel-tangle
                'run-at-end
                'only-in-org-mode)))
-
-
-  (require 'custom-logging-config)
 
   (log/info :fn 'init
             :msg "----Begin init.el processing----"
@@ -477,18 +423,18 @@ This means all variables with external origins in emacs are specified here.
        (eln-dir-list-ending-payload ")"))
 
     (log/info :fn 'init
-      	    :msg "check values of  package-user-dir, eln-cache directory and straight-base-dir."
-      	    :obj (format
-      		  (concat
-      		   user-dir-payload
+              :msg "check values of  package-user-dir, eln-cache directory and straight-base-dir."
+              :obj (format
+                    (concat
+                     user-dir-payload
                      straight-dir-payload
                      eln-cache-fp-payload
-      		   eln-dir-list-payloads
+                     eln-dir-list-payloads
                      eln-dir-list-ending-payload)
-      		  package-user-dir
-      		  straight-base-dir
+                    package-user-dir
+                    straight-base-dir
                     my-filepaths/eln-cache
-      		  native-comp-eln-load-path-string)))
+                    native-comp-eln-load-path-string)))
 
 #+end_src
 
@@ -525,16 +471,16 @@ This means all variables with external origins in emacs are specified here.
 [[file:./custom-modules/custom-init-config.el][Packages to initialise the emacs configuration.]]
 
 [[file:./custom-modules/custom-path-support.el][Packages to set and manage paths needed for emacs.]]
-- [[https://github.com/emacscollective/no-littering/blob/main/no-littering.el][no-littering]]:            Keep your paths tidy.
-- [[https://www.emacswiki.org/emacs/RecentFiles][recentf]]:                 Recentf is a minor mode that builds a list of recently opened files.
+- [[[[https://github.com/emacscollective/no-littering/blob/main/no-littering.el][no-littering]]:][Link]]            Keep your paths tidy.
+- [[[[https://www.emacswiki.org/emacs/RecentFiles][recentf]]:][Link]]                 Recentf is a minor mode that builds a list of recently opened files.
   
 [[file:./custom-modules/straight-crafted-org-packages.el][Packages for Org]]
 - org
 - org-contrib
 - org-contacts
 - google-contacts
-- [[https://github.com/awth13/org-appear][org-appear]]:             Toggle the visibility of some Org elements.
-- [[https://github.com/Fuco1/org-pretty-table][org-pretty-table]]:       Prettyfy org tables.
+- [[[[https://github.com/awth13/org-appear][org-appear]]:][Link]]             Toggle the visibility of some Org elements.
+- [[[[https://github.com/Fuco1/org-pretty-table][org-pretty-table]]:][Link]]       Prettyfy org tables.
 - org-pretty-tags
 - org-roam 
   
@@ -548,12 +494,7 @@ This means all variables with external origins in emacs are specified here.
             :msg "----Begin loading base functionality.----"
             :obj t)
 
-  (require 'custom-path-support)
   (require 'custom-init-config)
-
-  ;; install the org package before it is used - otherwise it causes conflict.
-  (require 'straight-crafted-org-packages);
-
   (require 'custom-defaults-config);
   ;; setup save histories.
   (savehist-mode 1)
@@ -572,10 +513,6 @@ This means all variables with external origins in emacs are specified here.
   (when (and custom-file (file-exists-p custom-file))
     (load custom-file nil 'nomessage))
 
-  ;; add files needed to the load path
-  (add-to-list
-   'load-path
-   (expand-file-name "var/elisp-demos/" user-emacs-directory))
 
   (log/info :fn 'init
             :msg "----Initial configuration complete----"
@@ -587,69 +524,57 @@ This means all variables with external origins in emacs are specified here.
 **** IDE type functionality
 
 [[file:./custom-modules/straight-crafted-ide-packages.el][Packages for IDE functionality]]
--  [[https://github.com/editorconfig/editorconfig-emacs][editorconfig]]:           Expose additional configuration options for an IDE in a clear way.
--  [[https://github.com/Malabarba/aggressive-indent-mode][aggressive-indent]]:      Keep your code correctly indented as you type.
--  [[https://github.com/AndreaCrotti/yasnippet-snippets][yasnippet-snippets]]:     A collection of yasnippets.
--  [[https://github.com/jacktasia/dumb-jump][dumb-jump]]:              A "jump to definition" package that favors "just working".
+-  [[[[https://github.com/editorconfig/editorconfig-emacs][editorconfig]]:][Link]]           Expose additional configuration options for an IDE in a clear way.
+-  [[[[https://github.com/Malabarba/aggressive-indent-mode][aggressive-indent]]:][Link]]      Keep your code correctly indented as you type.
+-  [[[[https://github.com/AndreaCrotti/yasnippet-snippets][yasnippet-snippets]]:][Link]]     A collection of yasnippets.
+-  [[[[https://github.com/jacktasia/dumb-jump][dumb-jump]]:][Link]]              A "jump to definition" package that favors "just working".
   
 [[file:./custom-modules/custom-tree-sitter-support.el][Packages and configuration for Tree-sitter]]
 
 [[file:./custom-modules/custom-undo-tree-support.el][Packages and configuration for undo-tree]]
--  [[https://gitlab.com/tsc25/undo-tree/-/blob/master/undo-tree.el][undo-tree]]:              Save undo histories and access them in an intuitive way.
+-  [[[[https://gitlab.com/tsc25/undo-tree/-/blob/master/undo-tree.el][undo-tree]]:][Link]]              Save undo histories and access them in an intuitive way.
 
 #+begin_src emacs-lisp :tangle ./init.el
   ;; IDE configuration.
-  ;; (require 'straight-crafted-hydra-packages)
-  (require 'straight-crafted-ide-packages)
   (require 'custom-tree-sitter-support)
   (require 'custom-undo-tree-support)
-
+ 
 #+end_src
 
 **** UI enhancements
 
 [[file:./custom-modules/straight-crafted-lib-packages.el][Packages for base libraries for emacs lisp]]
 - [[https://github.com/magnars/s.el][ s.el]]:                   string manipulation library
--  [[https://github.com/magnars/dash.el][dash.el]]:                A modern list API for Emacs. No 'cl required.
+-  [[[[https://github.com/magnars/dash.el][dash.el]]:][Link]]                A modern list API for Emacs. No 'cl required.
 
 [[file:./custom-modules/straight-crafted-completion-packages.el][Packages for Completion functionality]]
--  [[https://github.com/minad/cape][cape]]:                   Cape provides Completion At Point Extensions.
--  [[https://github.com/minad/consult][consult]]:                Consulting completing-read.
--  [[https://github.com/minad/corfu][corfu]]:                  Corfu enhances in-buffer completion with a small completion popup.
--  [[https://codeberg.org/akib/emacs-corfu-terminal][corfu-terminal]]:         Corfu popup on the terminal.
--  [[https://github.com/oantolin/embark][embark]]:                 Emacs Mini-Buffer Actions Rooted in Keymaps.
--  [[https://github.com/oantolin/embark/blob/master/embark-consult.el][embark-consult]]:         Use embark to configure the results provided by the consult completing read package.
--  [[https://github.com/minad/marginalia][marginalia]]:             Add marginalia to minibuffer completions.
--  [[https://github.com/oantolin/orderless][orderless]]:              Provides an orderless completion style that divides the pattern into space-separated components.
--  [[https://github.com/minad/vertico][vertico]]:                VERTical Interactive COmpletion.
--  [[https://github.com/d12frosted/flyspell-correct][flyspell-correct]]:       Generic interface to access flyspell.
--  [[https://gitlab.com/OlMon/consult-flyspell][consult-flyspell]]:       Integrate flyspell with consult.
--  [[https://github.com/mohkale/consult-yasnippet][consult-yasnippet]]:      A consulting-read interface for yasnippet.
+-  [[[[https://github.com/minad/cape][cape]]:][Link]]                   Cape provides Completion At Point Extensions.
+-  [[[[https://github.com/minad/consult][consult]]:][Link]]                Consulting completing-read.
+-  [[[[https://github.com/minad/corfu][corfu]]:][Link]]                  Corfu enhances in-buffer completion with a small completion popup.
+-  [[[[https://codeberg.org/akib/emacs-corfu-terminal][corfu-terminal]]:][Link]]         Corfu popup on the terminal.
+-  [[[[https://github.com/oantolin/embark][embark]]:][Link]]                 Emacs Mini-Buffer Actions Rooted in Keymaps.
+-  [[[[https://github.com/oantolin/embark/blob/master/embark-consult.el][embark-consult]]:][Link]]         Use embark to configure the results provided by the consult completing read package.
+-  [[[[https://github.com/minad/marginalia][marginalia]]:][Link]]             Add marginalia to minibuffer completions.
+-  [[[[https://github.com/oantolin/orderless][orderless]]:][Link]]              Provides an orderless completion style that divides the pattern into space-separated components.
+-  [[[[https://github.com/minad/vertico][vertico]]:][Link]]                VERTical Interactive COmpletion.
+-  [[[[https://github.com/d12frosted/flyspell-correct][flyspell-correct]]:][Link]]       Generic interface to access flyspell.
+-  [[[[https://gitlab.com/OlMon/consult-flyspell][consult-flyspell]]:][Link]]       Integrate flyspell with consult.
+-  [[[[https://github.com/mohkale/consult-yasnippet][consult-yasnippet]]:][Link]]      A consulting-read interface for yasnippet.
 
 [[file:./custom-modules/straight-crafted-ui-packages.el][Packages for User Interface functionality]]
 -  imenu-list
 -  all-the-icons
 -  elisp-demos
 -  helpful
--  [[https://github.com/gregsexton/origami.el][origami]]:                code folding - this works best on bracket based folding. 
--  [[https://github.com/alphapapa/bufler.el][bufler]]:                 a butler for your buffers, presenting them in an organized way based on instructions.
--  [[https://github.com/alphapapa/burly.el][burley]]:                 Restore workspaces.
--  [[https://github.com/abo-abo/hydra][hydra]]:                  Tie related commands into a family of short bindings with a common prefix.
--  [[https://github.com/jerrypnz/major-mode-hydra.el][major-mode-hydra.el]]:    pretty hydras to use with major modes.
--  [[https://www.emacswiki.org/emacs/BookmarkPlu][Bookmark+]]:              Improved bookmarking; loaded at the end of the process because of its many dependencies.
--  [[https://www.emacswiki.org/emacs/DiredPlus][Dired+]]:                 Improved Dired; loaded at the end of the process because of its many dependencies.
--  [[https://www.emacswiki.org/emacs/InfoPlus][Info+]]:                  Additional functionality for navigating help/Info files in emacs.
+-  [[[[https://github.com/gregsexton/origami.el][origami]]:][Link]]                code folding - this works best on bracket based folding. 
+-  [[[[https://github.com/alphapapa/bufler.el][bufler]]:][Link]]                 a butler for your buffers, presenting them in an organized way based on instructions.
+-  [[[[https://github.com/abo-abo/hydra][hydra]]:][Link]]                  Tie related commands into a family of short bindings with a common prefix.
+-  [[[[https://github.com/jerrypnz/major-mode-hydra.el][major-mode-hydra.el]]:][Link]]    pretty hydras to use with major modes.
+-  [[[[https://www.emacswiki.org/emacs/BookmarkPlu][Bookmark+]]:][Link]]              Improved bookmarking; loaded at the end of the process because of its many dependencies.
+-  [[[[https://www.emacswiki.org/emacs/DiredPlus][Dired+]]:][Link]]                 Improved Dired; loaded at the end of the process because of its many dependencies.
+-  [[[[https://www.emacswiki.org/emacs/InfoPlus][Info+]]:][Link]]                  Additional functionality for navigating help/Info files in emacs.
 
 [[file:./custom-modules/straight-crafted-writing-packages.el][Packages for Tex and other document production]]
-
-#+begin_src emacs-lisp :tangle ./init.el
-
-  (require 'straight-crafted-lib-packages)
-  ;;(require 'straight-crafted-completion-packages)
-  (require 'straight-crafted-ui-packages)
-  (require 'straight-crafted-writing-packages)
-
-#+end_src
 
 [[file:./custom-modules/custom-system-tools.el][    Additional functionality for use with user functions in emacs]]
 [[file:./custom-modules/custom-theme-support.el][    Packages and config for theming]]
@@ -671,19 +596,20 @@ This means all variables with external origins in emacs are specified here.
 [[file:./custom-modules/custom-speedbar-support.el][Custom Speedbar support]]
 
 [[file:./custom-modules/custom-mode-line-support.el][Custom Mode-line support]]
-- [[https://github.com/seagle0128/doom-modeline][doom-modeline]]:           Build a modeline with functionality but no crowding.
+- [[[[https://github.com/seagle0128/doom-modeline][doom-modeline]]:][Link]]           Build a modeline with functionality but no crowding.
   
 [[file:./custom-modules/custom-spreadsheet-support.el][Custom Mode-line support]]
-- [[https://gitlab.com/dto/cell-mode][Cell-Mode]]:               A spreadsheet with cell-mode (see the emacs conference [[https://emacsconf.org/2019/talks/18/][for 2019]])
+- [[[[https://gitlab.com/dto/cell-mode][Cell-Mode]]:][Link]]               A spreadsheet with cell-mode (see the emacs conference [[https://emacsconf.org/2019/talks/18/][for 2019]])
 
 #+begin_src emacs-lisp :tangle ./init.el
 
    ;; user interface
   (require 'custom-ui-config)
+  (require 'tabline-support)
   (require 'custom-speedbar-support)
-  (require 'custom-modeline-support)
+  (require 'modeline-support)
   (require 'custom-spreadsheet-support)
-  
+
 #+end_src
 
     [[file:./custom-modules/custom-ide-config.el][    Base configuration for the IDE]]
@@ -702,7 +628,6 @@ This means all variables with external origins in emacs are specified here.
   (require 'custom-debugger-support)
 
   ;; Handle writing config (Latex and the like)
-  (require 'custom-org-config)
   (require 'custom-writing-config)
 
 #+end_src
@@ -717,38 +642,39 @@ This means all variables with external origins in emacs are specified here.
 #+end_src
 
 [[file:./custom-modules/custom-magit-support.el][    Packages and configs for Magit]]
-    - [[https://github.com/magnars/s.el][magit]]:                   string manipulation library
-    - [[https://github.com/magnars/dash.el][magit-todos]]:             A modern list API for Emacs. No 'cl required.    
+    - [[[[https://github.com/magnars/s.el][magit]]:][Link]]                   string manipulation library
+    - [[[[https://github.com/magnars/dash.el][magit-todos]]:][Link]]             A modern list API for Emacs. No 'cl required.    
 
 #+begin_src emacs-lisp :tangle ./init.el
 
   ;; version control
-  (require 'custom-magit-support)
-  
+  (require 'custom-vc-support)
+
 #+end_src
 
 
 **** Set up the IDE functionality
 These links take you to the languages set up with Emacs.
-
+[[file:./custom-modules/custom-lang--prog-mode.el][    IDE language: functionality common across all languages]]
 [[file:./custom-modules/custom-lang-lisp.el][    IDE language: Packages needed for writing lisp varietals]]
 [[file:./custom-modules/custom-lang-rust.el][    IDE language: Packages needed for Rust support]]
 [[file:./custom-modules/custom-lang-python.el][    IDE language: Python setup]]
 [[file:./custom-modules/custom-lang-q.el][    IDE language: Q setup]]
 [[file:./custom-modules/custom-lang-systemd.el][    IDE language: Systemd setup]]
 [[file:./custom-modules/custom-lang-web.el][    IDE language: web setup]]
-    [[https://github.com/emacs-php/apache-mode][apache-mode]]:                  Emacs major mode for editing apache2 config files.
-    [[https://github.com/emacs-php/robots-txt-mode][robots-txt-mode]]:              Emacs major mode for editing [[http://www.robotstxt.org/robotstxt.html][robots.txt]]. This mode supports well-known [[https://developers.google.com/search/docs/crawling-indexing/robots/create-robots-txt?visit_id=638447716778136466-858157116&rd=1][extension by Google]] and [[https://datatracker.ietf.org/doc/html/draft-rep-wg-topic-00][RFC Draft]].
-    [[https://web-mode.org][web-mode]]:                     An emacs major-mode for editing web templates containing embedded parts. (eg HTML embedding CSS / JavaScript).
+    [[[[https://github.com/emacs-php/apache-mode][apache-mode]]:][Link]]                  Emacs major mode for editing apache2 config files.
+    [[[[https://github.com/emacs-php/robots-txt-mode][robots-txt-mode]]:][Link]]              Emacs major mode for editing [[[[http://www.robotstxt.org/robotstxt.html][robots.txt]].][Link]] This mode supports well-known [[https://developers.google.com/search/docs/crawling-indexing/robots/create-robots-txt?visit_id=638447716778136466-858157116&rd=1][extension by Google]] and [[https://datatracker.ietf.org/doc/html/draft-rep-wg-topic-00][RFC Draft]].
+    [[[[https://web-mode.org][web-mode]]:][Link]]                     An emacs major-mode for editing web templates containing embedded parts. (eg HTML embedding CSS / JavaScript).
 [[file:./custom-modules/custom-lang-bash.el][    IDE language: bash setup]]
 [[file:./custom-modules/custom-lang-docker.el][    IDE language: docker setup]]
-    [[https://github.com/Silex/docker.el][docker.el]]:                    Manage docker from Emacs.
-    [[https://github.com/meqif/docker-compose-mode][docker-compose]]:               Completions for editing docker compose files.
+    [[[[https://github.com/Silex/docker.el][docker.el]]:][Link]]                    Manage docker from Emacs.
+    [[[[https://github.com/meqif/docker-compose-mode][docker-compose]]:][Link]]               Completions for editing docker compose files.
 
 
 #+begin_src emacs-lisp :tangle ./init.el
 
   ;; programming languages
+  (require 'custom-lang--prog-mode)
   (require 'custom-lang-lisp)
   (require 'custom-lang-rust)
   (require 'custom-lang-python)
@@ -762,12 +688,12 @@ These links take you to the languages set up with Emacs.
 #+end_src
 
 [[file:./custom-modules/custom-db-support.el][    Database support]]:             Support needed for sql-mode and PostgreSQL.
-    - [[https://github.com/anse1/emacs-libpq][emacs-libpq]]:                An Emacs 25 module for accessing PostgreSQL via the libpq client library.
-    - [[https://github.com/purcell/sqlformat][sqlformat]]:                  Provides commands and a minor mode for easily reformatting SQL using external programs.
+    - [[[[https://github.com/anse1/emacs-libpq][emacs-libpq]]:][Link]]                An Emacs 25 module for accessing PostgreSQL via the libpq client library.
+    - [[[[https://github.com/purcell/sqlformat][sqlformat]]:][Link]]                  Provides commands and a minor mode for easily reformatting SQL using external programs.
 
     Integrated external functions:
-    - [[https://www.postgresql.org/][postgresql]]:                 Great open-source database.
-    - [[https://github.com/darold/pgFormatter][pgFormatter]]:                Formats postgresql code.
+    - [[[[https://www.postgresql.org/][postgresql]]:][Link]]                 Great open-source database.
+    - [[[[https://github.com/darold/pgFormatter][pgFormatter]]:][Link]]                Formats postgresql code.
 
     Functions:
     - my/sql-connect-postgres:    Connect to a PostgreSQL database, using an environment variable for the password if available.
@@ -786,30 +712,16 @@ These links take you to the languages set up with Emacs.
 
 Load the summary page code then set up the startup configuration.  finalize the init log and profile the startup time.
 
-[[file:./custom-modules/custom-hydra-support.el][Packages and configuration for Hydras]] (DEPRECIATED)
--  [[https://github.com/abo-abo/hydra][hydra]]:                         Tie related commands into a family of short bindings with a common prefix and menu.
--  [[https://github.com/jerrypnz/major-mode-hydra.el][major-mode-hydra]]:              Build a hydra for each major mode consistently. 
--  [[https://github.com/jerrypnz/major-mode-hydra.el/blob/master/pretty-hydra.el][pretty-hydra]]:                  Make hydras pretty. (part of major-mode-hydra but can be used with other hydras.)
--  [[https://github.com/bgwines/symbol-navigation-hydra][symbol-navigation-hydra]]:       A hydra for navigating code blocks. 
--  [[https://gitlab.com/to1ne/use-package-hydra][use-package-hydra]]:             Define hydras for packages as they are loaded in use-package with keyword `:hydra'.
-
--  [[file:./custom-modules/custom-startup-config.el][Custom Startup configs]]:        Load the IDE on startup. 
+[[file:./custom-modules/custom-menus-config.el][Packages and configuration for menus.]]
+-  [[file:./custom-modules/custom-startup-config.el][Custom Startup configs]]:        Load the IDE on startup.
 
 #+begin_src emacs-lisp :tangle ./init.el
   ;;(require 'custom-hydra-config)
   (require 'custom-terminal-support)
-  (require 'custom-summary-config)
-  (require 'custom-system-window-management)
+  (require 'summary-support)
+  (require 'system-window-management)
   (require 'custom-startup-config)
-  (require 'custom-menus-config)
-
-  ;; These additional packages are not currently used:
-  ;; custom-package-config.el ;
-  ;; custom-updates-config.el ;
-
-  (log/debug :fn 'init
-             :msg "set the elisp-flymake-byte-compile-load-path."
-             :obj t)
+  (require 'menu-keys-support)
 
   ;; All the autoloaded packages are now loaded.
   ;; set elisp-flymake-byte-compile-load-path
@@ -847,14 +759,14 @@ Show the loading time via a the emacs-startup-hook.
   (add-hook
    'emacs-startup-hook #'crafted-startup-example/display-startup-time)
 
-  
+
   ;; start the server if its not already running.
   ;; To shutdown the server use the below: 
   ;;   M-x server-edit
   ;;   C-x C-c
-  (unless
-      (server-running-p)
-    (server-start))
+  ;; (unless
+  ;;     (server-running-p)
+  ;;   (server-start))
 
   (provide 'init)
   ;;; init.el ends here

@@ -34,30 +34,38 @@
     		        user-emacs-directory))
 
 
-(defvar no-littering-etc-directory nil "Create the path `no-littering-etc-directory`.")
+(defvar no-littering-etc-directory nil "Create the path `no-littering-etc-directory'.")
 (setq no-littering-etc-directory
       (expand-file-name (concat "etc/"  envvar/SYSTEM_NAME "/")
     		        user-emacs-directory))
 
+;; (add-to-list 'load-path package-gnupghome-dir)  ; not needed since we are not using package.el
+;; Define and add directories to load-path
+(mapc (lambda (dir)
+        (make-directory dir t)                                     ; Ensure the eln-cache directory exists.
+        (add-to-list 'load-path dir))
+      (list
+       (setq modules-user-dir (expand-file-name "custom-modules/" user-emacs-directory))
+       (setq tools-user-dir (expand-file-name "system-tools/" modules-user-dir))
+       (setq package-user-dir (expand-file-name "custom-packages/" user-emacs-directory))
+       (setq straight-base-dir no-littering-etc-directory)
+       (setq my-filepaths/eln-cache
+             (expand-file-name
+              "eln-cache/" no-littering-etc-directory))
+       )
+      )
+
 ;; Set up the eln-cache
 ;; --------------------
-(defvar my-filepaths/eln-cache nil)
-(setq my-filepaths/eln-cache
-      (expand-file-name
-       "eln-cache/" no-littering-etc-directory))
-(make-directory my-filepaths/eln-cache t)                                     ; Ensure the eln-cache directory exists
-(startup-redirect-eln-cache my-filepaths/eln-cache)                           ; Set the cache directory for compiled files
+(startup-redirect-eln-cache my-filepaths/eln-cache)                           ; Set the cache directory for compiled files.
 
 ;; set up logging
 ;; --------------
-(load (expand-file-name
-       "custom-modules/custom-logging-config.el" user-emacs-directory))
+;; (load (expand-file-name
+;;        "custom-modules/custom-logging-config.el" user-emacs-directory))
 (require 'custom-logging-config)
-(load (expand-file-name
-       "custom-modules/custom-system-objects.el" user-emacs-directory))
-(require 'custom-system-objects)
-(load (expand-file-name
-       "custom-modules/custom-system-tools.el" user-emacs-directory))
+;; (load (expand-file-name
+;;        "custom-modules/custom-system-tools.el" user-emacs-directory))
 (require 'custom-system-tools)
 
 (log/debug :fn 'early-init
@@ -82,7 +90,7 @@
 (defvar my/REPO_LIST nil "The path to a list of git projects on the system.")
 (setq my/REPO_LIST (getenv "REPO_LIST"))
 
-;; Use this to rebuild packages with straight
+;; Use this to rebuild packages with straight.
 ;;(straight-rebuild-package "tree-sitter-langs")
 
 ;; This is the way we define a custom variable and add it to a group.
@@ -95,59 +103,12 @@
     	   :msg "no-littering etc directory set"
     	   :obj no-littering-etc-directory)
 
-;; Set up package management paths
-;; -------------------------------
-;; ** NOT NEEDED NOW AS THIS DIRECTORY IS USED TO DOWNLOAD AND
-;; VARIFY PACKAGES FROM GNUELPA BY PACKAGE.EL **
-;; Set the gnupg directory path needed for package management.
-;; (defconst package-gnupghome-dir
-;;   (expand-file-name
-;;    "gnupg/" no-littering-etc-directory)
-;;   "Define the package management directory.")
-
-;; Set the elpa directory needed for package management.
-;; ** NOT NEEDED NOW AS THIS DIRECTORY IS USED TO STORE
-;; DOWNLOADED PACKAGES BY PACKAGE.EL *
-;; (setq package-user-dir
-;;       (expand-file-name
-;;        "elpa/" no-littering-etc-directory))
-
 (defvar straight-base-dir nil "Define the straight directory so compilation is in the right location.")
-(setq straight-base-dir no-littering-etc-directory)
-
-;; treesitter scripts
-;; (defconst tree-sitter-load-path
-;;   (list (concat straight-base-dir
-;;     		"/straight/build/tree-sitter-langs/bin/"))
-;;   "Define the location of treesitter language grammars.
-
-;;     		      At present, emacs insists on checking in the .emacs.d home directory so I have
-;;     		      a shortcut to allow this directory to be in two places at once. ")
-
-;; ;; elpaca not used
-;; now but maybe will be ??
-;;(defconst elpaca-directory
-;;  (expand-file-name "elpaca/" no-littering-etc-directory))
-
 
 ;; custom.el
 (defvar custom-file nil "Set location of custom.el")
 (setq custom-file
       (expand-file-name "custom.el" no-littering-etc-directory))
-
-;; user packages
-(setq package-user-dir 
- (expand-file-name "custom-packages/" user-emacs-directory))
-
-;; user modules
-(add-to-list
- 'load-path
- (expand-file-name "custom-modules/" user-emacs-directory))
-
-;; (add-to-list 'load-path package-gnupghome-dir)  ; not needed since we are not using package.el
-(add-to-list 'load-path package-user-dir)
-(add-to-list 'load-path straight-base-dir)
-(add-to-list 'load-path my-filepaths/eln-cache)
 
 ;; With straight-base-dir defined, ensure our straight.el setup is loaded.
 (require 'straight-early-init)
@@ -158,9 +119,9 @@
     ((obj
       (concat "\n   ("
               (replace-regexp-in-string
-    			";" ";\n      "
-                            (mapconcat 'identity load-path ";")) ")"
-                            )))
+    	       ";" ";\n      "
+               (mapconcat 'identity load-path ";")) ")"
+              )))
   (log/debug :fn 'early-init
     	     :msg "Added custom-modules to load-path."
     	     :obj obj))
@@ -169,7 +130,7 @@
 ;;  -----------------------------
 
 ;; 
-(defvar comp-speed nil "set native compilation")
+(defvar comp-speed nil "set native compilation.")
 (setq comp-speed 1)
 
 (defvar package-native-compile)
@@ -205,8 +166,8 @@
 
 
 ;;; Emacs lisp source/compiled preference
-;; Prefer loading newest compiled .el file
-(defvar load-prefer-newer nil "loading preference")
+;; Prefer loading newest compiled .el file.
+(defvar load-prefer-newer nil "loading preference.")
 (setq load-prefer-newer t)
 (require 'auto-compile)
 (auto-compile-on-load-mode)
@@ -214,21 +175,24 @@
 
 ;; delight enables us to manage mode interactions with the modeline via
 ;; use-package and the :delight key. 
-(use-package delight :straight t)
 (use-package bind-key :straight t)
 (use-package helpful :straight t)
 
-(require 'delight)                                          ; if you use :delight
 (require 'bind-key)                                         ; if you use any :bind variant
+
 
 ;;; UI configuration
 ;;  ----------------
 ;; Remove some unneeded UI elements
-;;(the user can turn back on anything they wish)
+;;(the user can turn back on anything they wish.)
 (setq inhibit-startup-message t)
 
 (push '(tool-bar-lines . nil) default-frame-alist)
-;; (push '(menu-bar-lines . nil) default-frame-alist)
+;; Turn off Menu-Bar and then bind it to C-TAB (Ctrl + <TAB>) to toggle on if needed.
+(menu-bar-mode -1)
+(define-key input-decode-map [C-tab] [control-tab])
+(global-set-key [control-tab] 'menu-bar-mode)
+
 ;; (push '(vertical-scroll-bars) default-frame-alist)
 ;; (push '(mouse-color . "white") default-frame-alist)
 
