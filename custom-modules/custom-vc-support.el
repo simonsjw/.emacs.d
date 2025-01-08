@@ -187,6 +187,11 @@
                (display-buffer-reuse-window
                 display-buffer-same-window)))
 
+(add-to-list 'display-buffer-alist
+             '("^\\*log-edit-files\\*"
+               (display-buffer-reuse-window
+                display-buffer-same-window)))
+
 ;;; Set up git tags list.
 ;;  ---------------------
 ;; Define `my-magit/tagCommits-alist` with `defcustom` to make it customizable
