@@ -68,22 +68,25 @@
 (use-package projectile-speedbar)
 (use-package pretty-speedbar)
 
-;;; Customise Speedbar
+
+;;; Customise Speedbar and Related elements.
 (custom-set-variables
+;;;; Customise Speedbar
+ '(speedbar-indentation-width 3)                                                  ; Increase the indentation for better usability.
  '(speedbar-use-images t)                                                         ; Use icon images. (not needed with pretty-speedbar)
- '(speedbar-directory-button-trim-method 'trim)
+ '(speedbar-directory-button-trim-method 'trim)                                   ;    Indicates how the directory button will be displayed. Hide
+                                                                                  ; Possible values are:
+                                                                                  ;       ‘span’ - span large directories over multiple lines.
+                                                                                  ;          ‘trim’ - trim large directories to only show the last few.
+                                                                                  ;          nil    - no trimming.
  '(speedbar-update-flag t)                                                        ; Auto-update when the attached frame changes directory
- '(projectile-speedbar-enable t)
- '(sr-speedbar-auto-refresh t)
- '(speedbar-indentation-width 3)                                                  ; Increase the indentation for better useability.
- '(pretty-speedbar-icon-size 20)                                                  ; Icon height in pixels.
- '(setq speedbar-vc-do-check t)                                                   ; Disable check-marks if nil. 
+ '(semantic-sb-info-format-tag-function 'semantic-format-tag-short-doc)               ; Display a short form of TAG’s documentation.  (Comments, or docstring.)
+                                                                                  ;     Optional argument PARENT is the parent type if TAG is a detail.
+                                                                                  ;     Optional argument COLOR means highlight the prototype with font-lock colours.
+                                                                                  ;     (fn TAG &optional PARENT COLOR)
+ '(speedbar-vc-do-check t)                                                        ; Disable check-marks if nil.
  '(speedbar-show-unknown-files t)
  '(speedbar-smart-directory-expand-flag t)
- '(speedbar-directory-button-trim-method 'trim)
- '(sr-speedbar-max-width 170)
- '(sr-speedbar-width 40)
- '(sr-speedbar-right-side nil)
  '(speedbar-directory-unshown-regexp "^\\(CVS\\|RCS\\|SCCS\\|\\.\\.*$\\)\\'")
  ;;'(speedbar-hide-button-brackets-flag t)                                          ; this stops icons being shown.
  
@@ -97,8 +100,30 @@
  ;;     (tool-bar-lines . 0)
  ;;     (unsplittable . t)
  ;;     (left-fringe . 10)))
+
+ '(speedbar-add-supported-extension
+   '(
+     ".cl" ".li?sp"                                                               ; General Lisp Languages
+     ".lua" ".fnl" ".fennel"                                                      ; Lua/Fennel (Lisp that transpiles to lua)
+     ".kt" ".mvn" ".gradle" ".properties" ".cljs?"                                ; JVM languages (Java, Kotlin, Clojure)
+     ".sh" ".bash"                                                                ; shellscript
+     ".php" ".ts" ".html?" ".css" ".less" ".scss" ".sass"                         ; Web Languages and Markup/Styling
+     ".py" ".p" ".q" ".k"                                                         ; Data languages
+     ".rs" ".lock"                                                                ; Rust
+     "makefile" "MAKEFILE" "Makefile"                                             ; Makefile
+     ".json" ".yaml" ".toml"                                                      ; Data formats
+     ".md" ".markdown" ".org" ".txt" "README"))                                   ; Notes and Markup
  
-;;; Customize text color (need to run `pretty-speedbar-generate' on change)
+ '(projectile-speedbar-enable t)                                                  ; Open speedbar in the project root. 
+ 
+ '(sr-speedbar-auto-refresh t)
+ '(sr-speedbar-max-width 170)
+ '(sr-speedbar-width 40)
+ '(sr-speedbar-right-side nil)
+
+;;;; Customize icons (need to run `pretty-speedbar-generate' on change)
+ '(pretty-speedbar-icon-size 20)                                                  ; Icon height in pixels.
+
  '(pretty-speedbar-font "Symbols Nerd Font Mono")
  '(pretty-speedbar-folder '("\uf07b" t))                                          ;  Closed folder icon.
  '(pretty-speedbar-folder-open '("\uf07c" t))                                     ;  Open folder icon.
@@ -111,30 +136,9 @@
  '(pretty-speedbar-info '("\uf05a"))                                              ;  Info icon.
  '(pretty-speedbar-tags '("\uf02c"))                                              ;  Tags icon used for plus and minus tags generation. 
  '(pretty-speedbar-tag '("\uf02b"))                                               ;  Single tag icon. Most frequent tag icon.
- '(speedbar-add-supported-extension
-   '(
-   ;;;; General Lisp Languages
-     ".cl" ".li?sp"
-   ;;;; Lua/Fennel (Lisp that transpiles to lua)
-     ".lua" ".fnl" ".fennel"
-   ;;;; JVM languages (Java, Kotlin, Clojure)
-     ".kt" ".mvn" ".gradle" ".properties" ".cljs?"
-   ;;;; shellscript
-     ".sh" ".bash"
-   ;;;; Web Languages and Markup/Styling
-     ".php" ".ts" ".html?" ".css" ".less" ".scss" ".sass"
-   ;;;; Data languages
-     ".py" ".p" ".q" ".k"
-   ;;;; Rust
-     ".rs" ".lock"
-   ;;;; Makefile
-     "makefile" "MAKEFILE" "Makefile"
-   ;;;; Data formats
-     ".json" ".yaml" ".toml"
-;;;; Notes and Markup
-     ".md" ".markdown" ".org" ".txt" "README")))
+ )
 
-;; set base colour scheme for pretty-speedbar. 
+;;; set base colour scheme for pretty-speedbar. 
 `(setq pretty-speedbar-icon-fill ,info-theme-light-white)                         ; Fill color for all non-folder icons. white: #FFFFFF
 `(setq pretty-speedbar-icon-stroke ,info-theme-dark-red)                          ; Stroke color for all non-folder icons. light grey: #DCDCDC
 `(setq pretty-speedbar-icon-folder-fill ,info-theme-dark-red)                     ; Fill color for all folder icons: purple (fuchia?): #D9B3FF
@@ -143,7 +147,7 @@
 `(setq pretty-speedbar-about-stroke ,info-theme-light-white)                      ; Stroke color for all icons placed to the right of the file name, including checks and locks.
 `(setq pretty-speedbar-signs-fill ,info-theme-light-white)                        ; Fill color for plus and minus signs used on non-folder icons. darkblue/magenta: #594968
 
-
+;;;; Customise the speedbar faces. 
 (custom-set-faces
  `(speedbar-button-face ((t (:foreground ,info-theme-white-grey))))
  `(speedbar-directory-face ((t (:foreground ,info-theme-white-grey))))
@@ -162,11 +166,11 @@
 (defun speedbar-frame-width ()
   "Return the width of the sr-speedbar window, or a default value."
   (if (and (boundp 'sr-speedbar-window) sr-speedbar-window)
-      (window-width sr-speedbar-window) ;; Use sr-speedbar window width
-    30)) ;; Fallback default width
+      (window-width sr-speedbar-window)                                           ; Use sr-speedbar window width
+    30))                                                                          ; Fallback default width
 
-(defun my-speedbar/show-relative-path ()
-  "This function displays the relative path from the project root.
+(defun my-speedbar/calc-relative-path-str ()
+  "This function calculates a string for the relative path to the project root.
 
 If no project root is found fallback to `parent/current-directory'."
   (let* (
@@ -184,12 +188,7 @@ If no project root is found fallback to `parent/current-directory'."
                (file-name-directory current-dir)))
              "/" (file-name-nondirectory current-dir))))
          )
-    
-    (with-current-buffer (get-buffer "*SPEEDBAR*")
-      (let ((inhibit-read-only t))
-        (goto-char (point-min))
-        (insert (format "Path: %s\n" relative-path))))))
-
+    project-root))
 
 ;; (add-hook 'speedbar-mode-hook 'my-speedbar-display-parent-directory)
 
@@ -225,16 +224,14 @@ If no project root is found fallback to `parent/current-directory'."
 
 (add-hook 'speedbar-mode-hook
           (lambda ()
-            ;;   (visual-line-mode 0) ; Disable word wrapping in speedbar if you always enable it globally.
-            ;;  (setq-local truncate-lines t)                                     ; Ensure lines do not wrap
-            
-            ;; Change speedbar's text size.  May need to alter the icon size if you change size.
-            (text-scale-adjust -0.25)
+            (visual-line-mode 0)                                                  ; Disable word wrapping in speedbar if you always enable it globally.
+            (setq-local truncate-lines t)                                         ; Ensure lines do not wrap
+
+            (text-scale-adjust -0.25)                                             ; Change speedbar's text size.  May need to alter the icon size if you change size.
 
             ;; Adjust horizontal scrolling behaviour
-
-            (setq-local auto-hscroll-mode 'current-line) ; Horizontal scroll on the current line
-            (setq-local hscroll-margin 0) ; No margin for horizontal scrolling
+            (setq-local auto-hscroll-mode 'current-line)                          ; Horizontal scroll on the current line
+            (setq-local hscroll-margin 0)                                         ; No margin for horizontal scrolling
 
             ;; Bind the toggle function to the '.' key in speedbar mode
             (define-key speedbar-mode-map "." 'my-speedbar/toggle-filter)))
@@ -264,3 +261,9 @@ Current view is given in SPEEDBAR-VIEW."
 ;;; custom-speedbar-support.el ends here
 
                                                                                   ; LocalWords:  FFFFFF shellscript fnl sp Makefile
+                                                                                  ; LocalWords:  Lua JVM html
+                                                                                  ; LocalWords:  makefile
+                                                                                  ; LocalWords:  toml
+                                                                                  ; LocalWords:  php
+                                                                                  ; LocalWords:  cljs
+                                                                                  ; LocalWords:  lua SCCS
