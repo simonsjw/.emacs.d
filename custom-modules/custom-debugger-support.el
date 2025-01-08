@@ -83,27 +83,31 @@
 (defvar dape-configs)
 (declare-function dape "dape")
 
-;; (defun my-dape/setup (config)
-;;   "Initialize Dape using CONFIG without issues from `display-buffer-alist'."
-;;   (interactive
-;;    (list
-;;     (intern
-;;      (completing-read "Choose dape config: " (mapcar #'car dape-configs))))
-;;    )
-;;   (setq debug-on-error t)
-;;   (let ((display-buffer-alist nil))  ;; Temporarily clear
-;;     (dape config)))
 
-;; (defun my-dape/setup ()
-;;   "Initialize Dape using CONFIG without issues from `display-buffer-alist'."
+;; The below keymap and minor mode are used in place of
+;; dape-breakpoint-global-mode-map. This mode is made local only so does not
+;; override mouse settings as `dape-breakpoint-global-mode' would.
 
-;;   (setq debug-on-error t)
-;;   (let ((display-buffer-alist nil))  ;; Temporarily clear
-;;     (dape "debugpy")))
+(defvar my-dape/breakpoint-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [left-fringe mouse-1] 'dape-mouse-breakpoint-toggle)
+    (define-key map [left-margin mouse-1] 'dape-mouse-breakpoint-toggle)
+    (define-key map [left-fringe mouse-2] 'dape-mouse-breakpoint-expression)
+    (define-key map [left-margin mouse-2] 'dape-mouse-breakpoint-expression)
+    (define-key map [left-fringe mouse-3] 'dape-mouse-breakpoint-log)
+    (define-key map [left-margin mouse-3] 'dape-mouse-breakpoint-log)
+    map)
+  "Keymap for `dape-breakpoint-mode'.")
+
+(define-minor-mode my-dape/breakpoint-mode
+  "Adds fringe and margin breakpoint controls in the current buffer."
+  ;; :lighter " DapeBP"
+  ;; The keymap is automatically associated with the mode
+  )
 
 
 (defun my-dape/setup (config-symbol)
-  "Initialize Dape using CONFIG-SYMBOL without issues from `display-buffer-alist'."
+  "Initialize Dape using CONFIG-SYMBOL without`display-buffer-alist'."
   (interactive
    (list
     (intern
@@ -116,21 +120,6 @@
       ;; Pass the full plist to `dape`
       (dape config))))
 
-;; (defun my-dape/setup (config-symbol)
-;;   "Initialize Dape using CONFIG-SYMBOL without issues from `display-buffer-alist'.
-;; Stores the chosen configuration in `my-dape-last-config` for inspection."
-;;   (interactive
-;;    (list (intern (completing-read "Choose dape config: " (mapcar #'car dape-configs)))))
-;;   (let ((display-buffer-alist nil))  ;; Temporarily clear
-;;     ;; Retrieve the full plist configuration for the chosen symbol
-;;     (let ((config (alist-get config-symbol dape-configs)))
-;;       (setq my-dape-last-config config)  ;; Save for later inspection
-;;       (unless config
-;;         (error "Configuration not found for %s" config-symbol))
-;;       ;; Display the configuration for inspection
-;;       (message "Dape configuration: %S" config)
-;;       ;; Pass the full plist to `dape`
-;;       (dape config))))
 
 ;; The latest version of jsonrpc is needed. You need to swap it in the
 ;; existing Emacs files then rebuild. This issue will be resolved in Emacs 30.
@@ -162,16 +151,18 @@
   (setq dape-buffer-window-arrangement 'right)
 
   ;; Automatically enable dape-breakpoint-global-mode with dape-active-mode
-  (add-hook 'dape-active-mode-hook #'dape-breakpoint-global-mode)
+  (add-hook 'dape-active-mode-hook #'my-dape/breakpoint-mode)
 
   ;; Disable dape-breakpoint-global-mode when dape-active-mode is turned off
-  (add-hook 'dape-active-mode-hook
-            (lambda ()
-              (add-hook 'kill-buffer-hook
-                        (lambda ()
-                          (when (derived-mode-p 'dape-active-mode)
-                            (dape-breakpoint-global-mode -1)))
-                        nil t)))
+  ;; It should not be active anyway since we use a local version of the keymaps.
+  ;; However, this provides a double check.
+  ;; (add-hook 'dape-active-mode-hook
+  ;;           (lambda ()
+  ;;             (add-hook 'kill-buffer-hook
+  ;;                       (lambda ()
+  ;;                         (when (derived-mode-p 'dape-active-mode)
+  ;;                           (dape-breakpoint-global-mode -1)))
+  ;;                       nil t)))
 
   ;; ensure the dape menu is active.
   ;;(add-hook 'dape-active-mode-hook '(lambda ()(easy-menu-add dape-menu)))
