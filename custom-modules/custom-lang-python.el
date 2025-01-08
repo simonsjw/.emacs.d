@@ -131,7 +131,13 @@ active environment."
               ;; Update exec-path and PATH with new environment path.
               (setq exec-path (append (list env-path) exec-path))
               (setenv "PATH" (concat env-path ":" (getenv "PATH"))))
-          (message "WORKON_HOME environment variable is not set"))))))
+          (message "WORKON_HOME environment variable is not set")))
+
+      ;; Reconnect Eglot if it is running
+      ;; (let ((server (eglot-current-server)))
+      ;;   (when server
+      ;;     (eglot-reconnect server)))
+      )))
 
 
 (defun my-lang-python/start-or-switch-to-python-shell ()
@@ -195,13 +201,13 @@ active environment."
   (my-lang-python/update-python-path)
   
   ;; switch on hover at point mode.
-  (eldoc-box-hover-at-point-mode 1)
-
+  ;;(eldoc-box-hover-at-point-mode nil)
+  ;;(eldoc-box-help-at-point)
 
   (reformatter-define python-format
     :program "ruff"
     :args '("format")
-    :lighter " PF")
+    :lighter " PF")  ; remove ref on modeline.
 
   ;; -------
   ;; Folding
