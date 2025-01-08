@@ -13,20 +13,34 @@
 ;; (tabline is built in).
 
 ;;; Code:
-(require 'delight)
-;; (require 'hydra)
-;; (require 'major-mode-hydra)
-(require 'tab-line)  ;; (tab-line is built in)
+
+(use-package bookmark+)
+(use-package dired+)
+(use-package info+)
+(use-package imenu-list)
+(use-package elisp-demos)
+
+;; docs in windows over code.
+(use-package eldoc-box)
+
+(require 'org)
 (require 'ibuffer)
 (require 'easymenu)
 
-(require 'bookmark+) ;; commands usually have a bmkp prefix.
-(require 'dired+)    ;; commands usually have a diredp prefix.
+(require 'bookmark+)                                                              ; commands usually have a bmkp prefix.
+(require 'dired+)                                                                 ; commands usually have a diredp prefix.
 (require 'info+)
 
 
 
+(defvar org-roam-directory)
+
 (defvar rainbow-hexadecimal-colors-font-lock-keywords)
+
+(defvar rainbow-x-colors)
+(defvar rainbow-x-colors-font-lock-keywords)
+(defvar rainbow-latex-rgb-colors)
+(defvar rainbow-rgb-colors-font-lock-keywords)
 
 (defvar ediff-window-setup-function)
 
@@ -34,37 +48,189 @@
 (defvar ediff-buffer-A)
 (defvar ediff-buffer-B)
 (defvar ediff-merge-buffer)
+
+;; (declare-function global-org-link-mode "org")
 (declare-function ediff-get-file-name "ediff")
 
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; Rainbow mode functionality
-;; -------------------
-;; ensure we can see what colours are being used in the themeing.
-(add-to-list 'auto-mode-alist
-             '("custom-theme-support\\.el\\'"
-               . (lambda ()
-                   (emacs-lisp-mode)
-                   (rainbow-mode 1)
-                   (setq rainbow-x-colors nil                                  ; Disable color names like "red"
-                         rainbow-x-colors-font-lock-keywords nil               ; Ensure color names are not highlighted
-                         rainbow-latex-rgb-colors nil                          ; Disable LaTeX rgb colors
-                         rainbow-rgb-colors-font-lock-keywords nil             ; Disable rgb(...) colors
-                         rainbow-hexadecimal-colors-font-lock-keywords         ; Keep only hex colors
-                         '(("#[0-9a-fA-F]\\{6\\}\\|#[0-9a-fA-F]\\{3\\}"
-                            (0 (rainbow-colorize-itself))))
-                         )
-                   )
-               )
-             )
 
-(with-eval-after-load 'rainbow-mode
-  (setq rainbow-x-colors nil                       ;; Disable color names like "red"
-        rainbow-x-colors-font-lock-keywords nil    ;; Ensure color names are not highlighted
-        rainbow-latex-rgb-colors nil               ;; Disable LaTeX rgb colors
-        rainbow-rgb-colors-font-lock-keywords nil  ;; Disable rgb(...) colors
-        rainbow-hexadecimal-colors-font-lock-keywords
-        '(("#[0-9a-fA-F]\\{6\\}\\|#[0-9a-fA-F]\\{3\\}"
-           (0 (rainbow-colorize-itself))))))       ;; Keep only hex colors
+;; replace form-feed with clean lines.
+(use-package page-break-lines)
+
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Clickable links.
+;; -----------------------------------------------
+;; Ensure we can use hyperlinks and org type links throughout emacs.
+;; Enable clickable URLs in all modes
+(global-goto-address-mode 1)
+;; (org-open-at-point-global)
+
+;; Enable Org-style link handling everywhere
+;; (global-org-link-mode 1)
+
+
+;; Define custom faces for links
+;; (defface  my-font-faces/url-face
+;;   '((t (:foreground "DodgerBlue" :underline t)))
+;;   "Face for plain URLs."
+;;   :group 'my-faces/programming)
+
+;; (defface  my-font-faces/org-link-face
+;;   '((t (:foreground "MediumPurple1" :underline t)))
+;;   "Face for Org-style links."
+;;   :group 'my-faces/programming)
+
+;; ;; Add highlighting rules
+;; (defun my-links/highlight-links ()
+;;   "Highlight plain URLs and Org-style links in comments."
+;;   (font-lock-add-keywords
+;;    nil
+;;    '(("\\(https?://[^ \t\n]+\\)" ;; Plain URLs
+;;       (1 'my-font-faces/url-face t))
+;;      ("\\(\\[\\[https?://[^ \t\n]+\\]\\[[^]]+\\]\\]\\)"                           ; Org-style links
+;;       (1 'my-font-faces/org-link-face t)))))
+
+;; (add-hook 'prog-mode-hook #'my-links/highlight-links)                             ; For code modes
+;; (add-hook 'text-mode-hook #'my-links/highlight-links)                             ; For text modes
+
+;; ;; Show tool-tips for links
+;; ;; (defun my-links/tooltip (window object position)
+;; ;;   "Show a tooltip with the URL or Org link description.
+;; ;; ARGS:
+;; ;;     WINDOW is the window the link is in.
+;; ;;     OBJECT is the link.
+;; ;;     POSITION is the position of the link in the window."
+;; ;;   (when (and (stringp object)
+;; ;;              (string-match "\\(https?://[^ \t\n]+\\)" object))
+;; ;;     (let ((url (match-string 1 object)))
+;; ;;       (concat "Open: " url))))
+
+;; ;; (add-to-list 'tooltip-functions #'my-links/tooltip)
+
+;; (defun my-links/add-tooltips ()
+;;   "Add tool-tips to URLs in the current buffer."
+;;   (save-excursion
+;;     (goto-char (point-min))
+;;     (while (re-search-forward "\\(https?://[^ \t\n]+\\)" nil t)
+;;       (let ((url (match-string 0)))
+;;         (put-text-property (match-beginning 0) (match-end 0)
+;;                            'help-echo (concat "Open: " url))))))
+;; (add-hook 'prog-mode-hook #'my-links/add-tooltips)
+;; (add-hook 'text-mode-hook #'my-links/add-tooltips)
+
+;; (defun my-links/add-org-tooltips ()
+;;   "Add tooltips to Org-style links in the current buffer."
+;;   (save-excursion
+;;     (goto-char (point-min))
+;;     (while (re-search-forward "\\[\\[\\(https?://[^]]+\\)\\]\\[\\([^]]+\\)\\]\\]" nil t)
+;;       (let ((url (match-string 1))
+;;             (desc (match-string 2)))
+;;         (put-text-property (match-beginning 0) (match-end 0)
+;;                            'help-echo (format "URL: %s\nDescription: %s" url desc))))))
+;; (add-hook 'prog-mode-hook #'my-links/add-org-tooltips)
+;; (add-hook 'text-mode-hook #'my-links/add-org-tooltips)
+
+;; (defun my-links/format-plain-links ()
+;;   "Format plain URLs in comments as Org-style links."
+;;   (save-excursion
+;;     (goto-char (point-min))
+;;     (while (re-search-forward "\\(https?://[^ \t\n]+\\)" nil t)
+;;       (unless (save-match-data (org-in-regexp org-link-any-re))
+;;         (replace-match "[[\\1][Link]]" nil nil)))))
+
+;; ;; Add to save hooks
+;; (add-hook 'before-save-hook #'my-links/format-plain-links)
+
+;; (defun my-links/open-link-at-point ()
+;;   "Open the link at point in a browser."
+;;   (interactive)
+;;   (let ((url (thing-at-point 'url t)))
+;;     (if url
+;;         (browse-url url)
+;;       (message "No link at point!"))))
+
+;; (global-set-key (kbd "C-c o") #'my-links/open-link-at-point)
+
+
+;; (defun my-links/save-link-to-roam (url description)
+;;   "Save a link to the Org Roam database.
+;; ARGS:
+;;     URL is the link.
+;;     DESCRIPTION is a description of what the URL links to."
+;;   (with-temp-buffer
+;;     (insert (format "* %s\n  %s\n" description url))
+;;     (write-file (concat org-roam-directory "/links.org"))))
+
+;; ;; Save a link interactively
+;; (defun my-links/save-link-at-point ()
+;;   "Save the link at point to Org Roam."
+;;   (interactive)
+;;   (let ((url (thing-at-point 'url))
+;;         (description (read-string "Description: ")))
+;;     (my-links/save-link-to-roam url description)))
+
+
+;; (defun my-links/list-links ()
+;;   "List all Org-style links in the buffer."
+;;   (interactive)
+;;   (let ((links '()))
+;;     (save-excursion
+;;       (goto-char (point-min))
+;;       (while
+;;           (re-search-forward "\\[\\[https?://[^]]+\\]\\[\\([^]]+\\)\\]\\]"
+;;                              nil t)
+;;         (push (match-string 1) links)))
+;;     (message "Links: %s" (string-join links ", "))))
+
+
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Fix 'use minibuffer whilst in minibuffer' error
+;; -----------------------------------------------
+;; automatically cancel the minibuffer when you switch to it, to avoid
+;; "attempted to use minibuffer" error.
+;; see stack-overflow:
+;; [[https://stackoverflow.com/questions/812135/emacs-modes-command-attempted-to-use-minibuffer-while-in-minibuffer][attempted-to-use-minibuffer-while-in-minibuffer]]
+
+;; (defun my-ui/cancel-minibuffer-before-using-again (sub-read &rest args)
+;;   "If you call the mini-buffer whilst in the mini-buffer, you get an error.
+
+;; This can be managed by allowing recursive mini-buffer calls but this is seldom
+;; what the user intends.  This function provides an alternative, cancelling the
+;; existing mini-buffer session before starting the new one.
+;; SUB-READ is the prompt used to call the mini-buffer.  ARGS is the list of
+;; commands used with the buffer call."
+;;   (let ((active (active-minibuffer-window)))
+;;     (if active
+;;         (progn
+;;           ;; we have to trampoline, since we're IN the minibuffer right now.
+;;           (apply 'run-at-time 0 nil sub-read args)
+;;           (abort-recursive-edit))
+;;       (apply sub-read args))))
+
+;; (advice-add 'read-from-minibuffer :around #'my-ui/cancel-minibuffer-before-using-again)
+
+
+;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Fix 'use minibuffer whilst in minibuffer' error with Vertico compatibility
+;; ----------------------------------------------------------------------------
+
+(defun my-ui/cancel-minibuffer-before-using-again (sub-read &rest args)
+  "Safely cancel the minibuffer session if called within an active minibuffer.
+
+SUB-READ is the prompt used to call the minibuffer, and ARGS are additional
+parameters for the minibuffer function."
+  (if-let ((active (active-minibuffer-window)))
+      (progn
+        ;; Cancel the current recursive edit safely.
+        (abort-recursive-edit)
+        ;; Defer the new minibuffer call slightly to allow proper cleanup.
+        (run-at-time 0 nil (lambda ()
+                             (apply sub-read args))))
+    ;; No active minibuffer, proceed normally.
+    (apply sub-read args)))
+
+;; Add advice to handle minibuffer recursion gracefully.
+(advice-add 'read-from-minibuffer
+            :around #'my-ui/cancel-minibuffer-before-using-again)
 
 
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -107,292 +273,11 @@
 ;; (setq ediff-window-setup-function 'ediff-setup-windows-plain)                  ; prevent frame creation.
 ;; (setq ediff-split-window-function 'ignore)                                     ; Prevent any window splitting
 
-
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; tabline functionality
-;; ---------------------
-;; the below code improves functionality for tab-line-mode.
-;; It is based on this blog:
-;; https://andreyor.st/posts/2020-05-10-making-emacs-tabs-look-like-in-atom/
-;; with this:
-;; [[https://github.com/minad/bookmark-view][bookmark-view]]
-;; to allow us to more effectively control layout.
-;; In addition, customise the tabline and the modeline.
-;; See:
-;; [[https://jdhao.github.io/2021/09/30/emacs_custom_tabline/][Customise Tabline]]
-;; for details of the tabline functions used in crafted-workspaces-support.el.
-
-(defcustom my-tab-line/tab-min-width 10
-  "Minimum width of a tab in characters."
-  :type 'integer
-  :group 'tab-line)
-
-(defcustom my-tab-line/tab-max-width 30
-  "Maximum width of a tab in characters."
-  :type 'integer
-  :group 'tab-line)
-
-(defun my-tab-line/tab-line-close-tab-given-buffer (buffer &optional given-window)
-  "Close the selected tab for BUFFER.
-
-If BUFFER is presented in window other than GIVEN-WINDOW, close the tab by
-using the `bury-buffer' function.  If BUFFER is unique to all existing windows,
-kill the buffer with `kill-buffer' function.  Lastly, if no tabs
-are left in the window, it is deleted with `delete-window' function.
-
-This function is used in setting up the IDE."
-  (interactive)
-  (if (not given-window)
-      (setq given-window (selected-window)))
-  (with-selected-window given-window
-    ;; get a list of the buffers associated with the current window.
-    (let
-        ((tab-list (tab-line-tabs-window-buffers))
-         (buffer-list
-          (flatten-list
-           (seq-reduce
-            (lambda (list window)
-              (select-window window t)
-              (cons (tab-line-tabs-window-buffers) list))
-            (window-list) nil))))
-
-      (select-window given-window)
-      (if (> (seq-count (lambda (b) (eq b buffer)) buffer-list) 1)
-          (progn
-            (if (eq buffer (current-buffer))
-                (bury-buffer)
-              (set-window-prev-buffers
-               given-window
-               (assq-delete-all buffer (window-prev-buffers)))
-              (set-window-next-buffers
-               given-window
-               (delq buffer (window-next-buffers))))
-            (unless (cdr tab-list)
-              (ignore-errors (delete-window given-window))))
-        (and (kill-buffer buffer)
-             (unless (cdr tab-list)
-               (ignore-errors (delete-window given-window))))))))
-
-
-(defun my-tab-line/tab-line-close-tab (&optional e)
-  "Close the selected tab. (E  - using mouse)
-
-If tab is presented in another window, close the tab by using the `bury-buffer'
-function.  If tab is unique to all existing windows, kill the buffer with
-`kill-buffer' function.  Lastly, if no tabs left in the window, it is deleted
-with `delete-window' function."
-  (interactive "e")
-  (let* ((posnp (event-start e))
-         (window (posn-window posnp))
-         (buffer (get-pos-property 1 'tab (car (posn-string posnp)))))
-    (with-selected-window window
-      (let ((tab-list (tab-line-tabs-window-buffers))
-            (buffer-list
-             (flatten-list
-              (seq-reduce
-               (lambda (list window)
-                 (select-window window t)
-                 (cons (tab-line-tabs-window-buffers) list))
-               (window-list) nil))))
-        (select-window window)
-        (if (> (seq-count (lambda (b) (eq b buffer)) buffer-list) 1)
-            (progn
-              (if (eq buffer (current-buffer))
-                  (bury-buffer)
-                (set-window-prev-buffers
-                 window
-                 (assq-delete-all buffer (window-prev-buffers)))
-                (set-window-next-buffers
-                 window
-                 (delq buffer (window-next-buffers))))
-              (unless (cdr tab-list)
-                (ignore-errors (delete-window window))))
-          (and (kill-buffer buffer)
-               (unless (cdr tab-list)
-                 (ignore-errors (delete-window window)))))))))
-
-
-(defalias 'tab-line-close-tab 'my-tab-line/tab-line-close-tab
-  "Use my-tab-line/tab-line-close-tab to close tabs carefully.")
-
-
-(defun my-tab-line/tab-line-name-buffer (buffer &rest _buffers)
-  "Create name for tab with padding and truncation.
-
-If BUFFER  name is shorter than `tab-line-tab-max-width' it gets
-centred with spaces, otherwise it is truncated, to preserve equal width for
-all tabs.  This function also tries to fit as many tabs in window as possible,
-so if there is no room for tabs with maximum width, it calculates new width
-for each tab and truncates text if needed.
-Minimal width can be set with `tab-line-tab-min-width' variable."
-  (with-current-buffer buffer
-    (let* (
-           (window-width
-            (window-width (get-buffer-window)))
-           (tab-amount
-            (length (tab-line-tabs-window-buffers)))
-           (window-max-tab-width
-            (if (>= (* (+ my-tab-line/tab-max-width 3) tab-amount)
-                    window-width)
-                (/ window-width tab-amount)
-              my-tab-line/tab-max-width))
-           (tab-width
-            (- (cond ((> window-max-tab-width my-tab-line/tab-max-width)
-                      my-tab-line/tab-max-width)
-                     ((< window-max-tab-width my-tab-line/tab-min-width)
-                      my-tab-line/tab-min-width)
-                     (t window-max-tab-width))
-               3))                                                             ; compensation for ' x ' button
-           (buffer-name (string-trim (buffer-name)))
-           (name-width (length buffer-name))
-           )
-
-      (if (>= name-width tab-width)
-          (concat  " "
-                   (truncate-string-to-width buffer-name (- tab-width 2))
-                   "…")
-        (let* (
-               (padding
-                (make-string (+ (/ (- tab-width name-width) 2) 1) ?\s))
-               (buffer-name (concat padding buffer-name))
-               )
-
-          (concat buffer-name
-                  (make-string (- tab-width (length buffer-name)) ?\s)))))))
-
-
-;; make sure the mode is loaded before we set variables from the mode.
-(global-tab-line-mode t)
-
-
-(setq tab-line-close-button-show t
-      tab-line-new-button-show nil
-      tab-line-separator "|"
-      tab-line-tab-name-function #'my-tab-line/tab-line-name-buffer
-      tab-line-right-button
-
-      (propertize (if (char-displayable-p ?▶) " ▶ " " > ")
-                  'keymap tab-line-right-map
-                  'mouse-face 'tab-line-highlight
-                  'help-echo "Click to scroll right")
-
-      tab-line-left-button
-      (propertize (if (char-displayable-p ?◀) " ◀ " " < ")
-                  'keymap tab-line-left-map
-                  'mouse-face 'tab-line-highlight
-                  'help-echo "Click to scroll left")
-
-      tab-line-close-button
-      (propertize (if (char-displayable-p ?×) "  ×  " "  x  ")
-                  'keymap tab-line-tab-close-map
-                  'mouse-face 'tab-line-close-highlight
-                  'help-echo "Click to close tab"))
-
-
-
-;; exclude some buffers from tab-line according to their mode.
-(dolist (mode '(speedbar-mode
-                corfu-mode
-                corfu-popupinfo-mode
-                dape-info-threads-mode
-                dape-info-stack-mode
-                dape-info-sources-mode
-                dape-info-scope-mode
-                dape-repl-mode
-                dape-info-breakpoints-mode))
-  (add-to-list 'tab-line-exclude-modes mode))
-
-
-;; Sort tabs by most recently opened. (NOT IMPLEMENTED YET)
-(defvar my-tab-line/tab-line-sort-by-most-recent nil)
-
-
-;; Set up exceptions to the rules prohibiting tab-line-mode.
-(defvar my-tab-line/enabled-buffers
-  '("*Async-native-compile-log*" "*Messages*" "*Window Names*")
-  "List of buffer names where `tab-line-mode` should always be enabled.")
-
-
-(defvar my-tab-line/enabled-prefixes
-  '("*EGLOT")
-  "List of buffer name prefixes where `tab-line-mode` should be enabled.")
-
-
-(defun my-tab-line/enable-tab-line-mode-for-specific-buffers ()
-  "Enable `tab-line-mode' for particular buffers.
-
-These are buffers specified  in `my-tab-line/enabled-buffers' or with names
-starting with any of the prefixes in `my-tab-line/enabled-prefixes'."
-  (let ((buffer-name (buffer-name)))
-    (when (or (member buffer-name my-tab-line/enabled-buffers)
-              (cl-some (lambda (prefix) (string-prefix-p prefix buffer-name))
-                       my-tab-line/enabled-prefixes))
-      (tab-line-mode 1))))
-
-(add-hook 'fundamental-mode-hook
-          #'my-tab-line/enable-tab-line-mode-for-specific-buffers)
-
-
-(defun my-tab-line/tab-line-tabs-window-buffers--removed-nameless-buffers ()
-  "Return a list of tabs that should be displayed in the tab line.
-By default returns a list of window buffers excluding buffers without a name,
-i.e. buffers previously shown in the same window where the tab line is
-displayed.  It replaces the built in functionality by using `setq' to override
-variable `tab-line-tabs-function'."
-  (let
-      ((buflist
-
-        (let* ((window (selected-window))
-               (buffer (window-buffer window))
-               (next-buffers (seq-remove (lambda (b) (eq b buffer))
-                                         (window-next-buffers window)))
-               (next-buffers (seq-filter #'buffer-live-p next-buffers))
-               (prev-buffers
-                (seq-remove (lambda (b) (eq b buffer))
-                            (mapcar #'car (window-prev-buffers window))))
-               (prev-buffers (seq-filter #'buffer-live-p prev-buffers))
-               ;; Remove next-buffers from prev-buffers
-               (prev-buffers (seq-difference prev-buffers next-buffers)))
-          (append (reverse prev-buffers)
-                  (list buffer)
-                  next-buffers))))
-
-    (delq nil
-          (mapcar
-           (lambda (buf)
-             (let ((name (buffer-name buf)))            ; Exclude buffers with
-               (unless                                  ; names that start
-                   (or (string-prefix-p                 ; with a space.
-                        " " name)
-                       (string-match-p                  ; Exclude corfu buffer.
-                        "\\` \\*corfu\\*\\'" name)
-                       (string-match-p                  ; Exclude Speedbar.
-                        "\\`\\*speedbar\\*\\'" name)
-                       (string-match-p                  ; Exclude marginalia.
-                        "\\`\\*Marginalia\\*\\'" name))
-                 buf)))
-           buflist))))
-
-
-(setq tab-line-tabs-function
-      'my-tab-line/tab-line-tabs-window-buffers--removed-nameless-buffers)
-
-(defun my-tab-line/close-specific-buffer (buffer-name)
-  "Close BUFFER-NAME from the current window, handling all necessary steps.
-
-This function is used in setting up the IDE."
-  (interactive "sBuffer name: ")
-  (let ((buffer (get-buffer buffer-name)))
-    (when buffer
-      (my-buffer-tools/switch-to-buffer-in-current-window buffer-name)
-      (my-tab-line/tab-line-close-tab-given-buffer buffer))))
-
-
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; ibuffer mode
 ;; ------------
 ;; Make the buffer size human readable.
-;; (see https://www.emacswiki.org/emacs/IbufferMode)
+;; (see [[https://www.emacswiki.org/emacs/IbufferMode)][Link]]
 ;; Use human readable Size column instead of original one
 (define-ibuffer-column size-h
   (:name "Size"
@@ -406,7 +291,7 @@ This function is used in setting up the IDE."
                       (float
                        (my-strings/human-readable-file-sizes-to-bytes string))
                       total)))
-             (my-strings/bytes-to-human-readable-file-sizes total)))           ; :summarizer nil
+             (my-strings/bytes-to-human-readable-file-sizes total)))              ; :summarizer nil
          )
   (my-strings/bytes-to-human-readable-file-sizes (buffer-size)))
 
@@ -437,21 +322,6 @@ This function is used in setting up the IDE."
   (face-remap-add-relative 'default  :height 90))
 ;;  - then add it to a hook.
 (add-hook 'ibuffer-mode-hook 'my-ibuffer/ibuffer-mode-config-hook)
-
-;; Ensure minor modes don't crowd the modeline.
-(delight '((checkdoc-minor-mode nill "checkdoc")
-           (eldoc-mode nil "eldoc")
-           (flyspell-mode nil "flyspell")
-           (olivetti-mode nil "olivetti")
-           (magit-wip-mode nil "magit-wip")
-           (undo-tree-mode nil "undo-tree")
-           (editorconfig-mode nil "editorconfig")
-           (bufler-mode nil "bufler")
-           (aggressive-indent-mode nil "aggressive-indent")
-           (anaconda-mode nil "anaconda-mode")
-           (blacken-mode nil "blacken")
-           ))
-
 
 ;; Define key maps
 ;;CNTRL-SPACE activates any major-mode-hydra defined.
