@@ -22,7 +22,7 @@
   :custom
   (flymake-mode-line-lighter "ERR")
   ;;(flymake-mode-line-format
-  ;; (flymake-mode-line-title flymake-mode-line-exception  ; deleted " " from first position after bracket.
+  ;; (flymake-mode-line-title flymake-mode-line-exception                         ; deleted " " from first position after bracket.
   ;;  flymake-mode-line-counters))
   (flymake-no-changes-timeout 1.0)
   (flymake-start-on-flymake-mode t)
@@ -135,9 +135,24 @@
 (add-hook 'flymake-diagnostics-buffer-mode-hook
           (lambda ()
             (setq wrap-prefix "                            ")
-            (visual-line-mode t))) ; Adjust indentation size as needed
+            (visual-line-mode t)))                                                ; Adjust indentation size as needed
 
+(defun my-flymake/show-project-diagnostics ()
+  "Show a list of Flymake diagnostics for the current project."
+  (interactive)
+  (let* ((prj (project-current))
+         (root (project-root prj))
+         (buffer (flymake--project-diagnostics-buffer root)))
+    (with-current-buffer buffer
+      (flymake-project-diagnostics-mode)
+      (setq-local flymake--project-diagnostic-list-project prj)
+      (revert-buffer)
+      (display-buffer (current-buffer)))))
 
+;; (display-buffer (current-buffer)
+;;                 `((display-buffer-reuse-window
+;;                    display-buffer-at-bottom)
+;;                   (window-height . fit-window-to-buffer))))))
 (provide 'custom-flymake-config)
 ;;; custom-flymake-config.el ends here
 
