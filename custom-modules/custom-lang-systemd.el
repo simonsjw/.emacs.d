@@ -22,9 +22,9 @@
 ;; Repo home:[[https://github.com/holomorph/systemd-mode][systemd-mode]]
 
 ;;; Code:
-
+(defvar my-paths/systemd-mode)                                                    ; path defined in path-support.el
 ;;; Packages phase
-(use-package systemd-mode)
+(load my-paths/systemd-mode)
 
 ;;; Configuration phase
 ;; (non - can add company-mode hooks if you use company though.)
