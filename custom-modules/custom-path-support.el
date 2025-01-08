@@ -1,9 +1,9 @@
 ;;; custom-path-support.el --- path configuration for emacs  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022
+;; Copyright (C) 2024
 ;; SPDX-License-Identifier: MIT
 
-;; Author: System Crafters Community
+;; Author: Simon Watson
 
 ;;; Commentary:
 
@@ -25,6 +25,7 @@
 
 
 (defvar custom-info-dir)
+(defvar custom-packages-dir)
 (defvar undo-tree-history-directory-alist)
 (defvar auto-save-dir)
 (defvar backup-dir)
@@ -62,15 +63,12 @@
   "Path to the Emacs diary file for built in diary functionality.")
 
 (defvar my-paths/q-load-balancer-folder)
+(defvar my-paths/custom-rainbow-mode)
+(defvar my-paths/systemd-mode)
 
 (defvar my-paths/ispell-word-replacement)
 (defvar ispell-personal-dictionary)
 
-
-(declare-function
- my-on-disk-tools/ensure-directory-exists "custom-system-tools")
-
-(declare-function recentf-expand-file-name "recentf")
 
 ;;; Packages:
 
@@ -78,14 +76,31 @@
 
 ;;; Code:
 
+;; this function is take from TOOLS FOR THE FILE SYSTEM in custom-system-tools.
+;; It is reproduced here so custom-path-support can be loaded without
+;; dependencies.
+
+(defun my-on-disk-tools/ensure-directory-exists (dir)
+  "Ensure the directory DIR exists, create it if it does not."
+  (unless (file-directory-p dir)
+    (message "creating %s" dir)
+    (make-directory dir t)))
+
+(declare-function recentf-expand-file-name "recentf")
+
+
 (message
  "no-littering var directory set: %s" no-littering-var-directory)
 (message
  "no-ilttering etc directory set: %s" no-littering-etc-directory)
 
 
+;; set a path to local custom packages.
+(setq custom-packages-dir
+      (expand-file-name "custom-packages/" user-emacs-directory))
+
 ;; set a path to custom documentation to be searchable with `info'.
-(setq custom-info-dir (expand-file-name "docs/dir"  user-emacs-directory))
+(setq custom-info-dir (expand-file-name "docs" user-emacs-directory))
 
 ;; Automatically create the auto-save and backup directories if they don't
 ;; exist
@@ -145,22 +160,19 @@
 
 (with-eval-after-load 'bookmark+
 
-  ;; Set the location of the default bookmark directory.
-
+  ;; Set the default location of bookmarks.
+  (setq bookmark-default-file
+        (expand-file-name
+         "bmkp/bookmark-default.el" no-littering-var-directory))
+  
+  ;; Set the location of the default bookmark desktop directory.
   (setq
    bmkp-desktop-default-directory
    (expand-file-name "bmkp/desktops" no-littering-var-directory))
 
-  ;; Set the location of the default bookmark file.
-
-  (setq
-   bookmark-default-file
-   (expand-file-name
-    "bmkp/desktops/IDE" no-littering-var-directory))
+  (my-on-disk-tools/ensure-directory-exists
+   bmkp-desktop-default-directory)
   )
-
-(my-on-disk-tools/ensure-directory-exists
- (expand-file-name "bmkp/desktops" no-littering-var-directory))
 
 ;; Yasnippet directories
 ;; ---------------------
@@ -305,18 +317,27 @@
 (setq my-paths/q-load-balancer-folder
       (concat user-emacs-directory "custom-packages/q-loadbalancer/"))
 
+;; define a path to the rainbow-mode custom package
+(setq my-paths/custom-rainbow-mode
+      (concat user-emacs-directory "custom-packages/rainbow-mode.el"))
+
+;; define a path to the systemd-mode custom package
+(setq my-paths/systemd-mode
+      (concat user-emacs-directory "custom-packages/systemd-mode/systemd.el"))
+
+
 
 ;;; Recent Files
 ;; Don't store visits to these files in the recent file history
 ;; https://www.emacswiki.org/emacs/RecentFiles
 
 ;; Don't record files opened in the etc and var directories in recent file lists.
-(add-to-list 'recentf-exclude
-             (recentf-expand-file-name no-littering-var-directory))
+;; (add-to-list 'recentf-exclude
+;;              (recentf-expand-file-name no-littering-var-directory))
 
-(add-to-list 'recentf-exclude
-             (recentf-expand-file-name
-              "~/sync/primary/dotfiles/emacs/.emacs.d/"))
+;; (add-to-list 'recentf-exclude
+;;              (recentf-expand-file-name
+;;               "~/sync/primary/dotfiles/emacs/.emacs.d/"))
 
 (add-to-list 'recentf-exclude
              (recentf-expand-file-name "~/.emacs.d/conf.org"))
@@ -325,6 +346,6 @@
 (provide 'custom-path-support)
 ;;; custom-path-support.el ends here
 
-                                        ; LocalWords:  pws prepl
-                                        ; LocalWords:  recentf
-                                        ; LocalWords:  loadbalancer
+                                                                                  ; LocalWords:  pws prepl systemd
+                                                                                  ; LocalWords:  recentf
+                                                                                  ; LocalWords:  loadbalancer
