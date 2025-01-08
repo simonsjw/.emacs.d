@@ -16,7 +16,7 @@
 
 (require 'tabulated-list)
 (require 'projectile)
-(require 'magit)
+;; (require 'magit)
 
 ;; **1. Define a New Major Mode for the Project Overview**
 
@@ -55,46 +55,46 @@ Press \\[custom-project-overview/pull] to pull marked projects."
 
 ;; **3. Function to Refresh the Project Overview List**
 
-(defun custom-project-overview/refresh ()
+;; (defun custom-project-overview/refresh ()
   "Refresh the list of projects in the project overview buffer."
-  (interactive)
+;;   (interactive)
   ;; Build the entries for `tabulated-list-entries`
-  (setq tabulated-list-entries
-        (mapcar (lambda (project)
+;;   (setq tabulated-list-entries
+;;         (mapcar (lambda (project)
                   ;; Set the default directory to the project path
-                  (let* ((default-directory project)
+;;                   (let* ((default-directory project)
                          ;; Get the project name
-                         (name (file-name-nondirectory
-                                (directory-file-name project)))
+;;                          (name (file-name-nondirectory
+;;                                 (directory-file-name project)))
                          ;; Get the last modification time of the project directory
-                         (last-edit (format-time-string
-                                     "%Y-%m-%d %H:%M"
-                                     (nth 5 (file-attributes
-                                             (directory-file-name project)))))
+;;                          (last-edit (format-time-string
+;;                                      "%Y-%m-%d %H:%M"
+;;                                      (nth 5 (file-attributes
+;;                                              (directory-file-name project)))))
                          ;; Get the Git status (short format)
-                         (git-status (string-trim
-                                      (shell-command-to-string
-                                       "git status --short")))
+;;                          (git-status (string-trim
+;;                                       (shell-command-to-string
+;;                                        "git status --short")))
                          ;; Get the remote repository URL, if any
-                         (remote-status (magit-get "remote" "origin" "url"))
+;;                          (remote-status (magit-get "remote" "origin" "url"))
                          ;; Calculate the project size in human-readable format
-                         (size (file-size-human-readable
-                                (custom-project-overview/project-directory-size project)))
+;;                          (size (file-size-human-readable
+;;                                 (custom-project-overview/project-directory-size project)))
                          ;; Get the last commit message
-                         (last-commit-msg (string-trim
-                                           (magit-git-string
-                                            "log" "-1" "--pretty=%B")))
+;;                          (last-commit-msg (string-trim
+;;                                            (magit-git-string
+;;                                             "log" "-1" "--pretty=%B")))
                          ;; Get the last commit date
-                         (last-commit-date (magit-git-string
-                                            "log" "-1" "--pretty=%ci")))
+;;                          (last-commit-date (magit-git-string
+;;                                             "log" "-1" "--pretty=%ci")))
                     ;; Create the entry for the table
-                    (list project
-                          (vector name last-edit git-status remote-status
-                                  size last-commit-msg last-commit-date))))
+;;                     (list project
+;;                           (vector name last-edit git-status remote-status
+;;                                   size last-commit-msg last-commit-date))))
                 ;; Get the list of relevant known projects from Projectile
-                (projectile-relevant-known-projects)))
+;;                 (projectile-relevant-known-projects)))
   ;; Refresh the table display
-  (tabulated-list-print t))
+;;   (tabulated-list-print t))
 
 ;; **4. Entry Point Function to Open the Project Overview**
 
@@ -137,31 +137,31 @@ Press \\[custom-project-overview/pull] to pull marked projects."
 
 ;; **7. Function to Push Changes to Remotes**
 
-(defun custom-project-overview/push ()
-  "Push changes to the remote repositories of the marked projects."
-  (interactive)
-  (dolist (project (custom-project-overview/get-marked-projects))
-    (let ((default-directory project))
-      (if (magit-git-repo-p)
-          (progn
-            ;; Push to the current branch's push-remote
-            (magit-push-current-to-pushremote nil)
-            (message "Pushed %s" project))
-        (message "Not a Git repository: %s" project)))))
+;; (defun custom-project-overview/push ()
+;;   "Push changes to the remote repositories of the marked projects."
+;;   (interactive)
+;;   (dolist (project (custom-project-overview/get-marked-projects))
+;;     (let ((default-directory project))
+;;       (if (magit-git-repo-p)
+;;           (progn
+;;             ;; Push to the current branch's push-remote
+;;             (magit-push-current-to-pushremote nil)
+;;             (message "Pushed %s" project))
+;;         (message "Not a Git repository: %s" project)))))
 
 ;; **8. Function to Pull Changes from Remotes**
 
-(defun custom-project-overview/pull ()
-  "Pull changes from the remote repositories of the marked projects."
-  (interactive)
-  (dolist (project (custom-project-overview/get-marked-projects))
-    (let ((default-directory project))
-      (if (magit-git-repo-p)
-          (progn
-            ;; Pull from the current branch's upstream
-            (magit-pull-from-upstream nil)
-            (message "Pulled %s" project))
-        (message "Not a Git repository: %s" project)))))
+;; (defun custom-project-overview/pull ()
+;;   "Pull changes from the remote repositories of the marked projects."
+;;   (interactive)
+;;   (dolist (project (custom-project-overview/get-marked-projects))
+;;     (let ((default-directory project))
+;;       (if (magit-git-repo-p)
+;;           (progn
+;;             ;; Pull from the current branch's upstream
+;;             (magit-pull-from-upstream nil)
+;;             (message "Pulled %s" project))
+;;         (message "Not a Git repository: %s" project)))))
 
 ;; **9. Provide the Feature**
 
