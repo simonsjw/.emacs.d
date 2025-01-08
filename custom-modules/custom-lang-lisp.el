@@ -169,6 +169,17 @@
   (setq comment-fill-column 260)                                                  ; Column to use for 'comment-indent'. If nil, use 'fill-column' instead. 
   (setq comment-column 82)                                                        ; Column to indent right-margin comments to. 
   (display-fill-column-indicator-mode 1)                                          ; show the visual prompt. 
+
+  ;;; Set up outline
+  ;;  --------------
+  ;; Use outline-minor-mode
+  (customize-set-variable 'outline-minor-mode t)
+  ;; show the buttons.
+  (customize-set-variable 'outline-minor-mode-use-buttons 'in-margins)
+  ;; show a blank line prior to a grouped outline header
+  (customize-set-variable 'outline-blank-line t)
+  ;; Use font-locking with the outlines.
+  (customize-set-variable 'outline-minor-mode-highlight t)
   
   
   ;;; IDE functionality map
@@ -303,3 +314,5 @@ a message telling you which statement you are at."
 
 (provide 'custom-lang-lisp)
 ;;; custom-lang-lisp.el ends here
+
+; LocalWords:  codeberg
