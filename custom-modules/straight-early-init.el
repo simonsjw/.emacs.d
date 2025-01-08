@@ -16,7 +16,7 @@
 
 
 ;; straight-base-dir set previously.
-;;(require 'early-init)
+;; (require 'early-init)
 
 (defvar straight-base-dir)
 
@@ -49,14 +49,6 @@
 (setq use-package-always-ensure t)
 
 (use-package auto-compile)
-
-
-;; Configure crafted-emacs to use straight as package manager.
-;; See `(info "(crafted-emacs)Using alternate package managers")'
-
-;; (setq crafted-package-system 'straight)
-;; (setq crafted-package-installer #'straight-use-package)
-;; (setq crafted-package-installed-predicate #'straight--installed-p)
 
 (provide 'straight-early-init)
 ;;; straight-early-init.el ends here
