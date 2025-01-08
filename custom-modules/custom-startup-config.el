@@ -18,14 +18,12 @@
 ;;; Code:
 
 ;; Imports
-(require 'custom-summary-config)
+(require 'summary-support)
 (require 'custom-logging-config)
-(require 'custom-system-window-management)
+(require 'system-window-management)
 (require 'custom-ui-config)
 (require 'custom-system-tools)
 
-(defvar magit-display-buffer-function)
-(defvar magit-display-buffer-noselect)
 
 (declare-function speedbar "speedbar")
 
@@ -39,13 +37,10 @@
 (declare-function projectile "projectile")
 (declare-function projectile-speedbar "projectile-speedbar")
 
-(declare-function magit "magit")
-(declare-function magit-status-setup-buffer "magit")
-
-(declare-function bufler "bufler")
 (declare-function vterm "vterm")
 (declare-function dired "dired")
 (declare-function cell-sheet-create "cell-mode")
+(declare-function my-startup-screen/startup-screen "custom-summary-config")
 
 
 (defun my-ui/create-project-frame (given-project-path)
@@ -88,10 +83,6 @@ created."
               (not (string= given-project-path "")))
              given-project-path
            (my-interactive-tools/select-directory-using-dired))))
-       ;; setting the below variable means that when we do (magit-status),
-       ;; magit will use my-window-tools/magit-display-buffer to find the
-       ;; appropriate window and show the buffer there.
-       (magit-display-buffer-function #'my-window-tools/magit-display-buffer)
        )
 
     ;; If speedbar is open, close it.
@@ -106,10 +97,6 @@ created."
     (defconst ide-init/default-log-file
       (expand-file-name "init.log" user-emacs-directory)
       "Path to the init log file.")
-
-    ;; Temporarily disable the buffer-list-update-hook
-    ;; (remove-hook 'buffer-list-update-hook
-    ;;             'my-window-tools/assign-buffer-to-window-hook)
 
     ;; Here we create a new frame and name it.
     (let
@@ -152,7 +139,6 @@ created."
           (setq default-directory project-path)
 
           ;; Create and assign buffers to the windows
-
 
           (progn
             (set-window-buffer bottom-left (get-buffer-create "logs"))
@@ -258,9 +244,7 @@ created."
 
           ;; Bottom windows: bottom middle
           (with-selected-window bottom-middle
-            (let ((default-directory project-path)
-                  (magit-display-buffer-noselect t))
-              (magit-status-setup-buffer))
+            (vc-dir project-path)
             (my-tab-line/close-specific-buffer "*scratch*"))
 
           ;; Bottom windows: bottom right
@@ -286,15 +270,11 @@ created."
 
           ;; Main window
           (with-selected-window top-left
-            (crafted-startup-screen)
+            (dashboard-open)
             (my-tab-line/close-specific-buffer "*scratch*")
             )
           )
         )
-      ;; clean up the start-up frame.
-      ;; (let ((startup-frame (my-frame-tools/get-frame-by-name "startup")))
-      ;; (if startup-frame (delete-frame startup-frame))
-      ;;  )
       )
     )
   )
@@ -308,12 +288,10 @@ closed as a result of this action."
   (interactive)
   (my-frame-tools/set-current-frame-name "startup")
   (my-ui/create-project-frame user-emacs-directory)
-  ;; With windows and tags now set, enable the buffer-window
-  ;; relationships for new buffers specified in
-  ;; custom-system-window-management.el
-  ;; (add-hook 'buffer-list-update-hook
-  ;;           #'my-window-tools/detect-new-non-system-buffer)
-  )
+  (my-frame-tools/delete-frame-by-name "startup"))
+
+(defalias 'IDE-refresh 'my-ui/startup-layout
+  "Alias for `my-ui/startup-layout' to refresh the Emacs session layout.")
 
 ;; Use the function on startup
 (add-hook 'emacs-startup-hook 'my-ui/startup-layout)
