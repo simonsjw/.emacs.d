@@ -78,9 +78,6 @@
 ;; (require 'flymake-shellcheck)
 ;; (add-hook 'bash-ts-mode-hook 'flymake-shellcheck-load)
 
-;; save the file automatically. 
-;; (add-hook 'bash-ts-mode-hook 'my-programming-mode/auto-save-hook) 
-
 ;; Configuration for bash-ts-mode
 ;; (add-hook 'bash-ts-mode-hook
 ;;           (lambda ()
