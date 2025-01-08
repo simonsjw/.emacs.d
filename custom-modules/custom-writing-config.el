@@ -9,6 +9,8 @@
 
 ;; Configures Markdown, LaTeX, and general text editing in Emacs.
 
+;;; Code:
+
 (defvar citar-templates)
 (defvar TeX-auto-save)
 (defvar TeX-parse-self)
@@ -32,6 +34,7 @@
 (defvar auctex-latexmk-inherit-TeX-PDF-mode)
 (defvar bibtex-dialect)
 
+(declare-function flyspell-mode-on "flyspell")
 (declare-function auto-fill-mode "simple")
 (declare-function LaTeX-math-mode "tex")
 (declare-function TeX-source-correlate-mode "tex")
@@ -41,9 +44,50 @@
 (declare-function pdf-tools-install "pdf-tools")
 (declare-function auctex-latexmk-setup "auctex")
 
+(use-package markdown-mode)                                                       ; Markdown support
+(use-package flymake-markdownlint)                                                ; lint markdown in flymake if markdownlint-cli is installed. 
+(use-package pandoc-mode)
+(use-package olivetti)
 
-;;; Code:
+;; PDF support
+(use-package pdf-tools
+  :config
+  (pdf-tools-install))
 
+;; LaTeX support - uses Auctex
+;; only install and load auctex when the latex executable is found,
+;; otherwise it crashes when loading
+(when (executable-find "latex")
+  (use-package auctex)
+  ;; Install the auctex-latexmk package when the latex and latexmk
+  ;; executable are found.
+  ;;
+  ;; This package contains a bug which might make it crash during loading
+  ;; (with a bug related to tex-buf) on newer systems.
+  ;;
+  ;; If you encounter the bug, you should uninstall this package, then
+  ;; you can install a fix (not on melpa) with the following recipe,
+  ;; and the configuration in this file will still work
+  ;;
+  ;; (N.B. the recipe is for straight.el, but can be modified for use with Emacs
+  ;;       29 package-vc, quelpa.el, or other \"from source\" package
+  ;;       managers.)
+  ;;
+  ;; '(auctex-latexmk :fetcher git :host github :repo \"wang1zhen/auctex-latexmk\")
+  (when (executable-find "latexmk")
+    (use-package auctex-latexmk)))
+
+(use-package citar
+  :custom
+  (citar-bibliography (list (getenv "BIB_HOME")))                                 ; Wrap in `list` to ensure it's a list
+  :hook
+  (LaTeX-mode . citar-capf-setup)
+  (org-mode . citar-capf-setup))
+
+(use-package citar-embark
+  :after citar embark
+  :no-require
+  :config (citar-embark-mode))
 
 ;;; Whitespace
 (defun crafted-writing-configure-whitespace
@@ -143,6 +187,9 @@ Example usage:
   "Configure LaTeX environment for writing and editing."
   (my-lang-tex/latex-warning-if-no-executable)
 
+  ;; turn on flyspell.
+  (flyspell-mode-on)
+
   ;; Point latex at the current directory. 
 
   ;; Delay Corfu drop-downs.
@@ -188,8 +235,8 @@ Example usage:
   ;; (add-to-list 'LaTeX-indent-environment-list '("tikzcd" LaTeX-indent-tabular))
   ;; (add-to-list 'LaTeX-indent-environment-list '("tikzpicture" current-indentation))
   (dolist (env '("lstlisting" "tikzcd" "tikzpicture"))
-      (add-to-list
-      'LaTeX-indent-environment-list (cons env 'current-indentation)))
+    (add-to-list
+     'LaTeX-indent-environment-list (cons env 'current-indentation)))
 
   ;; Verbatim environments
   ;; Define `verbatim` environments to prevent LaTeX from auto-formatting text.
@@ -199,10 +246,10 @@ Example usage:
   ;; (add-to-list 'LaTeX-verbatim-macros-with-braces "lstinline")
   ;; (add-to-list 'LaTeX-verbatim-macros-with-delims "lstinline")
   (dolist (env '("lstlisting" "Verbatim"))
-   (add-to-list 'LaTeX-verbatim-environments env))
-   (dolist (macro '("lstinline"))
-      (add-to-list 'LaTeX-verbatim-macros-with-braces macro)
-      (add-to-list 'LaTeX-verbatim-macros-with-delims macro))
+    (add-to-list 'LaTeX-verbatim-environments env))
+  (dolist (macro '("lstinline"))
+    (add-to-list 'LaTeX-verbatim-macros-with-braces macro)
+    (add-to-list 'LaTeX-verbatim-macros-with-delims macro))
 
   ;; parentheses
   (electric-pair-mode 1) ; auto-insert matching bracket
