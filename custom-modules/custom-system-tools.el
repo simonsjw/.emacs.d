@@ -18,7 +18,7 @@
 
 
 ;;; Code:
-
+(defvar ispell-dictionary)
 (defvar org-link-abbrev-alist)
 (declare-function speedbar-refresh "speedbar")
 
@@ -28,6 +28,10 @@
 (declare-function image-supported-file-p "image")
 
 (declare-function org-link-abbrev-alist "ol")
+
+(declare-function dired-get-file-for-visit "dired")
+
+(require 'custom-logging-config)
 
 
 
@@ -260,13 +264,49 @@ If FRAME is nil, use the current frame."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; BUFFER management ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun my-buffer-tools/open-temp-org-buffer ()
-  "Open a temporary `org-mode' buffer."
-  (interactive)
-  (let ((buffer (generate-new-buffer "*temp-org*")))
+(defun my-buffer-tools/show-buffer-from-first-line (buffer)
+  "Show BUFFER starting from the first line."
+  (when (buffer-live-p buffer)                                                    ; Ensure the buffer exists
+    (with-current-buffer buffer
+      (goto-char (point-min))                                                     ; Move point to the beginning of the buffer
+      (set-window-start (get-buffer-window buffer) (point-min)))))
+
+(defun my-buffer-tools/resize-window-vertically (buffer pct)
+  "Resize the window displaying BUFFER by increasing its height by PCT.
+
+Note that a 30% resize would be a pct of 0.3."
+  (let* ((window (get-buffer-window buffer))
+         (current-height (window-height window))
+         (resize-amount (round (* current-height pct))))                          ; Calculate PCT% increase
+    (if window
+        (window-resize window resize-amount t)                                    ; Resize vertically (t = vertical)
+      (message
+       "Buffer %s is not displayed in any window" (buffer-name buffer)))))
+
+(defun my-buffer-tools/open-temp-buffer (&optional buffer-name)
+  "Open a temporary buffer, optionally naming it BUFFER-NAME.
+If BUFFER-NAME is nil, the default name '*temp*' is used.
+The buffer object is returned."
+  (interactive "sEnter buffer name (default: *temp*): ")
+  
+  (let ((buffer (generate-new-buffer (or (and (not (string-empty-p buffer-name)) buffer-name)
+                                         "*temp*"))))
+    (switch-to-buffer buffer)
+    buffer))
+
+(defun my-buffer-tools/open-temp-org-buffer (&optional buffer-name)
+  "Open a temporary `org-mode' buffer, optionally naming it BUFFER-NAME.
+If BUFFER-NAME is nil, the default name '*temp-org*' is used.
+The buffer object is returned."
+  (interactive "sEnter buffer name (default: *temp-org*): ")
+  
+  (let ((buffer (generate-new-buffer (or (and (not (string-empty-p buffer-name)) buffer-name)
+                                         "*temp-org*"))))
     (with-current-buffer buffer
       (org-mode))
-    (switch-to-buffer buffer)))
+    (switch-to-buffer buffer)
+    buffer))
+
 
 (global-set-key (kbd "C-c t") 'my-buffer-tools/open-temp-org-buffer)
 
@@ -335,18 +375,18 @@ This condition and body have been removed:
 
 
 (defun my-buffer-tools/copy-buffer-in-new-frame (click)
-  "Copy the active buffer in a selected window to a new frame.
+"Copy the active buffer in a selected window to a new frame.
 CLICK: the mouse event."
-  (interactive (list last-nonmenu-event))                                         ; Enable the function to handle a mouse event.
-  (message "triggered")                                                           ; Give feedback when function is triggered.
-  (mouse-minibuffer-check click)                                                  ; Prevent triggering if click is in the minibuffer.
-  (let* ((window (posn-window (event-start click)))                               ; Get the window where click occurred.
-         (buf (window-buffer window))                                             ; Get the buffer from that window.
-         (temp-rule '(".*" (display-buffer-pop-up-frame))))                       ; Temporary display rule for opening in a new frame.
-    (message "Selected window: %s" window)                                        ; Display selected window as feedback.
-    (setq display-buffer-alist (cons temp-rule display-buffer-alist))             ; Temporarily add the new frame rule to `display-buffer-alist`.
-    (display-buffer buf)                                                          ; Display the buffer in a new frame.
-    (setq display-buffer-alist (cdr display-buffer-alist))))                      ; Restore the original `display-buffer-alist`.
+(interactive (list last-nonmenu-event))                                         ; Enable the function to handle a mouse event.
+(message "triggered")                                                           ; Give feedback when function is triggered.
+(mouse-minibuffer-check click)                                                  ; Prevent triggering if click is in the minibuffer.
+(let* ((window (posn-window (event-start click)))                               ; Get the window where click occurred.
+       (buf (window-buffer window))                                             ; Get the buffer from that window.
+       (display-buffer-alist '(("." (display-buffer-pop-up-frame)))))           ; Temporarily add the new frame rule to `display-buffer-alist`.
+
+  (message "Selected window: %s" window)                                        ; Display selected window as feedback.
+  (display-buffer buf)))                                                        ; Display the buffer in a new frame.
+
 
 ;; Define the customizable variable at the top level
 (defcustom my-buffer-attributes nil
@@ -381,6 +421,14 @@ my-buffer-tools/display-buffer-by-name-and-tag"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;; TOOLS FOR USE IN BUFFER ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun my-buffer-tools/insert-blank-line-at-start ()
+  "Insert a blank line at the start of the current buffer, even if it's read-only."
+  (let ((inhibit-read-only t))       ; Temporarily disable read-only mode
+    (save-excursion                 ; Preserve point position
+      (goto-char (point-min))       ; Move to the start of the buffer
+      (open-line 1))))              ; Insert a blank line
+
 
 (defun my-in-buffer-tools/get-matching-bracket-position (cursor-position)
   "Given a bracket at point in a buffer, return the matching bracket position.
@@ -625,6 +673,6 @@ If `sr-speedbar' is not open, open it first."
 (provide 'custom-system-tools)
 ;;; custom-system-tools.el ends here
 
-                                        ; LocalWords:  LISTB sr ol
-                                        ; LocalWords:  netstat isn
-                                        ; LocalWords:  minibuffer
+                                                                                  ; LocalWords:  LISTB sr ol dired
+                                                                                  ; LocalWords:  netstat isn
+                                                                                  ; LocalWords:  minibuffer
