@@ -113,7 +113,7 @@
 
  `(cell-cursor-face
    ((t (:background
-        ,info-theme-grass
+        ,info-theme-flat-green
         :foreground ,info-theme-sharp-lime
         :box (:line-width 1
                           :color ,info-theme-white-grey)))))
