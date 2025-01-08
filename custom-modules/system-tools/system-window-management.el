@@ -79,6 +79,7 @@
                      ("*Ilist*" .config)
                      (".gitignore" . vc)
                      ("*vc-dir*" . vc)
+                     ("*vc-dir*" . vc)
                      ))
         (:regexps . (("^documentation$" . config)                                     ; exact match for `documentation'
                      ("^README.*" . config)                                           ; strings beginning upper or lower case `README'.
