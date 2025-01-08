@@ -16,8 +16,8 @@
 ;;; customization
 (require 'straight)
 
-(use-package tree-sitter-indent)
-(use-package tree-sitter-ispell)
+;; (use-package tree-sitter-indent)
+;; (use-package tree-sitter-ispell)
 (use-package treesit-fold)
 (use-package combobulate)
 
