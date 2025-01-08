@@ -41,14 +41,14 @@
 ;;     (push (file-name-directory custom-info-dir) Info-directory-list)))
 
 ;; Ensure Info paths are set up correctly, and add custom docs
-(require 'info)
-;; Only initialize Info directories once
-(unless Info-directory-list
-  (info-initialize))
+;; (require 'info)
+;; ;; Only initialize Info directories once
+;; (unless Info-directory-list
+;;   (info-initialize))
 ;; Define and add custom directory
-(let ((custom-info-dir (expand-file-name "docs" user-emacs-directory)))
-  (when (file-directory-p custom-info-dir)
-    (add-to-list 'Info-directory-list custom-info-dir)))
+;; (let ((custom-info-dir (expand-file-name "docs" user-emacs-directory)))
+;;   (when (file-directory-p custom-info-dir)
+;;     (add-to-list 'Info-directory-list custom-info-dir)))
 
 (provide 'custom-init-config)
 ;;; custom-init-config.el ends here
