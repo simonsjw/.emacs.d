@@ -38,3 +38,10 @@ custom-packages/archives/gnu/
 custom-packages/archives/nongnu/
 custom-packages/worg/
 var/INFODYNAMICS/bmkp/bookmark-default.el
+elpa/archives/gnu/
+elpa/archives/nongnu/
+elpa/archives/gnu/archive-contents
+elpa/archives/gnu/archive-contents.signed
+elpa/gnupg/pubring.kbx
+elpa/gnupg/pubring.kbx~
+elpa/gnupg/trustdb.gpg
