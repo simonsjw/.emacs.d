@@ -42,7 +42,7 @@
 
 (defconst log/type-special-form-provide   1
   "Log use of the special form `provide'.
-  Logging this helps understand which modules are being loaded.")
+Logging this helps understand which modules are being loaded.")
 
 (defconst log/type-macro-use-package      2
   "Log use of the `use-package' macro.")
@@ -120,10 +120,10 @@ use like this:
 (defun log/get-log-type-by-index (idx)
   "Get the log type properties for the given index IDX.
 Example usage:
-(log/get-log-type-by-index log/type-adhoc-log)
+ (log/get-log-type-by-index log/type-adhoc-log)
  - Returns
    (:idx \"log/type-adhoc-log\" :item-type \"log-message\" :active t)
-(get-log-type-by-index log/type-special-form-provision)
+ (get-log-type-by-index log/type-special-form-provision)
  - Returns
    (:idx \"type-special-form-provide\" :item-type \"provide\" :active nil)"
   (gethash idx log/log-table))
@@ -143,8 +143,9 @@ Example usage:
 
 (defun log/write-to-file (message log-file)
   "Write a log to file, creating or appending as necessary.
-  This function mirrors \"my/append-to-file\" and is defined so
-  logging can be set up without loading dependencies.
+
+This function mirrors \"my/append-to-file\" and is defined so logging can be
+set up without loading dependencies.
   MESSAGE:    A string to be appended to the file (string).
   LOG-FILE:  A path to a file (string)"
   (with-temp-buffer
@@ -153,10 +154,11 @@ Example usage:
 
 (defun log/logger (&rest args)
   "Base logger function for the session.
-  Note that any object passed will be converted to a string and truncated at no
-  more than the number of characters in \"print-length\".
-  If the object is a string, it will not be truncated and any formatting symbols
-  contained (\\n for example) will be respected in the print to file.
+
+Note that any object passed will be converted to a string and truncated at no
+more than the number of characters in \"print-length\".
+If the object is a string, it will not be truncated and any formatting symbols
+contained (\\n for example) will be respected in the print to file.
 
   ARGS:
   LOGFILE:  The file-path for the log (symbol).
