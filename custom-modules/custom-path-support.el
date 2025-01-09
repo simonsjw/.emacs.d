@@ -49,7 +49,6 @@
 (defvar org-roam-directory)
 (defvar org-roam-dailies-directory)
 (defvar org-agenda-files)
-(defvar recentf-exclude)
 
 (defvar org-contacts-files nil
   "Load the path to each file in the contacts directory.")
@@ -85,9 +84,6 @@
   (unless (file-directory-p dir)
     (message "creating %s" dir)
     (make-directory dir t)))
-
-(declare-function recentf-expand-file-name "recentf")
-
 
 (message
  "no-littering var directory set: %s" no-littering-var-directory)
@@ -325,22 +321,6 @@
 (setq my-paths/systemd-mode
       (concat user-emacs-directory "custom-packages/systemd-mode/systemd.el"))
 
-
-
-;;; Recent Files
-;; Don't store visits to these files in the recent file history
-;; https://www.emacswiki.org/emacs/RecentFiles
-
-;; Don't record files opened in the etc and var directories in recent file lists.
-;; (add-to-list 'recentf-exclude
-;;              (recentf-expand-file-name no-littering-var-directory))
-
-;; (add-to-list 'recentf-exclude
-;;              (recentf-expand-file-name
-;;               "~/sync/primary/dotfiles/emacs/.emacs.d/"))
-
-(add-to-list 'recentf-exclude
-             (recentf-expand-file-name "~/.emacs.d/conf.org"))
 
 
 (provide 'custom-path-support)
