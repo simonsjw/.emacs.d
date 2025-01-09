@@ -249,7 +249,7 @@ If the cursor is not on or next to a bracket, display the default position info.
 
 
 ;; Projectile
-(customize-set-variable 'projectile-mode-line-prefix "Project:")
+(customize-set-variable 'projectile-mode-line-prefix " Project:")
 
 ;; (defvar-local my-modeline/projectile
 ;;     `(:eval
@@ -271,7 +271,7 @@ If the cursor is not on or next to a bracket, display the default position info.
 ;; (easy-menu-define my-prog-mode-menu                                             ; symbol-name
 ;;   (current-local-map)                                                           ; maps
 ;;   "Menu for comment-related functions."                                         ; docs
-;;   my-custom-menus/comment-menu)     
+;;   my-custom-menus/comment-menu)
                                                                                   ; menu
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -342,28 +342,32 @@ Specific to the current window's mode line.")
 ;;   (setq mode-line-misc-info
 ;;         (delete '(eglot--managed-mode (" [" eglot--mode-line-format "] ")) mode-line-misc-info)))
 
-(defvar-local my-modeline/eglot
-    `(:eval
-      (when (and (featurep 'eglot) (mode-line-window-selected-p))
-        '(eglot--managed-mode eglot--mode-line-format)))
-  "Mode line construct displaying Eglot information.
-Specific to the current window's mode line.")
+;; (defvar-local my-modeline/eglot
+;;     `(:eval
+;;       (when (and (featurep 'eglot) (mode-line-window-selected-p))
+;;         '(eglot--managed-mode eglot--mode-line-format)))
+;;   "Mode line construct displaying Eglot information.
+;; Specific to the current window's mode line.")
 
 ;; ##########################################################################
 ;; END OF CUSTOM SEGMENTS.
 
+
+
+(setq-default mode-line-misc-info nil)
+
 ;; Propertize modeline variables with `risky-local-variable'. Variables will
 ;; not work without it.
-(dolist (construct '(my-modeline/matching-bracket
-                     my-modeline/window-tag
-                     my-modeline/buffer-icon
-                     my-modeline/flymake
-                     my-modeline/eglot
-                     my-modeline/projectile
-                     my-modeline/vc-info
-                     pyvenv-mode-line-indictator
-                     my-speedbar/show-relative-path))
-  (put construct 'risky-local-variable t))
+;; (dolist (construct '(my-modeline/matching-bracket
+;;                      my-modeline/window-tag
+;;                      my-modeline/buffer-icon
+;;                      my-modeline/flymake
+;;                      my-modeline/eglot
+;;                      my-modeline/projectile
+;;                      my-modeline/vc-info
+;;                      pyvenv-mode-line-indictator
+;;                      my-speedbar/show-relative-path))
+;;   (put construct 'risky-local-variable t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; Set up modeline layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -384,39 +388,39 @@ Specific to the current window's mode line.")
 ;;                 (global-mode-string
 ;;                  ("" global-mode-string))))
 
-(setq-default mode-line-format
-              '("%e"
-                my-modeline/window-tag
-                " "
-                my-modeline/buffer-icon
-                mode-line-front-space
-                (:propertize
-                 (" "
-                  mode-line-mule-info
-                  mode-line-client
-                  mode-line-modified
-                  mode-line-remote
-                  mode-line-auto-compile)
-                 display
-                 (min-width
-                  (1.0)))
-                " "
-                mode-line-buffer-identification
-                "  "
-                ;;   (:eval projectile-update-mode-line)
-                " "
-                my-modeline/matching-bracket
-                " "
-                mode-name
-                " "
-                ;; (:eval my-modeline/vc-info)
-                " "
-                (:eval (pyvenv-mode pyvenv-mode-line-indicator))
-                (:eval my-modeline/eglot)
-                " "
-                my-modeline/flymake
-                mode-line-end-spaces
-                ))
+;; (setq-default mode-line-format
+;;               '("%e"
+;;                 my-modeline/window-tag
+;;                 " "
+;;                 my-modeline/buffer-icon
+;;                 mode-line-front-space
+;;                 (:propertize
+;;                  (" "
+;;                   mode-line-mule-info
+;;                   mode-line-client
+;;                   mode-line-modified
+;;                   mode-line-remote
+;;                   mode-line-auto-compile)
+;;                  display
+;;                  (min-width
+;;                   (1.0)))
+;;                 " "
+;;                 mode-line-buffer-identification
+;;                 "  "
+;;                 ;;   (:eval projectile-update-mode-line)
+;;                 " "
+;;                 my-modeline/matching-bracket
+;;                 " "
+;;                 mode-name
+;;                 " "
+;;                 ;; (:eval my-modeline/vc-info)
+;;                 " "
+;;                 (:eval (pyvenv-mode pyvenv-mode-line-indicator))
+;;                 ;;    (:eval my-modeline/eglot)
+;;                 " "
+;;                 my-modeline/flymake
+;;                 mode-line-end-spaces
+;;                 ))
 
 
 ;; The default original:
@@ -444,7 +448,5 @@ Specific to the current window's mode line.")
 
 (provide 'modeline-support)
 ;;; modeline-support.el ends here
-
-
 
                                                                                   ; LocalWords:  FIXME
