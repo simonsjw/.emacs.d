@@ -183,7 +183,7 @@
 
 
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; Fix 'use minibuffer whilst in minibuffer' error
+;; Fix 'use mini-buffer whilst in minibuffer' error
 ;; -----------------------------------------------
 ;; automatically cancel the minibuffer when you switch to it, to avoid
 ;; "attempted to use minibuffer" error.
