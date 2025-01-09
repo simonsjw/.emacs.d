@@ -459,5 +459,4 @@ It ensures:
 (provide 'tabline-support)
 ;;; tabline-support.el ends here
 
-                                        ; LocalWords:  ibuffer Ediff
-                                        ; LocalWords:  Dired ediff
+                                                                                  ; LocalWords:  Dired ediff
