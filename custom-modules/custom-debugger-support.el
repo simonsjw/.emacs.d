@@ -145,7 +145,7 @@
   ;;(dape-breakpoint-global-mode)
 
   ;; Timeout is 30 seconds.
-  (setq dape-request-timeout 30)
+  (setq dape-request-timeout 60)
 
   ;; Info buffers to the right
   (setq dape-buffer-window-arrangement 'right)
