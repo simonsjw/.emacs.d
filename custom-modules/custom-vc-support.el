@@ -213,7 +213,7 @@
 (defun my-vc/tagCommits ()
   "Display a list of tags for git commit messages and insert the selected tag.
 Utilises `tagCommits-alist` for retrieving the list of available tags.
-Users can select a tag from a prompted list in the minibuffer, and the
+Users can select a tag from a prompted list in the mini-buffer, and the
 selected tag is then inserted at the current cursor position in the active
 buffer."
   (interactive)
