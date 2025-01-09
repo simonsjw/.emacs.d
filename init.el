@@ -8,11 +8,16 @@
 
 ;;; Code
 
+
+
 ;;; imports and declarations
 (require 'custom-logging-config)
 (require 'recentf)
 (require 'custom-path-support)
 (require 'elisp-packages)
+
+ ;; Don't log files touched in the init process. 
+(recentf-mode -1)
 
 ;; ensure the correct org-mode is sourced.
 ;; install the org package before it is used - otherwise it causes conflict.
@@ -199,7 +204,7 @@
 (add-hook
  'emacs-startup-hook #'crafted-startup-example/display-startup-time)
 
-
+ 
 ;; start the server if its not already running.
 ;; To shutdown the server use the below: 
 ;;   M-x server-edit
@@ -207,6 +212,8 @@
 ;; (unless
 ;;     (server-running-p)
 ;;   (server-start))
+
+(recentf-mode 1)
 
 (provide 'init)
 ;;; init.el ends here
