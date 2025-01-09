@@ -248,13 +248,13 @@ active environment."
   
   (setq display-fill-column-indicator-column 88)                                  ; comment inde
   (setq fill-column 88)                                                           ; Column beyond which line wrapping occurs if it is activated.
-  (setq comment-fill-column 270)                                                  ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead. 
+  (setq comment-fill-column 270)                                                  ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
   (setq py-comment-fill-column 270)
-  (setq comment-column 90)                                                        ; Column to indent right-margin comments to. 
-  (setq py-docstring-fill-column 88)                                              ; Set docstrings to have same fill column as code. 
+  (setq comment-column 90)                                                        ; Column to indent right-margin comments to.
+  (setq py-docstring-fill-column 88)                                              ; Set docstrings to have same fill column as code.
   (setq python-indent-offset 4)                                                   ; Set the indent for python mode.
 
-  (display-fill-column-indicator-mode 1)
+  (display-fill-column-indicator-mode 1)                                          ; show the buffer line width.
 
   (dape-active-mode)                                                              ; ensure dape mode is active.
 
@@ -318,7 +318,6 @@ active environment."
   ;;  (keymap-set python-ts-mode-map "M-=" #'anaconda-mode-find-assignments)
 
 
-
   ;; add-missing-dependencies
   (keymap-set python-ts-mode-map "C-c i f" #'python-fix-imports)
   
@@ -334,77 +333,9 @@ active environment."
 
 (add-hook 'python-ts-mode-hook #'my-lang-python/python-mode-setup)
 
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; Hydra
-;; ----------------
-
-;; set the python blue colour. 
-;; (defface nerd-icons-python-blue-face
-;;   '((t (:foreground "#306998")))  ;; Python blue
-;;   "Face to provide the blue associated with Python."
-;;   :group 'nerd-icons-faces)
-
-;; (major-mode-hydra-define python-ts-mode
-;;   (:title  (concat
-;;             (nerd-icons-mdicon "nf-md-language-python"
-;;                                :height 1.2
-;;                                :v-adjust 0.0
-;;                                :face 'nerd-icons-python-blue-face)
-;;             " Python")
-;;            :color amaranth
-;;            :quit-key "q")
-;;   ("Tools"
-;;    (("i" python-fix-imports "fix imports"))
-;;    "Evaluate code"
-;;    (("vb" python-shell-send-buffer "eval buffer")
-;;     ("." python-shell-send-defun "eval fn")
-;;     ("vr" python-shell-send-region "eval region")
-;;     ("vs" python-shell-send-string "eval string")
-;;     ("vx" python-shell-restart "restart shell"))
-;;    "Errors/Linting"
-;;    (("e" flymake-show-buffer-diagnostics "list errors")
-;;     ("E" flymake-show-project-diagnostics "list project errors")
-;;     ("m" consult-flymake "defun")
-;;     ("n" flymake-goto-next-error "next")
-;;     ("l" flymake-goto-prev-error "previous"))
-;;    "References"
-;;    (("rf" anaconda-mode-find-references "find reference")
-;;     ("rF" projectile-find-references "find all references")
-;;     ("rd" anaconda-mode-find-definitions "find definition")
-;;     ("ra" anaconda-mode-find-assignments "find assignment"))
-;;    "Project"
-;;    (("j" consult-projectile "switch projects"))
-;;    "Doc"
-;;    (("dp" eldoc-box-help-at-point "thing-at-pt")
-;;     ("<up>" eldoc-box-scroll-up "scroll up")
-;;     ("<down>" eldoc-box-scroll-down "scroll down")
-;;     ("x" eldoc-box-hide "close eldoc"))
-;;    "Debugging"
-;;    (("bd" dape "start debugging")
-;;     ("bb" dape-breakpoint-toggle "toggle breakpoint")
-;;     ("bc" dape-continue "continue")
-;;     ("bn" dape-next "next")
-;;     ("bi" dape-step-in "step in")
-;;     ("bo" dape-step-out "step out")
-;;     ("bq" dape-disconnect "disconnect"))))
-
-
 (provide 'custom-lang-python)
 ;;; custom-lang-python.el ends here
 
-;; eldoc-box-help-at-point
-
-
-                                                                                 ; LocalWords:  pyvenv isort
-                                                                                 ; LocalWords:  numpydoc el
-                                                                                 ; LocalWords:  CONDA WORKON
-                                                                                 ; LocalWords:  ENV serviceEnv
-                                                                                 ; LocalWords:  lang keymap
-                                                                                 ; LocalWords:  eldoc defun
-                                                                                 ; LocalWords:  minibuffer
-                                                                                 ; LocalWords:  pycodestyle
-                                                                                 ; LocalWords:  pycomplete
-                                                                                 ; LocalWords:  gitlab melpa
-                                                                                 ; LocalWords:  pythonic dape
-                                                                                 ; LocalWords:  yasnippet
-                                                                                 ; LocalWords:  debugpy adapter
+                                                                                  ; LocalWords:  pyvenv isort numpydoc el CONDA WORKON ENV serviceEnv lang keymap
+                                                                                  ; LocalWords:  eldoc defun minibuffer pycodestyle pycomplete gitlab melpa
+                                                                                  ; LocalWords:  pythonic dape yasnippet debugpy adapter
