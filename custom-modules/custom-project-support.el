@@ -19,14 +19,24 @@
   (define-key
    projectile-mode-map (kbd "C-c p") 'projectile-command-map))
 
+
 (use-package consult-projectile)
-(use-package ibuffer-projectile)
+
+(use-package ibuffer-projectile
+  :config
+  (add-to-list 'ibuffer-saved-filter-groups
+               '("home"
+                 ("Projectile" (projectile . t))
+                 ;;   ("Projects" (filename . "/path/to/projects/"))
+                 ("Agenda Files" (filename . "/home/simon/Documents/org/agenda/"))
+                 ("Emacs Custom Files" (filename . "/home/simon/.emacs.d/custom-modules/"))
+                 )))
 
 ;;; Configuration phase
 
 (require 'projectile)
 (require 'consult-projectile)
-(require 'ibuffer-projectile)
+;;(require 'ibuffer-projectile)
 
 ;; (setq projectile-mode-line-function                                               ; set the modeline entry for projectile.
 ;;       '(lambda () (format " proj[%s]" (projectile-project-name))))
@@ -67,12 +77,14 @@ The first column of the CSV contains the project paths."
                 (message "Added project: %s" project-path)))))
         (forward-line 1)))))
 
+
 ;; enhance ibuffer with ibuffer-projectile-default-group-name if available.
 (defun my-project/ibuffer-projectile-setup ()
   "Set up integration for `ibuffer' with `ibuffer-projectile'."
   (setq ibuffer-filter-groups (ibuffer-projectile-generate-filter-groups))
   (unless (eq ibuffer-sorting-mode 'project-name)
     (ibuffer-do-sort-by-project-name)))
+
 (when (require 'ibuffer-projectile nil :noerror)
   (add-hook 'ibuffer-hook #'my-project/ibuffer-projectile-setup))
 
@@ -82,3 +94,6 @@ The first column of the CSV contains the project paths."
 
 (provide 'custom-project-support)
 ;;; custom-project-support.el ends here
+
+                                                                                  ; LocalWords:  simon
+                                                                                  ; LocalWords:  emacs
