@@ -1,5 +1,11 @@
 ;;; custom-ui-config.el --- Ui configuration  -*- lexical-binding: t; -*-
 
+;; Local Variables:
+;; outline-regexp:  ';;;+'
+;; outline-start:  ';;'
+;; outline-level: my-outline-mode/outline-level
+;; End:
+
 ;; Copyright (C) 2022
 ;; SPDX-License-Identifier: MIT
 
@@ -31,8 +37,6 @@
 (require 'dired+)                                                                 ; commands usually have a diredp prefix.
 (require 'info+)
 
-
-
 (defvar org-roam-directory)
 
 (defvar rainbow-hexadecimal-colors-font-lock-keywords)
@@ -49,12 +53,49 @@
 (defvar ediff-buffer-B)
 (defvar ediff-merge-buffer)
 
-;; (declare-function global-org-link-mode "org")
+(declare-function global-page-break-lines-mode "page-break-lines-mode")
+(declare-function global-org-link-mode "org")
 (declare-function ediff-get-file-name "ediff")
 
 
 ;; replace form-feed with clean lines.
 (use-package page-break-lines)
+(global-page-break-lines-mode 1)
+
+;;; Outline-mode/Outline-minor-mode
+;;  -------------------------------
+;; The below function can be used to determine the outline-level for use with
+;; outline-mode and outline-minor-mode.
+
+(defun my-outline-mode/outline-level (&optional outline-start)
+  "Calculate the outline level from the number of characters in START-STRING.
+
+If OUTLINE-START is not provided, default to the length of `outline-regexp'
+minus one.  A typical formatting expression for an Elisp script might be:
+  ;; Local Variables:
+  ;; outline-regexp:  ';;;+'
+  ;; outline-start:  ';;'
+  ;; outline-level: my-outline-mode/outline-level
+  ;; End:"
+  (let* (
+         (n (length (match-string 0)))                                            ; get the length of the last matched string.
+         (regex-length (length outline-regexp)))                                  ; get the length of the regex string.
+    ;; outline-start is provided so subtract that from the total length of the
+    ;; string to get the number of outlines in.
+    ;; Example: for outline start of ';;'
+    ;; ;;;    is level 1.
+    ;; ;;;;   is level 2.
+    ;; ;;;;;  is level 3.
+    (if outline-start
+        (- n (length outline-start))
+      ;; if no start-string is provided, calculate where to start counting
+      ;; levels from looking at the given regex for an outline.
+      ;; Here we assume there is one character added to the regex on the end
+      ;; (usually +). If the regex is only 1 character for some reason, we
+      ;; ensure no zeros or negatives are passed.
+      (- n (if (> regex-length 1) (- regex-length 1) 1)))))
+
+
 
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Clickable links.
@@ -324,9 +365,6 @@ parameters for the minibuffer function."
 (add-hook 'ibuffer-mode-hook 'my-ibuffer/ibuffer-mode-config-hook)
 
 ;; Define key maps
-;;CNTRL-SPACE activates any major-mode-hydra defined.
-;; (global-set-key (kbd "C-SPC") #'major-mode-hydra)
-
 
 ;; set up functionality to reopen a buffer in a new frame here you click on the
 ;; modeline with Cntrl pressed and the buffer opens in a new frame.
@@ -364,5 +402,5 @@ parameters for the minibuffer function."
 (provide 'custom-ui-config)
 ;;; custom-ui-config.el ends here
 
-                                        ; LocalWords:  ibuffer Ediff
-                                        ; LocalWords:  Dired ediff
+                                                                                  ; LocalWords:  ibuffer Ediff Elisp
+                                                                                  ; LocalWords:  Dired ediff
