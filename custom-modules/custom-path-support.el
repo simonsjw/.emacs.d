@@ -64,6 +64,7 @@
 (defvar my-paths/q-load-balancer-folder)
 (defvar my-paths/custom-rainbow-mode)
 (defvar my-paths/systemd-mode)
+(defvar my-paths/cell-mode)
 
 (defvar my-paths/ispell-word-replacement)
 (defvar ispell-personal-dictionary)
@@ -90,6 +91,8 @@
 (message
  "no-ilttering etc directory set: %s" no-littering-etc-directory)
 
+;; GPG application:
+(setq epg-gpg-program "/usr/bin/gpg")
 
 ;; set a path to local custom packages.
 (setq custom-packages-dir
@@ -315,11 +318,15 @@
 
 ;; define a path to the rainbow-mode custom package
 (setq my-paths/custom-rainbow-mode
-      (concat user-emacs-directory "custom-packages/rainbow-mode.el"))
+      (concat user-emacs-directory "custom-packages/rainbow-mode/"))
 
 ;; define a path to the systemd-mode custom package
 (setq my-paths/systemd-mode
-      (concat user-emacs-directory "custom-packages/systemd-mode/systemd.el"))
+      (concat user-emacs-directory "custom-packages/systemd-mode/"))
+
+;; define a path to the cell-mode custom package
+(setq my-paths/cell-mode
+      (concat user-emacs-directory "custom-packages/cell-mode/"))
 
 
 
