@@ -8,12 +8,12 @@
 
 ;;; Commentary:
 
-;; configure a spreadsheet like buffer. 
+;; configure a spreadsheet like buffer.
 
 ;;; Code:
 
-
-(load-file "~/.emacs.d/custom-packages/cell-mode/cell-mode.el")
+(defvar my-paths/cell-mode)
+(add-to-list 'load-path my-paths/cell-mode) ; Add directory to the load path
 (require 'cell-mode)
 
 ;;; Look & Feel
