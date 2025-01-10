@@ -150,29 +150,29 @@ EVENT must be a down-mouse-1 event in the mode-line."
 
 
 ;; Now let’s attach this to the mode-line element:
-(defvar-local my-modeline/window-tag
-    '(:eval
-      (let ((tag (my-window-tools/get-tag-given-window)))
-        (if tag
-            (propertize (format "[%s]" tag)
-                        ;; Use an appropriate face for active/inactive windows:
-                        'face (if (mode-line-window-selected-p)
-                                  'mode-line-highlight
-                                'mode-line-inactive)
-                        ;; Change face while mouse is over or pressed:
-                        ;; 'mouse-face 'my-face/active
-                        ;; Attach a keymap that invokes our drag function:
-                        'local-map (let ((map (make-sparse-keymap)))
-                                     (define-key map [mode-line down-mouse-3]
-                                                 '(lambda ()
-                                                    "Ask for confirmation before deleting the window."
-                                                    (when (y-or-n-p "Are you sure you want to delete this window?"))
-                                                    (delete-window)))
-                                     map)
-                        ;; Optional tool-tip:
-                        'help-echo "Right click to delete window.")
-          "")))
-  "Return the tag of the current window for the modeline.")
+;; (defvar-local my-modeline/window-tag
+;;     '(:eval
+;;       (let ((tag (my-window-tools/get-tag-given-window)))
+;;         (if tag
+;;             (propertize (format "[%s]" tag)
+;;                         ;; Use an appropriate face for active/inactive windows:
+;;                         'face (if (mode-line-window-selected-p)
+;;                                   'mode-line-highlight
+;;                                 'mode-line-inactive)
+;;                         ;; Change face while mouse is over or pressed:
+;;                         ;; 'mouse-face 'my-face/active
+;;                         ;; Attach a keymap that invokes our drag function:
+;;                         'local-map (let ((map (make-sparse-keymap)))
+;;                                      (define-key map [mode-line down-mouse-3]
+;;                                                  '(lambda ()
+;;                                                     "Ask for confirmation before deleting the window."
+;;                                                     (when (y-or-n-p "Are you sure you want to delete this window?"))
+;;                                                     (delete-window)))
+;;                                      map)
+;;                         ;; Optional tool-tip:
+;;                         'help-echo "Right click to delete window.")
+;;           "")))
+;;"Return the tag of the current window for the modeline.")
 
 
 
@@ -352,9 +352,6 @@ Specific to the current window's mode line.")
 ;; ##########################################################################
 ;; END OF CUSTOM SEGMENTS.
 
-
-
-(setq-default mode-line-misc-info nil)
 
 ;; Propertize modeline variables with `risky-local-variable'. Variables will
 ;; not work without it.
