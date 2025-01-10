@@ -24,7 +24,7 @@
 ;;; Code:
 (defvar my-paths/systemd-mode)                                                    ; path defined in path-support.el
 ;;; Packages phase
-(load my-paths/systemd-mode)
+(add-to-list 'load-path my-paths/systemd-mode) ; Add directory to the load path
 
 ;;; Configuration phase
 ;; (non - can add company-mode hooks if you use company though.)
