@@ -1,5 +1,11 @@
 ;;; custom-lang-lisp.el --- Lisp development configuration -*- lexical-binding: t; -*-
 
+;; Local Variables:
+;; outline-regexp:  ';;;+'
+;; outline-start:  ';;'
+;; outline-level: my-outline-mode/outline-level
+;; End:
+
 ;; Copyright (C) 2022
 ;; SPDX-License-Identifier: MIT
 
