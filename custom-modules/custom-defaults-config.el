@@ -1,5 +1,5 @@
 ;;; custom-defaults-config.el --- Defaults for the Emacs setup config  -*- lexical-binding: t; -*-
-
+;; outline-regexp: ";;;+"
 ;; Copyright (C) 2023
 ;; SPDX-License-Identifier: MIT
 
