@@ -30,14 +30,8 @@ var/**/image-dired/
 var/**/eshell/
 var/**/tramp/
 var/**/dape/dape-breakpoints
-custom-packages/systemd-mode/
-custom-packages/systemd-mode/LICENSE
-custom-packages/cell-mode/
-custom-packages/org-pretty-table/
-custom-packages/archives/gnu/
-custom-packages/archives/nongnu/
+var/**/bmkp/bookmark-default.el
 custom-packages/worg/
-var/INFODYNAMICS/bmkp/bookmark-default.el
 elpa/archives/gnu/
 elpa/archives/nongnu/
 elpa/archives/gnu/archive-contents
