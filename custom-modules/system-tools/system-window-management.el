@@ -105,7 +105,7 @@
                      (".*\\.log" . logs)                                              ; strings ending `.log'.
                      (".*-log.*" . logs)                                              ; strings with `-log' in them.
                      (".*tramp.*" . logs)                                             ; strings with `tramp' in them.
-                     ("^\\*vc-git: .*" . logs)                                        ; strings beginning `*vc-git :'               
+                     ("^\\*vc-git :.*" . logs)                                        ; strings beginning `*vc-git :'               
                      ("^\\*ielm*" . terminal)                                         ; strings beginning `*ielm' followed by any characters.
                      ("^\\*Q PROC.*" . terminal)                                      ; strings beginning `*Q PROC' followed by any characters.
                      ("^\\*vterm.*" . terminal)                                       ; strings beginning `*vterm' followed by any characters.
