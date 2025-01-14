@@ -14,6 +14,9 @@
 
 ;;; Packages phase
 (use-package projectile
+  :init
+  (setq projectile-auto-discover nil)                                             ; do not scan the search path everytime emacs starts.
+  (setq projectile-enable-caching t)                                              ; save results from project searches across sessions.
   :config
   (projectile-mode +1)
   (define-key
@@ -40,8 +43,7 @@
 
 ;; (setq projectile-mode-line-function                                               ; set the modeline entry for projectile.
 ;;       '(lambda () (format " proj[%s]" (projectile-project-name))))
-(setq projectile-auto-discover nil)                                               ; do not scan the search path everytime emacs starts.
-(setq projectile-enable-caching t)                                                ; save results from project searches across sessions.
+
 (projectile-mode +1)                                                              ; switch on projectile mode.
 
 
