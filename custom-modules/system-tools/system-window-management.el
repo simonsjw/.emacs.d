@@ -79,7 +79,7 @@
                      ("*Ilist*" .config)
                      (".gitignore" . vc)
                      ("*vc-dir*" . vc)
-                     ("*vc-dir*" . vc)
+                     ("*log-edit-files*" . vc)
                      ))
         (:regexps . (("^documentation$" . config)                                     ; exact match for `documentation'
                      ("^README.*" . config)                                           ; strings beginning upper or lower case `README'.
@@ -141,6 +141,28 @@
                      (helpful-mode . config)
                      (compilation-mode . logs)
                      (debugger-mode . logs)
+                     (vc-dir . vc))
+                  )
+        )
+      )
+
+
+;; now map frame names to window opening functions. 
+(setq my-window-tools/frame-map
+      '((:names   . (("*dape-shell*" . terminal)
+                     ("*scratch*" . terminal)
+                     ("*Ilist*" .config)
+                     (".gitignore" . vc)
+                     ("*vc-dir*" . vc)
+                     ("*log-edit-files*" . vc)
+                     ))
+        (:regexps . (("^documentation$" . config)    
+                     ("^README.*" . config)   
+                     (".*\\.conf$" . config)     
+                     (".*\\.dconf$" . config)  
+                     ))
+        (:modes   . ((vterm-mode . terminal)
+                     (eshell-mode . terminal)
                      (vc-dir . vc))
                   )
         )
@@ -224,10 +246,9 @@ speedbar when the window that contains it no longer exists."
  'delete-frame-functions #'my-window-tools/close-sr-speedbar-on-frame-delete)
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;; Buffer assignment to windows ;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ----------------------------------------------------------------------------
+
+;;;; Buffer assignment to windows
+;;   ----------------------------
 ;; Here we implement the mechanics that, when given a buffer, can determine
 ;; the appropriate window for that buffer and move it if necessary.
 ;; The steps in this process are:
@@ -555,7 +576,8 @@ ALIST is a dummy variable to make the function conform to the expected
 signature."
   (let* ((tag (my-window-tools/get-buffer-tag-or-default buffer))
          (window (and tag (my-window-tools/get-window-for-tag tag)))
-         (original-window (get-buffer-window buffer)))
+         (original-window (get-buffer-window buffer))
+         (original-frame (window-frame original-window)))
     (cond
      ;; Whitelisted buffer; do not interfere.
      ((not tag)
@@ -571,9 +593,9 @@ signature."
      (t
       nil))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Other window tools  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;; Other window tools
+;;   ------------------
 
 (defvar my-window-tools/window-state nil
   "Saved window state including custom properties.")
@@ -668,10 +690,10 @@ The tag name must be one of `my-window-tools/tag-list`."
     (with-current-buffer (symbol-name tag-name) (tab-line-mode 1))))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; BACKTRACE AND MESSAGES HANDLED BY WINDOW MANAGEMENT FUNCTIONS NOW. ;;
-;; THESE ARE KEPT TO SHOW HOW DISPLAY-BUFFER-ALIST CAN BE USED.       ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; BACKTRACE AND MESSAGES HANDLED BY WINDOW MANAGEMENT FUNCTIONS NOW. 
+;; THESE ARE KEPT TO SHOW HOW DISPLAY-BUFFER-ALIST CAN BE USED.       
+
 ;; (add-to-list 'display-buffer-alist
 ;;              '("^\\*Messages\\*"
 ;;                (display-buffer-reuse-window
@@ -688,20 +710,21 @@ The tag name must be one of `my-window-tools/tag-list`."
 ;; ----------------------------------------------------------------------------
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;; Configure display-buffer-alist ;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;; Configure display-buffer-alist
+;;   ------------------------------
 ;; the below object controls how new buffers are assigned to windows in Emacs.
 ;; This is central to managing the relationship between buffers and windows.
 (setq display-buffer-alist
       `(;; Rule for *Dictionary* and *Ilist* buffers
-        ;; (Show dictionary definition on the left)
+        ;; (Show Ilist or dictionary definition on the left)
         ("^\\*\\(Dictionary\\|Ilist\\)\\*"
          (display-buffer-in-side-window)
          (side . right)
          (window-width . 50)                                                      ; change to 0.5 to make it half the size of the buffer it is next to.
          (window-parameters . ((no-delete-other-windows . t))))
+
+        
         ;; General rule using your custom function
         (".*" . (my-window-tools/display-buffer))))
 
