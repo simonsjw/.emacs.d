@@ -5,7 +5,13 @@
  ;; If there is more than one, they won't work right.
  '(bmkp-last-as-first-bookmark-file
    "/home/simon/.emacs.d/var/INFODYNAMICS/bmkp/current-bookmark.el")
-
+ '(icon-preference '(symbol image text emoji))
+ '(org-agenda-files
+   '("/home/simon/Documents/org/agenda/todos.org" "/home/simon/Documents/org/agenda/evie.org" "/home/simon/Documents/org/agenda/gracie.org" "/home/simon/Documents/org/agenda/recurrent.org"))
+ '(outline-minor-mode-cycle t)
+ '(outline-minor-mode-highlight 'override)
+ '(outline-minor-mode-prefix [3 64])
+ '(outline-minor-mode-use-buttons 'in-margins)
  '(package-selected-packages '(org-plus-contrib))
  '(pretty-speedbar-blank-page '(""))
  '(pretty-speedbar-book '(""))
@@ -20,6 +26,7 @@
  '(pretty-speedbar-page '(""))
  '(pretty-speedbar-tag '(""))
  '(pretty-speedbar-tags '(""))
+ '(projectile-speedbar-enable t)
  '(safe-local-variable-values
    '((checkdoc-package-keywords-flag)
      (org-blank-before-new-entry
@@ -28,6 +35,7 @@
      (org-list-description-max-indent . 5)
      (org-list-two-spaces-after-bullet-regexp)
      (eval olivetti-set-width 160)))
+ '(semantic-sb-info-format-tag-function 'semantic-format-tag-short-doc)
  '(speedbar-add-supported-extension
    '(".cl" ".li?sp" ".lua" ".fnl" ".fennel" ".kt" ".mvn" ".gradle" ".properties" ".cljs?" ".sh" ".bash" ".php" ".ts" ".html?" ".css" ".less" ".scss" ".sass" ".py" ".p" ".q" ".k" ".rs" ".lock" "makefile" "MAKEFILE" "Makefile" ".json" ".yaml" ".toml" ".md" ".markdown" ".org" ".txt" "README"))
  '(speedbar-directory-button-trim-method 'trim)
