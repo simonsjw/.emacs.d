@@ -32,10 +32,6 @@ var/**/tramp/
 var/**/dape/dape-breakpoints
 var/**/bmkp/bookmark-default.el
 custom-packages/worg/
-elpa/archives/gnu/
-elpa/archives/nongnu/
-elpa/archives/gnu/archive-contents
-elpa/archives/gnu/archive-contents.signed
-elpa/gnupg/pubring.kbx
-elpa/gnupg/pubring.kbx~
-elpa/gnupg/trustdb.gpg
+
+
+
