@@ -209,9 +209,20 @@ active environment."
     :args '("format")
     :lighter " PF")  ; remove ref on modeline.
 
-  ;; -------
-  ;; Folding
-  ;; -------
+  ;;;;;; Set up outline
+  ;;     --------------
+  ;; Set up customizations for outline-minor-mode.
+  (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons
+  (setq-local outline-blank-line t)                                               ; Blank line before headers
+  (setq-local outline-minor-mode-highlight t)                                     ; Font-lock outlines
+  (setq-local outline-regexp "##+")                                              ; Match `;;;`
+  (setq-local outline-start "#")                                                 ; Start marker
+  (setq-local outline-level #'my-outline-mode/outline-level)                      ; Custom level function
+  (outline-minor-mode 1)                                                          ; Use outline-minor-mode
+
+
+  ;;;;;; Folding
+  ;;     -------
   ;; Set the fringe mode for python-ts-mode folding.
   (set-fringe-mode '(12 . 12))
   ;; Enable ts-fold-mode

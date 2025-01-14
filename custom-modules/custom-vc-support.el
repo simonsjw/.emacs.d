@@ -16,19 +16,9 @@
 
 
 
-
-;; Ensure github functionality is activated.
-;; (use-package forge
-;;   :Straight (:type git
-;;                    :flavor melpa
-;;                    :host github
-;;                    :repo "magit/forge"))
-
 ;; git-modes
 ;; support for git configuration files.
 (use-package git-modes)
-
-;; Support todos and similar with git.
 
 ;;; code:
 ;;; config phase
@@ -182,15 +172,16 @@
 
 ;; Customize display-buffer-alist for *vc-log*
 ;; Control how *vc-log* is displayed using display-buffer-alist.
-(add-to-list 'display-buffer-alist
-             '("^\\*vc-log\\*"
-               (display-buffer-reuse-window
-                display-buffer-same-window)))
+(with-eval-after-load 'system-window-management
+  (add-to-list 'display-buffer-alist
+               '("^\\*vc-log\\*"
+                 (display-buffer-reuse-window
+                  display-buffer-same-window)))
 
-(add-to-list 'display-buffer-alist
-             '("^\\*log-edit-files\\*"
-               (display-buffer-reuse-window
-                display-buffer-same-window)))
+  (add-to-list 'display-buffer-alist
+               '("^\\*log-edit-files\\*"
+                 (display-buffer-reuse-window
+                  display-buffer-same-window))))
 
 ;;; Set up git tags list.
 ;;  ---------------------

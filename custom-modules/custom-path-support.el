@@ -317,7 +317,7 @@
       (concat user-emacs-directory "custom-packages/q-loadbalancer/"))
 
 ;; define a path to the rainbow-mode custom package
-(setq my-paths/custom-rainbow-mode
+(setq my-paths/rainbow-mode
       (concat user-emacs-directory "custom-packages/rainbow-mode/"))
 
 ;; define a path to the systemd-mode custom package

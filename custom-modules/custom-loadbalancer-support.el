@@ -18,8 +18,8 @@
 
 
 
-;;; 1. functions to set/get environmental variables for KDB setup.
-;; ---------------------------------------------------------------
+;;;; 1. functions to set/get environmental variables for KDB setup.
+;;   --------------------------------------------------------------
 (defun loadBalancer/set-env-vars-for-base-config ()
   "Set up the environmental variables needed for the base kdb/q
 configuration. "
@@ -278,12 +278,12 @@ corpus. "
   (unless (getenv "kdb_service_ai_conda_env")
     (setenv "kdb_service_ai_conda_env" "pyTorch")))
 
-;;; THIS IS THE END OF 1. functions to set/get environmental var...
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; THIS IS THE END OF 1. functions to set/get environmental var...
 
 
-;;; 2. functions to manage KDB processes. 
-;; ---------------------------------------------------------------
+
+;;;; 2. functions to manage KDB processes. 
+;;   -------------------------------------
 
 
 
@@ -310,8 +310,7 @@ corpus. "
 
 
 
-;; 1. Function to Check and Manage Ports
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; 1. Function to Check and Manage Ports
 ;; This is similar to what you might have in your shell scripts, 
 ;; but adapted to be initiated from Emacs.
 (defun loadBalancer/find-next-available-port (start-port)
@@ -326,8 +325,7 @@ corpus. "
     port))
 
 
-;; 2. Starting a Process in a New Buffer
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; 2. Starting a Process in a New Buffer
 ;; Here’s how you might start a new process in a buffer, creating a
 ;; new term buffer if one does not exist.
 (defun loadBalancer/start-load-balancer-process (process-name start-port)
@@ -393,8 +391,8 @@ KDB/Q process."
         secondary_threads_txt
         port)))
 
-;; 3. Managing and Interacting with the Process
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; 3. Managing and Interacting with the Process
+
 ;; You can write functions to send commands to the process, stop it,
 ;; or restart it.
 (defun loadBalancer/send-command-to-process (process-name command)
@@ -456,8 +454,8 @@ KDB/Q process."
               (term-send-raw-string (concat command "\n")))))))))
 
 
-;; Example Usage
-;;;;;;;;;;;;;;;;
+;;; Example Usage
+;;  -------------
 ;; You can use these functions to manage and interact with your
 ;; loadBalancer processes. For instance, to start a process, you might
 ;; call (start-load-balancer-process "loadBalancer" 4000).

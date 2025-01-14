@@ -39,102 +39,43 @@
 ;;   * geiser-racket
 ;;   * geiser-stklos
 
+
+;;; Requirements: 
+(declare-function aggressive-indent-mode "aggressive-indent-mode")
+(declare-function my-outline-mode/outline-level "custom-ui-config")
+
 (require 'custom-system-tools)
 (require 'eldoc)
 (require 'yasnippet)
 (require 'yasnippet-snippets)
+(require 'eldoc)
 
-;; Emacs Lisp
+;;; Packages:
+
+;;;; Emacs Lisp
 ;; https://codeberg.org/ideasman42/emacs-elisp-autofmt
 (use-package elisp-autofmt)
 
-;; Common Lisp
+;;;; Common Lisp
 (use-package sly)
 (use-package sly-asdf)
 (use-package sly-quicklisp)
 (use-package sly-repl-ansi-color)
 
-;; Clojure
+;;;; Clojure
 (use-package cider)
 (use-package clj-refactor)
 (use-package clojure-mode)
 (use-package flycheck-clojure)
 
-;; Scheme and Racket
+;;;; Scheme and Racket
 (use-package geiser)
 (use-package geiser-guile)
 (use-package geiser-racket)
 
 ;;; Code:
-(declare-function aggressive-indent-mode "aggressive-indent-mode")
 
-;; Global defaults
-;;(require 'eldoc)
-
-
-;; (defun elisp-flymake-byte-compile-with-packages (report-fn &rest _args)
-;;   "A Flymake backend for elisp byte compilation.
-;; Spawn an Emacs process that byte-compiles a file representing the
-;; current buffer state and calls REPORT-FN when done."
-;;   (when elisp-flymake--byte-compile-process
-;;     (when (process-live-p elisp-flymake--byte-compile-process)
-;;       (kill-process elisp-flymake--byte-compile-process)))
-;;   (let ((temp-file (make-temp-file "elisp-flymake-byte-compile"))
-;;         (source-buffer (current-buffer))
-;;         (coding-system-for-write 'utf-8-unix)
-;;         (coding-system-for-read 'utf-8))
-;;     (save-restriction
-;;       (widen)
-;;       (write-region (point-min) (point-max) temp-file nil 'nomessage))
-;;     (let* ((output-buffer (generate-new-buffer " *elisp-flymake-byte-compile*")))
-;;       (setq
-;;        elisp-flymake--byte-compile-process
-;;        (make-process
-;;         :name "elisp-flymake-byte-compile"
-;;         :buffer output-buffer
-;;         :command `(,(expand-file-name invocation-name invocation-directory)
-;;                    "-Q"
-;;                    "--batch"
-;;                    ;; "--eval" "(setq load-prefer-newer t)" ; for testing
-;;                    ,@(mapcan (lambda (path) (list "-L" path))
-;;                              elisp-flymake-byte-compile-load-path)
-;;                    "-f" "package-initialize"
-;;                    "-f" "elisp-flymake--batch-compile-for-flymake"
-;;                    ,temp-file)
-;;         :connection-type 'pipe
-;;         :sentinel
-;;         (lambda (proc _event)
-;;           (unless (process-live-p proc)
-;;             (unwind-protect
-;;                 (cond
-;;                  ((not (and (buffer-live-p source-buffer)
-;;                             (eq proc (with-current-buffer source-buffer
-;;                                        elisp-flymake--byte-compile-process))))
-;;                   (flymake-log :warning
-;;                                "byte-compile process %s obsolete" proc))
-;;                  ((zerop (process-exit-status proc))
-;;                   (elisp-flymake--byte-compile-done report-fn
-;;                                                     source-buffer
-;;                                                     output-buffer))
-;;                  (t
-;;                   (funcall report-fn
-;;                            :panic
-;;                            :explanation
-;;                            (format "byte-compile process %s died" proc))))
-;;               (ignore-errors (delete-file temp-file))
-;;               (kill-buffer output-buffer))))
-;;         :stderr " *stderr of elisp-flymake-byte-compile*"
-;;         :noquery t)))))
-
-
-;; aggressive indent is already activated for any prog-mode. 
-;; aggressive-indent-mode for all lisp modes
-;;(when (locate-library "aggressive-indent")
-;;  (add-hook 'lisp-mode-hook #'aggressive-indent-mode)
-;;  (add-hook 'clojure-mode-hook #'aggressive-indent-mode)
-;;  (add-hook 'scheme-mode-hook #'aggressive-indent-mode))
-
-;;; Emacs lisp
+;;;; Emacs lisp
 (defun my/emacs-lisp-mode-setup ()
   "Custom setup for `emacs-lisp-mode`."
   ;; You will probably want to tweak this variable, it determines how
@@ -160,11 +101,8 @@
   ;; show diagnostics.
   ;;(flymake-show-buffer-diagnostics)
 
-  ;; Enable Ielm
-  ;;(projectile-run-ielm)
 
-  
-  ;;; IDE layout
+;;;;; IDE layout
   ;;  ----------
   ;; Provide a function to set the fill column indicator.
   ;; This has a default of 80 but can be set on a per mode basis.
@@ -176,27 +114,29 @@
   (setq comment-column 82)                                                        ; Column to indent right-margin comments to. 
   (display-fill-column-indicator-mode 1)                                          ; show the visual prompt. 
 
-  ;;; Set up outline
+;;;;;; Set up outline
   ;;  --------------
-  ;; Use outline-minor-mode
-  (customize-set-variable 'outline-minor-mode t)
-  ;; show the buttons.
-  (customize-set-variable 'outline-minor-mode-use-buttons 'in-margins)
-  ;; show a blank line prior to a grouped outline header
-  (customize-set-variable 'outline-blank-line t)
-  ;; Use font-locking with the outlines.
-  (customize-set-variable 'outline-minor-mode-highlight t)
+  ;; Set up customizations for outline-minor-mode.
+  (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons
+  (setq-local outline-blank-line t)                                               ; Blank line before headers
+  (setq-local outline-minor-mode-highlight 'override)                                     ; Font-lock outlines
   
+  (setq-local outline-regexp ";;;+")                                              ; Match `;;;`
+  (setq-local outline-start ";;")                                                 ; Start marker
+  (setq-local outline-level #'my-outline-mode/outline-level)                      ; Custom level function
+  (outline-minor-mode 1)                                                          ; Use outline-minor-mode
+
   
-  ;;; IDE functionality map
+
+;;;;; IDE functionality map
   ;;  ---------------------
   ;; compiling the code (Not applicable)
   ;; (keymap-set python-ts-mode-map "C-c C-c C-u" #)
   (keymap-set emacs-lisp-mode-map "C-c c f" #'elisp-byte-compile-file)
-  
+
   ;;compile buffer but don't write
   (keymap-set emacs-lisp-mode-map "C-c c b" #'elisp-byte-compile-buffer)
-  
+
   ;; debugging the code tbc
   (keymap-set emacs-lisp-mode-map "C-c C-c C-k" #'edebug-defun)
 
@@ -321,4 +261,4 @@ a message telling you which statement you are at."
 (provide 'custom-lang-lisp)
 ;;; custom-lang-lisp.el ends here
 
-; LocalWords:  codeberg
+                                                                                  ; LocalWords:  codeberg ui

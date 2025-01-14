@@ -33,11 +33,8 @@
 
 (require 'custom-logging-config)
 
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;; Emacs Lisp logging helpers ;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Emacs Lisp logging helpers
+;;   --------------------------
 
 
 ;; Define an advice function to be used for implicit logging.
@@ -77,10 +74,7 @@ Additional ARGS are captured in a secondary field."
      :before (lambda (&rest args)
                (apply 'my-log/advice "use-package: " args))))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; Hash table management ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Hash table management
 
 ;; utility for creating a hash table.
 (defun my-hash-tools/define-hash-table
@@ -106,10 +100,8 @@ If not supplied, the default names `idx' and `item' are used."
 ;; ---------------------------
 
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Dired tools ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Dired tools
+;;   -----------
 
 (defun my-interactive-tools/select-directory-using-dired ()
   "Open a Dired buffer for directory selection and return the selected path."
@@ -120,12 +112,11 @@ If not supplied, the default names `idx' and `item' are used."
       (user-error "Not a directory"))))
 
 ;; end of Dired tools.
-;; ---------------------------
+;; -------------------
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Image processing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Image processing
+;;   ----------------
 
 (defun my-image-tools/create-image-icon (file &optional width height)
   "Create an image icon from FILE with optional WIDTH and HEIGHT."
@@ -138,12 +129,11 @@ If not supplied, the default names `idx' and `item' are used."
       (message "Image creation failed for file: %s" file)
       "")))
 ;; end of Image processing
-;; ---------------------------
+;; -----------------------
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; String processing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; String processing
+;;   -----------------
 
 (defun my-strings/ensure-directory-path (path)
   "Ensure the directory PATH ends with a '/'."
@@ -209,9 +199,9 @@ into a given amount of bytes."
 ;; end of String processing
 ;; ---------------------------
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Frame management
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;; Frame management
+;;   ----------------
 (defun my-frame-tools/delete-frame-by-name (frame-name)
   "Delete a frame by its name FRAME-NAME."
   (interactive "sEnter frame name to delete: ")  ; Prompt for frame name
@@ -257,12 +247,11 @@ If FRAME is nil, use the current frame."
 
 
 ;; end of Frame management
-;; ---------------------------
+;; -----------------------
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; BUFFER management ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; BUFFER management
+;;   -----------------
 
 (defun my-buffer-tools/show-buffer-from-first-line (buffer)
   "Show BUFFER starting from the first line."
@@ -418,9 +407,8 @@ my-buffer-tools/display-buffer-by-name-and-tag"
         (throw 'window win)))
     nil))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;; TOOLS FOR USE IN BUFFER ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; TOOLS FOR USE IN BUFFER
+;;   -----------------------
 
 (defun my-buffer-tools/insert-blank-line-at-start ()
   "Insert a blank line at the start of the current buffer, even if it's read-only."
@@ -519,9 +507,9 @@ to buffer here, the check needs to be made."
     (comment-box beg end (- pad 2))))
 
 ;; ---end of TOOLS FOR THE FILE SYSTEM---
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;TOOLS FOR THE FILE SYSTEM ;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;; TOOLS FOR THE FILE SYSTEM
+;;   -------------------------
 ;; Function to ensure directory exists
 (defun my-on-disk-tools/ensure-directory-exists (dir)
   "Ensure the directory DIR exists, create it if it does not."
@@ -531,9 +519,8 @@ to buffer here, the check needs to be made."
 
 ;; ---end of TOOLS FOR USE IN BUFFER---
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;; TOOLS FOR THEME SUPPORT ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; TOOLS FOR THEME SUPPORT
+;;   -----------------------
 
 (defun my-theme-support/tone-down-fringes ()
   "Set the buffer fringes to be invisible.
@@ -551,9 +538,8 @@ LEFT is the left margin width, and RIGHT is the right margin width (optional)."
 
 ;; ---end of TOOLS FOR THEME SUPPORT---
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;; TOOLS USING ORG-MODE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; TOOLS USING ORG-MODE
+;;   --------------------
 
 ;; Create abbreviations
 (defun my-org/org-link-abbreviations-create ()
@@ -642,9 +628,8 @@ If `sr-speedbar' is not open, open it first."
 
 ;; ---end of TOOLS USING THE OS---
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;; TOOLS FOR LANGUAGE & DICTIONARIES ;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; TOOLS FOR LANGUAGE & DICTIONARIES
+;;   --------------------------
 
 (defun my-dictionary/use-american ()
   "Switch to American English dictionary."

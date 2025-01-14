@@ -288,7 +288,8 @@ closed as a result of this action."
   (interactive)
   (my-frame-tools/set-current-frame-name "startup")
   (my-ui/create-project-frame user-emacs-directory)
-  (my-frame-tools/delete-frame-by-name "startup"))
+;;  (my-frame-tools/delete-frame-by-name "startup")
+  )
 
 (defalias 'IDE-refresh 'my-ui/startup-layout
   "Alias for `my-ui/startup-layout' to refresh the Emacs session layout.")

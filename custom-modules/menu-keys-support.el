@@ -8,7 +8,7 @@
 
 ;;; Commentary:
 
-;; Better menu organisation and key bindings. 
+;; Better menu organisation and key bindings.
 
 ;;; Code:
 
@@ -34,10 +34,9 @@
 ;;   (add-hook 'context-menu-functions #'my-menus/add-vc-mode-to-context-menu))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;; Set comment shortcuts and build menu for prog-mode ;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;; 
+;;;; PROG_MODE: Comment Key Map and Menu
+;;   -------------------------------------------
 ;; Define the keymap for 'comments' related commands
 (defvar my-key-maps/prog-mode-comment-map (make-sparse-keymap "Comment")
   "Keymap for comment commands in programming modes.")
@@ -106,9 +105,8 @@ These are available in `prog-mode'."
   "Menu for comment-related functions in `prog-mode'.")
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Window management ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Window management: Key Map
+;;   --------------------------
 
 (defgroup custom-windows '()
   "Window related configuration for Custom Emacs."

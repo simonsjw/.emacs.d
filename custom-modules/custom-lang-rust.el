@@ -132,14 +132,12 @@
   ;; This should already be done in the main programming mode settings. 
   ;;    (add-hook 'rust-mode-hook (lambda () (setq indent-tabs-mode nil)))
   
-  ;;;;;;;;;;;;;
-  ;; IDE layout
-  ;; ----------
+  ;;;; IDE layout
+  ;;   ----------
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; IDE functionality map
-  ;; ---------------------
+  ;;;; IDE functionality map
+  ;;   ---------------------
   ;; compiling the code
   (keymap-set rustic-mode-map "C-c C-c C-u" #'rust-compile)
   
@@ -172,9 +170,9 @@
   
   ;; rustic-cargo-add-missing-dependencies
 
-  ;;;;;;;;;;;;;;;;;;;
-  ;; Project settings
-  ;; ----------------
+
+  ;;;; Project settings
+  ;;   ----------------
   ;; switch projects
   (keymap-set rustic-mode-map "C-c p p" #'consult-projectile)
 

@@ -278,7 +278,7 @@ Converts keys to strings and ensures values are strings."
 ;;; Extend Rainbow-mode to cover my system theme.
 
 
-(add-to-list 'load-path my-paths/cell-mode) ; Add directory to the load path
+(add-to-list 'load-path my-paths/rainbow-mode) ; Add directory to the load path
 (require 'rainbow-mode)
 (setq rainbow-info-theme-colors-alist
       (my-colors/extract-theme-colors my-colors/info-theme-colors)

@@ -25,13 +25,11 @@
 
 
 ;; ##########################################################################
-;;; CUSTOM SEGMENTS.
+;;;; CUSTOM SEGMENTS.
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;; loadbalancer Process List ;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;; loadbalancer Process List
 
 ;; (defun q-loadbalancer-buffer-list-segment ()
 ;;   "Display buffers with names starting with '*Q PROC:' in q-loadbalancer-mode."
@@ -41,9 +39,7 @@
 ;;     (mapconcat (lambda (buf) (buffer-name buf)) buffers " | ")))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Buffer Icon ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;; Buffer Icon
 
 (defvar-local my-modeline/buffer-icon
     '(:eval
@@ -53,9 +49,7 @@
           "")))
   "Display the icon for the current buffer in the mode-line.")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Modeline Window Tag ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;; Modeline Window Tag 
 ;; (defun my-modeline/drag-window-boundary (start-event)
 ;;   "Allow dragging of window boundaries when the mode-line element is clicked.
 
@@ -176,9 +170,7 @@ EVENT must be a down-mouse-1 event in the mode-line."
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;; Modeline Matching Bracket ;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;; Modeline Matching Bracket
 
 (defvar-local my-modeline/matching-bracket
     '(:eval (let* ((match-info
@@ -200,9 +192,8 @@ If the cursor is not on or next to a bracket, display the default position info.
 
 ;; pyvenv
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;; sly mode-line entry ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;; sly mode-line entry
 
 ;; fix up the recursive sly--mode-line-format error.
 ;; (defun my-modeline/sly-mode-line-setup()
@@ -221,9 +212,8 @@ If the cursor is not on or next to a bracket, display the default position info.
 ;; (add-hook 'sly-mode-hook #'my-modeline/sly-mode-line-setup)
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; eglot mode-line entry ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;  eglot mode-line entry
 
 ;; fix up the recursive eglot--mode-line-format error.
 ;; (defun my-modeline/eglot-mode-line-setup ()
@@ -274,9 +264,8 @@ If the cursor is not on or next to a bracket, display the default position info.
 ;;   my-custom-menus/comment-menu)
                                                                                   ; menu
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Flymake entry ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;; Flymake entry
 
 (declare-function flymake--severity "flymake" (type))
 (declare-function flymake-diagnostic-type "flymake" (diag))
@@ -336,7 +325,7 @@ TYPE is usually keyword `:error', `:warning' or `:note'."
   "Mode line construct displaying `flymake-mode-line-format'.
 Specific to the current window's mode line.")
 
-;;;; Eglot
+;;;;;; Eglot
 
 ;; (with-eval-after-load 'eglot
 ;;   (setq mode-line-misc-info
@@ -366,9 +355,9 @@ Specific to the current window's mode line.")
 ;;                      my-speedbar/show-relative-path))
 ;;   (put construct 'risky-local-variable t))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; Set up modeline layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;; Set up modeline layout
+
 
 ;; (setq-default mode-line-misc-info
 ;;               '(

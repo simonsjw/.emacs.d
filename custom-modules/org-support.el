@@ -402,11 +402,14 @@ Pipe indicates that DONE and CANCELLED are both final states to be chosen.")
 ;;(org-clock-persistence-insinuate)
 
 
+
 ;; Org Capture:
 ;; Capture templates
 (setq org-capture-templates
       '(
-        ("t" "Todo with link to contact" entry (file+headline "~/org/todo.org" "Tasks")
+        ("t" "Todo with link to contact"
+         entry (file+headline
+                (expand-file-name "agenda/todo.org" org-directory) "Tasks")
          "* TODO %^{Title}
  SCHEDULED: %^t
  :PROPERTIES:

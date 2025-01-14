@@ -1,4 +1,4 @@
-;;; custom-undo-tree-support.el - better undo-tree in emacs -*- lexical-binding: t; -*-
+;;; custom-undo-tree-support.el --- better undo-tree in emacs -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022
 ;; SPDX-License-Identifier: MIT
@@ -7,7 +7,9 @@
 
 ;;; Commentary:
 
-;; Get quality undo-tree support in emacs. 
+;; Get quality undo-tree support in Emacs.
+
+
 
 ;;; Packages:
 
@@ -19,10 +21,15 @@
 ;; https://gitlab.com/tsc25/undo-tree/-/blob/master/undo-tree.el
 (use-package undo-tree)
 
+
+
 (require 'undo-tree)
+
+;;; Code:
 (global-undo-tree-mode)
 
 
+;;;; Customisation:
 ;; Define the undo-tree customization group
 (defgroup undo-tree nil
   "Customization group for undo-tree."
@@ -31,20 +38,25 @@
 
 ;; Define the undo-tree-show-minibuffer-help custom variable
 (defcustom undo-tree-show-minibuffer-help t
-  "Show a quick reference to the most important undo-tree-mode commands in the
-mini-buffer when the undo-tree buffer is active."
+  "Show a quick reference to the most important `undo-tree-mode' commands.
+
+shown in the mini-buffer when the undo-tree buffer is active."
   :type 'boolean
   :group 'undo-tree)
+
+
 
 ;; Enable timestamps in the undo-tree visualizer
 (setq undo-tree-visualizer-timestamps t)
 ;; Enable diffs in the undo-tree visualizer
 (setq undo-tree-visualizer-diff t)
 
+
 ;; Define the undo-tree-auto-save-history custom variable
 (defcustom undo-tree-auto-save-history t
   "Automatically save undo history to a file.
-(the path for the save history is defined in custom-path-support.el)
+
+  (the path for the save history is defined in custom-path-support.el)
 Note: Requires Emacs version 24.3 or higher."
   :type 'boolean
   :group 'undo-tree)
@@ -60,7 +72,7 @@ Note: Requires Emacs version 24.3 or higher."
 
 
 
-;; Compressing undo history
+;;; Compressing undo history
 ;; Undo history files cannot grow beyond the maximum undo tree size, which is
 ;; limited by undo-limit, undo-strong-limit and undo-outer-limit.
 ;; Nevertheless, undo history files can grow quite large.

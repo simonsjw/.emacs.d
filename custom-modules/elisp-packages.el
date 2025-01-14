@@ -11,10 +11,10 @@
 
 ;;; Code:
 
-;; dash.el: A modern list API for Emacs. No 'cl required.
+;;;; dash.el: A modern list API for Emacs. No 'cl required.
 (use-package dash)
 
-;; The long lost Emacs string manipulation library.
+;;;; The long lost Emacs string manipulation library.
 (use-package s)
 
 ;; (use-package pkg-info)
@@ -22,7 +22,7 @@
 (use-package jump)
 
 
-;; package to process and display alerts.
+;;;; package to process and display alerts.
 ;; https://github.com/spegoraro/org-alert
 (use-package alert)
 

@@ -27,7 +27,7 @@
   (when (facep 'my-font-faces/prog-mode-face)
     (face-remap-add-relative 'default 'my-font-faces/prog-mode-face))
 
-  (setq display-line-numbers-type 'absolute)
+  (setq-local display-line-numbers-type 'absolute)
   (display-line-numbers-mode)                                                     ; activate line numbers.
   (set-face-attribute 'line-number nil :height 0.8)
 
@@ -47,7 +47,7 @@
   (fringe-mode '(5 . 10))
 
   ;; show the fill column with an indicator line
-  (setq display-fill-column-indicator-column t)
+  (setq-local display-fill-column-indicator-column t)
   (display-fill-column-indicator-mode)
   
   ;; ensure changess are visible in the buffer.
@@ -61,7 +61,7 @@
   ;; (setq fci-rule-width 1)
   ;; (setq fci-rule-color "darkgrey")
 
-  (setq truncate-lines t)   ; deactivate line-wrapping.
+  (setq-local truncate-lines t)   ; deactivate line-wrapping.
 
   ;; Keymaps and Menus
   ;; Assign buffer local prefixes to comment keymap.

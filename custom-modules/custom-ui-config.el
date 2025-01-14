@@ -1,8 +1,8 @@
-;;; custom-ui-config.el --- Ui configuration  -*- lexical-binding: t; -*-
+;;; custom-ui-config.el --- UI configuration  -*- lexical-binding: t; -*-
 
 ;; Local Variables:
-;; outline-regexp:  ';;;+'
-;; outline-start:  ';;'
+;; outline-regexp:  ";;;+"
+;; outline-start:  ";;"
 ;; outline-level: my-outline-mode/outline-level
 ;; End:
 
@@ -10,7 +10,7 @@
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: System Crafters Community
-;; Keywords: ui
+;; Keywords: UI User Interface
 
 ;;; Commentary:
 
@@ -25,17 +25,20 @@
 (use-package info+)
 (use-package imenu-list)
 (use-package elisp-demos)
+(use-package page-break-lines)
 
 ;; docs in windows over code.
 (use-package eldoc-box)
 
 (require 'org)
+(require 'outline)
 (require 'ibuffer)
 (require 'easymenu)
 
 (require 'bookmark+)                                                              ; commands usually have a bmkp prefix.
 (require 'dired+)                                                                 ; commands usually have a diredp prefix.
 (require 'info+)
+(require 'page-break-lines)
 
 (defvar org-roam-directory)
 
@@ -59,11 +62,19 @@
 
 
 ;; replace form-feed with clean lines.
-(use-package page-break-lines)
+
 (global-page-break-lines-mode 1)
 
-;;; Outline-mode/Outline-minor-mode
+
+;;;; Outline-mode/Outline-minor-mode
 ;;  -------------------------------
+
+(custom-set-variables
+ '(outline-minor-mode-cycle t)                                                    ; Enable cycling through outline states by default.
+ '(outline-minor-mode-highlight 'override)                                        ; Use the outline face, overwriting attributes of the existing face by default. 
+ '(outline-minor-mode-prefix [3 64])                                              ; Set the prefix keys for the mode ([3 64] corresponds to 'C-c @').
+ '(outline-minor-mode-use-buttons 'in-margins))                                   ; Use buttons in margins by default
+
 ;; The below function can be used to determine the outline-level for use with
 ;; outline-mode and outline-minor-mode.
 
@@ -73,29 +84,45 @@
 If OUTLINE-START is not provided, default to the length of `outline-regexp'
 minus one.  A typical formatting expression for an Elisp script might be:
   ;; Local Variables:
-  ;; outline-regexp:  ';;;+'
-  ;; outline-start:  ';;'
+  ;; outline-regexp:  \";;;+\"
+  ;; outline-start:  \";;\"
   ;; outline-level: my-outline-mode/outline-level
   ;; End:"
-  (let* (
-         (n (length (match-string 0)))                                            ; get the length of the last matched string.
-         (regex-length (length outline-regexp)))                                  ; get the length of the regex string.
-    ;; outline-start is provided so subtract that from the total length of the
-    ;; string to get the number of outlines in.
-    ;; Example: for outline start of ';;'
-    ;; ;;;    is level 1.
-    ;; ;;;;   is level 2.
-    ;; ;;;;;  is level 3.
-    (if outline-start
-        (- n (length outline-start))
-      ;; if no start-string is provided, calculate where to start counting
-      ;; levels from looking at the given regex for an outline.
-      ;; Here we assume there is one character added to the regex on the end
-      ;; (usually +). If the regex is only 1 character for some reason, we
-      ;; ensure no zeros or negatives are passed.
-      (- n (if (> regex-length 1) (- regex-length 1) 1)))))
+  (let ((match (match-string 0)))
+    (if (not match)
+        (progn
+          ;; (message "my-outline-mode/outline-level: No match found. Returning nil.") 
+          nil)                                                                    ; Return nil to indicate the line is not a heading
+      (let* ((n (length match))                                                   ; get the length of the last matched string.
+             (regex-length (length outline-regexp))                               ; get the length of the regex string.
+             ;; outline-start is provided so subtract that from the total
+             ;; length of the string to get the number of outlines in.
+             ;; Example: for outline start of ';;'
+             ;; ;;;    is level 1.
+             ;; ;;;;   is level 2.
+             ;; ;;;;;  is level 3.
+             (level (if outline-start
+                        ;; Here we assume there is one character added to the
+                        ;; regex on the end (usually +).
+                        ;; If the regex is only 1 character for some reason, we
+                        ;; ensure no zeros or negatives are passed.
+                        (- n (length outline-start))
+                      ;; if no start-string is provided, calculate where to
+                      ;; start counting levels from looking at the given regex
+                      ;; for an outline.
+                      (- n (if (> regex-length 1) (- regex-length 1) 1))
+                      )))
+        ;; Given there are 8 outline faces, we must also ensure the number is
+        ;; never bigger than 8.
+        ;; (message "my-outline-mode/outline-level: match='%s', n=%d, regex-length=%d, level=%d"
+        ;;          match n regex-length level)
+        (min (max 1 level) 8)))))
 
-
+(custom-set-variables
+ '(outline-minor-mode-cycle t)
+ '(outline-minor-mode-highlight 'override)
+ '(outline-minor-mode-prefix [3 64])
+ '(outline-minor-mode-use-buttons 'in-margins))
 
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Clickable links.
@@ -396,7 +423,6 @@ parameters for the minibuffer function."
 ;; ;; Add the function to prog-mode-hook to ensure it's active in prog-mode buffers
 ;; (add-hook 'prog-mode-hook 'my-ui/add-change-indicators-right-click-menu)
 ;; ----------------------------------------------------------------------------
-
 
 
 (provide 'custom-ui-config)

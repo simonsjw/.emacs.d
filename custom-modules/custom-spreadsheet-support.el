@@ -49,8 +49,8 @@
 
 (custom-set-faces
 
- ;; Define faces for cell-mode
- ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ ;;;; Define faces for cell-mode
+
 
 
  ;; The default face before any modification. 

@@ -96,15 +96,14 @@
 ;;   ;; Here you can define keybindings or functionalities specific to bash-ts-mode
 ;;   ;; Example: (define-key bash-ts-mode-map (kbd "YOUR-KEYBINDING") 'SOME-FUNCTION)
 
-;;   ;;;;;;;;;;;;;
-;;   ;; IDE layout
-;;   ;; ----------
+
+;;   ;;;; IDE layout
+;;   ;;   ----------
 ;;   ;; set preferred buffer width
 
 
-;;   ;;;;;;;;;;;;;;;;;;;;;;;;
-;;   ;; IDE functionality map
-;;   ;; ---------------------
+;;   ;;;; IDE functionality map
+;;   ;;   ---------------------
 ;;   ;; compiling the code
 ;;   ;; (keymap-set rust-ts-mode-map "C-c C-c C-u" #'rust-compile)
 
@@ -136,9 +135,8 @@
 
 ;;   ;; rustic-cargo-add-missing-dependencies
 
-;;   ;;;;;;;;;;;;;;;;;;;
-;;   ;; Project settings
-;;   ;; ----------------
+;;   ;;;; Project settings
+;;   ;;   ----------------
 
 
 ;;   )

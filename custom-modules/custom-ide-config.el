@@ -10,6 +10,8 @@
 
 ;; Eglot has been built-in since Emacs 29.
 
+(declare-function eldoc-box-hover-at-point-mode "eldoc-box")
+(declare-function which-key-mode "which-key")
 
 (use-package which-key
   :config
@@ -57,9 +59,8 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; eglot setup ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; eglot setup
+;;   -----------
 
 (with-eval-after-load 'eglot
   (with-eval-after-load 'embark
@@ -103,11 +104,8 @@
   )
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;; editorconfig setup. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:
-
-
+;;;; editorconfig setup
+;;   ------------------
 ;; turn on editorconfig if it is available
 (when (require 'editorconfig nil :noerror)
   (add-hook 'prog-mode-hook #'editorconfig-mode))
@@ -118,3 +116,5 @@
 
 
                                                                                   ; LocalWords:  eglot dape ide cEnter basepyright
+                                                                                  ; LocalWords:  eldoc
+                                                                                  ; LocalWords:  UI
