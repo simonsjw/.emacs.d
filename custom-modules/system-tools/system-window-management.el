@@ -24,6 +24,7 @@
 (declare-function sr-speedbar-refresh-turn-off "sr-speedbar")
 (declare-function sr-speedbar-close "sr-speedbar")
 
+(require 'custom-logging-config)
 (require 'custom-ui-config)
 
 
@@ -210,7 +211,10 @@ FRAME is the frame in which the window resides.
 WINDOW is the window to be added.
 WINDOW-TAG is the tag describing the window's purpose."
   (let ((key window-tag))
-    (message "Adding window with key: %s" key) ; Add this line
+    (log/debug
+     :fn 'my-window-tools/add-window
+     :msg (format "Adding window with key: %s" key)
+     :obj t) 
     (puthash key window my-window-tools/window-hash)))
 
 
@@ -251,6 +255,17 @@ speedbar when the window that contains it no longer exists."
 ;;   ----------------------------
 ;; Here we implement the mechanics that, when given a buffer, can determine
 ;; the appropriate window for that buffer and move it if necessary.
+;;
+;; defun my-window-tools/display-buffer   (called from display-buffer-alist)
+;;     |
+;;     -- defun my-window-tools/get-buffer-tag-or-default buffer
+;;     |      |
+;;     |      -- my-window-tools/whitelabel-buffers
+;;     |      |
+;;     |      -- defun my-window-tools/get-buffer-tag buffer
+;;     |
+;;     -- my-window-tools/get-window-for-tag tag
+;;
 ;; The steps in this process are:
 ;; 1) Call a function to determine the action needed to assign a given buffer
 ;;    to the right window. This function is:
@@ -289,8 +304,11 @@ assignment is made."
                 ;; Return the window and tag as a cons cell
                 (cons window tag))
             (progn
-              (message "No window with tag '%s' was found."
-                       my-window-tools/default-tag)
+              (log/debug
+               :fn 'my-window-tools/assign-buffer-to-window
+               :msg (format "No window with tag '%s' was found."
+                            my-window-tools/default-tag)
+               :obj -1)
               nil))))))
 
 
@@ -303,8 +321,12 @@ whitelisted, no tag will be assigned, and no window assignment will occur."
   ;; Check if the buffer is whitelisted (skip assignment if true)
   (if (member buffer-name-text my-window-tools/whitelabel-buffers)
       (progn
-        (message "Buffer %s is whitelisted, no window assignment performed."
-                 buffer-name-text)
+        (log/debug
+         :fn 'my-window-tools/get-buffer-tag-or-default
+         :msg (format
+               "Buffer %s is whitelisted, no window assignment performed."
+               buffer-name-text)
+         :obj t)
         nil)
     ;; Get the tag for the buffer, defaulting to
     ;; `my-window-tools/default-tag` if `no-tag`
@@ -313,9 +335,12 @@ whitelisted, no tag will be assigned, and no window assignment will occur."
       (if (eq tag 'no-tag)
           ;; If no tag found, assign the default tag and log the action
           (progn
-            (message
-             "Buffer %s does not map to a tag. Assigned to default tag '%s."
-             buffer-name-text my-window-tools/default-tag)
+            (log/debug
+             :fn 'my-window-tools/get-buffer-tag-or-default
+             :msg (format
+                   "Buffer %s does not map to a tag. Assigned to default tag '%s."
+                   buffer-name-text my-window-tools/default-tag)
+             :obj t)
             my-window-tools/default-tag)
         ;; Return the found tag if it is not 'no-tag'
         tag)))))
@@ -384,12 +409,17 @@ If OUTPUT-ONLY is non-nil, only log the target window without moving the
 buffer."
   (if output-only
       ;; Log only, do not perform buffer assignment
-      (message "Output-only flag is set. No buffer reassignment performed.")
+      (log/debug
+       :fn 'my-window-tools/move-buffer-to-window 
+       :msg  "Output-only flag is set. No buffer reassignment performed."
+       :obj t)
     ;; Check if the buffer is already in the target window
     (if (eq window original-window)
         ;; If so, log a message and do nothing further
-        (message
-         "Target window is the buffer's current window. No changes made.")
+        (log/debug
+         :fn 'my-window-tools/move-buffer-to-window 
+         :msg  "Target window is the buffer's current window. No changes made."
+         :obj t)
       ;; Otherwise, assign the buffer to the window and activate necessary modes
       (progn
         ;; Set the buffer in the target window
@@ -400,8 +430,11 @@ buffer."
         (when original-window
           (my-tab-line/tab-line-close-tab-given-buffer buffer original-window))
         ;; Log the successful assignment
-        (message "Buffer %s assigned to window %s."
-                 (buffer-name buffer) window)))))
+        (log/debug
+         :fn 'my-window-tools/move-buffer-to-window 
+         :msg  (format "Buffer %s assigned to window %s."
+                       (buffer-name buffer) window)
+         :obj t)))))
 
 ;; ----------------------------------------------------------------------------
 ;; END OF Buffer assignment to windows
@@ -467,6 +500,12 @@ out by the window assignment algorithm here."
         (if result
             (let ((window (car result)))
               (my-window-tools/list-window-tags window))
+          (log/debug
+           :fn 'my-window-tools/show-window-assignment-for-buffer-name
+      	   :msg  (format
+                  "No window assignment found for buffer '%s'"
+                  buffer-name)
+      	   :obj -1)
           (message
            "No window assignment found for buffer '%s'" buffer-name))))))
 
@@ -482,12 +521,14 @@ out by the window assignment algorithm here."
         ;; Add to the known-buffers list
         (push buffer my-window-tools/known-buffers)
         ;; Indicate a new buffer has been found
-        (message "new buffer %s detected" buffer)
+        (log/debug :fn 'my-window-tools/detect-new-non-system-buffer
+      	           :msg (format "New buffer %s detected" buffer)
+      	           :obj buffer)
         ;; Call the buffer assignment function here
         (my-window-tools/assign-buffer-to-window buffer)))))
 
 (defun my-window-tools/reassign-buffer-to-default-window (buffer)
-  "This function reassigns a BUFFER to a window based the value in `tag',
+  "This function reassigns a BUFFER to a window based on the value in `tag',
 
   It is also removed from the original window and the tab-line is updated."
   (my-window-tools/assign-buffer-to-window buffer))
@@ -503,7 +544,11 @@ out by the window assignment algorithm here."
          (name-of-buffer (buffer-name target-buffer))
          (current-window (get-buffer-window target-buffer)))
     (my-window-tools/add-window current-window tag)
-    (message "Window on buffer '%s' tagged as '%s'" name-of-buffer tag)))
+    (log/debug :fn 'my-window-tools/set-window-purpose
+      	       :msg (format "Window on buffer '%s' tagged as '%s'"
+                            name-of-buffer tag)
+      	       :obj tag)
+    ))
 
 
 (defun my-window-tools/reassign-all-buffers-to-default-windows ()
@@ -611,7 +656,9 @@ signature."
                           (list :window (window-parameter win 'window-id)
                                 :name (buffer-name (window-buffer win))))
                         (window-list))))
-  (message "Window state with properties saved."))
+  (log/debug :fn 'my-window-tools/save-window-state-with-properties
+      	     :msg "Window state with properties saved."
+      	     :obj t))
 
 
 (defun my-window-tools/mouse-delete-window-confirmation (click)
@@ -735,3 +782,4 @@ The tag name must be one of `my-window-tools/tag-list`."
                                                                                   ; LocalWords:  Customize vc repl
                                                                                   ; LocalWords:  elisp
                                                                                   ; LocalWords:  tabline
+                                                                                  ; LocalWords:  defun
