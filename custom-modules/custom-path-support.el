@@ -23,7 +23,7 @@
   (warn
    "no-littering-etc-directory is not set. Please ensure it is set in init.el"))
 
-
+(defvar epg-gpg-program)
 (defvar custom-info-dir)
 (defvar custom-packages-dir)
 (defvar undo-tree-history-directory-alist)
@@ -62,9 +62,10 @@
   "Path to the Emacs diary file for built in diary functionality.")
 
 (defvar my-paths/q-load-balancer-folder)
-(defvar my-paths/custom-rainbow-mode)
+(defvar my-paths/rainbow-mode)
 (defvar my-paths/systemd-mode)
 (defvar my-paths/cell-mode)
+(defvar my-paths/logging-view-mode)
 
 (defvar my-paths/ispell-word-replacement)
 (defvar ispell-personal-dictionary)
@@ -89,7 +90,7 @@
 (message
  "no-littering var directory set: %s" no-littering-var-directory)
 (message
- "no-ilttering etc directory set: %s" no-littering-etc-directory)
+ "no-littering etc directory set: %s" no-littering-etc-directory)
 
 ;; GPG application:
 (setq epg-gpg-program "/usr/bin/gpg")
@@ -248,7 +249,7 @@
 ;; --------
 (setq org-directory "~/Documents/org") ; Path to org data.
 
-(setq org-contacts-directory                                                   ; Path to the Emacs contacts file for org contacts functionality.
+(setq org-contacts-directory                                                      ; Path to the Emacs contacts file for org contacts functionality.
       (expand-file-name  "contacts/" org-directory))
 
 (customize-set-variable
@@ -328,7 +329,9 @@
 (setq my-paths/cell-mode
       (concat user-emacs-directory "custom-packages/cell-mode/"))
 
-
+;; define a path to the logging-view-mode custom package
+(setq my-paths/logging-view-mode
+      (concat user-emacs-directory "custom-packages/logging-view-mode/"))
 
 (provide 'custom-path-support)
 ;;; custom-path-support.el ends here

@@ -53,6 +53,9 @@ Logging this helps understand which modules are being loaded.")
 (defconst log/type-special-form-defvar    4
   "Log use of the special form `defvar'.")
 
+(defvar my-paths/logging-view-mode)
+
+(declare-function logging-view-mode "logging-view-mode")
 
 (defvar
   log/settings
@@ -250,6 +253,17 @@ ARGS:
     (log/logger
      :logFile log/init-log :fn fn :msg msg :obj obj
      :lvl log/lvl-INFO)))
+
+;; now ensure that our logging-view-mode is bound to any buffer with the
+;; `.log' suffix.
+(with-eval-after-load 'custom-theme-support
+  (with-eval-after-load 'custom-path-support
+;; Require the log-view-mode (adjust the path if necessary)
+(add-to-list 'load-path my-paths/logging-view-mode)                                       ; Add directory to the load path
+(require 'logging-view-mode)
+
+;; Associate .log files with log-view-mode
+(add-to-list 'auto-mode-alist '("\\.log\\'" . logging-view-mode))))
 
 
 (provide 'custom-logging-config)
