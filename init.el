@@ -180,11 +180,8 @@
 (let  ((elisp-flymake-byte-compile-load-path-string
         (mapconcat 'identity elisp-flymake-byte-compile-load-path ";\n      ")))
   (log/info :fn 'init
-            :msg (concat
-                  "set elisp-flymake-byte-compile-load-path:\n   ("
-                  elisp-flymake-byte-compile-load-path-string
-                  ")")
-            :obj t))
+            :msg "Set elisp-flymake-byte-compile-load-path"
+            :obj (concat "(" elisp-flymake-byte-compile-load-path-string ")")))
 
 ;; ---------------------------------------------
 ;; All config and support files are now loaded.
