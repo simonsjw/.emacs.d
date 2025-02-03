@@ -1,4 +1,4 @@
-;;; init.el -- Simon's Crafted Emacs user customization file -*- lexical-binding: t; -*-
+;;; init.el -- Simon's Emacs user customization file -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; This file is generated from config.org. If you want to edit the
@@ -8,15 +8,33 @@
 
 ;;; Code
 
+;;; Emacs lisp source/compiled preference
+;; Prefer loading newest compiled .el file.
+(defvar load-prefer-newer nil "loading preference.")
+(setq load-prefer-newer t)
+(use-package auto-compile
+    :vc (:url "https://github.com/emacscollective/auto-compile.git")
+    :custom
+    (auto-compile-display-buffer nil) ;; Optional: Prevent showing the compile buffer
+    (auto-compile-use-mode-line t) ;; Optional: Show compile status in the mode line
+    :config
+    (auto-compile-on-load-mode 1)
+    (auto-compile-on-save-mode 1))
 
+;; delight enables us to manage mode interactions with the modeline via
+;; use-package and the :delight key.
+(use-package bind-key)
+(use-package helpful
+    :ensure t)
 
 ;;; imports and declarations
+(require 'bind-key)                                                              ; if you use any :bind variant
 (require 'custom-logging-config)
-(require 'recentf)
 (require 'custom-path-support)
 (require 'elisp-packages)
 
- ;; Don't log files touched in the init process. 
+(require 'recentf)
+ ;; Don't log files touched in the init process.
 (recentf-mode -1)
 
 ;; ensure the correct org-mode is sourced.
@@ -46,23 +64,19 @@
       "\n   custom eln-cache: %s;")
      (user-dir-payload
       "\n   (package-user-dir: %s;")
-     (straight-dir-payload
-      "\n   straight-base-dir: %s;")
      (eln-dir-list-payloads
       "\n   native-comp-eln-load-path-strings:\n      %s")
      (eln-dir-list-ending-payload ")"))
 
   (log/info :fn 'init
-            :msg "check values of  package-user-dir, eln-cache directory and straight-base-dir."
+            :msg "check values of  package-user-dir and eln-cache directory."
             :obj (format
                   (concat
                    user-dir-payload
-                   straight-dir-payload
                    eln-cache-fp-payload
                    eln-dir-list-payloads
                    eln-dir-list-ending-payload)
                   package-user-dir
-                  straight-base-dir
                   my-filepaths/eln-cache
                   native-comp-eln-load-path-string)))
 
@@ -118,17 +132,18 @@
           :obj t)
 
 ;; IDE configuration.
-(require 'custom-tree-sitter-support)
+(require 'treesit-support)
 (require 'custom-undo-tree-support)
 
 ;;; Configuration phase
 
-(require 'custom-theme-support)
-(require 'custom-project-support)
-(require 'custom-completion-support)
+(require 'theme-support)
+(require 'project-support)
+(require 'completion-support)
 
 ;; user interface
 (require 'custom-ui-config)
+(require 'ibuffer-support)
 (require 'tabline-support)
 (require 'custom-speedbar-support)
 (require 'modeline-support)
@@ -150,28 +165,28 @@
 (require 'custom-fileFormat-support)
 
 ;; version control
-(require 'custom-vc-support)
+(require 'vc-support)
 
 ;; programming languages
-(require 'custom-lang--prog-mode)
-(require 'custom-lang-lisp)
-(require 'custom-lang-rust)
-(require 'custom-lang-python)
-(require 'custom-lang-q)
-(require 'custom-lang-systemd)
-(require 'custom-lang-web)
-(require 'custom-lang-bash)
-(require 'custom-lang-docker)
-(require 'custom-lang-vega)
+(require 'lang--prog-mode)
+(require 'lang-lisp)
+(require 'lang-rust)
+(require 'lang-python)
+(require 'lang-q)
+(require 'lang-systemd)
+(require 'lang-web)
+(require 'lang-bash)
+(require 'lang-docker)
+(require 'lang-vega)
 
 ;; database integration and SQL support.
-(require 'custom-db-support)
+(require 'db-support)
 
 ;;(require 'custom-hydra-config)
 (require 'custom-terminal-support)
 (require 'summary-support)
 (require 'system-window-management)
-(require 'custom-startup-config)
+(require 'startup-config)
 (require 'menu-keys-support)
 
 ;; All the autoloaded packages are now loaded.
