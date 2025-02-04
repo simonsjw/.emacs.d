@@ -20,9 +20,12 @@
 
 ;;; Code:
 
-(use-package bookmark+)
-(use-package dired+)
-(use-package info+)
+(use-package bookmark+
+  :vc (:url "https://github.com/emacsmirror/bookmark-plus.git"))
+(use-package info+
+  :vc (:url "https://github.com/emacsmirror/info-plus.git"))
+(use-package dired+
+  :vc (:url "https://github.com/emacsmirror/dired-plus.git"))
 (use-package imenu-list)
 (use-package elisp-demos)
 (use-package page-break-lines)
@@ -32,7 +35,6 @@
 
 (require 'org)
 (require 'outline)
-(require 'ibuffer)
 (require 'easymenu)
 
 (require 'bookmark+)                                                              ; commands usually have a bmkp prefix.
@@ -57,7 +59,6 @@
 (defvar ediff-merge-buffer)
 
 (declare-function global-page-break-lines-mode "page-break-lines-mode")
-(declare-function global-org-link-mode "org")
 (declare-function ediff-get-file-name "ediff")
 
 
@@ -68,12 +69,6 @@
 
 ;;;; Outline-mode/Outline-minor-mode
 ;;  -------------------------------
-
-(custom-set-variables
- '(outline-minor-mode-cycle t)                                                    ; Enable cycling through outline states by default.
- '(outline-minor-mode-highlight 'override)                                        ; Use the outline face, overwriting attributes of the existing face by default. 
- '(outline-minor-mode-prefix [3 64])                                              ; Set the prefix keys for the mode ([3 64] corresponds to 'C-c @').
- '(outline-minor-mode-use-buttons 'in-margins))                                   ; Use buttons in margins by default
 
 ;; The below function can be used to determine the outline-level for use with
 ;; outline-mode and outline-minor-mode.
@@ -118,11 +113,43 @@ minus one.  A typical formatting expression for an Elisp script might be:
         ;;          match n regex-length level)
         (min (max 1 level) 8)))))
 
+
 (custom-set-variables
- '(outline-minor-mode-cycle t)
- '(outline-minor-mode-highlight 'override)
- '(outline-minor-mode-prefix [3 64])
- '(outline-minor-mode-use-buttons 'in-margins))
+ '(outline-minor-mode-cycle t)                                                    ; Enable cycling through outline states by default.
+ '(outline-minor-mode-highlight 'override)                                        ; Use the outline face, overwriting attributes of the existing face by default. 
+ '(outline-minor-mode-prefix [3 64])                                              ; Set the prefix keys for the mode ([3 64] corresponds to 'C-c @').
+ '(outline-minor-mode-use-buttons 'in-margins))                                   ; Use buttons in margins by default
+
+
+(defun my-outline-mode/faces-for-prog-mode ()
+  "Customise outline faces to use `default' color in `prog-mode'."
+  (dolist (face '((outline-1 . 1.0)  ;; Adjust size multipliers if needed
+                  (outline-2 . 1.0)
+                  (outline-3 . 1.0)
+                  (outline-4 . 1.0)
+                  (outline-5 . 1.0)
+                  (outline-6 . 1.0)
+                  (outline-7 . 1.0)
+                  (outline-8 . 1.0)))
+    (let ((face-name (car face))
+          (scale (cdr face)))
+      (set-face-attribute face-name nil
+                          :inherit 'default
+                          :weight 'bold
+                          :height scale))))
+
+
+(set-face-attribute 'fill-column-indicator nil
+                    :foreground "dimgray"
+                    :inherit 'default)
+
+;; Apply customizations only in `prog-mode`
+(add-hook 'prog-mode-hook
+          (lambda ()
+            (when outline-minor-mode
+              (my-outline-mode/faces-for-prog-mode))))
+
+
 
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Clickable links.
@@ -307,7 +334,7 @@ parameters for the minibuffer function."
 
 ;; Buffer title
 (defun my-dired/set-dired-buffer-title ()
-  "Set Dired buffer title to 'Dired: <immediate directory>'."
+  "Set Dired buffer title to `Dired: <immediate directory>'."
   (when (eq major-mode 'dired-mode)
     (let*
         ((dir-name (expand-file-name dired-directory))
@@ -341,56 +368,6 @@ parameters for the minibuffer function."
 ;; (setq ediff-window-setup-function 'ediff-setup-windows-plain)                  ; prevent frame creation.
 ;; (setq ediff-split-window-function 'ignore)                                     ; Prevent any window splitting
 
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; ibuffer mode
-;; ------------
-;; Make the buffer size human readable.
-;; (see [[https://www.emacswiki.org/emacs/IbufferMode)][Link]]
-;; Use human readable Size column instead of original one
-(define-ibuffer-column size-h
-  (:name "Size"
-         :inline t
-         :summarizer
-         (lambda (column-strings)
-           (let ((total 0))
-             (dolist (string column-strings)
-               (setq total
-                     (+
-                      (float
-                       (my-strings/human-readable-file-sizes-to-bytes string))
-                      total)))
-             (my-strings/bytes-to-human-readable-file-sizes total)))              ; :summarizer nil
-         )
-  (my-strings/bytes-to-human-readable-file-sizes (buffer-size)))
-
-;; Modify the default ibuffer-formats. Note the two lists allow us to switch
-;;  between two views using the command `=ibuffer-switch-format=
-(setq ibuffer-formats
-      '((mark
-         modified
-         read-only
-         locked
-         " "
-         (name 20 20 :left :elide)
-         " "
-         (size-h 11 -1 :right)
-         " "
-         (mode 16 16 :left :elide)
-         " "
-         filename-and-process)
-        (mark
-         " "
-         (name 16 -1)
-         " "
-         filename)))
-
-
-(defun my-ibuffer/ibuffer-mode-config-hook ()
-  "Define a function to set the font in ibuffer."
-  (face-remap-add-relative 'default  :height 90))
-;;  - then add it to a hook.
-(add-hook 'ibuffer-mode-hook 'my-ibuffer/ibuffer-mode-config-hook)
-
 ;; Define key maps
 
 ;; set up functionality to reopen a buffer in a new frame here you click on the
@@ -398,7 +375,7 @@ parameters for the minibuffer function."
 ;; This is adapted from `tear-off-window' but unlike that package does not
 ;; delete the buffer from the window which the new frame is spawned from.
 ;; The function my-buffer-tools/copy-buffer-in-new-fram is in
-;; custom-system-tools
+;; system-tools
 (global-set-key [mode-line C-mouse-1]
                 'my-buffer-tools/copy-buffer-in-new-frame)
 
