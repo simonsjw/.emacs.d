@@ -42,8 +42,9 @@
 
   (load-file (concat loadBalancerPackageDirectory "q-parse.el"))
   (load-file (concat loadBalancerPackageDirectory "process-groups.el"))
- ;; (load-file (concat loadBalancerPackageDirectory "q-modeline.el"))
-  (load-file (concat loadBalancerPackageDirectory "q-ibuffer.el")))
+  ;; (load-file (concat loadBalancerPackageDirectory "q-modeline.el"))
+  ;; (load-file (concat loadBalancerPackageDirectory "q-ibuffer.el"))
+  )
 
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Define the q-script Menus, keys and major mode.

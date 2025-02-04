@@ -14,9 +14,9 @@
 
 ;; In this script, we update ibuffer for this mode.
 
-(defvar ibuffer-saved-filter-groups)
-(declare-function ibuffer-switch-to-saved-filter-groups "ibuffer")
-(declare-function ibuffer-do-sort-by-alphabetic "ibuffer")
+;; (defvar ibuffer-saved-filter-groups)
+;; (declare-function ibuffer-switch-to-saved-filter-groups "ibuffer")
+;; (declare-function ibuffer-do-sort-by-alphabetic "ibuffer")
 
 ;;; Code:
 
@@ -24,23 +24,23 @@
 ;; Ensure ibuffer is available before loading this setup.
 
 
-(when (featurep 'ibuffer)
-  ;; Add "Q Processes" group without overwriting existing groups
-  (let ((existing-groups (assoc "default" ibuffer-saved-filter-groups)))
-    (if existing-groups
-        ;; If "default" group exists, add "Q Processes" to it
-        (setcdr existing-groups
-                (append (cdr existing-groups)
-                        '(("Q Processes" (mode . q-loadbalancer)))))
-      ;; Otherwise, create a new "default" group with "Q Processes"
-      (add-to-list 'ibuffer-saved-filter-groups
-                   '("default" ("Q Processes" (mode . q-loadBalancer))))))
+;; (when (featurep 'ibuffer)
+;;   ;; Add "Q Processes" group without overwriting existing groups
+;;   (let ((existing-groups (assoc "default" ibuffer-saved-filter-groups)))
+;;     (if existing-groups
+;;         ;; If "default" group exists, add "Q Processes" to it
+;;         (setcdr existing-groups
+;;                 (append (cdr existing-groups)
+;;                         '(("Q Processes" (mode . q-loadbalancer)))))
+;;       ;; Otherwise, create a new "default" group with "Q Processes"
+;;       (add-to-list 'ibuffer-saved-filter-groups
+;;                    '("default" ("Q Processes" (mode . q-loadBalancer))))))
 
-  (add-hook 'ibuffer-mode-hook
-            (lambda ()
-              (ibuffer-switch-to-saved-filter-groups "default")
-              ;; Sort by buffer name within groups
-              (ibuffer-do-sort-by-alphabetic))))
+;;   (add-hook 'ibuffer-mode-hook
+;;             (lambda ()
+;;               (ibuffer-switch-to-saved-filter-groups "default")
+;;               ;; Sort by buffer name within groups
+;;               (ibuffer-do-sort-by-alphabetic))))
 
 
 
