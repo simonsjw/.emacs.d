@@ -1,9 +1,9 @@
 ;;; logging-view-mode.el --- Major mode for viewing log files -*- lexical-binding: t; -*-
 
 ;; Author: Simon Watson
-;; Version: 1.0
+;; Version: 1.4
 ;; Keywords: logs, tools
-;; URL: http://example.com/logging-view-mode
+;; URL: tbc
 
 ;;; Commentary:
 
@@ -55,53 +55,42 @@
   "Face for log objects."
   :group 'logging-view)
 
-;; Function to determine LOGTYPE face
-(defun logging-view-logtype-face ()
-  "Return the appropriate face for the current LOGTYPE."
-  (let ((logtype (match-string 2)))
-    (cond
-     ((string= logtype "INFO") 'logging-view-logtype-info-face)
-     ((string= logtype "WARNING") 'logging-view-logtype-warning-face)
-     ((string= logtype "ERROR") 'logging-view-logtype-error-face)
-     ((string= logtype "DEBUG") 'logging-view-logtype-debug-face)
-     (t 'default))))
 
 ;; Define font-lock keywords
+;; "\\[\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\.[0-9]\\{6\\}\\)"
 (defvar logging-view-font-lock-keywords
-  `(
-    ;; Match the main log line structure and apply faces to each group
-    ("^\\[\\([0-9-: .]+\\); \\(INFO\\|WARNING\\|ERROR\\|DEBUG\\); \\([^]]+\\)\\]\\(.*?\\);\\([^;]+\\);"
-     ;; Group 1: Timestamp
-     (1 'logging-view-timestamp-face)
-     ;; Group 2: LOGTYPE with dynamic face
-     (2 (logging-view-logtype-face))
-     ;; Group 3: Location
-     (3 'logging-view-location-face)
-     ;; Group 4: Message
-     (4 'logging-view-message-face)
-     ;; Group 5: Object
-     (5 'logging-view-obj-face))
-    
-    ;; Fallback: Match any line not matching the above structure
-    ("^[^[]+.*"
-     ;; Apply the Object face to the entire line, excluding any trailing ';'
-     (0 (progn
-          (let ((line-end (line-end-position)))
-            ;; Remove Object face from trailing ';' if present
-            (when (and (> line-end 0)
-                       (char-equal (char-before line-end) ?\;))
-              (put-text-property (1- line-end) line-end 'face nil)))
-          'logging-view-obj-face)))
-    )
-  "Highlighting expressions for `logging-view-mode'.")
+  (let* (
+         ;; Define regex patterns for each component
+         (timestamp-regex
+          (concat "\\[\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} "
+                  "[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\.[0-9]\\{6\\}\\)"))
+         (logtype-regex "; \\(INFO\\|WARNING\\|ERROR\\|DEBUG\\);")
+         (location-regex "; \\([^]]+\\)\\]")
+         (message-regex "\\]\\(.*?\\);")
+         (obj-regex ";\\([^;]+\\);"))
+    `(
+      (,timestamp-regex 1 'logging-view-timestamp-face)
+      (,logtype-regex 1
+                      (cond
+                       ((string-equal (match-string 1) "INFO")
+                        'logging-view-logtype-info-face)
+                       ((string-equal (match-string 1) "WARNING")
+                        'logging-view-logtype-warning-face)
+                       ((string-equal (match-string 1) "ERROR")
+                        'logging-view-logtype-error-face)
+                       ((string-equal (match-string 1) "DEBUG")
+                        'logging-view-logtype-debug-face)))
+      (,location-regex 1 'logging-view-location-face)
+      (,message-regex 1 'logging-view-message-face)
+      (,obj-regex 1 'logging-view-obj-face)
+      )))
 
-
-
-
-
-;; Define variables for filters
-(defvar logging-view-active-filters (make-hash-table :test 'equal)
+;; Define buffer-local variables for filters and overlays
+(defvar-local logging-view-active-filters (make-hash-table :test 'equal)
   "Hash table storing active log type filters.")
+
+(defvar-local logging-view-overlays nil
+  "List of overlays used to hide filtered log entries.")
 
 ;; Toggle filter function
 (defun logging-view-toggle-filter (logtype)
@@ -113,69 +102,119 @@
   (logging-view-apply-filters)
   (logging-view-update-modeline))
 
-;; Apply filters to buffer
+;; Apply filters to buffer using overlays
 (defun logging-view-apply-filters ()
-  "Apply log type filters to the buffer."
+  "Apply log type filters to the buffer using overlays."
   (save-excursion
+    (remove-overlays (point-min) (point-max) 'logging-view t)                     ; Remove existing log entry overlays
+    (setq logging-view-overlays nil)                                              ; Reset the overlay list
     (goto-char (point-min))
-    (let ((inhibit-read-only t))
-      (while (re-search-forward
-              "^\\[\\([0-9-: .]+\\); \\(INFO\\|WARNING\\|ERROR\\|DEBUG\\); \\([^]]+\\)\\]\\(.*?\\);\\([^;]+\\);"
-              nil t)
-        (let ((logtype (match-string 2)))
-          (if (or (not (hash-table-p logging-view-active-filters))
-                  (hash-table-empty-p logging-view-active-filters)
-                  (gethash logtype logging-view-active-filters))
-              (progn
-                (put-text-property (line-beginning-position) (line-end-position)
-                                   'invisible nil))
-            (put-text-property (line-beginning-position) (line-end-position)
-                               'invisible t)))))))
+    (let ((start-regex "^\\[[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\.[0-9]\\{6\\}; \\(INFO\\|WARNING\\|ERROR\\|DEBUG\\); \\([^]]+\\)\\]"))
+      (while (re-search-forward start-regex nil t)
+        (let ((entry-start (match-beginning 0))
+              (logtype (match-string 1)))
+          ;; Find the end of the current log entry
+          (if (re-search-forward start-regex nil t)
+              (let ((entry-end (match-beginning 0)))
+                (goto-char entry-end))
+            ;; If no next entry, set end to end of buffer
+            (goto-char (point-max)))
+          (let ((entry-end (point)))
+            ;; Adjust entry-end to include the final newline if present
+            (when (and (> entry-end entry-start)
+                       (eq (char-before entry-end) ?\n))
+              (setq entry-end (1+ entry-end)))
+            ;; Decide whether to hide or show the entry
+            (unless (or (hash-table-empty-p logging-view-active-filters)
+                        (gethash logtype logging-view-active-filters))
+              (let ((ov (make-overlay entry-start entry-end)))
+                (overlay-put ov 'invisible t)
+                (overlay-put ov 'logging-view t)                                  ; Tag to identify the overlay
+                (push ov logging-view-overlays)))))))))
 
 ;; Update mode line
 (defun logging-view-update-modeline ()
   "Update the mode line buttons based on active filters."
-  (setq mode-line-format
-        (list
-         " LogView: "
-         (logging-view-create-button "INFO")
-         " "
-         (logging-view-create-button "WARNING")
-         " "
-         (logging-view-create-button "ERROR")
-         " "
-         (logging-view-create-button "DEBUG"))))
+  (setq-local mode-line-format
+              (list
+               " LogView: "
+               (logging-view-create-button "INFO")
+               " "
+               (logging-view-create-button "WARNING")
+               " "
+               (logging-view-create-button "ERROR")
+               " "
+               (logging-view-create-button "DEBUG"))))
 
-;; Create mode line button
+;; Create mode line button using propertize with correct buffer capture
 (defun logging-view-create-button (logtype)
   "Create a mode line button for LOGTYPE."
-  (propertize logtype
-              'face (cond
-                     ((string-equal logtype "INFO") 'logging-view-logtype-info-face)
-                     ((string-equal logtype "WARNING") 'logging-view-logtype-warning-face)
-                     ((string-equal logtype "ERROR") 'logging-view-logtype-error-face)
-                     ((string-equal logtype "DEBUG") 'logging-view-logtype-debug-face))
-              'mouse-face 'highlight
-              'help-echo (concat "Toggle " logtype " logs")
-              'local-map (let ((map (make-sparse-keymap)))
-                           (define-key map [mouse-1]
-                                       `(lambda ()
-                                          (interactive)
-                                          (logging-view-toggle-filter ,logtype)))
-                           map)))
+  (let* ((active (gethash logtype logging-view-active-filters))
+         (buffer (current-buffer)))                                               ; Capture the current buffer
+    (concat
+     (propertize (concat " " logtype " ")
+                 'face (cond
+                        ((string-equal logtype "INFO")
+                         'logging-view-logtype-info-face)
+                        ((string-equal logtype "WARNING")
+                         'logging-view-logtype-warning-face)
+                        ((string-equal logtype "ERROR")
+                         'logging-view-logtype-error-face)
+                        ((string-equal logtype "DEBUG")
+                         'logging-view-logtype-debug-face))
+                 'help-echo (concat "Toggle " logtype " logs")
+                 'mouse-face 'mode-line-highlight
+                 'local-map (let ((map (make-sparse-keymap)))
+                              (define-key map [mode-line mouse-1]
+                                          `(lambda ()
+                                             (interactive)
+                                             (with-current-buffer ,buffer
+                                               (logging-view-toggle-filter
+                                                ,logtype))))
+                              map)
+                 'cursor 'pointer)
+     ;; Visual indicator for active filters
+     (when active
+       (propertize "*"
+                   'face '(:foreground "white" :background "red"))))))
 
-;; Initialise modeline
+;; Initialize modeline
 (defun logging-view-initialize-modeline ()
   "Initialize the mode line with filter buttons."
   (logging-view-update-modeline))
+
+;; Handle buffer changes to update overlays dynamically
+(defun logging-view-after-change-function (beg end len)
+  "Function to handle buffer changes and update overlays.
+BEG, END, and LEN are the standard parameters for `after-change-functions`."
+  ;; Re-apply filters to ensure new entries are handled
+  (logging-view-apply-filters))
 
 ;; Define the major mode
 (define-derived-mode logging-view-mode fundamental-mode "LogView"
   "Major mode for viewing log files."
   (setq font-lock-defaults '(logging-view-font-lock-keywords))
   (setq buffer-read-only t)
+  ;; Initialize buffer-local variables
+  (setq logging-view-active-filters (make-hash-table :test 'equal))
+  (setq logging-view-overlays nil)
+  ;; Initialize modeline
   (logging-view-initialize-modeline)
-  (logging-view-apply-filters))
+  ;; Apply initial filters
+  (logging-view-apply-filters)
+  ;; Add hook to handle buffer changes
+  (add-hook 'after-change-functions #'logging-view-after-change-function nil t))
+
+;; Clean up overlays and hooks when exiting the mode
+(defun logging-view-exit-mode ()
+  "Clean up overlays and hooks when exiting `logging-view-mode`."
+  (remove-overlays (point-min) (point-max) 'logging-view t)
+  (setq logging-view-overlays nil)
+  (remove-hook 'after-change-functions #'logging-view-after-change-function t)
+  ;; Reset mode line
+  (force-mode-line-update))
+
+(add-hook 'kill-buffer-hook #'logging-view-exit-mode nil t)
 
 ;; Provide the feature
 (provide 'logging-view-mode)
