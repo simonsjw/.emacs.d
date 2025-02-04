@@ -15,7 +15,7 @@
 ;;; Code:
 
 (declare-function my-buffer-tools/switch-to-buffer-in-current-window
-                  "custom-system-tools")
+                  "system-tools")
 
 (require 'tab-line)  ; (tab-line is built in)
 (require 'easymenu)
