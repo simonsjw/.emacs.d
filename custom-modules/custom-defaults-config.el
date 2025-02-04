@@ -28,7 +28,7 @@
 (require 'dired)
 (require 'ispell)
 (require 'xref)
-(require 'custom-system-tools)
+(require 'system-tools)
 (require 'helpful)
 ;;(require 'aggressive-indent)
 
@@ -92,10 +92,12 @@ file paths.")
 ;; automatically update dired buffers on revisiting their directory
 (customize-set-variable 'dired-auto-revert-buffer t)
 
-;; ensure that we start with a detailed view of our directories
+;; ensure that we start with a detailed view of our directories and
+;; show the breadcrumbs header. 
 (add-hook 'dired-mode-hook
           (lambda ()
-            (dired-hide-details-mode nil)))
+            (dired-hide-details-mode nil)
+	    (diredp-breadcrumbs-in-header-line-mode 1)))
 
 ;; Ensure that we navigate through directories using the same dired
 ;; buffer whilst files are opened in a new buffer.
@@ -104,8 +106,8 @@ file paths.")
   (interactive)
   (let ((file (dired-get-file-for-visit)))
     (if (file-directory-p file)
-        (dired-find-alternate-file)
-      (dired-find-file-other-window))))
+        (dired-find-alternate-file)  ; function run if file is a directory
+      (dired-find-file-other-window)))) ;function run if file is a file. 
 
 (add-hook 'dired-mode-hook
           (lambda ()
@@ -128,18 +130,6 @@ file paths.")
 ;; treat manual buffer switching (C-x b for example) the same as
 ;; programmatic buffer switching.
 (customize-set-variable 'switch-to-buffer-obey-display-actions t)
-
-
-;;;; Ibuffer
-;;  -------
-;; prefer the more full-featured built-in ibuffer for managing
-;; buffers.
-(keymap-global-set "<remap> <list-buffers>" #'ibuffer-list-buffers)
-;; turn on forward and backward movement cycling
-(customize-set-variable 'ibuffer-movement-cycle t)
-;; the number of hours before a buffer is considered "old" by
-;; ibuffer.
-(customize-set-variable 'ibuffer-old-time 24)
 
 ;;;; helpful
 ;;   -------

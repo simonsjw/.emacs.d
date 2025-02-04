@@ -2,7 +2,7 @@
 
 ;; Author: Your Name
 ;; Version: 1.0
-;; Package-Requires: ((emacs "26.1") (projectile "2.0.0") (magit "3.0.0"))
+;; Package-Requires: emacs "26.1"
 ;; Keywords: project, git, management
 ;; URL: https://your-repository-url
 
@@ -15,7 +15,7 @@
 ;;; Code:
 
 (require 'tabulated-list)
-(require 'projectile)
+
 ;; (require 'magit)
 
 ;; **1. Define a New Major Mode for the Project Overview**

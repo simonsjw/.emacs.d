@@ -189,8 +189,8 @@
   ;; Kill compile buffer on build success
   ;; (add-hook 'dape-compile-hook 'kill-buffer)
 
-  ;; Projectile users
-  (setq dape-cwd-fn 'projectile-project-root))
+  ;; Ensure dape opens in the project root.
+  (setq dape-cwd-fn #'project-root))
 
 ;; add dape config for python (debugging)
 ;; note debugpy must be installed in the environment in use.
