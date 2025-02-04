@@ -1,8 +1,8 @@
-;;; org-support.el --- org setup -*- lexical-binding: t -*-
+;;; org-support.el --- org setup  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2025
 ;; SPDX-License-Identifier: MIT
-
+;; -*- mode: org;
 ;; Author: Simon Watson
 
 ;;; Commentary:
@@ -14,14 +14,17 @@
 ;; org type functionality is called by anything. The built in or
 ;; can cause conflicts with this if org is called before this.
 (use-package org
-  :ensure org-plus-contrib)
+  :ensure nil)                                                                    ; was   :ensure org-plus-contrib
 (use-package org-contrib)
 (use-package org-contacts)
 (use-package google-contacts)
 
-;; This web-link; https://github.com/seanohalpin/org-link-minor-mode
-;; shows as this: [[https://github.com/seanohalpin/org-link-minor-mode][org-link-minor-mode]].
-(use-package org-link-minor-mode)
+;; This web-link; https://github.com/emacsmirror/org-link-beautify
+;; shows as this: [[https://github.com/emacsmirror/org-link-beautify][org-link-beautify]].
+(use-package org-link-beautify
+  :ensure t
+  :init (org-link-beautify-mode t))
+  
 ;; send alerts to the desktop (via `libnotify' here which should be already
 ;; built in Ubuntu).
 ;; Note it depends on alert package (installed previously)
@@ -86,8 +89,8 @@
   :bind-keymap
   ("C-c n d" . org-roam-dailies-map)
   :config
-  (require 'org-roam-dailies) ;; Ensure the keymap is available
-  (org-roam-db-autosync-mode))
+  (require 'org-roam-dailies)                                                     ; Ensure the keymap is available
+  (org-roam-db-autosync-mode))                                                    ; ensure org-roam looks after itself.
 
 (require 'custom-logging-config)
 (require 'org)
@@ -101,105 +104,11 @@
 (require 'org-roam)
 (require 'org-alert)
 
-;; ensure org-roam looks after itself.
-(org-roam-db-autosync-mode)
 
-;; Use LuaTeX as the default LaTeX compiler for better support with complex documents
-(customize-set-variable
- 'org-latex-compiler "luatex"
- "Use LuaLaTeX as the default LaTeX compiler for better font support and compatibility.")
-
-;; Define a multi-pass PDF generation process to handle complex LaTeX documents,
-;; including those with TikZ diagrams.
-(setq org-latex-pdf-process
-      '("pdflatex -interaction nonstopmode -output-directory %o %f"
-        "pdflatex -interaction nonstopmode -output-directory %o %f"
-        "pdflatex -interaction nonstopmode -output-directory %o %f"))
-
-;; set the pdf rendering engine.
-;; (setq org-latex-pdf-process
-;;       '"lualatex -interaction nonstopmode -output-directory %o %f")
-
-;;;; Enable inline LaTeX rendering and configure rendering options
-;; 
-;; This setup allows Org Mode to preview LaTeX fragments inline, using image files
-;; rendered by external programs like dvipng and imagemagick, for better visual compatibility.
-(with-eval-after-load 'org
-  (setq org-preview-latex-process-alist
-        '((dvipng :programs ("latex" "dvipng")
-                  :description "dvi > png"
-                  :message "You need to install the programs: latex and dvipng."
-                  :image-input-type "dvi"
-                  :image-output-type "png"
-                  :image-size-adjust (1.0 . 1.0)
-                  :latex-compiler ("latex -interaction nonstopmode -output-directory %o %f")
-                  :image-converter ("dvipng -D %D -T tight -o %O %f"))
-          (imagemagick :programs ("latex" "convert")
-                       :description "pdf > png"
-                       :message "You need to install the programs: latex and imagemagick."
-                       :image-input-type "pdf"
-                       :image-output-type "png"
-                       :image-size-adjust (1.0 . 1.0)
-                       :latex-compiler ("pdflatex -interaction nonstopmode -output-directory %o %f")
-                       :image-converter ("convert -density %D -trim -antialias %f -quality 100 %O")))))
-
-
-;;;; set the defaults for viewing latex in org-mode
-;;  ----------------------------------------------
-;; note that the cache for rendered latex is stored in
-;; ~/.emacs.d/var/MY_NAME/.cache_latex/
-;; This is set by custom-no-littering where MY_NAME is the
-;; environmental variable where the name of the machine using this
-;; setup is stored.
-
-;; Default to imagemagick for rendering LaTeX previews for improved quality.
-(customize-set-variable
- 'org-preview-latex-default-process 'imagemagick
- "Use ImageMagick to render LaTeX previews in Org Mode for high-quality output.")
-
-;; Render latex by default.
-(setq org-startup-with-latex-preview t)
-
-;; Set the default format.
-;; (setq org-format-latex-header
-;;       "\\documentclass[12pt]{article}    % This sets the default font size to 10pt
-;; \\usepackage[usenames]{color}
-;; \\usepackage{xcolor}
-;; \\usepackage{amsmath}
-;; \\usepackage{amsfonts}
-;; \\usepackage{amssymb}
-;; \\usepackage{graphicx}
-;; \\usepackage{fontspec}            % fontspec allows us to set the font 
-;; \\setmainfont{source code pro}    % Set the font to Source Code Pro
-;; \\usepackage{array}               % for specifying cell format
-;; \\pagestyle{empty}                % Removes page numbers
-;; \\color[HTML]{FFFFFF}             % Sets default text color to white") 
-
-
-;;begin{document}
-
-;; Set the scale of the latex object so it is bigger.
-;;(default makes you squint)
-(setq org-format-latex-options
-      (plist-put org-format-latex-options :scale 0.25))
-
-;; Enable LaTeX previews on file open and when editing LaTeX fragments.
-(add-hook 'org-mode-hook 'org-latex-preview)
-
+;;;; Set the defaults for viewing org-mode
 (customize-set-variable
  'org-agenda-window-setup 'current-window                                         ; previously 'only-window "org-agenda takes the whole window."
  "org-agenda takes the current window.")
-
-;; (customize-set-variable
-;;  'diary-time-format 12
-;;  "set the time format to 12 hours (with am/pm) for emacs diary.")
-
-(customize-set-variable 'diary-number-of-entries 7
-                        "Number of entries to show for the diary")
-
-(customize-set-variable
- 'org-agenda-restore-windows-after-quit t
- "Restore the window configuration on exit of org-agenda.")
 
 ;; Return or left-click with mouse follows link
 (customize-set-variable
@@ -227,6 +136,152 @@
 (when (locate-library "org-appear")
   (add-hook 'org-mode-hook 'org-appear-mode))
 
+
+;;;; Set the defaults for viewing latex in org-mode
+;; note that the cache for rendered latex is stored in
+;; ~/.emacs.d/var/MY_NAME/.cache_latex/
+;; This is set by custom-no-littering where MY_NAME is the
+;; environmental variable where the name of the machine using this
+;; setup is stored.
+
+
+
+;; This setup allows Org Mode to preview LaTeX fragments inline, using image
+;; files rendered by external programs like dvipng and imagemagick, for better
+;; visual compatibility.
+
+;; Note that org-format-latex-header is not modified as a custom 
+(with-eval-after-load 'org
+  
+  (customize-set-variable
+   'org-preview-latex-process-alist
+   '((dvipng :programs ("latex" "dvipng")
+             :description "dvi > png"
+             :message "You need to install the programs: latex and dvipng."
+             :image-input-type "dvi"
+             :image-output-type "png"
+             :image-size-adjust (1.0 . 1.0)
+             :latex-compiler ("latex -interaction nonstopmode -output-directory %o %f")
+             :image-converter ("dvipng -D %D -T tight -o %O %f"))
+
+     (imagemagick :programs ("lualatex" "convert")
+                  :description "pdf > png"
+                  :message "You need to install the programs: lualatex and imagemagick."
+                  :image-input-type "pdf"
+                  :image-output-type "png"
+                  :image-size-adjust (1.0 . 1.0)
+                  :latex-compiler ("lualatex -interaction nonstopmode -output-directory %o %f")
+                  :image-converter ("convert -density 600 -trim -antialias %f -quality 100 %O"))))
+
+  ;; Define a multi-pass latex generation process to handle complex LaTeX
+  ;; documents, including those with TikZ diagrams.
+  ;; Running 3 times helps resolve things like cross-references.
+  ;; Biber is used to help with inserting book references.
+  (customize-set-variable
+   'org-latex-pdf-process
+   '("lualatex -interaction nonstopmode -output-directory %o %f"
+     "biber %b"                                                                   ; If using biber for bibliography
+     "lualatex -interaction nonstopmode -output-directory %o %f"
+     "lualatex -interaction nonstopmode -output-directory %o %f")
+   "Define how Org exports PDFs from LaTeX.")
+  ;; Setting the pdf rendering engine without biber would be:
+  ;; (setq org-latex-pdf-process
+  ;;       '("pdflatex -interaction nonstopmode -output-directory %o %f"
+  ;;         "pdflatex -interaction nonstopmode -output-directory %o %f"
+  ;;         "pdflatex -interaction nonstopmode -output-directory %o %f"))
+
+  ;; Default to imagemagick for rendering LaTeX previews for improved quality.
+  (customize-set-variable
+   'org-preview-latex-default-process 'imagemagick
+   "Use Imagemagick to render LaTeX previews in Org Mode for high-quality output.")
+
+  ;; Use LuaLaTeX as the default LaTeX compiler for better support with complex
+  ;; documents
+  (customize-set-variable
+   'org-latex-compiler "lualatex"
+   "Use LuaLaTeX as the default LaTeX compiler for better font support and compatibility.")
+
+  (customize-set-variable
+   'org-startup-with-latex-preview t "Render latex by default.")
+
+  (customize-set-variable
+   'org-latex-packages-alist
+   '(("" "xcolor" t)                                                              ; Ensure `xcolor' is included
+     ("" "array" t)                                                               ; Include `array' for tables
+     ("" "amsmath" t)                                                             ; Include `amsmath' explicitly
+     ("" "amsfonts" t)                                                            ; Include `amsfonts'
+     ("" "amssymb" t)                                                             ; Include `amssymb'
+     ("" "graphicx" t)                                                            ; Ensure image support
+     ("" "fontspec" t)                                                            ; Ensure `fontspec' for LuaLaTeX
+     ("dvipsnames" "xcolor" t)                                                    ; Enable extra colors in `xcolor'
+     )
+   "Add custom packages (without modifying defaults).")
+
+  (setq my-latex/primary-header-values
+        (string-join
+         '("\\documentclass[12pt]{article}"
+           "\\usepackage[usenames]{color}"
+           "\\usepackage{xcolor}"
+           "\\usepackage{fontspec}"
+           "\\setmainfont{Source Code Pro}"
+           "\\usepackage{amsmath}"
+           "\\usepackage{amsfonts}"
+           "\\usepackage{amssymb}"
+           "\\usepackage{graphicx}"
+           "\\usepackage{array}"
+           "\\pagestyle{empty}      % No page numbers"
+           "\\color[HTML]{FFFFFF}   % White text color") "\n"))
+
+  ;; Set up org-format-latex-header for 'in buffer' rendering. 
+  (customize-set-variable
+   'org-format-latex-header my-latex/primary-header-values)
+
+  ;; Add a custom org-latex-class and set it as default FOR EXPORT ONLY.
+  (add-to-list 'org-latex-classes
+               `("custom-org-export"
+                 ,my-latex/primary-header-values
+                 ("\\section{%s}" . "\\section*{%s}")
+                 ("\\subsection{%s}" . "\\subsection*{%s}")
+                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")))
+
+  (customize-set-variable
+   'org-latex-default-class "custom-org-export"
+   "Set the default class to be used for formatting latex in Org.")
+
+  ;;  Set the scale of the latex object so it is smaller.
+  (customize-set-variable 'org-format-latex-options
+                          (plist-put org-format-latex-options :scale 0.33)
+                          "Reduce the scale as needed.")
+  )
+
+;; Enable LaTeX previews on file open and when editing LaTeX fragments.
+(add-hook 'org-mode-hook 'org-latex-preview)
+
+
+;;;; Fix the org-table layout when using org-link-beautify-mode
+(defun my/org-table-fix-link-width ()
+  "Adjust Org table column widths when `org-link-beautify-mode' is active."
+  (when (and (bound-and-true-p org-link-beautify-mode)
+             (org-at-table-p))
+    (save-excursion
+      (goto-char (org-table-begin))
+      (while (re-search-forward org-bracket-link-regexp (org-table-end) t)
+        (let* ((full-link (match-string 0))
+               (displayed-text (if (match-string 3) (match-string 3) (match-string 1)))
+               ;; Fine-tune extra padding based on estimated icon width
+               (icon-width 0.9)                                                   ; Approximate width of the beautified icon
+               (extra-spacing (max 0 (ceiling (- 1 icon-width))))                 ; Ensure at least 1 space if necessary
+               (adjusted-text
+                (concat displayed-text (make-string extra-spacing ?\s))))
+          (replace-match adjusted-text t t))))))
+
+(defun my/org-table-align-hook (&rest _)
+  "Hook function to adjust table alignment."
+  (when (bound-and-true-p org-link-beautify-mode)
+    (my/org-table-fix-link-width)))
+
+(advice-add 'org-table-align :before #'my/org-table-align-hook)
+
 ;; Disable auto-pairing of "<" in org-mode with electric-pair-mode
 (defun org-enhance-electric-pair-inhibit-predicate ()
   "Disable auto-pairing of \"<\" in `org-mode' using `electric-pair-mode'."
@@ -247,11 +302,24 @@
           #'org-enhance-electric-pair-inhibit-predicate)
 
 
+;;;; Org Agenda/Calendar
+
+;; (customize-set-variable
+;;  'diary-time-format 12
+;;  "set the time format to 12 hours (with am/pm) for emacs diary.")
+
+(customize-set-variable 'diary-number-of-entries 7
+                        "Number of entries to show for the diary")
+
+(customize-set-variable
+ 'org-agenda-restore-windows-after-quit t
+ "Restore the window configuration on exit of org-agenda.")
+
 ;; Set up holidays. 
 (defvar holiday-australia-holidays
   (mapcar 'purecopy
           '((holiday-fixed 1 1 "New Year's Day")
-            (holiday-float 1 1 2 "Australia Day")                                 ; Typically observed on the 26th, but can be floated for observance
+            (holiday-float 1 26 "Australia Day")                                  ; Typically observed on the 26th, but can be floated for observance
             (holiday-fixed 4 25 "Anzac Day")
             (holiday-float 5 0 2 "Mother's Day")
             (holiday-float 6 1 2 "Queen's Birthday")                              ; Varies by state, commonly second Monday in June
@@ -278,7 +346,7 @@
             (holiday-fixed 12 26 "Boxing Day"))))
 
 (defun combine-holiday-lists (&rest lists)
-  "Combine multiple holiday lists, removing duplicates."
+  "Combine multiple holiday LISTS, removing duplicates."
   (let ((combined (apply 'append lists)))
     ;; Remove duplicates
     (delete-dups combined)))
@@ -364,7 +432,7 @@
 
 ;; ensure appointments are being checked.
 ;; (after current timezone and position have been set)
-(appt-activate t)
+
 
 ;; Make appt aware of appointments from the agenda
 (defun my-org/agenda-to-appt ()
@@ -496,13 +564,13 @@ Pipe indicates that DONE and CANCELLED are both final states to be chosen.")
       ;;   (sit-for 1)                                                                 ; Pause briefly to visualize the process
       )))           
 
-(declare-function my-buffer-tools/open-temp-buffer "custom-system-tools")
-(declare-function my-buffer-tools/show-buffer-from-first-line "custom-system-tools")
-(declare-function my-buffer-tools/resize-window-vertically "custom-system-tools")
+(declare-function my-buffer-tools/open-temp-buffer "system-tools")
+(declare-function my-buffer-tools/show-buffer-from-first-line "system-tools")
+(declare-function my-buffer-tools/resize-window-vertically "system-tools")
 
 (defun my-org/open-agenda ()
   "Open Org agenda in a new frame named `*agenda*'."
-  (interactive) 
+  (interactive) (appt-activate t)
   (let* (
          (base-buffer (my-buffer-tools/open-temp-buffer "TEMP-agenda"))
          (agenda-frame (make-frame `((name . "*agenda*"))))
@@ -584,3 +652,20 @@ Pipe indicates that DONE and CANCELLED are both final states to be chosen.")
 
 
                                                                                   ; LocalWords:  filenameing
+                                                                                  ; LocalWords:  Biber
+                                                                                  ; LocalWords:  luatex
+                                                                                  ; LocalWords:  LaTeX imagemagick
+                                                                                  ; LocalWords:  dvipng
+                                                                                  ; LocalWords:  png
+                                                                                  ; LocalWords:  dvi
+                                                                                  ; LocalWords:  pdf
+                                                                                  ; LocalWords:  dvipsnames
+                                                                                  ; LocalWords:  xcolor
+                                                                                  ; LocalWords:  LuaLaTeX
+                                                                                  ; LocalWords:  amssymb
+                                                                                  ; LocalWords:  amsfonts
+                                                                                  ; LocalWords:  amsmath
+                                                                                  ; LocalWords:  fontspec
+                                                                                  ; LocalWords:  color
+                                                                                  ; LocalWords:  graphicx
+                                                                                  ; LocalWords:  usepackage documentclass
