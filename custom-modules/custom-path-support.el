@@ -37,8 +37,6 @@
 (defvar yasnippets-directory-yasmate)
 (defvar yas-snippet-dirs)
 
-(defvar projectile-project-search-path)
-
 (defvar bookmark-default-file)
 (defvar bmkp-desktop-default-directory)
 
@@ -77,7 +75,7 @@
 
 ;;; Code:
 
-;; this function is take from TOOLS FOR THE FILE SYSTEM in custom-system-tools.
+;; this function is take from TOOLS FOR THE FILE SYSTEM in system-tools.
 ;; It is reproduced here so custom-path-support can be loaded without
 ;; dependencies.
 
@@ -93,7 +91,7 @@
  "no-littering etc directory set: %s" no-littering-etc-directory)
 
 ;; GPG application:
-(setq epg-gpg-program "/usr/bin/gpg")
+;; (setq epg-gpg-program "/usr/bin/gpg")
 
 ;; set a path to local custom packages.
 (setq custom-packages-dir
@@ -134,23 +132,9 @@
 
 ;; Set the tree-sitter load paths.
 ;;(note treesit-extra-load-path is set in early-init.el)
-;; (add-to-list 'load-path
-;;              (concat straight-base-dir "straight/" straight-build-dir "/"
-;;                      "tree-sitter-langs/bin/"))
 
-;; (setq my-paths/tree-sitter-lib
-;;       (expand-file-name (concat no-littering-etc-directory
-;;                                 "tree-sitter/")))
-;; (my-on-disk-tools/ensure-directory-exists my-paths/tree-sitter-lib)
-
-;; (setq tree-sitter-load-path (list my-paths/tree-sitter-lib))
-
-;; (defvar treesit-extra-load-path nil)
 ;; (defvar treesit-load-path '())
-;; (setq tree-sitter-load-path (list (expand-file-name "~/.emacs.d/tree-sitter/")))
-;; (setq tree-sitter-load-path (list (expand-file-name "~/.emacs.d/tree-sitter/")))
-;; (add-to-list 'tree-sitter-load-path "~/.emacs.d/tree-sitter/")
-;; (add-to-list 'load-path  (expand-file-name "~/.emacs.d/tree-sitter/"))
+;; (defvar treesit-extra-load-path nil)
 ;; (add-to-list 'treesit-load-path  (expand-file-name "~/.emacs.d/tree-sitter/"))
 ;; (add-to-list 'treesit-extra-load-path  (expand-file-name "~/.emacs.d/tree-sitter/"))
 
@@ -172,6 +156,10 @@
 
   (my-on-disk-tools/ensure-directory-exists
    bmkp-desktop-default-directory)
+  
+  (setq bmkp-bmenu-state-file
+        (expand-file-name
+         "bmkp/emacs-bmk-bmenu-state.el" no-littering-var-directory))
   )
 
 ;; Yasnippet directories
@@ -184,8 +172,8 @@
                             no-littering-var-directory))
     (setq yasnippets-directory-default
           (expand-file-name
-           "straight/build/yasnippet-snippets/snippets/"
-           no-littering-etc-directory))
+           "package/archives/elpa/yasnippet-snippets-1.0/snippets/"
+           no-littering-var-directory))
     (setq yasnippets-directory-yasmate
           (expand-file-name
            "yasnippet/yasmate/snippets/" no-littering-var-directory))
@@ -198,42 +186,15 @@
               "yasnippet/snippets/"
               no-littering-var-directory)
             ,(expand-file-name
-              "straight/build/yasnippet-snippets/snippets/"
+              "package/archives/elpa/yasnippet-snippets-1.0/snippets/"
               no-littering-etc-directory)
             ,(expand-file-name
               "yasnippet/yasmate/snippets/" ;; the yasmate collection
-              no-littering-var-directory)))))
+              no-littering-var-directory))))
 
-;; ensure the yasnippet directories exist.
-(my-on-disk-tools/ensure-directory-exists
- (expand-file-name "yasnippet/snippets/" no-littering-var-directory))
-(my-on-disk-tools/ensure-directory-exists
- (expand-file-name
-  "straight/build/yasnippet-snippets/snippets/"
-  no-littering-etc-directory))
-(my-on-disk-tools/ensure-directory-exists
- (expand-file-name
-  "yasnippet/yasmate/snippets/" no-littering-var-directory))
-
-;;; Get Projectile search paths from the environmental variable
-;; PROJECTILE_PATHS. If it is not set, default to ~/.
-
-;; A typical example is:
-;; export PROJECTILE_PATHS="/home/simon/Downloads/github:5,/home/simon/sync/primary/Adventures:5,/home/simon/sync/primary/dotfiles:5,/mnt/HDD04_WDD_08TB/workspace:7"
-;; This searches the locations recursively to a maximum of 5
-;; directories deep (apart from workspace, which searches 7 deep.)
-
-
-(setq
- projectile-project-search-path
- (if (getenv "PROJECTILE_PATHS")
-     (mapcar (lambda (path-depth-pair)
-               (let ((parts (split-string path-depth-pair ":")))
-                 (cons (car parts) (string-to-number (cadr parts)))))
-             (split-string (getenv "PROJECTILE_PATHS") ","))
-   ;; Default search path if the environment variable is not set
-   '(("~/" . 3))))
-
+  ;; ensure the yasnippet directories exist.
+  (my-on-disk-tools/ensure-directory-exists yasnippets-directory-personal)
+  (my-on-disk-tools/ensure-directory-exists yasnippets-directory-yasmate))
 
 ;; Dape
 ;; ----
@@ -298,8 +259,7 @@
 
 (setq save-sql-history-dir
       (expand-file-name "sql-history/" no-littering-var-directory))
-(setq save-sql-history-dir
-      (expand-file-name "sql-history/" no-littering-var-directory))
+
 
 ;; keep the pretty-speedbar-icons in the icon stash.
 ;; (defvar pretty-speedbar-icons-dir
@@ -339,3 +299,4 @@
                                                                                   ; LocalWords:  pws prepl systemd
                                                                                   ; LocalWords:  recentf
                                                                                   ; LocalWords:  loadbalancer
+                                                                                  ; LocalWords:  Dape
