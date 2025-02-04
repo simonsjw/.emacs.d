@@ -13,7 +13,9 @@
 (declare-function eldoc-box-hover-at-point-mode "eldoc-box")
 (declare-function which-key-mode "which-key")
 
+;; whichkey is now built in.
 (use-package which-key
+  :ensure nil
   :config
   (which-key-mode))
 
@@ -45,8 +47,7 @@
 
 ;;; Code:
 
-(require 'straight)
-(require 'eglot)
+;; (require 'eglot)
 (require 'consult)
 (require 'embark)
 
@@ -56,11 +57,7 @@
 (declare-function consult-eglot-embark-mode "consult-eglot-embark")
 (declare-function eldoc-box-hover-mode "eldoc-box-hover-mode")
 
-
-
-
 ;;;; eglot setup
-;;   -----------
 
 (with-eval-after-load 'eglot
   (with-eval-after-load 'embark
@@ -88,7 +85,7 @@
   ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("ruff" "server")))
   ;;  (add-hook 'python-ts-mode 'eglot-ensure)
   (add-to-list 'eglot-server-programs
-               '(python-ts-mode . ("basedpyright-langserver" "--stdio")))
+               '((python-mode python-ts-mode) . ("basedpyright-langserver" "--stdio")))
   
 
 
