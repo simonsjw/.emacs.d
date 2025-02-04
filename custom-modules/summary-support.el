@@ -1,4 +1,4 @@
-;;; custom-summary-config.el --- Crafted Emacs splash screen  -*- lexical-binding: t -*-
+;;; summary-support.el --- Emacs splash screen  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2025
 ;; SPDX-License-Identifier: MIT
@@ -12,6 +12,8 @@
 ;;; Code:
 
 ;; [[https://github.com/emacs-dashboard/emacs-dashboard][Dashboard]]
+
+(declare-function dashboard-setup-startup-hook "dashboard")
 
 (use-package dashboard
   :ensure t
@@ -58,15 +60,21 @@
        ".bashrc"
        "Open .bashrc file"
        (lambda (&rest _) (find-file "~/.bashrc")))
-      (#("󰒓" 0 1 (face (:family "Symbols Nerd Font Mono" :height 1.0)
+      (#("󰒓" 0 1 (face (:family "Symbols Nerd Font Mono"
+                                :height 1.0
+                                :foreground "white")
                        font-lock-face
-                       (:family "Symbols Nerd Font Mono" :height 1.0)
-                       display (raise 0.0) rear-nonsticky t))
-       ".bash_profile"
+                       (:family "Symbols Nerd Font Mono"
+                                :height 1.0
+                                :foreground "white")
+                       display (raise 0.0) 
+                       rear-nonsticky t))
+       #(".bash_profile" 0 13 `(face (:foreground ,info-theme-light-blue)))
        "Open .bash_profile"
        (lambda (&rest _) (find-file "~/.bash_profile")))
       )
      )
+
    dashboard-startupify-list '(dashboard-insert-banner
                                dashboard-insert-newline
                                dashboard-insert-banner-title
@@ -77,9 +85,10 @@
                                dashboard-insert-items
                                dashboard-insert-newline
                                dashboard-insert-footer)
+
    dashboard-buffer-name "*Emacs*"
-   dashboard-display-icons-p t                                              ; display icons on both GUI and terminal
-   dashboard-icon-type 'nerd-icons                                          ; use `nerd-icons' package
+   dashboard-display-icons-p t                                                    ; display icons on both GUI and terminal
+   dashboard-icon-type 'nerd-icons                                                ; use `nerd-icons' package
    dashboard-set-heading-icons t
    dashboard-set-file-icons t)
   :config
@@ -88,3 +97,5 @@
 
 (provide 'summary-support)
 ;;; summary-support.el ends here.
+
+                                                                                  ; LocalWords:  bashrc
