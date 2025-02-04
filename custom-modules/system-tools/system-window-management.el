@@ -8,16 +8,32 @@
 
 ;;; Commentary:
 ;; This script provides a mechanism for managing windows in Emacs, supporting
-;; multiple projects each in different frames.  It uses a hash table to store
-;; window references keyed by a combination of frame and window tags, allowing
-;; efficient matching of buffers to the appropriate frame and window.
+;; multiple window collections each in different frames.
+;; 
+;; Principle 1:
+;; Collections are mapped using relationships between tags in objects defined
+;; here and then tagged Frames and Windows are used to capture buffers which
+;; are mapped to tags using either buffer name, a regexp using the name or the
+;; buffer mode.  Also important is the frame and window active when the mapping
+;; event occurs.
 ;;
+;; Principle 2:
+;; Buffers are not tagged.  In Emacs, buffers run free.  This framework
+;; explicitly does not interfere with buffers themselves.  It only impacts
+;; where they are shown.
+;;
+;; Principle 3:
+;; If the window or frame isn't tagged and a buffer
+;; being processed isn't impacted by the maps, then Emacs should behave exactly
+;; as it would was this functionality not present.
+;; 
 
 
-(defvar sr-speedbar-window) ; variable defined in sr-speedbar - the current window of sr-speedbar.
+
+(defvar sr-speedbar-window)                                                       ; variable defined in sr-speedbar - the current window of sr-speedbar.
 
 ;; (declare-function sr-speedbar-get-window "sr-speedbar")
-;; TODO:understand why sr-speedbar-get-window seems to cause windows to open up between sr-speedbar and edit window.
+
 (defvar my-window-tools/buffer-window-map)
 (declare-function my-tab-line/tab-line-close-tab-given-buffer "tabline-support")
 (declare-function sr-speedbar-exist-p "sr-speedbar")
@@ -67,6 +83,7 @@
                      ("*Async-native-compile-log*". logs)
                      ("*elisp-flymake-byte-compile*" . logs)
                      ("*log-edit-files*" . logs)
+                     ("*Org Babel Results*" . logs)
                      ("*Checkdoc Status*" . data)
                      ("*RE-Builder*" . config)
                      ("*Anaconda*". config)
@@ -82,34 +99,34 @@
                      ("*vc-dir*" . vc)
                      ("*log-edit-files*" . vc)
                      ))
-        (:regexps . (("^documentation$" . config)                                     ; exact match for `documentation'
-                     ("^README.*" . config)                                           ; strings beginning upper or lower case `README'.
-                     (".*\\.conf$" . config)                                          ; any number of characters followed by `.conf'.
-                     (".*\\.dconf$" . config)                                         ; any number of characters followed by `.dconf'.
-                     ("^\\*Customize.*" . config)                                     ; strings beginning with `*Customize' followed by any characters.
-                     ("^\\*Ibuffer.*" . config)                                       ; strings beginning with `*Ibuffer' followed by any characters.
-                     (".*_types.py" . config)                                         ; strings ending `_type.py' - a Python file defining custom type hints. 
-                     ("^magit.*" . vc)                                                ; strings beginning with `magit' followed by any characters.
-                     ("^vc-.*" . vc)                                                  ; strings beginning with `vc' followed by any characters.
-                     (".*Annotate .*" . vc)                                           ; strings with `Annotate\ ' somewhere in them.
-                     (".*ede-proj.*" . vc)                                            ; strings with `ede-proj'  somewhere in them.
-                     (".*\\.pdf$" . data)                                             ; any number of characters followed by `.pdf'.
-                     ("^\\*Flymake diagnostics.*" . data)                             ; strings beginning with `Flymake-diagnostics' followed by any characters.
-                     ("^flymake-.*" . data)                                           ; strings beginning `flymake'.
-                     (".*cell sheet.*" . data)                                        ; strings containing `cell\ sheet'.
-                     ("^Ediff A\\:.*" . data)                                         ; strings beginning `Ediff A:' followed by any characters.
-                     ("^Ediff B\\:.*" . data)                                         ; strings beginning `Ediff B:' followed by any characters.
-                     ("^magit-process:.*" . logs)                                     ; strings beginning `magit-process:' followed by any characters.
-                     ("^\\*EGLOT.*" . logs)                                           ; strings beginning `*EGLOT' followed by any characters.
-                     (".*+sterr$" . logs)                                             ; strings ending `+sterr'.
-                     (".*\\.log" . logs)                                              ; strings ending `.log'.
-                     (".*-log.*" . logs)                                              ; strings with `-log' in them.
-                     (".*tramp.*" . logs)                                             ; strings with `tramp' in them.
-                     ("^\\*vc-git :.*" . logs)                                        ; strings beginning `*vc-git :'               
-                     ("^\\*ielm*" . terminal)                                         ; strings beginning `*ielm' followed by any characters.
-                     ("^\\*Q PROC.*" . terminal)                                      ; strings beginning `*Q PROC' followed by any characters.
-                     ("^\\*vterm.*" . terminal)                                       ; strings beginning `*vterm' followed by any characters.
-                     ("^\\*eshell.*" . terminal)                                      ; strings beginning `*eshell' followed by any characters.
+        (:regexps . (("^documentation$" . config)                                 ; exact match for `documentation'
+                     ("^README.*" . config)                                       ; strings beginning upper or lower case `README'.
+                     (".*\\.conf$" . config)                                      ; any number of characters followed by `.conf'.
+                     (".*\\.dconf$" . config)                                     ; any number of characters followed by `.dconf'.
+                     ("^\\*Customize.*" . config)                                 ; strings beginning with `*Customize' followed by any characters.
+                     ("^\\*Ibuffer.*" . config)                                   ; strings beginning with `*Ibuffer' followed by any characters.
+                     (".*_types.py" . config)                                     ; strings ending `_type.py' - a Python file defining custom type hints. 
+                     ("^magit.*" . vc)                                            ; strings beginning with `magit' followed by any characters.
+                     ("^vc-.*" . vc)                                              ; strings beginning with `vc' followed by any characters.
+                     (".*Annotate .*" . vc)                                       ; strings with `Annotate\ ' somewhere in them.
+                     (".*ede-proj.*" . vc)                                        ; strings with `ede-proj'  somewhere in them.
+                     (".*\\.pdf$" . data)                                         ; any number of characters followed by `.pdf'.
+                     ("^\\*Flymake diagnostics.*" . data)                         ; strings beginning with `Flymake-diagnostics' followed by any characters.
+                     ("^flymake-.*" . data)                                       ; strings beginning `flymake'.
+                     (".*cell sheet.*" . data)                                    ; strings containing `cell\ sheet'.
+                     ("^Ediff A\\:.*" . data)                                     ; strings beginning `Ediff A:' followed by any characters.
+                     ("^Ediff B\\:.*" . data)                                     ; strings beginning `Ediff B:' followed by any characters.
+                     ("^magit-process:.*" . logs)                                 ; strings beginning `magit-process:' followed by any characters.
+                     ("^\\*EGLOT.*" . logs)                                       ; strings beginning `*EGLOT' followed by any characters.
+                     (".*+sterr$" . logs)                                         ; strings ending `+sterr'.
+                     (".*\\.log" . logs)                                          ; strings ending `.log'.
+                     (".*-log.*" . logs)                                          ; strings with `-log' in them.
+                     (".*tramp.*" . logs)                                         ; strings with `tramp' in them.
+                     ("^\\*vc-git :.*" . logs)                                    ; strings beginning `*vc-git :'               
+                     ("^\\*ielm*" . terminal)                                     ; strings beginning `*ielm' followed by any characters.
+                     ("^\\*Q PROC.*" . terminal)                                  ; strings beginning `*Q PROC' followed by any characters.
+                     ("^\\*vterm.*" . terminal)                                   ; strings beginning `*vterm' followed by any characters.
+                     ("^\\*eshell.*" . terminal)                                  ; strings beginning `*eshell' followed by any characters.
                      ))
         (:modes   . ((vterm-mode . terminal)
                      (eshell-mode . terminal)
@@ -132,7 +149,7 @@
                      (XML-mode . config)
                      (nXML-mode . config)
                      (json-mode . config)
-                     (org-mode . config)
+              ;;       (org-mode . config)
                      (csv-mode . config)
                      (ibuffer-mode . config)
                      (bufler-list-mode . config)
@@ -148,26 +165,12 @@
       )
 
 
-;; now map frame names to window opening functions. 
+;; now map frames to windows. 
 (setq my-window-tools/frame-map
-      '((:names   . (("*dape-shell*" . terminal)
-                     ("*scratch*" . terminal)
-                     ("*Ilist*" .config)
-                     (".gitignore" . vc)
-                     ("*vc-dir*" . vc)
-                     ("*log-edit-files*" . vc)
-                     ))
-        (:regexps . (("^documentation$" . config)    
-                     ("^README.*" . config)   
-                     (".*\\.conf$" . config)     
-                     (".*\\.dconf$" . config)  
-                     ))
-        (:modes   . ((vterm-mode . terminal)
-                     (eshell-mode . terminal)
-                     (vc-dir . vc))
-                  )
-        )
-      )
+      '(
+        ('IDE  . '(edit logs config data terminal vc))
+        ('AGENDA . '(agenda holidays calendar items))
+        ))
 
 (defvar my-window-tools/whitelabel-buffers '("*SPEEDBAR*"
                                              "*dape-repl*"
