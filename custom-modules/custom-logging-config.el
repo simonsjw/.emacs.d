@@ -256,14 +256,14 @@ ARGS:
 
 ;; now ensure that our logging-view-mode is bound to any buffer with the
 ;; `.log' suffix.
-(with-eval-after-load 'custom-theme-support
+(with-eval-after-load 'theme-support
   (with-eval-after-load 'custom-path-support
-;; Require the log-view-mode (adjust the path if necessary)
-(add-to-list 'load-path my-paths/logging-view-mode)                                       ; Add directory to the load path
-(require 'logging-view-mode)
+    ;; Require the log-view-mode (adjust the path if necessary)
+    (add-to-list 'load-path my-paths/logging-view-mode)                                       ; Add directory to the load path
+    (require 'logging-view-mode)
 
-;; Associate .log files with log-view-mode
-(add-to-list 'auto-mode-alist '("\\.log\\'" . logging-view-mode))))
+    ;; Associate .log files with log-view-mode
+    (add-to-list 'auto-mode-alist '("\\.log\\'" . logging-view-mode))))
 
 
 (provide 'custom-logging-config)
