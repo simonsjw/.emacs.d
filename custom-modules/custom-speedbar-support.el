@@ -13,7 +13,7 @@
 
 ;; Configuration for speedbar, a file-tree (and more), that comes
 ;; builtin to Emacs it also has integration with some packages like
-;; Rmail and projectile
+;; Rmail.
 
 (defvar speedbar-mode-map)
 (defvar speedbar-indentation-width)
@@ -52,11 +52,6 @@
 (defvar pretty-speedbar-about-stroke)                                             ; Stroke color for all icons placed to the right of the file name, including checks and locks.
 (defvar pretty-speedbar-signs-fill)                                               ; Fill color for plus and minus signs used on non-folder icons.
 
-;; test
-(defvar projectile-speedbar-enable)
-
-(declare-function projectile-project-p "projectile")
-(declare-function projectile-project-root "projectile")
 (declare-function speedbar-refresh "speedbar")
 (declare-function speedbar-change-initial-expansion-list "speedbar")
 (declare-function speedbar-add-supported-extension "speedbar")
@@ -65,7 +60,6 @@
 ;;; Code:
 
 (use-package sr-speedbar)
-(use-package projectile-speedbar)
 (use-package pretty-speedbar)
 
 
@@ -113,8 +107,6 @@
      "makefile" "MAKEFILE" "Makefile"                                             ; Makefile
      ".json" ".yaml" ".toml"                                                      ; Data formats
      ".md" ".markdown" ".org" ".txt" "README"))                                   ; Notes and Markup
- 
- '(projectile-speedbar-enable t)                                                  ; Open speedbar in the project root. 
  
  '(sr-speedbar-auto-refresh t)
  '(sr-speedbar-max-width 170)
@@ -175,20 +167,18 @@
 If no project root is found fallback to `parent/current-directory'."
   (let* (
          (current-dir default-directory)
-
-         (project-root
-          (if (projectile-project-p) (projectile-project-root) nil))
-         
-         (relative-path
-          (if project-root
-              (file-relative-name current-dir project-root)
-            (concat
-             (file-name-nondirectory
-              (directory-file-name
-               (file-name-directory current-dir)))
-             "/" (file-name-nondirectory current-dir))))
-         )
-    project-root))
+         (project-root-path project-root))
+    
+    (relative-path
+     (if project-root-path
+         (file-relative-name current-dir project-root-path)
+       (concat
+        (file-name-nondirectory
+         (directory-file-name
+          (file-name-directory current-dir)))
+        "/" (file-name-nondirectory current-dir))))
+    )
+  relative-path)
 
 ;; (add-hook 'speedbar-mode-hook 'my-speedbar-display-parent-directory)
 
