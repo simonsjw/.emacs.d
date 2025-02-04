@@ -34,7 +34,6 @@
 ;;   (add-hook 'context-menu-functions #'my-menus/add-vc-mode-to-context-menu))
 
 
-;; 
 ;;;; PROG_MODE: Comment Key Map and Menu
 ;;   -------------------------------------------
 ;; Define the keymap for 'comments' related commands
