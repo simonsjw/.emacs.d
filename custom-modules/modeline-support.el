@@ -14,7 +14,7 @@
 
 
 (declare-function
- my-in-buffer-tools/get-matching-bracket-position "custom-system-tools")
+ my-in-buffer-tools/get-matching-bracket-position "system-tools")
 (declare-function
  my-window-tools/get-tag-given-window "system-window-management")
 ;; (declare-function delight "delight")
@@ -24,10 +24,8 @@
 ;;; Code:
 
 
-;; ##########################################################################
-;;;; CUSTOM SEGMENTS.
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+;;;; CUSTOM SEGMENTS.
 
 ;;;;;; loadbalancer Process List
 
@@ -49,7 +47,7 @@
           "")))
   "Display the icon for the current buffer in the mode-line.")
 
-;;;;;; Modeline Window Tag 
+;;;;;; Modeline Window Tag
 ;; (defun my-modeline/drag-window-boundary (start-event)
 ;;   "Allow dragging of window boundaries when the mode-line element is clicked.
 
@@ -237,10 +235,6 @@ If the cursor is not on or next to a bracket, display the default position info.
 ;; (add-hook 'eglot-managed-mode-hook #'my-modeline/eglot-mode-line-setup)
 ;; (add-hook 'eglot-unmanaged-mode-hook #'my-modeline/eglot-mode-line-cleanup)
 
-
-;; Projectile
-(customize-set-variable 'projectile-mode-line-prefix " Project:")
-
 ;; (defvar-local my-modeline/projectile
 ;;     `(:eval
 ;;       (when (and (bound-and-true-p projectile-mode)
@@ -267,63 +261,63 @@ If the cursor is not on or next to a bracket, display the default position info.
 
 ;;;;;; Flymake entry
 
-(declare-function flymake--severity "flymake" (type))
-(declare-function flymake-diagnostic-type "flymake" (diag))
+;; (declare-function flymake--severity "flymake" (type))
+;; (declare-function flymake-diagnostic-type "flymake" (diag))
 
-;; Based on `flymake--mode-line-counter'.
-(defun my-modeline/flymake-counter (type)
-  "Compute number of diagnostics in buffer with TYPE's severity.
-TYPE is usually keyword `:error', `:warning' or `:note'."
-  (let ((count 0))
-    (dolist (d (flymake-diagnostics))
-      (when (= (flymake--severity type)
-               (flymake--severity (flymake-diagnostic-type d)))
-        (cl-incf count)))
-    (when (cl-plusp count)
-      (number-to-string count))))
+;; ;; Based on `flymake--mode-line-counter'.
+;; (defun my-modeline/flymake-counter (type)
+;;   "Compute number of diagnostics in buffer with TYPE's severity.
+;; TYPE is usually keyword `:error', `:warning' or `:note'."
+;;   (let ((count 0))
+;;     (dolist (d (flymake-diagnostics))
+;;       (when (= (flymake--severity type)
+;;                (flymake--severity (flymake-diagnostic-type d)))
+;;         (cl-incf count)))
+;;     (when (cl-plusp count)
+;;       (number-to-string count))))
 
-(defvar my-modeline/flymake-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map [mode-line down-mouse-1] 'flymake-show-buffer-diagnostics)
-    (define-key map [mode-line down-mouse-3] 'my-flymake/show-project-diagnostics)
-    map)
-  "Keymap to display on Flymake indicator.")
+;; (defvar my-modeline/flymake-map
+;;   (let ((map (make-sparse-keymap)))
+;;     (define-key map [mode-line down-mouse-1] 'flymake-show-buffer-diagnostics)
+;;     (define-key map [mode-line down-mouse-3] 'my-flymake/show-project-diagnostics)
+;;     map)
+;;   "Keymap to display on Flymake indicator.")
 
-(defmacro my-modeline/flymake-type (type indicator &optional face)
-  "Return function that handles Flymake TYPE with stylistic INDICATOR and FACE."
-  `(defun ,(intern (format "my-modeline/flymake-%s" type)) ()
-     (when-let*
-         ((count (my-modeline/flymake-counter
-                  ,(intern (format ":%s" type)))))
-       (concat
-        (propertize ,indicator 'face 'shadow)
-        (propertize
-         count
-         'face ',(or face type)
-         'mouse-face 'mode-line-highlight
-         ;; FIXME 2023-07-03: Clicking on the text with
-         ;; this buffer and a single warning present, the
-         ;; diagnostics take up the entire frame.  Why?
-         'local-map my-modeline/flymake-map
-         'help-echo
-         "mouse-1: buffer diagnostics\nmouse-3: project diagnostics")))))
+;; (defmacro my-modeline/flymake-type (type indicator &optional face)
+;;   "Return function that handles Flymake TYPE with stylistic INDICATOR and FACE."
+;;   `(defun ,(intern (format "my-modeline/flymake-%s" type)) ()
+;;      (when-let*
+;;          ((count (my-modeline/flymake-counter
+;;                   ,(intern (format ":%s" type)))))
+;;        (concat
+;;         (propertize ,indicator 'face 'shadow)
+;;         (propertize
+;;          count
+;;          'face ',(or face type)
+;;          'mouse-face 'mode-line-highlight
+;;          ;; FIXME 2023-07-03: Clicking on the text with
+;;          ;; this buffer and a single warning present, the
+;;          ;; diagnostics take up the entire frame.  Why?
+;;          'local-map my-modeline/flymake-map
+;;          'help-echo
+;;          "mouse-1: buffer diagnostics\nmouse-3: project diagnostics")))))
 
-;; "☣"  "!"
-(my-modeline/flymake-type error "" error)
-(my-modeline/flymake-type warning "!" warning)
-(my-modeline/flymake-type note "·" success)
+;; ;; "☣"  "!"
+;; (my-modeline/flymake-type error "" error)
+;; (my-modeline/flymake-type warning "!" warning)
+;; (my-modeline/flymake-type note "·" success)
 
-(defvar-local my-modeline/flymake
-    `(:eval
-      (when (and (bound-and-true-p flymake-mode)
-                 (mode-line-window-selected-p))
-        (list
-         ;; See the calls to the macro `my-modeline/flymake-type'
-         '(:eval (my-modeline/flymake-error))
-         '(:eval (my-modeline/flymake-warning))
-         '(:eval (my-modeline/flymake-note)))))
-  "Mode line construct displaying `flymake-mode-line-format'.
-Specific to the current window's mode line.")
+;; (defvar-local my-modeline/flymake
+;;     `(:eval
+;;       (when (and (bound-and-true-p flymake-mode)
+;;                  (mode-line-window-selected-p))
+;;         (list
+;;          ;; See the calls to the macro `my-modeline/flymake-type'
+;;          '(:eval (my-modeline/flymake-error))
+;;          '(:eval (my-modeline/flymake-warning))
+;;          '(:eval (my-modeline/flymake-note)))))
+;;   "Mode line construct displaying `flymake-mode-line-format'.
+;; Specific to the current window's mode line.")
 
 ;;;;;; Eglot
 
