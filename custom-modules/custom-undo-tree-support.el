@@ -14,14 +14,11 @@
 ;;; Packages:
 
 (require 'custom-logging-config)
-(require 'custom-system-tools)
-(require 'straight)
+(require 'system-tools)
 
 ;; Undo-tree package
 ;; https://gitlab.com/tsc25/undo-tree/-/blob/master/undo-tree.el
 (use-package undo-tree)
-
-
 
 (require 'undo-tree)
 
