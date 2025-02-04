@@ -1,6 +1,8 @@
 *.eld
 *.log
 *.eln
+*.elc
+*.cache_latex
 tree-sitter/
 **/eln-cache/
 etc/images/ucd.all.flat.xml
@@ -9,6 +11,7 @@ etc/**/eln-cache
 etc/**/elpa
 etc/**/gnupg
 etc/**/gnus
+etc/**/package
 etc/**/straight
 var/**/.cache_latex
 var/**/anaconda-mode
