@@ -10,20 +10,49 @@
 
 ;; This package provides project support and sets up the project.el package.
 
-;;; Code:
 
-;;; Packages phase
+
+;;; Packages phase:
 
 (use-package consult-project-extra
   :bind
   (("C-c p f" . consult-project-extra-find)
    ("C-c p o" . consult-project-extra-find-other-window)))
 
+(require 'consult-project-extra)
+
+;;; Code:
+;; Define and add directories to load-path
+(defun my-project/scan-workspaces ()
+  "Interactively scan for new projects.
+
+The list of directories in `my-project/parent-directories' will be scanned
+recursively for projects."
+  (interactive)
+  (mapc (lambda (parent-dir)
+          (let ((absolute-parent-dir (file-truename parent-dir)))
+            (message "scanning: %s" absolute-parent-dir)
+            (project-remember-projects-under absolute-parent-dir 1)))             ; Add the directories to the load-path.
+        my-project/parent-directories)
+  )
+
 ;;; Configuration phase
 
 
-(require 'consult-project-extra)
 
+
+;; (project-remember-projects-under DIR &optional RECURSIVE)
+;; (project-remember-project PR &optional NO-WRITE)
+
+(customize-set-variable 'my-project/parent-directories
+                        '("/mnt/HDD04_WDD_08TB/workspace/"
+                          "~/Downloads/github/")
+                        "The directories to scan and pick up new projects.")
+
+
+
+
+;; (expand-file-name "/mnt/HDD04_WDD_08TB/workspace/")
 
 ;; (defun my-project/add-projects-from-csv (csv-file)
 ;;   "Add projects to Projectile from a CSV-FILE path.
@@ -64,3 +93,5 @@
 
                                                                                   ; LocalWords:  simon
                                                                                   ; LocalWords:  emacs
+                                                                                  ; LocalWords:  mapc
+                                                                                  ; LocalWords:  WDD
