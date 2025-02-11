@@ -13,21 +13,21 @@
 
 ;;     JSON, which is passed directly to Vega.
 ;;     elisp, which is evaluated and converted to JSON before being passed to
-;;     Vega. The elisp Vega specification format is, not coincidentally, the
+;;     Vega.  The elisp Vega specification format is, not coincidentally, the
 ;;     same as what is produced by called read-json on any Vega JSON
 ;;     specification.
 ;;     clojure, which is evaluated in the buffer's current cider context and
-;;     converted to JSON before being passed to Vega. The clojure
+;;     converted to JSON before being passed to Vega.  The clojure
 ;;     specification format is whatever EDN would translate into the JSON
-;;     specification you want. This is, also not coincidentally, the same
+;;     specification you want.  This is, also not coincidentally, the same
 ;;     format one would use with Oz.
 
 ;; When vega-view is invoked it first identifies the preceding sexp (whatever
 ;; that means for the language of the buffer), performs the mode-specific
 ;; conversion described above, then pipes it through the Vega command line
-;; tools to convert the specification to an SVG drawing. The drawing -- or
+;; tools to convert the specification to an SVG drawing.  The drawing -- or
 ;; the errors produced by Vega while trying to produce it -- are then
-;; displayed in an image-mode buffer called *vega*. (Note that you can toggle
+;; displayed in an image-mode buffer called *vega*.  (Note that you can toggle
 ;; between viewing an SVG image in an image-mode buffer as image or text
 ;; using C-c C-c in that buffer.)
 ;; JSON
@@ -48,7 +48,7 @@
 ;; }
 
 ;; Placing the cursor after the final } and invoking vega-view will bring up a
-;; new window (in the emacs sense of the term) containing an SVG drawing made
+;; new window (in the Emacs sense of the term) containing an SVG drawing made
 ;; from this spec.
 
 ;;; Packages:
@@ -67,7 +67,7 @@
  (expand-file-name
   "custom-packages/vega-view.el" user-emacs-directory))
 
-;;; File associations
+;;; File associations:
 
 ;; By default this library produces SVG output when used from an emacs that
 ;; supports SVG. If you would prefer that it produce PNG
@@ -80,13 +80,15 @@
 
 (customize-set-variable 'vega-view-prefer-png t)
 
+;;;; Code:
+
 (defcustom my-fn-vega/default-vega-spec 'vega
-  "The Vega format to use with vega-view. Can be `vega' or `vega-light'."
+  "The Vega format to use with `vega-view'. Can be `vega' or `vega-light'."
   :type 'symbol
   :group 'vega-view)
 
 (defun my-fn-vega/set-vega-spec-type (specification-type)
-  "Set the Vega specification given a specification type."
+  "Set the Vega specification given a SPECIFICATION-TYPE."
   (if (eq specification-type 'vega-light)
       (progn
         (customize-set-variable
@@ -105,8 +107,8 @@
 
 (defun my-fn-vega/change-vega-spec-type (chosen-specification-type)
   "Interactive function to change the Vega specification.
-Choices are `vega' or `vega-light'. This is an interactive wrapper for
-my-fn-vega/set-vega-spec-type."
+CHOSEN-SPECIFICATION-TYPE can be `vega' or `vega-light'.  This is an interactive
+ wrapper for `my-fn-vega/set-vega-spec-type'."
   (interactive
    (list
     (completing-read
@@ -123,3 +125,5 @@ my-fn-vega/set-vega-spec-type."
 ;;; Provision
 (provide 'lang-vega)
 ;;; crafted-q-mode-support.el ends here
+
+                                                                                  ; LocalWords:  vega fn PNG
