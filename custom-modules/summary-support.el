@@ -94,8 +94,9 @@
    dashboard-icon-type 'nerd-icons                                                ; use `nerd-icons' package
    dashboard-set-heading-icons t
    dashboard-set-file-icons t)
-  :config
-  (dashboard-setup-startup-hook))
+  ;; :config
+  ;; (dashboard-setup-startup-hook)
+  )
 
 
 (provide 'summary-support)
