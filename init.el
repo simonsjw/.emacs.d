@@ -6,36 +6,148 @@
 ;; Note that by default, init.el is the target of the tangle as
 ;; specified by #+PROPERTY in line 3.
 
-;;; Code
+;;; Code:
 
-;;; Emacs lisp source/compiled preference
-;; Prefer loading newest compiled .el file.
-(defvar load-prefer-newer nil "loading preference.")
-(setq load-prefer-newer t)
-(use-package auto-compile
-    :vc (:url "https://github.com/emacscollective/auto-compile.git")
-    :custom
-    (auto-compile-display-buffer nil) ;; Optional: Prevent showing the compile buffer
-    (auto-compile-use-mode-line t) ;; Optional: Show compile status in the mode line
-    :config
-    (auto-compile-on-load-mode 1)
-    (auto-compile-on-save-mode 1))
+;;;; Set up package.el
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
 
-;; delight enables us to manage mode interactions with the modeline via
-;; use-package and the :delight key.
+(require 'package)
+
+(setq package-archives
+      '(("gnu" . "https://elpa.gnu.org/packages/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+        ("melpa" . "https://melpa.org/packages/")
+        ("elpa-devel" . "https://elpa.gnu.org/devel/")))
+(setq package-archive-priorities
+      '(("gnu" . 2)
+        ("nongnu" . 1)
+        ("melpa" . 0)
+        ("elpa-devel" . 0)))
+
+;; Initialize the package system if not already done
+(unless (bound-and-true-p package--initialized)
+  (setq package-enable-at-startup nil)                                            ; Prevent Emacs from initializing it again later
+  (package-initialize))
+
+
+;; Ensure files are compiled natively and byte-wise.
+(use-package compile-angel
+  :ensure t
+  :demand t
+  :config
+  ;; Set `compile-angel-verbose' to nil to silence compile-angel.
+  (setq compile-angel-verbose t)
+  
+  ;; Enable native-compilation only
+  (setq compile-angel-enable-byte-compile nil)
+  (setq compile-angel-enable-native-compile t)   ; ensure we native compile only. 
+
+  (compile-angel-on-load-mode)
+  (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode))
+
+
+(eval-and-compile
+  (setq
+   use-package-always-ensure t                                                    ; once working - remove this and save elpa package store to git repo.
+   use-package-expand-minimally t))
+
+;; Install `no-littering' if necessary
+(unless (package-installed-p 'no-littering)
+  (unless package-archive-contents
+    (package-refresh-contents))
+  (package-install 'no-littering))
+
+;; Load `no-littering'
+(require 'no-littering)
+
+;; ensure we can control how minor modes are shown in the modeline. 
+(use-package delight)
+
+;;;; Set up logging
+(require 'custom-logging-config)
+(require 'system-tools)
+
+(log/debug :fn 'early-init
+           :msg (concat "collected base paths from env vars, defined "
+                        "eln-cache, no-littering-var-directory & "
+                        "no-littering-etc-directory.")
+           :obj user-emacs-directory)
+
+(when (file-exists-p log/init-log)
+  (delete-file log/init-log))
+
+(log/debug :fn 'early-init
+           :msg "loaded system tools."
+           :obj user-emacs-directory)
+
+
+(defvar my/REPO_LIST nil"The path to a list of git projects on the system.")
+(setq my/REPO_LIST (getenv"REPO_LIST"))
+
+;; This is the way we define a custom variable and add it to a group.
+;; (defcustom var-name default-value doc-string
+;;  :type 'type
+;;  :group 'group)
+
+(log/debug :fn 'early-init
+           :msg "no-littering etc directory set"
+           :obj no-littering-etc-directory)
+
+;;;; custom.el
+(defvar custom-file nil"Set location of custom.el.")
+(setq custom-file
+      (expand-file-name"custom.el" no-littering-etc-directory))
+
+(let
+    ((obj
+      (concat"\n   ("
+             (replace-regexp-in-string
+              ";"";\n     "
+              (mapconcat 'identity load-path";")) ")" )))
+  
+  (log/debug :fn 'early-init
+             :msg "Added custom-modules to load-path."
+             :obj obj))
+
+
+;;;; Settings to help compilation.
+(defvar comp-speed nil "Set native compilation.")
+(setq comp-speed 1)
+
+(defvar package-native-compile)
+(setq package-native-compile t)
+
+
+;; Record the filepath settings in the log.
+(let
+    ((native-comp-eln-load-path-string
+      (mapconcat 'identity native-comp-eln-load-path" ;\n     "))
+     (user-dir-payload
+      "\n   (package-user-dir: %s;")
+     (eln-dir-list-payloads
+      "\n   native-comp-eln-load-path-strings:\n      %s")
+     (eln-dir-list-ending-payload")"))
+
+  (log/info :fn 'early-init
+            :msg "Set package-user-dir and eln-cache directory."
+            :obj (format
+                  (concat
+                   user-dir-payload
+                   eln-dir-list-payloads eln-dir-list-ending-payload)
+                  package-user-dir
+                  native-comp-eln-load-path-string)))
+
+
 (use-package bind-key)
-(use-package helpful
-    :ensure t)
+(use-package helpful :ensure t)
 
 ;;; imports and declarations
 (require 'bind-key)                                                              ; if you use any :bind variant
 (require 'custom-logging-config)
 (require 'custom-path-support)
 (require 'elisp-packages)
-
-(require 'recentf)
- ;; Don't log files touched in the init process.
-(recentf-mode -1)
 
 ;; ensure the correct org-mode is sourced.
 ;; install the org package before it is used - otherwise it causes conflict.
@@ -107,8 +219,7 @@
           :msg "----Begin loading base functionality.----"
           :obj t)
 
-(require 'custom-init-config)
-(require 'custom-defaults-config);
+(require 'custom-defaults-config)
 ;; setup save histories.
 (savehist-mode 1)
 (setq history-length t)
@@ -159,7 +270,7 @@
 (require 'custom-debugger-support)
 
 ;; Handle writing config (Latex and the like)
-(require 'custom-writing-config)
+(require 'writing-config)
 
 ;; Additional file format support.
 (require 'custom-fileFormat-support)
@@ -182,7 +293,6 @@
 ;; database integration and SQL support.
 (require 'db-support)
 
-;;(require 'custom-hydra-config)
 (require 'custom-terminal-support)
 (require 'summary-support)
 (require 'system-window-management)
@@ -226,6 +336,8 @@
 ;;   (server-start))
 
 (recentf-mode 1)
+(recentf-cleanup)
+(savehist-mode 1)
 
 (provide 'init)
 ;;; init.el ends here
