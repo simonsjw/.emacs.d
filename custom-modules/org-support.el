@@ -125,7 +125,7 @@
  "Display links as descriptions rather than raw URLs.")
 
 ;; Visually indent org-mode files to a given header level
-(add-hook 'org-mode-hook #'org-indent-mode)
+;; (add-hook 'org-mode-hook #'org-indent-mode)
 
 ;; make org mode tables pretty.
 (add-hook
@@ -135,6 +135,14 @@
 (customize-set-variable 'org-hide-emphasis-markers t)
 (when (locate-library "org-appear")
   (add-hook 'org-mode-hook 'org-appear-mode))
+
+;; ensure formatting options used by org-toggle-pretty-entities must only be
+;; interpreted if they are in curly brackets ({})
+(customize-set-variable 'org-use-sub-superscripts '{})
+
+;; Ensure that TAB works in a code-block the way it works in the major-mode for
+;; that buffer.
+(customize-set-variable 'org-src-tab-acts-natively t)
 
 
 ;;;; Set the defaults for viewing latex in org-mode
@@ -319,7 +327,18 @@
 (defvar holiday-australia-holidays
   (mapcar 'purecopy
           '((holiday-fixed 1 1 "New Year's Day")
-            (holiday-float 1 26 "Australia Day")                                  ; Typically observed on the 26th, but can be floated for observance
+
+            (holiday-fixed 1 26 "Australia Day")                                  ; Always Jan 26
+            
+            (holiday-sexp                                                         ; If Jan 26 is a weekend, observe the following Monday
+             (let* ((year (or displayed-year (calendar-current-year)))            ; Use displayed-year if available, else fallback to current year
+                    (dow (calendar-day-of-week (list 1 26 year))))
+               (cond
+                ((= dow 6) (list 1 28 year))                                      ; Saturday -> holiday on Monday (the 28th)
+                ((= dow 0) (list 1 27 year))                                      ; Sunday -> holiday on Monday (the 27th)
+                (t nil)))
+             "Australia Day (Observed)")
+
             (holiday-fixed 4 25 "Anzac Day")
             (holiday-float 5 0 2 "Mother's Day")
             (holiday-float 6 1 2 "Queen's Birthday")                              ; Varies by state, commonly second Monday in June
@@ -390,8 +409,8 @@
   '(calendar-nth-named-day 1 0 4 year))                                           ; First Sunday in April
 
 
-;; Function to determine the current time zone offset
 (defun my-set-calendar-time-zone ()
+  "Determine the current time zone offset."
   (let ((current-time (current-time))
         (dst-start (calendar-absolute-from-gregorian
                     (eval calendar-daylight-savings-starts)))
@@ -669,3 +688,4 @@ Pipe indicates that DONE and CANCELLED are both final states to be chosen.")
                                                                                   ; LocalWords:  color
                                                                                   ; LocalWords:  graphicx
                                                                                   ; LocalWords:  usepackage documentclass
+                                                                                  ; LocalWords:  setmainfont
