@@ -24,7 +24,7 @@
 (use-package orderless)
 (use-package vertico)
 (use-package which-key
-  :ensure nil    ; which-key is built in from emacs30.
+  :ensure nil                                                                     ; which-key is built in from macs30
   :config (which-key-mode))
 
 
@@ -118,7 +118,7 @@
 
 (add-hook 'eshell-mode-hook #'crafted-completion-corfu-eshell)
 
-;; Which-key
+;; Which-key (now built in to emacs)
 ;; https://github.com/justbur/emacs-which-key
 
 ;;(which-key-setup-side-window-right)
