@@ -38,7 +38,7 @@
 ;;; File associations (.k and .q)
 (add-to-list 'auto-mode-alist '("\\.[kq]\\'" . q-script-mode))
 
-(defun my-lang-q/mode-setup ()
+(defun my-lang/q-mode-setup ()
   "The setup function hooked to be loaded on opening a .q or .k file."
   (message
    "[%s ; DEBUG; my-lang-q/mode-setup]starting loading the defun ; ;"
@@ -86,7 +86,7 @@
 ;; Hooks
 (add-hook 'ess-mode-hook #'remove-ess-q-extn)
 (add-hook 'inferior-ess-mode-hook #'remove-ess-q-extn)
-(add-hook 'q-script-mode-hook #'my-lang-q/mode-setup)
+(add-hook 'q-script-mode-hook #'my-lang/q-mode-setup)
 
 
 ;;; Provision

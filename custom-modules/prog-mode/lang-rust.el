@@ -45,8 +45,8 @@
 ;;; Key maps
 
 ;; Reassign the rust-mode keybindings to the rust-ts-mode map.
-(defun my-lang/rust()
-  "all the functionality you need for rust"
+(defun my-lang/rust-setup()
+  "All the functionality you need for rust."
 
   (eglot-ensure)
 
@@ -171,7 +171,7 @@
   
   )
 
-(add-hook 'rustic-mode-hook #'my-lang/rust)
+(add-hook 'rustic-mode-hook #'my-lang/rust-setup)
 
 (provide 'lang-rust)
 ;;; lang-rust.el ends here
