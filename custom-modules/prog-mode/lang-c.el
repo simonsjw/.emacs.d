@@ -141,8 +141,8 @@
 (add-to-list 'auto-mode-alist '("\\.cpp\\'" . cpp-ts-mode))
 
 ;; settings for c-mode.
-(defun my-lang-c/c-mode-setup ()
-  "Central function to hook into `python-mode' for python functionality."
+(defun my-lang/c-mode-setup ()
+  "Central function to hook into `c-mode' for python functionality."
   (message
    "[%s ; DEBUG; my-lang-python/python-mode-setup]starting loading the defun ; ;"
    (current-time-string))
@@ -170,8 +170,8 @@
   (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons
   (setq-local outline-blank-line t)                                               ; Blank line before headers
   (setq-local outline-minor-mode-highlight t)                                     ; Font-lock outlines
-  (setq-local outline-regexp "##+")                                              ; Match `;;;`
-  (setq-local outline-start "#")                                                 ; Start marker
+  (setq-local outline-regexp "##+")                                               ; Match `;;;`
+  (setq-local outline-start "#")                                                  ; Start marker
   (setq-local outline-level #'my-outline-mode/outline-level)                      ; Custom level function
   (outline-minor-mode 1)                                                          ; Use outline-minor-mode
 
@@ -212,11 +212,8 @@
   
   (setq display-fill-column-indicator-column 88)                                  ; comment inde
   (setq fill-column 88)                                                           ; Column beyond which line wrapping occurs if it is activated.
-  (setq comment-fill-column 270)                                                  ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
-  (setq py-comment-fill-column 270)
+  (setq comment-fill-column 270)                                                  ; Colujmn to use for `comment-indent'. If nil, use `fill-column' instead.
   (setq comment-column 90)                                                        ; Column to indent right-margin comments to.
-  (setq py-docstring-fill-column 88)                                              ; Set docstrings to have same fill column as code.
-  (setq python-indent-offset 4)                                                   ; Set the indent for python mode.
 
   (display-fill-column-indicator-mode 1)                                          ; show the buffer line width.
 
