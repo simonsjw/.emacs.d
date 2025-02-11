@@ -17,13 +17,14 @@
 
 (use-package dashboard
   :ensure t
+  :delight
   :init
   (setq
    dashboard-navigation-cycle t
    dashboard-heading-shorcut-format " [%s]"
    dashboard-items '((agenda    . 5)
-                     (recents   . 5)
-                     (projects  . 5)
+                     (recents   . 15)
+                     (projects  . 10)
                      (bookmarks . 5)
                      (registers . 5))
    dashboard-item-shortcuts '((agenda    . "a")
@@ -32,7 +33,8 @@
                               (projects  . "p")
                               (registers . "e"))
    dashboard-navigator-buttons
-   `(;; line1
+   `(
+     ;; line1
      (
       ("🏠" "HOME" "Go to Home Directory"
        (lambda (&rest _) (dired "~/")))
@@ -42,7 +44,8 @@
        (lambda (&rest _) (dired user-emacs-directory)))
       )
      ;; line 2
-     (;; define nerd-font icon (github)
+     (
+      ;; define nerd-font icon (github)
       (#("" 0 1 (face (:family "Symbols Nerd Font Mono" :height 1.0)
                        font-lock-face
                        (:family "Symbols Nerd Font Mono" :height 1.0)
