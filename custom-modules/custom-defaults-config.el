@@ -18,7 +18,7 @@
 
 
 ;;;; Global Settings
-;;   ---------------
+
 (setq-default lexical-binding t)                                               ; set variable scoping to be within the functions called by default as per modern languages.
 (set-default-coding-systems 'utf-8)                                            ; set default coding system.
 
@@ -33,7 +33,7 @@
 ;;(require 'aggressive-indent)
 
 
-;; load in the custom info files for use with the info docs. 
+;; load in the custom info files for use with the info docs.
 (when (file-directory-p custom-info-dir)
   (require 'info)
   (info-initialize)
@@ -45,7 +45,7 @@
 (setq mouse-autoselect-window nil)
 
 ;;;; Buffers
-;;   -------
+
 ;; turn off linewrap by default.
 ;; (we use setq-default since this value can be adjusted on a per buffer basis)
 (setq-default truncate-lines t)
@@ -73,7 +73,7 @@ file paths.")
 
 
 ;;;; Dired
-;;   -----
+
 ;; Make dired do something intelligent when two directories are shown
 ;; in separate dired buffers.  Makes copying or moving files between
 ;; directories easier.  The value `t' means to guess the default
@@ -93,7 +93,7 @@ file paths.")
 (customize-set-variable 'dired-auto-revert-buffer t)
 
 ;; ensure that we start with a detailed view of our directories and
-;; show the breadcrumbs header. 
+;; show the breadcrumbs header.
 (add-hook 'dired-mode-hook
           (lambda ()
             (dired-hide-details-mode nil)
@@ -119,7 +119,7 @@ file paths.")
 
 
 ;;;; eShell
-;;   ------
+
 ;; scroll eshell buffer to the bottom on input, but only in "this"
 ;; window.
 (customize-set-variable 'eshell-scroll-to-bottom-on-input 'this)
@@ -132,7 +132,7 @@ file paths.")
 (customize-set-variable 'switch-to-buffer-obey-display-actions t)
 
 ;;;; helpful
-;;   -------
+
 ;; prefer the helpful menus over standard documentation.
 
 ;; Note that the built-in `describe-function' includes both functions
@@ -156,11 +156,9 @@ file paths.")
 
 
 ;;;; Completion settings
-;;   -------------------
-;;
+
 ;; Turn on the best completion-mode available:
 ;; - Assume use of vertico
-;;
 
 ;; No matter which completion mode is used:
 (customize-set-variable 'tab-always-indent 'complete)
@@ -176,8 +174,7 @@ file paths.")
 
 
 ;;;; Editing
-;;   -------
-;; 
+
 ;; Typed text replaces the selection if the selection is active,
 ;; pressing delete or backspace deletes the selection.
 (delete-selection-mode)
@@ -204,7 +201,6 @@ file paths.")
 
 
 ;;;; Set up the spell-checker
-;;   ------------------------
 (setq ispell-program-name "aspell") ; Or "hunspell" or "ispell"
 
 (setq ispell-extra-args
@@ -232,7 +228,6 @@ file paths.")
 
 
 ;;;; set consult-flyspell defaults.
-;;   ------------------------------
 ;; consult-flyspell-set-point-after-word
 ;; If set to t (default) the point will be at the end of the word
 ;; after jumping to it, nil will set the point before the word.
@@ -245,7 +240,6 @@ file paths.")
 (customize-set-variable 'consult-flyspell-always-check-buffer nil)
 
 ;;;; correction at point functions
-;;   -----------------------------
 ;; There are two useful functions for correcting words at a point: 
 ;; *  flyspell-auto-correct-word
 ;;    This function automatically corrects the word that's
@@ -268,10 +262,9 @@ file paths.")
 ;; (customize-set-variable
 ;;  'consult-flyspell-select-function #'flyspell-correct-at-point)
 
-;;;; Persistence between sessions
 
-;; Enable savehist-mode for command history
-(savehist-mode 1)
+
+;;;; Miscellaneous
 
 ;; save the bookmarks file every time a bookmark is made or deleted
 ;; rather than waiting for Emacs to be killed.  Useful especially when
@@ -299,10 +292,6 @@ file paths.")
 (customize-set-variable 'ediff-window-setup-function
                         'ediff-setup-windows-plain)
 
-
-;;;; Miscellaneous
-;;   -------------
-;;
 
 ;; Make shebang (#!) file executable when saved
 (add-hook 'after-save-hook
