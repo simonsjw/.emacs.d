@@ -18,7 +18,8 @@
 
 ;; Undo-tree package
 ;; https://gitlab.com/tsc25/undo-tree/-/blob/master/undo-tree.el
-(use-package undo-tree)
+(use-package undo-tree
+  :delight)
 
 (require 'undo-tree)
 
