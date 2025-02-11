@@ -37,10 +37,7 @@
 ;;                    environments (dependency of anaconda)
 ;; * pyvenv        -- virtualenv wrapper
 
-;;; Packages phase
-;;(require 'eglot)
-;; (require 'major-mode-hydra)
-
+;;; Package phase
 
 (defvar dape-configs)                                                             ; list of configs by language for the debugger.
 (defvar py-comment-fill-column)
@@ -140,14 +137,8 @@ active environment."
 (let ((conda-home (getenv "CONDA_PREFIX")))
   (pyvenv-activate conda-home))
 
-;; Make sure that files with the suffix .p are recognised as python
-;; files.
-
-(add-to-list 'auto-mode-alist '("\\.p\\'" . python-ts-mode))
-(add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
-
 ;; settings for python-mode.
-(defun my-lang-python/python-mode-setup ()
+(defun my-lang/python-mode-setup ()
   "Central function to hook into `python-mode' for python functionality."
   (message
    "[%s ; DEBUG; my-lang-python/python-mode-setup]starting loading the defun ; ;"
@@ -182,9 +173,9 @@ active environment."
     :program "ruff"
     :args '("format")
     :lighter " PF")  ; remove ref on modeline.
+  
+;;;;; Set up outline
 
-  ;;;;;; Set up outline
-  ;;     --------------
   ;; Set up customisations for outline-minor-mode.
   (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons
   (setq-local outline-blank-line t)                                               ; Blank line before headers
@@ -195,8 +186,8 @@ active environment."
   (outline-minor-mode 1)                                                          ; Use outline-minor-mode
 
 
-  ;;;;;; Folding
-  ;;     -------
+;;;;; Folding
+
   ;; Set the fringe mode for python-ts-mode folding.
   (set-fringe-mode '(12 . 12))
   
@@ -226,7 +217,7 @@ active environment."
   ;; Add my/update-python-path function to pyvenv activation.
   (add-hook 'pyvenv-post-activate-hooks 'my-lang-python/update-python-path)
 
-  ;;; IDE layout
+;;;;; IDE layout
   ;;  ----------
   ;; Provide a function to set the fill column indicator.
   ;; This has a default of 80 but can be set on a per mode basis.
@@ -252,10 +243,7 @@ active environment."
   ;; Start python interpreter
   ;;  (my-lang-python/start-or-switch-to-python-shell)
 
-  ;; ---------------------
-  ;; IDE functionality map
-  ;; ---------------------
-
+;;;;; IDE functionality map
   ;; compiling the code (Not applicable)
   ;; (keymap-set python-ts-mode-map "C-c C-c C-u" #)
 
@@ -279,7 +267,7 @@ active environment."
   ;; (keymap-set python-ts-mode-map "C-c C-f b" #'blacken-buffer)
   ;;  (keymap-set python-ts-mode-map "C-c C-f r" #'blacken-buffer)
 
-  ;; Errors/linting
+;;;;; Errors/linting
   ;; --------------
   ;; list errors in buffer
   (keymap-set python-ts-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)
@@ -295,8 +283,7 @@ active environment."
   ;; go to previous error.
   (keymap-set python-ts-mode-map "C-c e l" #'flymake-goto-prev-error)
 
-
-  ;; variable/function references
+;;;;; Variable/function references
   ;; ----------------------------
   ;; xref-find-definitions
   ;; (keymap-set python-ts-mode-map "M-." #'anaconda-mode-find-definitions)
@@ -305,16 +292,32 @@ active environment."
   ;; xref-find-assignments
   ;;  (keymap-set python-ts-mode-map "M-=" #'anaconda-mode-find-assignments)
 
-
-  ;; add-missing-dependencies
+;;;;; add-missing-dependencies
   (keymap-set python-ts-mode-map "C-c i f" #'python-fix-imports)
   
-
   (message
-   "[%s ; DEBUG; my-lang-python/python-mode-setup]finished loading the defun ; ;"
+   "[%s ; DEBUG; my-lang/python-mode-setup]finished loading the defun ; ;"
    (current-time-string)))
 
-(add-hook 'python-ts-mode-hook #'my-lang-python/python-mode-setup)
+(add-hook 'python-ts-mode-hook #'my-lang/python-mode-setup)
+
+;; Make sure that files with the suffix .p are recognised as python files.
+
+(add-to-list 'auto-mode-alist '("\\.p\\'" . python-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
+
+;; if a shebang is included in the file, choose mode by the implied interpreter,
+;; Note that this overrides any file extension map.
+(add-to-list 'interpreter-mode-alist '("python" . python-ts-mode))
+(add-to-list 'interpreter-mode-alist '("python3" . python-ts-mode))
+
+;; finally, ensure that any non-standard shebangs are covered. This overrides
+;; interpreter-mode-alist. The difference is that interpreter-mode-alist
+;; matches strictly the interpreter at the end of the shebang. Magic-mode-alist
+;; can match any regular expression against the first line in a file.
+(add-to-list 'magic-mode-alist
+             '((lambda ()
+                 (looking-at "^#!.*\\(python\\|python3\\)")) . python-ts-mode))
 
 (provide 'lang-python)
 ;;; lang-python.el ends here
@@ -322,3 +325,4 @@ active environment."
                                                                                   ; LocalWords:  pyvenv isort numpydoc el CONDA WORKON ENV serviceEnv lang keymap
                                                                                   ; LocalWords:  eldoc defun minibuffer pycodestyle pycomplete gitlab melpa
                                                                                   ; LocalWords:  pythonic dape yasnippet debugpy adapter
+                                                                                  ; LocalWords:  customisations
