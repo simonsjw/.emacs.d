@@ -81,11 +81,11 @@
  ;;;; UI configuration
  ;; Remove some unneeded UI elements (the user can turn back on anything they wish)
  (add-to-list 'default-frame-alist '(background-color . "#1B152D"))
- (add-to-list 'default-frame-alist '(foreground-color . "#A8ACA4"))
+ ;; (add-to-list 'default-frame-alist '(foreground-color . "#A8ACA4"))
 
- (setq inhibit-startup-screen t                                                    ; stop the default splash screen
-       inhibit-startup-message t
-       inhibit-startup-echo-area-message t)
+ ;; (setq inhibit-startup-screen t                                                    ; stop the default splash screen
+ ;;       inhibit-startup-message t
+ ;;       inhibit-startup-echo-area-message t)
  ;; (setq initial-scratch-message nil)                                             ; remove the message in the scratch buffer.
  (push '(tool-bar-lines . 0) default-frame-alist)
  (push '(vertical-scroll-bars) default-frame-alist)
