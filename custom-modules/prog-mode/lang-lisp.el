@@ -77,7 +77,7 @@
 ;;; Code:
 
 ;;;; Emacs lisp
-(defun my/emacs-lisp-mode-setup ()
+(defun my-lang/elisp-mode-setup ()
   "Custom setup for `emacs-lisp-mode`."
   ;; You will probably want to tweak this variable, it determines how
   ;; quickly the completion prompt provides LSP suggestions when
@@ -127,8 +127,6 @@
   (setq-local outline-start ";;")                                                 ; Start marker
   (setq-local outline-level #'my-outline-mode/outline-level)                      ; Custom level function
   (outline-minor-mode 1)                                                          ; Use outline-minor-mode
-
-  
 
 ;;;;; IDE functionality map
   ;;  ---------------------
@@ -202,7 +200,7 @@ a message telling you which statement you are at."
     (debug)))
 
 ;;(add-hook 'python-ts-mode-hook #'my/python-start-or-switch-to-shell)
-(add-hook 'emacs-lisp-mode-hook #'my/emacs-lisp-mode-setup)
+(add-hook 'emacs-lisp-mode-hook #'my-lang/elisp-mode-setup)
 ;; ensure that the custom function in init.el is used for flymake to debug
 ;; Emacs lisp.
 ;; (add-hook 'emacs-lisp-mode-hook
@@ -220,17 +218,20 @@ a message telling you which statement you are at."
   ;; (setq inferior-lisp-program "/usr/bin/sbcl")
   (require 'sly-quicklisp "sly-quicklisp" :no-error)
   (require 'sly-repl-ansi-color "sly-repl-ansi-color" :no-error)
-  (require 'sly-asdf "sly-asdf" :no-error))
+  (require 'sly-asdf "sly-asdf" :no-error)
 
-(when (locate-library "sly")
-  (add-hook 'lisp-mode-hook #'sly-editing-mode))
+  (defun my-lang/sly-mode-setup()
+    (sly-editing-mode))
+
+  (add-hook 'lisp-mode-hook #'my-lang/sly-mode-setup))
+    
 
 ;;; Clojure
 (with-eval-after-load "clojure-mode"
   (require 'cider "cider" :no-error)
   (require 'clj-refactor "clj-refactor" :no-error)
 
-  (defun crafted-lisp-load-clojure-refactor ()
+  (defun my-lang/clojure-mode-setup ()
     "Load `clj-refactor' toooling and fix keybinding conflicts with cider."
     (when (locate-library "clj-refactor")
       (clj-refactor-mode 1)
@@ -238,7 +239,7 @@ a message telling you which statement you are at."
       ;; conflict with cider, use this by default as it does
       ;; not conflict and is a better mnemonic
       (cljr-add-keybindings-with-prefix "C-c r")))
-  (add-hook 'clojure-mode-hook #'crafted-lisp-load-clojure-refactor)
+  (add-hook 'clojure-mode-hook #'my-lang/clojure-mode-setup)
 
   (with-eval-after-load "flycheck"
     (flycheck-clojure-setup)))
