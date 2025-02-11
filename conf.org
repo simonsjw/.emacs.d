@@ -800,7 +800,6 @@ Show the loading time via a the emacs-startup-hook.
 #+end_src
 
 ;; Local Variables:
-;; eval: (toggle-truncate-lines 1)
 ;; eval: (olivetti-mode 1)
 ;; eval: (olivetti-set-width 160)
 ;; End:

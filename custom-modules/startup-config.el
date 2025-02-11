@@ -231,6 +231,7 @@ created."
           ;; Side windows: top right lower
           (with-selected-window top-right-sub-lower
             (find-file ide-init/default-config-file)
+            (toggle-truncate-lines 1)
             (ibuffer)
             (my-tab-line/close-specific-buffer "*scratch*"))
 
