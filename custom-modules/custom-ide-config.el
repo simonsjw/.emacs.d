@@ -15,6 +15,7 @@
 
 ;; whichkey is now built in.
 (use-package which-key
+  :delight
   :ensure nil
   :config
   (which-key-mode))
@@ -29,7 +30,8 @@
 ;; indentation, spaces vs tabs, etc.
 (use-package editorconfig)
 ;; a minor mode to always keep your code indented while editing blocks of code.
-(use-package aggressive-indent)
+(use-package aggressive-indent
+  :delight)
 ;; Jump to the definition of a function. Works using oldskool
 ;; rgrep type approaches. (No fancy tree-sitter here!)
 ;; https://github.com/jacktasia/dumb-jump
@@ -87,7 +89,10 @@
   (add-to-list 'eglot-server-programs
                '((python-mode python-ts-mode) . ("basedpyright-langserver" "--stdio")))
   
-
+  ;; If bash-language-server is installed, configure Eglot LSP for Bash
+  (when (executable-find "bash-language-server")
+    (add-to-list 'eglot-server-programs
+                 '((bash-mode bash-ts-mode) . ("bash-language-server" "start"))))
 
   ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ;; Documentation/help setup
