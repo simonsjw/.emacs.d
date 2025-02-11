@@ -293,10 +293,21 @@
 (setq my-paths/logging-view-mode
       (concat user-emacs-directory "custom-packages/logging-view-mode/"))
 
+;; paths to exclude from recentf (base and shortcut).
+(setq recentf-exclude
+      '(
+        "^~/sync/primary/dotfiles/emacs/\\.emacs\\.d/init\\.log"
+        "^~/sync/primary/dotfiles/emacs/\\.emacs\\.d/$"
+        "^~/sync/primary/dotfiles/emacs/\\.emacs\\.d/conf\\.org$"
+
+        "^~/\\.emacs\\.d/init\\.log"
+        "^~/\\.emacs\\.d/$"
+        "^~/\\.emacs\\.d/conf\\.org$"))
+
 (provide 'custom-path-support)
 ;;; custom-path-support.el ends here
 
                                                                                   ; LocalWords:  pws prepl systemd
                                                                                   ; LocalWords:  recentf
                                                                                   ; LocalWords:  loadbalancer
-                                                                                  ; LocalWords:  Dape
+                                                                                  ; LocalWords:  Dape emacs init
