@@ -227,7 +227,6 @@
 
 ;; put all of org under org-roam.
 (setq org-roam-directory org-directory)
-(setq org-roam-dailies-directory "daily/")
 ;;(setq org-roam-dailies-directory (expand-file-name "daily" org-directory))
 
 ;; Automatically include all Org files in a directory
@@ -292,6 +291,10 @@
 ;; define a path to the logging-view-mode custom package
 (setq my-paths/logging-view-mode
       (concat user-emacs-directory "custom-packages/logging-view-mode/"))
+
+;; define a path to the logging-view-mode custom package
+(setq my-paths/log-ts-mode
+      (concat user-emacs-directory "custom-packages/log-ts-mode/"))
 
 ;; paths to exclude from recentf (base and shortcut).
 (setq recentf-exclude
