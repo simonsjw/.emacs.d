@@ -78,7 +78,7 @@ It respects `nerd-icons-color-icons'."
   :group 'nerd-icons-ibuffer
   :type 'boolean)
 
-
+
 
 ;; For alignment, the size of the name field should be the width of an icon
 
@@ -258,7 +258,7 @@ It respects `nerd-icons-color-icons'."
 ;; the number of hours before a buffer is considered "old" by
 ;; ibuffer.
 (customize-set-variable 'ibuffer-old-time 24)
-;; Use headerline
+;; Use header-line
 (customize-set-variable 'ibuffer-use-header-line t)
 
 (custom-set-faces
