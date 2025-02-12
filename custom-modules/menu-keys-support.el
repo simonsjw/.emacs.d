@@ -18,11 +18,9 @@
 
 
 ;; Set context menu mode to t (right-click in buffer)
-
-;; enable the global mode context-menu-mode.
+;; and enable the global mode context-menu-mode.
 (context-menu-mode 1)
 (global-set-key [down-mouse-3] 'mouse-popup-menu)
-
 
 ;; (with-eval-after-load 'vc
 ;;   (defun my-menus/add-vc-mode-to-context-menu (menu click)
@@ -35,7 +33,7 @@
 
 
 ;;;; PROG_MODE: Comment Key Map and Menu
-;;   -------------------------------------------
+
 ;; Define the keymap for 'comments' related commands
 (defvar my-key-maps/prog-mode-comment-map (make-sparse-keymap "Comment")
   "Keymap for comment commands in programming modes.")
@@ -105,28 +103,27 @@ These are available in `prog-mode'."
 
 
 ;;;; Window management: Key Map
-;;   --------------------------
 
+;;;; Custom Windows Menu and Key Bindings
+
+;; Ensure `winner-mode` is enabled for undo/redo of window layouts
+(winner-mode 1)
+
+;; Define the custom keymap for window management
 (defgroup custom-windows '()
   "Window related configuration for Custom Emacs."
   :tag "Custom Windows"
   :group 'custom)
 
 (defcustom custom-windows-prefix-key "C-c w"
-  "Configure the prefix key for window movement bindings.
-
-Movement commands provided by `windmove' package, `winner-mode'
-also enables undo functionality if the window layout changes."
+  "Configure the prefix key for window movement bindings."
   :group 'custom-windows
   :type 'string)
 
-;; Turning on `winner-mode' provides an "undo" function for resetting
-;; your window layout.  We bind this to `C-c w u' for winner-undo and
-;; `C-c w r' for winner-redo (see below).
-(winner-mode 1)
-
+;; Define prefix command map
 (define-prefix-command 'custom-windows-key-map)
 
+;; Add existing window management commands
 (keymap-set 'custom-windows-key-map "u" 'winner-undo)
 (keymap-set 'custom-windows-key-map "r" 'winner-redo)
 (keymap-set 'custom-windows-key-map "n" 'windmove-down)
@@ -134,7 +131,54 @@ also enables undo functionality if the window layout changes."
 (keymap-set 'custom-windows-key-map "b" 'windmove-left)
 (keymap-set 'custom-windows-key-map "f" 'windmove-right)
 
+;; Add new vertical shrink window command key binding.
+(keymap-set 'custom-windows-key-map "v" 'shrink-window)
+
+;; Bind the prefix key
 (keymap-global-set custom-windows-prefix-key 'custom-windows-key-map)
+
+;; Define the "Windows" menu
+(define-key global-map [menu-bar windows]
+            (cons "Windows" (make-sparse-keymap "Windows")))
+
+;; Add window resizing commands with existing global keybindings
+(define-key global-map [menu-bar windows enlarge-window]
+            '(menu-item "Increase Height" enlarge-window))
+
+(define-key
+ global-map [menu-bar windows shrink-window]
+ '(menu-item "Decrease Height" shrink-window))                   ; Custom binding
+
+(define-key
+ global-map [menu-bar windows enlarge-window-horizontally]
+ '(menu-item "Increase Width" enlarge-window-horizontally))
+
+(define-key
+ global-map [menu-bar windows shrink-window-horizontally]
+ '(menu-item "Decrease Width" shrink-window-horizontally))
+
+;; Add separator line
+(define-key global-map [menu-bar windows separator]
+            '(menu-item "--"))
+
+;; Add window movement and undo/redo commands to the menu
+(define-key global-map [menu-bar windows winner-undo]
+            '(menu-item "Undo Window Change" winner-undo))
+
+(define-key global-map [menu-bar windows winner-redo]
+            '(menu-item "Redo Window Change" winner-redo))
+
+(define-key global-map [menu-bar windows windmove-down]
+            '(menu-item "Move to Window Below" windmove-down))
+
+(define-key global-map [menu-bar windows windmove-up]
+            '(menu-item "Move to Window Above" windmove-up))
+
+(define-key global-map [menu-bar windows windmove-left]
+            '(menu-item "Move to Window Left" windmove-left))
+
+(define-key global-map [menu-bar windows windmove-right]
+            '(menu-item "Move to Window Right" windmove-right))
 
 
 (provide 'menu-keys-support)
