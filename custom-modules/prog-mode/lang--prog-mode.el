@@ -32,7 +32,7 @@
   (set-face-attribute 'line-number nil :height 0.8)
 
   ;; show org-links: [[http://reddit.com/][reddit]]
- 
+  
 
   ;; Auto-save files.
   (my-prog-mode/auto-save-hook)
@@ -76,62 +76,6 @@
   ;; set up flyspell. (flyspell-prog-mode ignores function and variable names.)
   (flyspell-prog-mode)
 
-  ;; (setq-local mode-line-format
-  ;;             '("%e"
-  ;;               my-modeline/window-tag
-  ;;               " "
-  ;;               my-modeline/buffer-icon
-  ;;               mode-line-front-space
-  ;;               (:propertize
-  ;;                (" "
-  ;;                 mode-line-mule-info
-  ;;                 mode-line-client
-  ;;                 mode-line-modified
-  ;;                 mode-line-remote
-  ;;                 mode-line-auto-compile)
-  ;;                display
-  ;;                (min-width
-  ;;                 (1.0)))
-  ;;               " "
-  ;;               mode-line-buffer-identification
-  ;;               "  "
-  ;;               ;;my-modeline/projectile
-  ;;               projectile--mode-line
-  ;;               " "
-  ;;               my-modeline/matching-bracket
-  ;;               " "
-  ;;               mode-name
-  ;;               " "
-  ;;               (vc-mode vc-mode)
-  ;;               " "
-  ;;               ;;  projectile--mode-line
-  ;;               " "
-  ;;               ;; (:eval
-  ;;               ;;  (:propertize ("" mode-name)
-  ;;               ;;               'help-echo "Major mode menu"
-  ;;               ;;               'mouse-face 'mode-line-highlight
-  ;;               ;;               'keymap (let ((map (make-sparse-keymap)))
-  ;;               ;;                         (define-key map [mode-line down-mouse-1]
-  ;;               ;;                                     (lambda () (interactive)
-  ;;               ;;                                       (popup-menu (current-local-map))))
-  ;;               ;;                         map)))
-
-
-
-  ;;               ;; mode-line-modes
-  ;;               ;;    mode-line-misc-info
-  ;;               (pyvenv-mode pyvenv-mode-line-indicator)
-  ;;               ;;   (sly-mode
-  ;;               ;;   (" [" sly--mode-line-format "] "))
-  ;;               ;; (dape-active-mode
-  ;;               ;;  ("[" dape--mode-line-format "] "))
-  ;;               ;; (eglot--managed-mode
-  ;;               ;;  (" [" eglot--mode-line-format "] "))
-  ;;               my-modeline/eglot
-  ;;               " "
-  ;;               my-modeline/flymake
-  ;;               mode-line-end-spaces
-  ;;               ))
   )
   
 
