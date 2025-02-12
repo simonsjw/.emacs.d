@@ -105,7 +105,7 @@
 
 
 ;;;;; IDE layout
-  ;;  ----------
+
   ;; Provide a function to set the fill column indicator.
   ;; This has a default of 80 but can be set on a per mode basis.
   ;; Set the preferred fill column indicator for the mode and activate it.
@@ -117,19 +117,19 @@
   (display-fill-column-indicator-mode 1)                                          ; show the visual prompt. 
 
 ;;;;;; Set up outline
-  ;;  --------------
+
   ;; Set up customizations for outline-minor-mode.
   (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons
   (setq-local outline-blank-line t)                                               ; Blank line before headers
   (setq-local outline-minor-mode-highlight 'override)                                     ; Font-lock outlines
   
-  (setq-local outline-regexp ";;;+")                                              ; Match `;;;`
+  (setq-local outline-regexp "^[[:space:]]*;;;+")                                              ; Match `;;;`
   (setq-local outline-start ";;")                                                 ; Start marker
   (setq-local outline-level #'my-outline-mode/outline-level)                      ; Custom level function
   (outline-minor-mode 1)                                                          ; Use outline-minor-mode
 
 ;;;;; IDE functionality map
-  ;;  ---------------------
+
   ;; compiling the code (Not applicable)
   ;; (keymap-set python-ts-mode-map "C-c C-c C-u" #)
   (keymap-set emacs-lisp-mode-map "C-c c f" #'elisp-byte-compile-file)
@@ -163,7 +163,7 @@
   (keymap-set emacs-lisp-mode-map "C-c C-w" #'whitespace-cleanup)
 
   ;;; Errors/linting
-  ;;  --------------
+
   ;; list errors in buffer
   (keymap-set emacs-lisp-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)
   ;; list errors in mini-buffer
@@ -180,7 +180,7 @@
 
 
   ;;; variable/function references
-  ;;  ----------------------------
+
   ;; xref-find-definitions
   (keymap-set emacs-lisp-mode-map "M-." #'xref-find-definitions)
   ;; xref-find-references
