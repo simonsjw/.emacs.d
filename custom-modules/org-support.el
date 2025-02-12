@@ -13,8 +13,7 @@
 ;; make sure the org package is dowloaded and installed before
 ;; org type functionality is called by anything. The built in or
 ;; can cause conflicts with this if org is called before this.
-(use-package org
-  :ensure nil)                                                                    ; was   :ensure org-plus-contrib
+(use-package org)                                                                 ; was   :ensure org-plus-contrib
 (use-package org-contrib)
 (use-package org-contacts)
 (use-package google-contacts)
