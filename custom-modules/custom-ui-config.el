@@ -68,7 +68,6 @@
 
 
 ;;;; Outline-mode/Outline-minor-mode
-;;  -------------------------------
 
 ;; The below function can be used to determine the outline-level for use with
 ;; outline-mode and outline-minor-mode.
@@ -77,19 +76,21 @@
   "Calculate the outline level from the number of characters in START-STRING.
 
 If OUTLINE-START is not provided, default to the length of `outline-regexp'
-minus one.  A typical formatting expression for an Elisp script might be:
+minus one.  It also accounts for leading white-space.  A typical formatting
+expression for an Elisp script might be:
   ;; Local Variables:
-  ;; outline-regexp:  \";;;+\"
+  ;; outline-regexp:  \"^[[:space:]]*;;;+\"  ; note that ^[[:space:]]* allows
+                                             ; white-space in front of the
+                                             ; outline mark.
   ;; outline-start:  \";;\"
   ;; outline-level: my-outline-mode/outline-level
   ;; End:"
   (let ((match (match-string 0)))
     (if (not match)
-        (progn
-          ;; (message "my-outline-mode/outline-level: No match found. Returning nil.") 
-          nil)                                                                    ; Return nil to indicate the line is not a heading
-      (let* ((n (length match))                                                   ; get the length of the last matched string.
-             (regex-length (length outline-regexp))                               ; get the length of the regex string.
+        nil                                                                      ; Return nil to indicate the line is not a heading
+      (let* ((trimmed-match (string-trim-left match))                            ; Remove leading spaces
+             (n (length trimmed-match))                                          ; get the length of the last matched string.
+             (regex-length (length outline-regexp))                              ; get the length of the regex string.
              ;; outline-start is provided so subtract that from the total
              ;; length of the string to get the number of outlines in.
              ;; Example: for outline start of ';;'
@@ -109,7 +110,8 @@ minus one.  A typical formatting expression for an Elisp script might be:
                       )))
         ;; Given there are 8 outline faces, we must also ensure the number is
         ;; never bigger than 8.
-        ;; (message "my-outline-mode/outline-level: match='%s', n=%d, regex-length=%d, level=%d"
+        ;; (message "my-outline-mode/outline-level: match='%s', n=%d,
+        ;;          regex-length=%d, level=%d"
         ;;          match n regex-length level)
         (min (max 1 level) 8)))))
 
