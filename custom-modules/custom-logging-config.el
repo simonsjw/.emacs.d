@@ -80,6 +80,7 @@ These include events and the level of event to be logged.")
 ;; Define the log types with default values in a hash table
 (defvar log/log-table (make-hash-table :test 'equal)
   "A hash table of log settings and active status.")
+
 ;; Retrieve targets from log/settings
 (let ((targets (plist-get log/settings :targets))
       (log-definitions
@@ -181,12 +182,12 @@ contained (\\n for example) will be respected in the print to file.
     (log/write-to-file
      (format
       "[%s; %s; %s] %s; %s;"
-        (log/current-time)
-        (plist-get lvl :lvl)
-        (symbol-name fn)
-        msg
-        (prin1-to-string obj))
-  logFile)))
+      (log/current-time)
+      (plist-get lvl :lvl)
+      (symbol-name fn)
+      msg
+      (prin1-to-string obj))
+     logFile)))
 
 ;; Define the log levels used in the system.
 (defun log/fatal (&rest args)
@@ -259,11 +260,21 @@ ARGS:
 (with-eval-after-load 'theme-support
   (with-eval-after-load 'custom-path-support
     ;; Require the log-view-mode (adjust the path if necessary)
-    (add-to-list 'load-path my-paths/logging-view-mode)                                       ; Add directory to the load path
+    (add-to-list 'load-path my-paths/logging-view-mode)                           ; Add directory to the load path
     (require 'logging-view-mode)
 
     ;; Associate .log files with log-view-mode
     (add-to-list 'auto-mode-alist '("\\.log\\'" . logging-view-mode))))
+
+
+;; (with-eval-after-load 'theme-support
+;;   (with-eval-after-load 'custom-path-support
+;;     ;; Require the log-view-mode (adjust the path if necessary)
+;;     (add-to-list 'load-path my-paths/log-ts-mode)                           ; Add directory to the load path
+;;     (require 'log-ts-mode)
+
+;;     ;; Associate .log files with log-view-mode
+;;     (add-to-list 'auto-mode-alist '("\\.log\\'" . log-ts-mode))))
 
 
 (provide 'custom-logging-config)
