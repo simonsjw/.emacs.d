@@ -22,34 +22,101 @@
 (require 'consult-project-extra)
 
 ;;; Code:
-;; Define and add directories to load-path
+
+;; my-project/load-parent-directories
+;; my-project/scan-workspaces
+;; my-project/save-parent-directories
+;; my-project/add-parent-directory
+;; my-project/remove-parent-directory
+
+(defun my-project/load-workspace-directories ()
+  "Load `my-project/workspace-list' from the stored file."
+  (let ((workspaces-file my-project/workspace-list-file))
+    (when (file-exists-p workspaces-file)
+      (with-temp-buffer
+        (insert-file-contents workspaces-file)
+        (setq my-project/workspace-list (read (current-buffer)))))))
+
 (defun my-project/scan-workspaces ()
   "Interactively scan for new projects.
 
-The list of directories in `my-project/parent-directories' will be scanned
+The list of directories in `my-project/workspace-list' will be scanned
 recursively for projects."
   (interactive)
   (mapc (lambda (parent-dir)
           (let ((absolute-parent-dir (file-truename parent-dir)))
             (message "scanning: %s" absolute-parent-dir)
             (project-remember-projects-under absolute-parent-dir 1)))             ; Add the directories to the load-path.
-        my-project/parent-directories)
+        my-project/workspace-list)
   )
+
+(defun my-project/save-workspace-directories ()
+  "Save the current value of `my-project/workspace-list' to file.
+
+The file uses Emacs' project list format."
+  (with-temp-file my-project/workspace-list-file
+    (insert ";;; -*- lisp-data -*-\n")
+    (insert (format "%S" my-project/workspace-list))))
+
+
+;; (defun my-project/save-workspace-directories ()
+;;   "Save `my-project/workspace-list` to `old_project_paths.el`,
+;; ensuring a distinct, cumulative set of paths over time."
+;;   (let* ((workspace-file "~/.emacs.d/var/projects/old_project_paths.el")
+;;          (existing-data (when (file-exists-p workspace-file)
+;;                           (with-temp-buffer
+;;                             (insert-file-contents workspace-file)
+;;                             (read (current-buffer)))))
+;;          ;; Ensure it's a proper list-of-lists format
+;;          (existing-paths (if (and existing-data (listp existing-data))
+;;                              existing-data
+;;                            '()))
+;;          ;; Convert current workspace list to list-of-lists format
+;;          (new-paths (mapcar #'list my-project/workspace-list))
+;;          ;; Merge and deduplicate
+;;          (updated-paths (delete-dups (append existing-paths new-paths))))
+
+;;     ;; Save back to file
+;;     (with-temp-file workspace-file
+;;       (insert ";;; -*- lisp-data -*-\n")
+;;       (insert (format "%S" updated-paths)))
+
+;;     (message "Saved workspace directories. Total: %d" (length updated-paths))))
+
+
+
+(defun my-project/add-workspace-directory (dir)
+  "Add DIR as a project directory in Emacs' expected format."
+  (interactive "DDirectory: ")
+  (let ((expanded-dir (expand-file-name dir)))
+    (unless (member (list expanded-dir) my-project/workspace-list)
+      (setq my-project/workspace-list
+            (append my-project/workspace-list (list (list expanded-dir)))))
+    (my-project/save-workspace-directories)
+    (message "Added workspace directory: %s" expanded-dir)))
+
+
+(defun my-project/remove-workspace-directory (dir)
+  "Remove DIR from `my-project/workspace-list'."
+  (interactive "sDirectory to remove: ")
+  (let ((expanded-dir (expand-file-name dir)))
+    (setq my-project/workspace-directories
+          (remove (list expanded-dir) my-project/workspace-directories))
+    (my-project/save-workspace-directories)
+    (message "Removed workspace directory: %s" expanded-dir)))
+
+
 
 ;;; Configuration phase
 
 
-
+;; Load the parent directory paths.
+;; Paths project-list-file and my-project/workspace-list-file set in
+;; path-support.el.
+(my-project/load-workspace-directories)
 
 ;; (project-remember-projects-under DIR &optional RECURSIVE)
 ;; (project-remember-project PR &optional NO-WRITE)
-
-(customize-set-variable 'my-project/parent-directories
-                        '("/mnt/HDD04_WDD_08TB/workspace/"
-                          "~/Downloads/github/")
-                        "The directories to scan and pick up new projects.")
-
-
 
 
 ;; (expand-file-name "/mnt/HDD04_WDD_08TB/workspace/")
@@ -95,3 +162,4 @@ recursively for projects."
                                                                                   ; LocalWords:  emacs
                                                                                   ; LocalWords:  mapc
                                                                                   ; LocalWords:  WDD
+                                                                                  ; LocalWords:  dotfiles
