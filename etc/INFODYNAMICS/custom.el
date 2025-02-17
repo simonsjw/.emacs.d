@@ -15,10 +15,27 @@
  '(outline-minor-mode-highlight 'override)
  '(outline-minor-mode-prefix [3 64])
  '(outline-minor-mode-use-buttons 'in-margins)
- '(package-selected-packages nil)
+ '(package-selected-packages
+   '(aggressive-indent anaconda-mode apache-mode auctex-latexmk bookmark+ cape
+                       cargo cargo-mode cargo-transient citar-embark
+                       clj-refactor compile-angel consult-eglot
+                       consult-eglot-embark consult-project-extra corfu-terminal
+                       csv-mode dape dashboard delight dired+ docker
+                       docker-compose-mode dumb-jump eldoc-box elisp-demos
+                       embark-consult flycheck-clojure flymake-markdownlint
+                       flymake-shellcheck geiser-guile geiser-racket git-modes
+                       google-contacts helpful ibuffer-vc imenu-list info+ jump
+                       marginalia modus-themes nerd-icons-completion
+                       nerd-icons-corfu nerd-icons-dired no-littering numpydoc
+                       olivetti orderless org-alert org-appear org-contacts
+                       org-contrib org-link-beautify org-pretty-tags org-roam
+                       page-break-lines pandoc-mode pdf-tools pq pretty-speedbar
+                       pyvenv robots-txt-mode ruff-format rustic sly-asdf
+                       sly-quicklisp sly-repl-ansi-color sqlformat sr-speedbar
+                       treesit-fold undo-tree vertico vterm web-mode
+                       yasnippet-snippets))
  '(package-vc-selected-packages
-   '((no-littering :url
-                   "https://github.com/emacscollective/no-littering.git")))
+   '((no-littering :url "https://github.com/emacscollective/no-littering.git")))
  '(pretty-speedbar-blank-page '(""))
  '(pretty-speedbar-book '(""))
  '(pretty-speedbar-box-closed '(""))
@@ -38,11 +55,10 @@
      (eval olivetti-set-width 160)))
  '(semantic-sb-info-format-tag-function 'semantic-format-tag-short-doc)
  '(speedbar-add-supported-extension
-   '(".cl" ".li?sp" ".lua" ".fnl" ".fennel" ".kt" ".mvn" ".gradle"
-     ".properties" ".cljs?" ".sh" ".bash" ".php" ".ts" ".html?" ".css"
-     ".less" ".scss" ".sass" ".py" ".p" ".q" ".k" ".rs" ".lock"
-     "makefile" "MAKEFILE" "Makefile" ".json" ".yaml" ".toml" ".md"
-     ".markdown" ".org" ".txt" "README"))
+   '(".cl" ".li?sp" ".lua" ".fnl" ".fennel" ".kt" ".mvn" ".gradle" ".properties"
+     ".cljs?" ".sh" ".bash" ".php" ".ts" ".html?" ".css" ".less" ".scss" ".sass"
+     ".py" ".p" ".q" ".k" ".rs" ".lock" "makefile" "MAKEFILE" "Makefile" ".json"
+     ".yaml" ".toml" ".md" ".markdown" ".org" ".txt" "README"))
  '(speedbar-directory-button-trim-method 'trim)
  '(speedbar-directory-unshown-regexp "^\\(CVS\\|RCS\\|SCCS\\|\\.\\.*$\\)\\'")
  '(speedbar-indentation-width 3)

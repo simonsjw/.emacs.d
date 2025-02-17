@@ -84,6 +84,7 @@
                      ("*elisp-flymake-byte-compile*" . logs)
                      ("*log-edit-files*" . logs)
                      ("*Org Babel Results*" . logs)
+                     ("*vc*" . logs)
                      ("*Checkdoc Status*" . data)
                      ("*RE-Builder*" . config)
                      ("*Anaconda*". config)
@@ -149,7 +150,7 @@
                      (XML-mode . config)
                      (nXML-mode . config)
                      (json-mode . config)
-              ;;       (org-mode . config)
+                     ;;       (org-mode . config)
                      (csv-mode . config)
                      (ibuffer-mode . config)
                      (bufler-list-mode . config)
@@ -168,8 +169,16 @@
 ;; now map frames to windows. 
 (setq my-window-tools/frame-map
       '(
-        ('IDE  . '(edit logs config data terminal vc))
-        ('AGENDA . '(agenda holidays calendar items))
+        ('IDE  . '(edit
+                   logs
+                   config
+                   data
+                   terminal
+                   vc))
+        ('AGENDA . '(agenda
+                     holidays
+                     calendar
+                     items))
         ))
 
 (defvar my-window-tools/whitelabel-buffers '("*SPEEDBAR*"

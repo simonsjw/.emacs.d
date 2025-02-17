@@ -177,24 +177,49 @@ a STRING."
     (* 1000
        (string-to-number (substring string 0 (- (length string) 1)))))
    (t
-    (string-to-number (substring string 0 (- (length string) 1))))
-   )
+    (string-to-number string )))
   )
+
+
+(cl-defun my-strings/number-to-human-readable-file-sizes (number &optional (sigfigs 4) (prec 2) (strlength -1))
+  "Convert NUMBER to human-readable file size.
+
+The NUMBER will have SIGFIGS significant figures to a precision of PREC if it is
+small enough to fit in the allowed significant figures.  If STRLENGTH is a
+positive number, then white-space will be used to ensure a minimum of that
+length string is returned with a letter at the end for large numbers or else
+a space so the units column is aligned."
+  (interactive)
+  (let ((result
+         (cond
+          ((> number 1000000000) (format "%10.1fG" (/ number 1000000000.0)))
+          ((> number 100000000) (format "%10.0fM" (/ number 1000000.0)))
+          ((> number 1000000) (format "%10.1fM" (/ number 1000000.0)))
+          ((> number 100000) (format "%10.0fk" (/ number 1000.0)))
+          ((> number 1000) (format "%10.1fk" (/ number 1000.0)))
+          (t (format "%10f" number)))))  ;; Raw number case
+    (if (= (length result) 10)
+        (concat result " ")                                                       ; Append space to make length 11
+      result)))                                                                   ; Otherwise, return as is
+
 
 (defun my-strings/bytes-to-human-readable-file-sizes (bytes)
   "Convert number of BYTES to human-readable file size.
-This is the companion of `my-strings/human-readable-file-sizes-to-bytes', a
-function which converts a string showing a number as  a human readable size
-into a given amount of bytes."
+Ensures the result is always of length 5 by adding a space if no unit is
+present."
   (interactive)
-  (cond
-   ((> bytes 1000000000) (format "%10.1fG" (/ bytes 1000000000.0)))
-   ((> bytes 100000000) (format "%10.0fM" (/ bytes 1000000.0)))
-   ((> bytes 1000000) (format "%10.1fM" (/ bytes 1000000.0)))
-   ((> bytes 100000) (format "%10.0fk" (/ bytes 1000.0)))
-   ((> bytes 1000) (format "%10.1fk" (/ bytes 1000.0)))
-   (t (format "%10d" bytes)))
-  )
+  (let ((result
+         (cond
+          ((> bytes 1000000000) (format "%5.1fG" (/ bytes 1000000000.0)))
+          ((> bytes 100000000) (format "%5.0fM" (/ bytes 1000000.0)))
+          ((> bytes 1000000) (format "%5.1fM" (/ bytes 1000000.0)))
+          ((> bytes 100000) (format "%5.0fk" (/ bytes 1000.0)))
+          ((> bytes 1000) (format "%5.1fk" (/ bytes 1000.0)))
+          (t (format "%4d" bytes)))))  ;; Raw bytes case
+    (if (= (length result) 4)
+        (concat " "  result)                                                      ; Append space to make length 11
+      result)))                                                                   ; Otherwise, return as is
+
 
 ;; end of String processing
 ;; ---------------------------
@@ -661,3 +686,4 @@ If `sr-speedbar' is not open, open it first."
                                                                                   ; LocalWords:  LISTB sr ol dired
                                                                                   ; LocalWords:  netstat isn
                                                                                   ; LocalWords:  minibuffer
+; LocalWords:  PREC SIGFIGS STRLENGTH

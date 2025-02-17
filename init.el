@@ -1,36 +1,32 @@
 ;;; init.el -- Simon's Emacs user customization file -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; This file is generated from config.org. If you want to edit the
-;; configuration, DO NOT edit init.el, edit config.org, instead.
-;; Note that by default, init.el is the target of the tangle as
-;; specified by #+PROPERTY in line 3.
+;; This file is generated from config.org.  If you want to edit the
+;; configuration, DO NOT edit init.el, edit config.org, instead.  Note that by
+;; default, init.el is the target of the tangle as specified by #+PROPERTY in
+;; line 3.
 
 ;;; Code:
 
 ;;;; Set up package.el
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
+;;(unless (package-installed-p 'use-package)
+;;  (package-refresh-contents)
+;; (package-install 'use-package))
 
-(require 'package)
+;; (require 'package)
+(require 'use-package)
 
 (setq package-archives
       '(("gnu" . "https://elpa.gnu.org/packages/")
         ("nongnu" . "https://elpa.nongnu.org/nongnu/")
         ("melpa" . "https://melpa.org/packages/")
         ("elpa-devel" . "https://elpa.gnu.org/devel/")))
+
 (setq package-archive-priorities
       '(("gnu" . 2)
         ("nongnu" . 1)
         ("melpa" . 0)
         ("elpa-devel" . 0)))
-
-;; Initialize the package system if not already done
-(unless (bound-and-true-p package--initialized)
-  (setq package-enable-at-startup nil)                                            ; Prevent Emacs from initializing it again later
-  (package-initialize))
-
 
 ;; Ensure files are compiled natively and byte-wise.
 (use-package compile-angel
@@ -47,6 +43,7 @@
   (compile-angel-on-load-mode)
   (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode))
 
+(require 'use-package)
 
 (eval-and-compile
   (setq
@@ -54,13 +51,19 @@
    use-package-expand-minimally t))
 
 ;; Install `no-littering' if necessary
-(unless (package-installed-p 'no-littering)
-  (unless package-archive-contents
-    (package-refresh-contents))
-  (package-install 'no-littering))
+;; (unless (package-installed-p 'no-littering)
+;;   (unless package-archive-contents
+;;     (package-refresh-contents))
+;;   (package-install 'no-littering))
+
+(use-package no-littering
+  :ensure t
+  :demand t
+  :vc (:url "https://github.com/emacscollective/no-littering.git"))
+
 
 ;; Load `no-littering'
-(require 'no-littering)
+;;(require 'no-littering)
 
 ;; ensure we can control how minor modes are shown in the modeline. 
 (use-package delight)
@@ -145,7 +148,7 @@
 
 ;;; imports and declarations
 (require 'bind-key)                                                              ; if you use any :bind variant
-(require 'custom-logging-config)
+;;(require 'custom-logging-config)
 (require 'custom-path-support)
 (require 'elisp-packages)
 
@@ -326,7 +329,6 @@
 (add-hook
  'emacs-startup-hook #'crafted-startup-example/display-startup-time)
 
- 
 ;; start the server if its not already running.
 ;; To shutdown the server use the below: 
 ;;   M-x server-edit
@@ -341,3 +343,17 @@
 
 (provide 'init)
 ;;; init.el ends here
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-vc-selected-packages
+   '((no-littering :url
+		   "https://github.com/emacscollective/no-littering.git"))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
