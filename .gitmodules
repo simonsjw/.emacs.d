@@ -1,0 +1,3 @@
+[submodule "custom-packages/cell-mode"]
+	path = custom-packages/cell-mode
+	url = https://gitlab.com/dto/cell-mode.git
