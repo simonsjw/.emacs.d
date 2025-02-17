@@ -167,8 +167,9 @@ active environment."
   
   ;; switch on hover at point mode.
   (eldoc-box-hover-at-point-mode nil)
-  (eldoc-box-help-at-point)
-
+  (when (eldoc-doc-buffer)
+    (eldoc-box-help-at-point))
+  
   (reformatter-define python-format
     :program "ruff"
     :args '("format")
