@@ -23,34 +23,9 @@
 ;;; code:
 ;;; config phase
 
-;;User Option: magit-wip-mode
-
-;;    When this mode is enabled, then uncommitted changes are committed to dedicated work-in-progress
-;;    refs whenever appropriate (i.e., when dataloss would be a possibility otherwise).
-
-;;    Setting this variable directly does not take effect; either use the Custom interface to do so or
-;;    call the respective mode function.
-
-;;    For historic reasons this mode is implemented on top of four other magit-wip-* modes, which can
-;;    also be used individually, if you want finer control over when the wip refs are updated; but that
-;;    is discouraged. See Legacy Wip Modes.
-
-;; https://magit.vc/manual/magit/Wip-Modes.html
 
 
-;; User Option: magit-define-global-key-bindings
-;;    This option controls which set of Magit key bindings, if any, may be added to the global keymap,
-;;    even before Magit is first used in the current Emacs session.
 
-;;         If the value is nil, no bindings are added.
-;;         If default, maybe add:
-;;         C-x g	magit-status
-;;         C-x M-g	magit-dispatch
-;;         C-c M-g	magit-file-dispatch
-;;         If recommended, maybe add:
-;;         C-x g	magit-status
-;;         C-c g	magit-dispatch
-;;         C-c f	magit-file-dispatch
 
 ;;    These bindings are strongly recommended, but we cannot use them by default, because the
 ;;    C-c <LETTER> namespace is strictly reserved for bindings added by the user
@@ -183,8 +158,132 @@
                  (display-buffer-reuse-window
                   display-buffer-same-window))))
 
+
+;;;; Git Submodule  Support
+
+;;;;; 1) Basic Setup: Ensuring vc-mode Handles Submodules
+;; Specify which version control backends Emacs should use.
+;; By default, Emacs supports multiple VC backends like Git, SVN, Mercurial,
+;; etc.
+;; Setting this to '(Git) ensures Emacs only uses Git for version control.
+(setq vc-handled-backends '(Git))
+
+;; Modify the regular expression that tells Emacs which directories to ignore
+;; in vc-mode.
+;; `vc-ignore-dir-regexp` is a built-in variable that holds a regex pattern.
+;; The `format` function is used to append a new directory (`cell-mode`) to the
+;; existing ignore list.
+(setq vc-ignore-dir-regexp
+      (format "%s\\|%s"
+              vc-ignore-dir-regexp                                                ; Preserve the existing ignore patterns.
+              (expand-file-name                                                   ; Get absolute path from the Git root.
+               "custom-packages/cell-mode" (vc-root-dir))))                       ; Add cell-mode as an ignored directory.
+
+;;;;; 2) Adding a Submodule
+
+;; To add cell-mode as a Git submodule:
+;; ```
+;; Choose the protocol for import (SSH needs setting up on the remote first). 
+;; SSH: 
+;;     git submodule add git@gitlab.com:dto/cell-mode.git custom-packages/cell-mode
+;; or HTTPS:
+;;     git submodule add https://gitlab.com/dto/cell-mode.git custom-packages/cell-mode
+;;
+;; ****************
+;; Always run these commands from the Parent Git repo and not the submodule.
+;; ****************
+;;
+;; git submodule init
+;; git submodule update
+;; git commit -m "Added cell-mode as a submodule"
+;; ```
+;; Now, vc-mode should list cell-mode under custom-packages/ as a sub-repository.
+
+
+;;;;; 3) Tracking/Checking Submodule Status in vc-mode
+
+;; To check the status of the cell-mode submodule:
+;; Open vc-dir:
+;;     M-x vc-dir
+;; Navigate to custom-packages/cell-mode
+;; Press g to refresh
+;; If the submodule is not listed, try:
+;;     (vc-rescan)
+
+;;;;; 4) Updating Submodules in vc-mode
+
+;; When upstream changes are available in the remote submodule, update using
+;; vc-mode:
+
+;; * Open vc-dir:
+;;     M-x vc-dir
+;; * Navigate to cell-mode
+;; * Press U (vc-update) to pull the latest changes.
+
+;; Alternatively, use:
+;;     (vc-git-command nil 0 nil "submodule" "update" "--remote" "--merge")
+
+;;;;; 5) Committing Changes in a Submodule
+
+;; If you make changes inside cell-mode:
+
+;; * Open vc-dir
+;; * Navigate to custom-packages/cell-mode
+;; * Press C-x v v to commit the changes
+;; * Then return to the parent repository (.emacs.d/) and
+;; commit the new submodule reference:
+;;     git commit -m "Updated cell-mode submodule"
+
+;; or in Emacs:
+;;     (vc-git-command nil 0 nil "commit" "-m" "Updated cell-mode submodule")
+
+;;;;; 6) Cloning a Repository with Submodules
+
+;; When cloning a repository that contains submodules, ensure you initialise
+;; them:
+;;     git clone --recurse-submodules https://github.com/your-repo/dotfiles.git
+
+;; Or if already cloned:
+;;     git submodule init
+;;     git submodule update
+
+;; To do this from Emacs:
+;;     (vc-git-command nil 0 nil "submodule" "update" "--init" "--recursive")
+
+;;;;; 8) Removing a Submodule in vc-mode
+
+;; If you need to remove cell-mode:
+;;     git submodule deinit -f -- custom-packages/cell-mode
+;;     rm -rf .git/modules/custom-packages/cell-mode
+;;     git rm -f custom-packages/cell-mode
+;;     git commit -m "Removed cell-mode submodule"
+
+;; To do this in Emacs:
+;; Open vc-dir
+;; Navigate to cell-mode, press m to mark it
+;; Press C-x v v to commit
+;; Run:
+;;     (vc-git-command nil 0 nil "submodule" "deinit" "-f" "--" "custom-packages/cell-mode")
+;;     (vc-git-command nil 0 nil "rm" "-f" "custom-packages/cell-mode")
+;;     (vc-git-command nil 0 nil "commit" "-m" "Removed cell-mode submodule")
+
+;;;;; 8) Common Issues & Fixes
+
+;; |----------------------------------------------+---------------------------------------------------------|
+;; |  Issue                                       |  Fix                                                    |
+;; |----------------------------------------------+---------------------------------------------------------|
+;; | vc-dir does not show the submodule           | Run (vc-rescan) or restart Emacs                        |
+;; |----------------------------------------------+---------------------------------------------------------|
+;; | Submodule changes are not recognised         | M-x vc-refresh-state                                    |
+;; |----------------------------------------------+---------------------------------------------------------|
+;; | Submodule updates don’t appear	          | Run git submodule update --remote --merge in a terminal |
+;; |----------------------------------------------+---------------------------------------------------------|
+;; | Parent repo does not track submodule changes | Run git commit -m "Updated submodule reference"         |
+;; |----------------------------------------------+---------------------------------------------------------|
+
+
 ;;; Set up git tags list.
-;;  ---------------------
+
 ;; Define `my-magit/tagCommits-alist` with `defcustom` to make it customizable
 ;; via Emacs's Customize interface.
 (defcustom my-vc/tagCommits-alist
@@ -343,3 +442,4 @@ been modified since its last check-in."
 ;;; vc-support.el ends here
 
                                                                                   ; LocalWords:  gitRefactor
+; LocalWords:  submodule unhide
