@@ -146,116 +146,121 @@ These are all in =.emacs.d/custom-modules/=
 Define settings for =early-init.el=.
 
 #+begin_src emacs-lisp :tangle ./early-init.el
-   ;;; early-init.el --- Emacs early initialization for Crafted Emacs  -*- lexical-binding: t; no-byte-compile: t -*-
+;;; early-init.el --- Emacs early initialization for Crafted Emacs  -*- lexical-binding: t; no-byte-compile: t -*-
 
-   ;;; Commentary:
-   ;;  Work that is done before Emacs can be initialised.
-   ;;  Mainly setting up the package management process and
-   ;;  then setting a few variables needed to initialise the ide.
+;;; Commentary:
+;;  Work that is done before Emacs can be initialised.
+;;  Mainly setting up the package management process and
+;;  then setting a few variables needed to initialise the ide.
 
-   ;;; Code:
-   ;;; Base file paths needed for package management
-   ;; set paths used in package management before no-littering is set up to
-   ;; respect no-littering file paths.
-   ;; Use the `MY_NAME` environment variable to set machine specific
-   ;; locations for use with no littering.
+ ;;; Code:
+ ;;; Base file paths needed for package management
+;; set paths used in package management before no-littering is set up to
+;; respect no-littering file paths.
+;; Use the `MY_NAME` environment variable to set machine specific
+;; locations for use with no littering.
 
-   (defvar user-emacs-directory nil "The Emacs base directory.")
-   (setq user-emacs-directory (getenv "USER_EMACS_DIRECTORY"))
+(defvar user-emacs-directory nil "The Emacs base directory.")
+(setq user-emacs-directory (getenv "USER_EMACS_DIRECTORY"))
 
-   (defvar envvar/SYSTEM_NAME nil
-     "The name of the system on which we are currently running Emacs.")
-   (setq envvar/SYSTEM_NAME (getenv "MY_NAME"))
+(defvar envvar/SYSTEM_NAME nil
+  "The name of the system on which we are currently running Emacs.")
+(setq envvar/SYSTEM_NAME (getenv "MY_NAME"))
 
-   ;; Use the `envvar/SYSTEM_NAME` environment variable to set machine specific
-   ;; locations for use with no littering.
+;; Use the `envvar/SYSTEM_NAME` environment variable to set machine specific
+;; locations for use with no littering.
 
-   (defvar no-littering-var-directory nil
-     "Create the path `no-littering-var-directory`.")
-   (setq no-littering-var-directory
-         (expand-file-name (concat "var/"  envvar/SYSTEM_NAME )
-                      	user-emacs-directory))
+(defvar no-littering-var-directory nil
+  "Create the path `no-littering-var-directory`.")
+(setq no-littering-var-directory
+      (expand-file-name (concat "var/"  envvar/SYSTEM_NAME )
+                    	user-emacs-directory))
 
-   (defvar no-littering-etc-directory nil
-     "Create the path `no-littering-etc-directory'.")
-   (setq no-littering-etc-directory
-         (expand-file-name (concat "etc/" envvar/SYSTEM_NAME)
-                   	user-emacs-directory))
+(defvar no-littering-etc-directory nil
+  "Create the path `no-littering-etc-directory'.")
+(setq no-littering-etc-directory
+      (expand-file-name (concat "etc/" envvar/SYSTEM_NAME)
+                 	user-emacs-directory))
 
-   ;; Define and add directories to load-path
-   (mapc (lambda (dir)
-           (make-directory dir t)           ; Ensure the directory exists.
-           (add-to-list 'load-path dir))     ; Add the directories to the load-path.
-         (list
-          (setq modules-user-dir
-                (expand-file-name "custom-modules/" user-emacs-directory))           ; set up the custom modules building emacs functionality.
-          (setq modules-system-tools
-                (expand-file-name "system-tools/"modules-user-dir))                  ; set up the tools on which the custom modules rely.
-          (setq modules-prog-mode
-                (expand-file-name "prog-mode/" modules-user-dir))                    ; set up the custom modules which are specific to languages under prog-mode.
-          (setq my-filepaths/eln-cache
-                (expand-file-name "eln-cache/" no-littering-etc-directory))          ; Set up the eln-cache path.
-          ;; Set up package.el
-          (setq package-user-dir
-                (expand-file-name "package/" no-littering-etc-directory))
-          (setq package-gnupghome-dir (concat package-user-dir "gnupg/"))
-          )
-         )
+;; Define and add directories to load-path
+(mapc (lambda (dir)
+        (make-directory dir t)           ; Ensure the directory exists.
+        (add-to-list 'load-path dir))     ; Add the directories to the load-path.
+      (list
+       (setq modules-user-dir
+             (expand-file-name "custom-modules/" user-emacs-directory))           ; set up the custom modules building emacs functionality.
+       (setq modules-system-tools
+             (expand-file-name "system-tools/"modules-user-dir))                  ; set up the tools on which the custom modules rely.
+       (setq modules-prog-mode
+             (expand-file-name "prog-mode/" modules-user-dir))                    ; set up the custom modules which are specific to languages under prog-mode.
+       (setq my-filepaths/eln-cache
+             (expand-file-name "eln-cache/" no-littering-etc-directory))          ; Set up the eln-cache path.
+       ;; Set up package.el
+    ;;   (setq package-user-dir
+     ;;        (expand-file-name "package/" no-littering-etc-directory))
+  ;;     (setq package-gnupghome-dir (concat package-user-dir "gnupg/"))
+       )
+      )
 
-   (setq epg-gpg-program "/usr/bin/gpg")                                             ; set up the path to the encryption application on the system.
+(setq epg-gpg-program "/usr/bin/gpg")                                             ; set up the path to the encryption application on the system.
 
-   ;;;; Garbage collection, font & eln caching:
-   ;; Increase the GC threshold for faster startup
-   ;; The default is 800 kilobytes.  Measured in bytes.
-   ;; Garbage collection
-   (defvar gc-cons-threshold nil
-     "Increase the GC threshold for faster startup.
-   Default is 800 kilobytes.  Measured in bytes.")
+ ;;;; Garbage collection, font & eln caching:
+;; Increase the GC threshold for faster startup
+;; The default is 800 kilobytes.  Measured in bytes.
+;; Garbage collection
+(defvar gc-cons-threshold nil
+  "Increase the GC threshold for faster startup.
 
-   (setq gc-cons-threshold (* 50 1000 1000))
-   (startup-redirect-eln-cache my-filepaths/eln-cache)                               ; Set the eln-cache directory for compiled files to the defined path.
-   (setq inhibit-compacting-font-caches t)                                           ; Don't compact font caches during GC.
+Default is 800 kilobytes.  Measured in bytes.")
 
-   ;;; Emacs lisp source/compiled preference
-   ;; Prefer loading newest compiled .el file.
-   (defvar comp-speed nil "Set native compilation.")
-   (setq comp-speed 1)
+;; configure garbage collection.
+(setq gc-cons-threshold (* 50 1000 1000))
+(startup-redirect-eln-cache my-filepaths/eln-cache)                               ; Set the eln-cache directory for compiled files to the defined path.
+(setq inhibit-compacting-font-caches t)                                           ; Don't compact font caches during GC.
 
-   (defvar package-native-compile)
-   (setq  package-native-compile t)
-   (defvar load-prefer-newer nil "loading preference.")
-   (setq load-prefer-newer t)
+ ;;; Emacs lisp source/compiled preference
+;; Prefer loading newest compiled .el file.
+(defvar comp-speed nil "Set native compilation.")
+(setq comp-speed 1)
 
-   ;;;; UI configuration
-   ;; Remove some unneeded UI elements (the user can turn back on anything they wish)
-   (add-to-list 'default-frame-alist '(background-color . "#1B152D"))
-   ;; (add-to-list 'default-frame-alist '(foreground-color . "#A8ACA4"))
+;; stop package being re-initialised again in init.el
+;;(setq package-enable-at-startup nil)
 
-   ;; (setq inhibit-startup-screen t                                                    ; stop the default splash screen
-   ;;       inhibit-startup-message t
-   ;;       inhibit-startup-echo-area-message t)
-   ;; (setq initial-scratch-message nil)                                             ; remove the message in the scratch buffer.
-   (push '(tool-bar-lines . 0) default-frame-alist)
-   (push '(vertical-scroll-bars) default-frame-alist)
-   (push '(mouse-color . "white") default-frame-alist)
-   (menu-bar-mode -1)                                                                ; Turn off Menu-Bar and then bind it to C-TAB (Ctrl + <TAB>) to toggle on if needed.
-   (define-key input-decode-map [C-tab] [control-tab])
-   (global-set-key [control-tab] 'menu-bar-mode)
+(defvar package-native-compile)
+(setq  package-native-compile t)
+(defvar load-prefer-newer nil "loading preference.")
+(setq load-prefer-newer t)
 
-   ;; Make the initial buffer load faster by setting its mode to fundamental-mode
-   ;; and set size of the initial emacs window.
-   (customize-set-variable 'initial-major-mode 'fundamental-mode)                    ; Make the initial buffer load faster by setting its mode to fundamental-mode
-  ;; (add-to-list 'initial-frame-alist '(fullscreen . maximized))                      ; start the initial frame maximised
-  ;; (add-to-list 'default-frame-alist '(fullscreen . maximized))                      ; start every frame maximised
-   ;; Alternative - set the initial frame size default to a specific size.
-   ;;     (add-to-list 'default-frame-alist '(height . 150))
-   ;;     (add-to-list 'default-frame-alist '(width  . 300))
+ ;;;; UI configuration
+;; Remove some unneeded UI elements (the user can turn back on anything they wish)
+(add-to-list 'default-frame-alist '(background-color . "#1B152D"))
+(add-to-list 'default-frame-alist '(foreground-color . "#EEEEEC"))
 
-   (provide 'early-init)
-   ;;; early-init.el ends here
-                                                                                     ; LocalWords:  gnupg
+;; (setq inhibit-startup-screen t                                                    ; stop the default splash screen
+;;       inhibit-startup-message t
+;;       inhibit-startup-echo-area-message t)
+;; (setq initial-scratch-message nil)                                             ; remove the message in the scratch buffer.
 
+(push '(tool-bar-lines . 0) default-frame-alist)
+(push '(vertical-scroll-bars) default-frame-alist)
+(push '(mouse-color . "white") default-frame-alist)
+(menu-bar-mode -1)                                                                ; Turn off Menu-Bar and then bind it to C-TAB (Ctrl + <TAB>) to toggle on if needed.
+(define-key input-decode-map [C-tab] [control-tab])
+(global-set-key [control-tab] 'menu-bar-mode)
 
+;; Make the initial buffer load faster by setting its mode to fundamental-mode
+;; and set size of the initial emacs window.
+(customize-set-variable 'initial-major-mode 'fundamental-mode)                    ; Make the initial buffer load faster by setting its mode to fundamental-mode
+;; (add-to-list 'initial-frame-alist '(fullscreen . maximized))                     ; start the initial frame maximised
+;; (add-to-list 'default-frame-alist '(fullscreen . maximized))                     ; start every frame maximised
+;; Alternative - set the initial frame size default to a specific size.
+;;     (add-to-list 'default-frame-alist '(height . 150))
+;;     (add-to-list 'default-frame-alist '(width  . 300))
+
+(provide 'early-init)
+ ;;; early-init.el ends here
+                                                                                  ; LocalWords:  gnupg
+                                                                                  ; LocalWords:  ACA
 
 #+end_src
 
@@ -276,36 +281,32 @@ This means all variables with external origins in emacs are specified here.
   ;;; init.el -- Simon's Emacs user customization file -*- lexical-binding: t; -*-
 
   ;;; Commentary:
-  ;; This file is generated from config.org. If you want to edit the
-  ;; configuration, DO NOT edit init.el, edit config.org, instead.
-  ;; Note that by default, init.el is the target of the tangle as
-  ;; specified by #+PROPERTY in line 3.
-
+  ;; This file is generated from config.org.  If you want to edit the
+  ;; configuration, DO NOT edit init.el, edit config.org, instead.  Note that by
+  ;; default, init.el is the target of the tangle as specified by #+PROPERTY in
+  ;; line 3.
+  
   ;;; Code:
 
   ;;;; Set up package.el
-  (unless (package-installed-p 'use-package)
-    (package-refresh-contents)
-    (package-install 'use-package))
+  ;;(unless (package-installed-p 'use-package)
+  ;;  (package-refresh-contents)
+  ;; (package-install 'use-package))
 
-  (require 'package)
+  ;; (require 'package)
+  (require 'use-package)
 
   (setq package-archives
         '(("gnu" . "https://elpa.gnu.org/packages/")
           ("nongnu" . "https://elpa.nongnu.org/nongnu/")
           ("melpa" . "https://melpa.org/packages/")
           ("elpa-devel" . "https://elpa.gnu.org/devel/")))
+
   (setq package-archive-priorities
         '(("gnu" . 2)
           ("nongnu" . 1)
           ("melpa" . 0)
           ("elpa-devel" . 0)))
-
-  ;; Initialize the package system if not already done
-  (unless (bound-and-true-p package--initialized)
-    (setq package-enable-at-startup nil)                                            ; Prevent Emacs from initializing it again later
-    (package-initialize))
-
 
   ;; Ensure files are compiled natively and byte-wise.
   (use-package compile-angel
@@ -322,6 +323,7 @@ This means all variables with external origins in emacs are specified here.
     (compile-angel-on-load-mode)
     (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode))
 
+  (require 'use-package)
 
   (eval-and-compile
     (setq
@@ -329,17 +331,23 @@ This means all variables with external origins in emacs are specified here.
      use-package-expand-minimally t))
 
   ;; Install `no-littering' if necessary
-  (unless (package-installed-p 'no-littering)
-    (unless package-archive-contents
-      (package-refresh-contents))
-    (package-install 'no-littering))
+  ;; (unless (package-installed-p 'no-littering)
+  ;;   (unless package-archive-contents
+  ;;     (package-refresh-contents))
+  ;;   (package-install 'no-littering))
+
+  (use-package no-littering
+    :ensure t
+    :demand t
+    :vc (:url "https://github.com/emacscollective/no-littering.git"))
+
 
   ;; Load `no-littering'
-  (require 'no-littering)
+  ;;(require 'no-littering)
 
   ;; ensure we can control how minor modes are shown in the modeline. 
   (use-package delight)
-  
+
   ;;;; Set up logging
   (require 'custom-logging-config)
   (require 'system-tools)
@@ -420,7 +428,7 @@ This means all variables with external origins in emacs are specified here.
 
   ;;; imports and declarations
   (require 'bind-key)                                                              ; if you use any :bind variant
-  (require 'custom-logging-config)
+  ;;(require 'custom-logging-config)
   (require 'custom-path-support)
   (require 'elisp-packages)
 
@@ -467,34 +475,33 @@ This means all variables with external origins in emacs are specified here.
                     my-filepaths/eln-cache
                     native-comp-eln-load-path-string)))
 
-
 #+end_src
 
 **** Load environmental variables
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-;;; Load current environmental variables
-(defun load-environment-variables-from-file (file-path)
-  "Load environment variables from a file specified by FILE-PATH."
-  (with-temp-buffer
-    (insert-file-contents file-path)
-    (goto-char (point-min))
-    (while (not (eobp))
-      (let ((line
-             (buffer-substring-no-properties
-              (line-beginning-position) (line-end-position))))
-        (when (string-match "\\([^=]+\\)=\\(.*\\)" line)
-          (let ((key (match-string 1 line))
-                (value (match-string 2 line)))
-            (setenv key value))))
-      (forward-line 1))))
+  ;;; Load current environmental variables
+  (defun load-environment-variables-from-file (file-path)
+    "Load environment variables from a file specified by FILE-PATH."
+    (with-temp-buffer
+      (insert-file-contents file-path)
+      (goto-char (point-min))
+      (while (not (eobp))
+        (let ((line
+               (buffer-substring-no-properties
+                (line-beginning-position) (line-end-position))))
+          (when (string-match "\\([^=]+\\)=\\(.*\\)" line)
+            (let ((key (match-string 1 line))
+                  (value (match-string 2 line)))
+              (setenv key value))))
+        (forward-line 1))))
 
-(let ((envFile  (getenv "ENV_FILE")))
-  (log/debug :fn 'init
-             :msg "Load environmental variables from file."
-             :obj envFile)
-  (load-environment-variables-from-file envFile))
+  (let ((envFile  (getenv "ENV_FILE")))
+    (log/debug :fn 'init
+               :msg "Load environmental variables from file."
+               :obj envFile)
+    (load-environment-variables-from-file envFile))
 
 #+end_src
 
@@ -518,33 +525,33 @@ This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-;;; Initial phase.
-(log/info :fn 'init
-          :msg "----Begin loading base functionality.----"
-          :obj t)
+  ;;; Initial phase.
+  (log/info :fn 'init
+            :msg "----Begin loading base functionality.----"
+            :obj t)
 
-(require 'custom-defaults-config)
-;; setup save histories.
-(savehist-mode 1)
-(setq history-length t)
-(setq history-delete-duplicates t)
-(setq savehist-save-minibuffer-history 1)
-(setq savehist-additional-variables
-      '(kill-ring search-ring regexp-search-ring))
+  (require 'custom-defaults-config)
+  ;; setup save histories.
+  (savehist-mode 1)
+  (setq history-length t)
+  (setq history-delete-duplicates t)
+  (setq savehist-save-minibuffer-history 1)
+  (setq savehist-additional-variables
+        '(kill-ring search-ring regexp-search-ring))
 
-;; Load the custom file if it exists.  Among other settings, this will
-;; have the list `package-selected-packages', so we need to load that
-;; before adding more packages.  The value of the `custom-file'
-;; variable must be set appropriately, by default the value is nil.
-;; This can be done here, or in the early-init.el file.
-;; (filepath set to etc in no-littering config.)
-(when (and custom-file (file-exists-p custom-file))
-  (load custom-file nil 'nomessage))
+  ;; Load the custom file if it exists.  Among other settings, this will
+  ;; have the list `package-selected-packages', so we need to load that
+  ;; before adding more packages.  The value of the `custom-file'
+  ;; variable must be set appropriately, by default the value is nil.
+  ;; This can be done here, or in the early-init.el file.
+  ;; (filepath set to etc in no-littering config.)
+  (when (and custom-file (file-exists-p custom-file))
+    (load custom-file nil 'nomessage))
 
 
-(log/info :fn 'init
-          :msg "----Initial configuration complete----"
-          :obj t)
+  (log/info :fn 'init
+            :msg "----Initial configuration complete----"
+            :obj t)
 
 #+end_src
 
@@ -564,10 +571,10 @@ This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-;; IDE configuration.
-(require 'treesit-support)
-(require 'custom-undo-tree-support)
-   
+  ;; IDE configuration.
+  (require 'treesit-support)
+  (require 'custom-undo-tree-support)
+
 #+end_src
 
 **** UI enhancements
@@ -607,11 +614,11 @@ This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-;;; Configuration phase
+  ;;; Configuration phase
 
-(require 'theme-support)
-(require 'project-support)
-(require 'completion-support)
+  (require 'theme-support)
+  (require 'project-support)
+  (require 'completion-support)
 
 #+end_src
 
@@ -624,13 +631,13 @@ This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-;; user interface
-(require 'custom-ui-config)
-(require 'ibuffer-support)
-(require 'tabline-support)
-(require 'custom-speedbar-support)
-(require 'modeline-support)
-(require 'custom-spreadsheet-support)
+  ;; user interface
+  (require 'custom-ui-config)
+  (require 'ibuffer-support)
+  (require 'tabline-support)
+  (require 'custom-speedbar-support)
+  (require 'modeline-support)
+  (require 'custom-spreadsheet-support)
 
 #+end_src
 
@@ -640,17 +647,17 @@ This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-;; Flymake configuration
-(require 'custom-flymake-config)
+  ;; Flymake configuration
+  (require 'custom-flymake-config)
 
-;; Base IDE configuration.
-(require 'custom-ide-config)
+  ;; Base IDE configuration.
+  (require 'custom-ide-config)
 
-;; Debugger support
-(require 'custom-debugger-support)
+  ;; Debugger support
+  (require 'custom-debugger-support)
 
-;; Handle writing config (Latex and the like)
-(require 'writing-config)
+  ;; Handle writing config (Latex and the like)
+  (require 'writing-config)
 
 #+end_src
 
@@ -658,8 +665,8 @@ This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-;; Additional file format support.
-(require 'custom-fileFormat-support)
+  ;; Additional file format support.
+  (require 'custom-fileFormat-support)
 
 #+end_src
 
@@ -668,8 +675,8 @@ This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-;; version control
-(require 'vc-support)
+  ;; version control
+  (require 'vc-support)
 
 #+end_src
 
@@ -696,17 +703,17 @@ These links take you to the languages set up with Emacs.
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-;; programming languages
-(require 'lang--prog-mode)
-(require 'lang-lisp)
-(require 'lang-rust)
-(require 'lang-python)
-(require 'lang-q)
-(require 'lang-systemd)
-(require 'lang-web)
-(require 'lang-bash)
-(require 'lang-docker)
-(require 'lang-vega)
+  ;; programming languages
+  (require 'lang--prog-mode)
+  (require 'lang-lisp)
+  (require 'lang-rust)
+  (require 'lang-python)
+  (require 'lang-q)
+  (require 'lang-systemd)
+  (require 'lang-web)
+  (require 'lang-bash)
+  (require 'lang-docker)
+  (require 'lang-vega)
 
 #+end_src
 
@@ -719,12 +726,10 @@ These links take you to the languages set up with Emacs.
   - [[https://github.com/darold/pgFormatter][pgFormatter]]             Formats postgresql code.
 
  Functions:
-  - my/sql-connect-postgres:
-                            Connect to a PostgreSQL database, using an environment variable for the     password if available.
-  - my/capture-sql-output:  Capture the last SQL query output and put it in a new buffer called \*SQL Results\*.
-  - my/sql-save-history-hook:
-                            Save-sql-history-dir defined in custom-path-support.
-  - my/upcase-sql-keywords: Make all SQL keywords upper case.
+  - my/sql-connect-postgres:     Connect to a PostgreSQL database, using an environment variable for the     password if available.
+  - my/capture-sql-output:       Capture the last SQL query output and put it in a new buffer called \*SQL Results\*.
+  - my/sql-save-history-hook:    Save-sql-history-dir defined in custom-path-support.
+  - my/upcase-sql-keywords:      Make all SQL keywords upper case.
 
 
 #+begin_src emacs-lisp :tangle ./init.el
@@ -742,20 +747,20 @@ Load the summary page code then set up the startup configuration.  Finalize the 
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-(require 'custom-terminal-support)
-(require 'summary-support)
-(require 'system-window-management)
-(require 'startup-config)
-(require 'menu-keys-support)
+  (require 'custom-terminal-support)
+  (require 'summary-support)
+  (require 'system-window-management)
+  (require 'startup-config)
+  (require 'menu-keys-support)
 
-;; All the autoloaded packages are now loaded.
-;; set elisp-flymake-byte-compile-load-path
-(setq elisp-flymake-byte-compile-load-path load-path)
-(let  ((elisp-flymake-byte-compile-load-path-string
-        (mapconcat 'identity elisp-flymake-byte-compile-load-path ";\n      ")))
-  (log/info :fn 'init
-            :msg "Set elisp-flymake-byte-compile-load-path"
-            :obj (concat "(" elisp-flymake-byte-compile-load-path-string ")")))
+  ;; All the autoloaded packages are now loaded.
+  ;; set elisp-flymake-byte-compile-load-path
+  (setq elisp-flymake-byte-compile-load-path load-path)
+  (let  ((elisp-flymake-byte-compile-load-path-string
+          (mapconcat 'identity elisp-flymake-byte-compile-load-path ";\n      ")))
+    (log/info :fn 'init
+              :msg "Set elisp-flymake-byte-compile-load-path"
+              :obj (concat "(" elisp-flymake-byte-compile-load-path-string ")")))
 
 #+end_src
 
@@ -781,7 +786,6 @@ Show the loading time via a the emacs-startup-hook.
   (add-hook
    'emacs-startup-hook #'crafted-startup-example/display-startup-time)
 
-   
   ;; start the server if its not already running.
   ;; To shutdown the server use the below: 
   ;;   M-x server-edit
