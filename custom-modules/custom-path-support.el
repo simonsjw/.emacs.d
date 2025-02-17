@@ -196,6 +196,18 @@
   (my-on-disk-tools/ensure-directory-exists yasnippets-directory-personal)
   (my-on-disk-tools/ensure-directory-exists yasnippets-directory-yasmate))
 
+;; Projects.el
+;; -----------
+;; Set location of saved project paths and master work-spaces containing
+;; multiple projects.
+
+(setq project-list-file
+      (expand-file-name "projects/project-list.el" no-littering-var-directory))
+(setq my-project/workspace-list-file
+      (expand-file-name "projects/workspace-list.el" no-littering-var-directory))
+(my-on-disk-tools/ensure-directory-exists
+ (expand-file-name "projects/" no-littering-var-directory))
+
 ;; Dape
 ;; ----
 ;; Set location of saved breakpoints.
