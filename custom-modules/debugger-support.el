@@ -1,4 +1,4 @@
-;;; custom-debugger-support.el --- Provide Dape debugging -*- lexical-binding: t; -*-
+;;; debugger-support.el --- Provide Dape debugging -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023
 ;; SPDX-License-Identifier: MIT
@@ -220,7 +220,7 @@
 
 
 ;; (straight-rebuild-package "dape")
-(provide 'custom-debugger-support)
-;;; custom-debugger-support.el ends here
+(provide 'debugger-support)
+;;; debugger-support.el ends here
 
                                                                                   ; LocalWords:  Keymaps dape repl

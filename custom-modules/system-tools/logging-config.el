@@ -1,4 +1,4 @@
-;;; custom-logging-config.el --- Emacs logging configuration -*- lexical-binding: t; -*-
+;;; logging-config.el --- Emacs logging configuration -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023
 ;; SPDX-License-Identifier: MIT
@@ -30,6 +30,7 @@
   "The path to the log file used when loading Emacs.")
 
 ;; define log levels.
+
 (defconst log/lvl-FATAL (list :idx 0 :lvl "FATAL") "The FATAL log level.")
 (defconst log/lvl-ERR   (list :idx 1 :lvl "ERR")   "The ERR log level.")
 (defconst log/lvl-WARN  (list :idx 2 :lvl "WARN")  "The WARN log level.")
@@ -277,6 +278,6 @@ ARGS:
 ;;     (add-to-list 'auto-mode-alist '("\\.log\\'" . log-ts-mode))))
 
 
-(provide 'custom-logging-config)
-;;; custom-logging-config.el ends here
+(provide 'logging-config)
+;;; logging-config.el ends here
 

@@ -83,8 +83,8 @@ NOECHO is set to t to avoid this statement showing in the console."
 (add-hook 'vterm-mode-hook #'my-terminal/unset_bash_file_loader_flags)
 
 
-(provide 'custom-terminal-support)
-;;; custom-terminal-support.el ends here
+(provide 'terminal-support)
+;;; terminal-support.el ends here
 
                                         ; LocalWords:  color eterm
                                         ; LocalWords:  libvterm

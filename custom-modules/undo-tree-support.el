@@ -1,4 +1,4 @@
-;;; custom-undo-tree-support.el --- better undo-tree in emacs -*- lexical-binding: t; -*-
+;;; undo-tree-support.el --- better undo-tree in emacs -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022
 ;; SPDX-License-Identifier: MIT
@@ -13,7 +13,6 @@
 
 ;;; Packages:
 
-(require 'custom-logging-config)
 (require 'system-tools)
 
 ;; Undo-tree package
@@ -83,5 +82,5 @@ Note: Requires Emacs version 24.3 or higher."
   (setq ad-return-value (concat ad-return-value ".gz")))
 
 
-(provide 'custom-undo-tree-support)
-;;; custom-undo-tree-support.el ends here
+(provide 'undo-tree-support)
+;;; undo-tree-support.el ends here

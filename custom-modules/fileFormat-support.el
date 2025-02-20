@@ -117,5 +117,5 @@ Interactively, POINT is point and KILL is the prefix argument."
 ;; Add the custom setup to toml-ts-mode-hook
 (add-hook 'toml-ts-mode-hook #'my-fileFormat-support/toml-ts-mode-setup)
 
-(provide 'custom-fileFormat-support)
-;;; custom-fileFormat-support.el ends here
+(provide 'fileFormat-support)
+;;; fileFormat-support.el ends here

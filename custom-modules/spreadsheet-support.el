@@ -1,4 +1,4 @@
-;;; custom-spreadsheet-support.el --- Spreadsheet configuration -*- mode: emacs-lisp; mode: outline-minor; lexical-binding: t; -*-
+;;; spreadsheet-support.el --- Spreadsheet configuration -*- mode: emacs-lisp; mode: outline-minor; lexical-binding: t; -*-
 
 ;;; License
 ;; Copyright (C) 2022
@@ -185,5 +185,5 @@
 
 
 
-(provide 'custom-spreadsheet-support)
-;;; custom-spreadsheet-support.el ends here
+(provide 'spreadsheet-support)
+;;; spreadsheet-support.el ends here

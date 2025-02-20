@@ -1,4 +1,4 @@
-;;; custom-ui-config.el --- UI configuration  -*- lexical-binding: t; -*-
+;;; ui-config.el --- UI configuration  -*- lexical-binding: t; -*-
 
 ;; Local Variables:
 ;; outline-regexp:  ";;;+"
@@ -404,8 +404,8 @@ parameters for the minibuffer function."
 ;; ----------------------------------------------------------------------------
 
 
-(provide 'custom-ui-config)
-;;; custom-ui-config.el ends here
+(provide 'ui-config)
+;;; ui-config.el ends here
 
                                                                                   ; LocalWords:  ibuffer Ediff Elisp
                                                                                   ; LocalWords:  Dired ediff
