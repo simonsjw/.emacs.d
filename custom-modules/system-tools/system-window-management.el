@@ -32,8 +32,6 @@
 
 (defvar sr-speedbar-window)                                                       ; variable defined in sr-speedbar - the current window of sr-speedbar.
 
-;; (declare-function sr-speedbar-get-window "sr-speedbar")
-
 (defvar my-window-tools/buffer-window-map)
 (declare-function my-tab-line/tab-line-close-tab-given-buffer "tabline-support")
 (declare-function sr-speedbar-exist-p "sr-speedbar")
@@ -49,7 +47,7 @@
 ;; (defvar my-window-tools/buffer-window-map nil
 ;;   "Create the map of buffers to windows.")
 
-(setq my-window-tools/buffer-window-map
+(setq my-window-tools/IDE-buffer-window-map
       '((:names   . (("*dape-shell*" . terminal)
                      ("*scratch*" . terminal)
                      ("*Checkdoc Status*" . data)
@@ -167,21 +165,8 @@
 
 
 ;; temp as we move to frame specific assignment.
-(setq my-window-tools/frame-map `((:IDE . ,my-window-tools/buffer-window-map)))
-;; now map frames to windows. 
-;; (setq my-window-tools/frame-map
-;;       '(
-;;         ('IDE  . '(edit
-;;                    logs
-;;                    config
-;;                    data
-;;                    terminal
-;;                    vc))
-;;         ('AGENDA . '(agenda
-;;                      holidays
-;;                      calendar
-;;                      items))
-;;         ))
+(setq my-window-tools/frame-map `((:IDE . ,my-window-tools/IDE-buffer-window-map)))
+
 
 (defvar my-window-tools/whitelabel-buffers '("*SPEEDBAR*"
                                              "*dape-repl*"
@@ -197,13 +182,8 @@
                                              "vc")
   "Non-system buffers to be excluded from the window matching process.")
 
-;; (defvar my-window-tools/window-hash (make-hash-table :test 'equal)
-;;   "Hash table to store window references keyed by window-tag.")
-
 (defvar my-window-tools/known-buffers nil
   "List of buffers known to the system.  Used to detect newly created buffers.")
-
-
 
 
 ;; ******************* new window tools for new frame management.
@@ -222,7 +202,7 @@
 
 
 (defun my-window-tools/tag-windows-by-list (frame tag-list)
-  "Tag each window in FRAME  from TAG-LIST based on an ordered window list.
+  "Tag each window in FRAME from TAG-LIST based on an ordered window list.
 The window list is ordered by position.  If there are more windows than tags,
 the tags will be reused cyclically."
   (with-selected-frame frame
@@ -253,20 +233,6 @@ the tags will be reused cyclically."
 
 (defconst my-window-tools/tag-list '(edit logs config data terminal vc)
   "The tags assigned to non-system buffers.")
-
-;; (defun my-window-tools/add-window (window window-tag)
-;;   "Add WINDOW with WINDOW-TAG to the hash table.
-;; FRAME is the frame in which the window resides.
-;; WINDOW is the window to be added.
-;; WINDOW-TAG is the tag describing the window's purpose."
-;;   (let ((key window-tag))
-;;     (log/debug
-;;      :fn 'my-window-tools/add-window
-;;      :msg (format "Adding window with key: %s" key)
-;;      :obj t) 
-;;     (puthash key window my-window-tools/window-hash)))
-
-
 
 (defun my-window-tools/get-project-root (buffer)
   "Get the project root directory for BUFFER using the project.el package."
@@ -400,14 +366,6 @@ will be assigned, and no window assignment will occur."
           tag)))))
 
 
-;; (let* (
-;;        (frame-symbol 'IDE)
-;;        (key (intern (concat ":" (symbol-name frame-symbol))))
-;;        (buffer-window-map (alist-get key my-window-tools/frame-map))
-;;        )
-;;   (message "Buffer Window Map: %s" buffer-window-map))
-
-
 (defun my-window-tools/get-buffer-tag (buffer frame)
   "Get the tag for the given BUFFER and FRAME into which it is to be assigned.
 Return nil if the buffer is a system buffer without a match by name or
@@ -446,23 +404,6 @@ by name, regexp or mode."
         ;; does not begin with a space.
         tag))))
 
-;; (defun my-window-tools/get-window-for-tag (tag)
-;;   "Retrieve a window associated with TAG.
-
-;; If no live window exists with TAG, check for a window with the default tag.
-;;  (Found in `my-window-tools/default-tag').  Return nil if neither is available."
-;;   (let ((window (gethash tag my-window-tools/window-hash)))
-;;     (cond
-;;      ;; Return the window if it's live
-;;      ((and window (window-live-p window)) window)
-;;      ;; Otherwise, look for a live window with the default tag
-;;      ((let ((default-window (gethash my-window-tools/default-tag
-;;                                      my-window-tools/window-hash)))
-;;         (if (and default-window (window-live-p default-window))
-;;             default-window
-;;           ;; Return nil if neither a window for TAG nor for the default tag
-;;           ;; exists
-;;           nil))))))
 
 (defun my-window-tools/get-window-for-tag (target-tag frame)
   "Retrieve the first window in FRAME associated with TARGET-TAG.
@@ -476,8 +417,6 @@ Return the first matching window, or nil if none are found."
                  when (equal my-window-tools/default-tag
                              (window-parameter win 'tag))
                  return win))))
-
-
 
 (defun my-window-tools/move-buffer-to-window (buffer window original-window
                                                      output-only)
@@ -780,17 +719,6 @@ signature."
      nil 'visible)
     (display-buffer output-buffer)))
 
-;; (defun my-window-tools/rebuild-window-hash ()
-;;   "Rebuild the hash table `my-window-tools/window-hash'.
-
-;; This table contains the windows used in the IDE layout for Emacs."
-;;   (interactive)
-;;   (clrhash my-window-tools/window-hash)                                          ; Clear existing hash table entries
-;;   (walk-windows
-;;    (lambda (w)
-;;      (let ((window-tag (window-parameter w 'tag)))
-;;        (my-window-tools/add-window w window-tag)))))
-
 (defun my-window-tools/find-window-by-name (name)
   "Find the window with the 'Name' parameter equal to NAME."
   (let ((found-window nil))
@@ -825,7 +753,6 @@ The tag name must be one of `my-window-tools/tag-list`."
     ;; (my-window-tools/add-window window-to-tag tag-name)
     (get-buffer-create (symbol-name tag-name))
     (with-current-buffer (symbol-name tag-name) (tab-line-mode 1))))
-
 
 
 ;; BACKTRACE AND MESSAGES HANDLED BY WINDOW MANAGEMENT FUNCTIONS NOW. 
