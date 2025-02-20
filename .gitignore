@@ -35,8 +35,4 @@ var/**/tramp/
 var/**/dape/dape-breakpoints
 var/**/bmkp/bookmark-default.el
 custom-packages/worg/
-
-
-
-custom-packages/cell-mode/cell-mode.elc
 elpa/
