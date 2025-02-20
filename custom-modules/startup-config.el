@@ -1,4 +1,4 @@
-;;; custom-startup-config.el --- Emacs configuration -*- mode: emacs-lisp; lexical-binding: t; -*-
+;;; startup-config.el --- Emacs configuration -*- mode: emacs-lisp; lexical-binding: t; -*-
 
 ;;; License
 ;; Copyright (C) 2025

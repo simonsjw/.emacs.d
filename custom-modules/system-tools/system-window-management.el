@@ -40,6 +40,8 @@
 (declare-function sr-speedbar-refresh-turn-off "sr-speedbar")
 (declare-function sr-speedbar-close "sr-speedbar")
 
+(declare-function log/debug "system-window-management")
+
 (require 'ui-config)
 
 
