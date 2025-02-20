@@ -166,20 +166,22 @@
       )
 
 
+;; temp as we move to frame specific assignment.
+(setq my-window-tools/frame-map `((:IDE . ,my-window-tools/buffer-window-map)))
 ;; now map frames to windows. 
-(setq my-window-tools/frame-map
-      '(
-        ('IDE  . '(edit
-                   logs
-                   config
-                   data
-                   terminal
-                   vc))
-        ('AGENDA . '(agenda
-                     holidays
-                     calendar
-                     items))
-        ))
+;; (setq my-window-tools/frame-map
+;;       '(
+;;         ('IDE  . '(edit
+;;                    logs
+;;                    config
+;;                    data
+;;                    terminal
+;;                    vc))
+;;         ('AGENDA . '(agenda
+;;                      holidays
+;;                      calendar
+;;                      items))
+;;         ))
 
 (defvar my-window-tools/whitelabel-buffers '("*SPEEDBAR*"
                                              "*dape-repl*"
@@ -193,13 +195,48 @@
                                              "terminal"
                                              "config"
                                              "vc")
-  "A list of buffers to be excluded from the window matching process.")
+  "Non-system buffers to be excluded from the window matching process.")
 
-(defvar my-window-tools/window-hash (make-hash-table :test 'equal)
-  "Hash table to store window references keyed by window-tag.")
+;; (defvar my-window-tools/window-hash (make-hash-table :test 'equal)
+;;   "Hash table to store window references keyed by window-tag.")
 
 (defvar my-window-tools/known-buffers nil
   "List of buffers known to the system.  Used to detect newly created buffers.")
+
+
+
+
+;; ******************* new window tools for new frame management.
+(defun my-window-tools/sorted-window-list (frame)
+  "Return a list of windows in FRAME sorted by their top-left position."
+  (sort (window-list frame 'no-minibuffer)
+        :lessp (lambda (w1 w2)
+                 (let* ((edges1 (window-edges w1))
+                        (edges2 (window-edges w2))
+                        (y1 (nth 1 edges1))  ; top edge of w1
+                        (y2 (nth 1 edges2))
+                        (x1 (nth 0 edges1))  ; left edge of w1
+                        (x2 (nth 0 edges2)))
+                   (or (< y1 y2)
+                       (and (= y1 y2) (< x1 x2)))))))
+
+
+(defun my-window-tools/tag-windows-by-list (frame tag-list)
+  "Tag each window in FRAME  from TAG-LIST based on an ordered window list.
+The window list is ordered by position.  If there are more windows than tags,
+the tags will be reused cyclically."
+  (with-selected-frame frame
+    (let* ((windows (my-window-tools/sorted-window-list frame))
+           (tag-count (length tag-list)))
+      (cl-loop for win in windows
+               for idx from 0 do
+               (let ((tag-to-apply (nth (mod idx tag-count) tag-list)))
+                 (set-window-parameter win 'tag tag-to-apply)
+                 (message "Assigned tag %s to window %s" tag-to-apply win))))))
+
+;; *******************
+
+
 
 ;; ensure that our buffer list is updated when a buffer is killed.
 (defun my-window-tools/update-known-buffers-on-kill ()
@@ -217,17 +254,18 @@
 (defconst my-window-tools/tag-list '(edit logs config data terminal vc)
   "The tags assigned to non-system buffers.")
 
-(defun my-window-tools/add-window (window window-tag)
-  "Add WINDOW with WINDOW-TAG to the hash table.
-FRAME is the frame in which the window resides.
-WINDOW is the window to be added.
-WINDOW-TAG is the tag describing the window's purpose."
-  (let ((key window-tag))
-    (log/debug
-     :fn 'my-window-tools/add-window
-     :msg (format "Adding window with key: %s" key)
-     :obj t) 
-    (puthash key window my-window-tools/window-hash)))
+;; (defun my-window-tools/add-window (window window-tag)
+;;   "Add WINDOW with WINDOW-TAG to the hash table.
+;; FRAME is the frame in which the window resides.
+;; WINDOW is the window to be added.
+;; WINDOW-TAG is the tag describing the window's purpose."
+;;   (let ((key window-tag))
+;;     (log/debug
+;;      :fn 'my-window-tools/add-window
+;;      :msg (format "Adding window with key: %s" key)
+;;      :obj t) 
+;;     (puthash key window my-window-tools/window-hash)))
+
 
 
 (defun my-window-tools/get-project-root (buffer)
@@ -264,7 +302,7 @@ speedbar when the window that contains it no longer exists."
 
 
 ;;;; Buffer assignment to windows
-;;   ----------------------------
+
 ;; Here we implement the mechanics that, when given a buffer, can determine
 ;; the appropriate window for that buffer and move it if necessary.
 ;;
@@ -297,15 +335,17 @@ speedbar when the window that contains it no longer exists."
 ;;    in any testing.
 
 
-(defun my-window-tools/assign-buffer-to-window (buffer &optional output-only)
-  "Assign BUFFER to an appropriate window based on its tag.
+(defun my-window-tools/assign-buffer-to-window (buffer &optional frame output-only)
+  "Assign BUFFER to an appropriate window in FRAME based on its tag.
 
 If OUTPUT-ONLY is non-nil, this function will only determine the target window
 without moving the buffer.  Returns a cons cell (WINDOW . TAG) or nil if no
 assignment is made."
-  (let* ((tag (my-window-tools/get-buffer-tag-or-default buffer)))
+  (let* ((frame (or frame (selected-frame)))                                      ; set the FRAME to the current frame if it is not specified. 
+         (tag (my-window-tools/get-buffer-tag-or-default buffer frame))
+         )                                   
     (if tag                                                                       ; If there is no tag, the buffer is whitelisted so no window assignment performed."
-        (let* ((window (my-window-tools/get-window-for-tag tag))
+        (let* ((window (my-window-tools/get-window-for-tag tag frame))
                (original-window (get-buffer-window buffer)))
           (if window
               (progn
@@ -324,41 +364,52 @@ assignment is made."
               nil))))))
 
 
-(defun my-window-tools/get-buffer-tag-or-default (buffer)
-"Determine and return the tag for BUFFER.
+(defun my-window-tools/get-buffer-tag-or-default (buffer &optional frame)
+  "Determine and return the tag for BUFFER assuming FRAME.
 
-This function uses the default tag if unassigned.  If the buffer is
-whitelisted, no tag will be assigned, and no window assignment will occur."
-(let ((buffer-name-text (buffer-name buffer)))
-  ;; Check if the buffer is whitelisted (skip assignment if true)
-  (if (member buffer-name-text my-window-tools/whitelabel-buffers)
-      (progn
-        (log/debug
-         :fn 'my-window-tools/get-buffer-tag-or-default
-         :msg (format
-               "Buffer %s is whitelisted, no window assignment performed."
-               buffer-name-text)
-         :obj t)
-        nil)
-    ;; Get the tag for the buffer, defaulting to
-    ;; `my-window-tools/default-tag` if `no-tag`
-    (let ((tag (with-current-buffer buffer
-                 (my-window-tools/get-buffer-tag buffer))))
-      (if (eq tag 'no-tag)
-          ;; If no tag found, assign the default tag and log the action
-          (progn
-            (log/debug
-             :fn 'my-window-tools/get-buffer-tag-or-default
-             :msg (format
-                   "Buffer %s does not map to a tag. Assigned to default tag '%s."
-                   buffer-name-text my-window-tools/default-tag)
-             :obj t)
-            my-window-tools/default-tag)
-        ;; Return the found tag if it is not 'no-tag'
-        tag)))))
+This function uses the default tag if unassigned.  If no frame is specified,
+the currently selected one is assumed.  If the buffer is whitelisted, no tag
+will be assigned, and no window assignment will occur." 
+  (let ((buffer-name-text (buffer-name buffer))
+        (frame (or frame (selected-frame))))
+    ;; Check if the buffer is whitelisted (skip assignment if true)
+    (if (member buffer-name-text my-window-tools/whitelabel-buffers)
+        (progn
+          (log/debug
+           :fn 'my-window-tools/get-buffer-tag-or-default
+           :msg (format
+                 "Buffer %s is whitelisted, no window assignment performed."
+                 buffer-name-text)
+           :obj t)
+          nil)
+      ;; Get the tag for the buffer, defaulting to
+      ;; `my-window-tools/default-tag` if `no-tag`
+      (let ((tag (with-current-buffer buffer
+                   (my-window-tools/get-buffer-tag buffer frame))))
+        (if (eq tag 'no-tag)
+            ;; If no tag found, assign the default tag and log the action
+            (progn
+              (log/debug
+               :fn 'my-window-tools/get-buffer-tag-or-default
+               :msg (format
+                     "Buffer %s does not map to a tag. Assigned to default tag '%s."
+                     buffer-name-text my-window-tools/default-tag)
+               :obj t)
+              my-window-tools/default-tag)
+          ;; Return the found tag if it is not 'no-tag'
+          tag)))))
 
-(defun my-window-tools/get-buffer-tag (buffer)
-  "Get the tag for the given BUFFER.
+
+;; (let* (
+;;        (frame-symbol 'IDE)
+;;        (key (intern (concat ":" (symbol-name frame-symbol))))
+;;        (buffer-window-map (alist-get key my-window-tools/frame-map))
+;;        )
+;;   (message "Buffer Window Map: %s" buffer-window-map))
+
+
+(defun my-window-tools/get-buffer-tag (buffer frame)
+  "Get the tag for the given BUFFER and FRAME into which it is to be assigned.
 Return nil if the buffer is a system buffer without a match by name or
 regexp.  Return `no-tag' if the buffer is not a system buffer but isn't matched
 by name, regexp or mode."
@@ -367,10 +418,13 @@ by name, regexp or mode."
     (if (string-prefix-p " " buffer-name-text)
         nil
       ;; Proceed to check for tag matches.
-      (let ((tag 'no-tag)
-            (buffer-mode (buffer-local-value 'major-mode buffer))
-            (map my-window-tools/buffer-window-map))
-
+      (let* ((tag 'no-tag)
+             (buffer-mode (buffer-local-value 'major-mode buffer))
+             (ui-type (frame-parameter frame 'UI-TYPE))
+             (key (intern (concat ":" (symbol-name ui-type))))
+             (map (alist-get key my-window-tools/frame-map)))
+        ;; (message "-------\nbuffer: %s\n---------\nbuffer-name-text: %s \nbuffer-mode: %s \nui_type: %s \n key: %s\n map: %s" tBuffer buffer-name-text buffer-mode ui-type key map)
+        
         ;; Step 1: Check for match by buffer name.
         (dolist (name (cdr (assoc :names map)))
           (when (string-match-p (car name) buffer-name-text)
@@ -392,23 +446,38 @@ by name, regexp or mode."
         ;; does not begin with a space.
         tag))))
 
-(defun my-window-tools/get-window-for-tag (tag)
-  "Retrieve a window associated with TAG.
+;; (defun my-window-tools/get-window-for-tag (tag)
+;;   "Retrieve a window associated with TAG.
 
-If no live window exists with TAG, check for a window with the default tag.
- (Found in `my-window-tools/default-tag').  Return nil if neither is available."
-  (let ((window (gethash tag my-window-tools/window-hash)))
-    (cond
-     ;; Return the window if it's live
-     ((and window (window-live-p window)) window)
-     ;; Otherwise, look for a live window with the default tag
-     ((let ((default-window (gethash my-window-tools/default-tag
-                                     my-window-tools/window-hash)))
-        (if (and default-window (window-live-p default-window))
-            default-window
-          ;; Return nil if neither a window for TAG nor for the default tag
-          ;; exists
-          nil))))))
+;; If no live window exists with TAG, check for a window with the default tag.
+;;  (Found in `my-window-tools/default-tag').  Return nil if neither is available."
+;;   (let ((window (gethash tag my-window-tools/window-hash)))
+;;     (cond
+;;      ;; Return the window if it's live
+;;      ((and window (window-live-p window)) window)
+;;      ;; Otherwise, look for a live window with the default tag
+;;      ((let ((default-window (gethash my-window-tools/default-tag
+;;                                      my-window-tools/window-hash)))
+;;         (if (and default-window (window-live-p default-window))
+;;             default-window
+;;           ;; Return nil if neither a window for TAG nor for the default tag
+;;           ;; exists
+;;           nil))))))
+
+(defun my-window-tools/get-window-for-tag (target-tag frame)
+  "Retrieve the first window in FRAME associated with TARGET-TAG.
+If no window is found, check for a window with `my-window-tools/default-tag'.
+Return the first matching window, or nil if none are found."
+  (let ((windows (window-list frame 'no-minibuffer)))
+    (or (cl-loop for win in windows
+                 when (equal target-tag (window-parameter win 'tag))
+                 return win)
+        (cl-loop for win in windows
+                 when (equal my-window-tools/default-tag
+                             (window-parameter win 'tag))
+                 return win))))
+
+
 
 (defun my-window-tools/move-buffer-to-window (buffer window original-window
                                                      output-only)
@@ -502,8 +571,10 @@ project."
   "Show the window details that a given buffer will be assigned to.
 
 The function prompts the user for a BUFFER-NAME, retrieves the buffer, and
-passes it to `my-window-tools/list-window-tags', returning the tag it
-produces.  It is handy for checking you have the right assignment being carried
+passes it to `my-window-tools/list-window-tags', where the window tag it
+matches is found and returned assuming the map is for the currently selected
+frame.  It then returns the tag for the window it matches.  This function is
+intended to be useful for checking you have the right assignment being carried
 out by the window assignment algorithm here."
   (interactive "BBuffer name: ")
   (let ((buffer (get-buffer buffer-name)))
@@ -539,11 +610,12 @@ out by the window assignment algorithm here."
         ;; Call the buffer assignment function here
         (my-window-tools/assign-buffer-to-window buffer)))))
 
-(defun my-window-tools/reassign-buffer-to-default-window (buffer)
-  "This function reassigns a BUFFER to a window based on the value in `tag',
+(defun my-window-tools/reassign-buffer-to-default-window (buffer frame)
+  "This function reassigns a BUFFER to a window in FRAME.
+The assignment is made based on finding a property in the window called `tag'.
 
   It is also removed from the original window and the tab-line is updated."
-  (my-window-tools/assign-buffer-to-window buffer))
+  (my-window-tools/assign-buffer-to-window buffer frame))
 
 
 (defun my-window-tools/set-window-purpose (tag)
@@ -555,7 +627,7 @@ out by the window assignment algorithm here."
   (let* ((target-buffer (current-buffer))
          (name-of-buffer (buffer-name target-buffer))
          (current-window (get-buffer-window target-buffer)))
-    (my-window-tools/add-window current-window tag)
+    ;;(my-window-tools/add-window current-window tag)
     (log/debug :fn 'my-window-tools/set-window-purpose
       	       :msg (format "Window on buffer '%s' tagged as '%s'"
                             name-of-buffer tag)
@@ -571,7 +643,8 @@ named *SPEEDBAR*."
   (interactive)
   (dolist (buffer (buffer-list (selected-frame)))
     (unless (string= (buffer-name buffer) "*SPEEDBAR*")
-      (my-window-tools/reassign-buffer-to-default-window buffer))))
+      (my-window-tools/reassign-buffer-to-default-window buffer
+                                                         (selected-frame)))))
 
 
 (defun my-window-tools/reassign-current-buffer-to-default-window ()
@@ -580,33 +653,33 @@ named *SPEEDBAR*."
 The reassignment is  based on the buffer's tag.  It will be removed from the
 original window, updating the tab-line."
   (interactive)
-  (my-window-tools/reassign-buffer-to-default-window (current-buffer)))
+  (my-window-tools/reassign-buffer-to-default-window (current-buffer)
+                                                     (selected-frame)))
 
 
-(defun my-window-tools/get-window-with-tag (tag)
-  "Get a window by its tag.
+(defun my-window-tools/get-window-with-tag (tag &optional frame)
+  "Get a window by its TAG.
 
 Utility function takes a TAG and returns the first window object it finds
-with that tag.  It is envisioned there will never be more than one window
-per tag."
-  (catch 'window
-    (dolist (win (window-list))
-      (when (equal (window-parameter win 'tag) tag)
-        (throw 'window win)))
-    nil))
+with that tag in the FRAME provided.  If no FRAME is provided, then the current
+selected frame is used.  It is envisioned there will never be more than one
+window per tag in each frame."
+  (let ((frame (or frame (selected-frame))))
+    (catch 'window
+      (dolist (win (window-list))
+        (when (equal (window-parameter win 'tag) tag)
+          (throw 'window win)))
+      nil)))
 
 
 (defun my-window-tools/get-tag-given-window ()
   "Get the tag corresponding to the current window.
 
 Utility function shows the tag associated with the current selected window."
-  (let ((current-window (selected-window)))
-    (catch 'tag
-      (maphash (lambda (key value)
-                 (when (equal value current-window)
-                   (throw 'tag key)))
-               my-window-tools/window-hash)
-      nil)))
+  (interactive)
+  (let ((window-tag (window-parameter (selected-window) 'tag)))
+    (message "tag: %s" window-tag)
+    window-tag))
 
 
 ;; ---------------------------
@@ -627,12 +700,14 @@ Utility function shows the tag associated with the current selected window."
 
 
 (defun my-window-tools/display-buffer (buffer alist)
-  "Display BUFFER in the appropriate window based on its tag.
+  "Display BUFFER in a window based on its tag and the current frame.
 
 ALIST is a dummy variable to make the function conform to the expected
 signature."
-  (let* ((tag (my-window-tools/get-buffer-tag-or-default buffer))
-         (window (and tag (my-window-tools/get-window-for-tag tag)))
+  (message "found buffer: %s" buffer)
+  (let* ((frame (selected-frame))
+         (tag (my-window-tools/get-buffer-tag-or-default buffer frame))
+         (window (and tag (my-window-tools/get-window-for-tag tag frame)))
          (original-window (get-buffer-window buffer))
          (original-frame (window-frame original-window)))
     (cond
@@ -684,6 +759,11 @@ signature."
                (y-or-n-p "Are you sure you want to delete this window?"))
       (delete-window window))))
 
+;; set up the delete window confirmation. -- this is for >= Emacs 30.
+(global-set-key [mode-line mouse-3]
+                #'my-window-tools/mouse-delete-window-confirmation)
+
+
 (defun my-window-tools/list-window-names ()
   "List all windows and their names."
   (interactive)
@@ -700,18 +780,16 @@ signature."
      nil 'visible)
     (display-buffer output-buffer)))
 
+;; (defun my-window-tools/rebuild-window-hash ()
+;;   "Rebuild the hash table `my-window-tools/window-hash'.
 
-(defun my-window-tools/rebuild-window-hash ()
-  "Rebuild the hash table `my-window-tools/window-hash'.
-
-This table contains the windows used in the IDE layout for Emacs."
-  (interactive)
-  (clrhash my-window-tools/window-hash)                                          ; Clear existing hash table entries
-  (walk-windows
-   (lambda (w)
-     (let ((window-tag (window-parameter w 'tag)))
-       (my-window-tools/add-window w window-tag)))))
-
+;; This table contains the windows used in the IDE layout for Emacs."
+;;   (interactive)
+;;   (clrhash my-window-tools/window-hash)                                          ; Clear existing hash table entries
+;;   (walk-windows
+;;    (lambda (w)
+;;      (let ((window-tag (window-parameter w 'tag)))
+;;        (my-window-tools/add-window w window-tag)))))
 
 (defun my-window-tools/find-window-by-name (name)
   "Find the window with the 'Name' parameter equal to NAME."
@@ -744,7 +822,7 @@ The tag name must be one of `my-window-tools/tag-list`."
    (list (completing-read "Select tag: " my-window-tools/tag-list nil t)))
   (let ((window-to-tag (selected-window)))
     (set-window-parameter window-to-tag 'tag tag-name)
-    (my-window-tools/add-window window-to-tag tag-name)
+    ;; (my-window-tools/add-window window-to-tag tag-name)
     (get-buffer-create (symbol-name tag-name))
     (with-current-buffer (symbol-name tag-name) (tab-line-mode 1))))
 
@@ -795,3 +873,4 @@ The tag name must be one of `my-window-tools/tag-list`."
                                                                                   ; LocalWords:  elisp
                                                                                   ; LocalWords:  tabline
                                                                                   ; LocalWords:  defun
+                                                                                  ; LocalWords:  eldoc

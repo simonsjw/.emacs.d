@@ -8,8 +8,6 @@
 
 ;;; Commentary:
 
-;; This file was made with outline-minor-mode in mind
-;; and therefore have ";;;+"-comments as headers.
 
 ;; Configuration for speedbar, a file-tree (and more), that comes
 ;; builtin to Emacs it also has integration with some packages like
@@ -24,7 +22,6 @@
 (require 'custom-ui-config)
 (require 'system-tools)
 
-
 (declare-function speedbar "speedbar")
 
 (declare-function sr-speedbar-exist-p "sr-speedbar")
@@ -38,238 +35,86 @@
 (declare-function dired "dired")
 (declare-function cell-sheet-create "cell-mode")
 (declare-function my-startup-screen/startup-screen "custom-summary-config")
+(declare-function my-tab-line/close-specific-buffer "tabline-support")
+
+(defvar my-paths/default-config-file)
+(defvar my-paths/default-log-file)
+
+(defun my-ui/create-project-frame (project-path)
+  "Create a new frame with a UI-TYPE of IDE.
+The frame has a current working directory PROJECT-PATH."
+  (interactive)
 
 
-(defun my-ui/create-project-frame (given-project-path)
-  "Set up the window layout and names for a project.
-The window names are based on the frame.
-If no directory path is given, use Dired to navigate to one.
+  ;; set the current directory to the project root.
+  (cd project-path)
+  (setq default-directory project-path)
 
-GIVEN-PROJECT-PATH is the path to the project folder for which an ide will be
-created."
+  (let* ((frame-class 'IDE)
+         (frame
+          (make-frame `(
+                        (UI-TYPE . ,frame-class)
+                        (width . 200) (height . 75)
+                        (bottom-divider-width . 5) (right-divider-width . 5)
+                        ))))
+    
+    (with-selected-frame frame
 
-  ;; (setq given-project-path user-emacs-directory)
-  ;; (setq project-path
+      (setq frame-title-format
+            '((:eval
+               (concat "IDE:  " (buffer-name)))))
+      (progn
+        (get-buffer-create "sr-speedbar")
+        (get-buffer-create "edit")
+        (get-buffer-create "logs")
+        (get-buffer-create "data")
+        (get-buffer-create "config")
+        (get-buffer-create "vc")
+        (get-buffer-create "terminal")
+        (get-buffer-create "edit")
 
-  ;;       (my-strings/ensure-directory-path    ; ensure the path ends in a '/'
-  ;;        (if
-  ;;            (and
-  ;;             given-project-path
-  ;;             (not (string= given-project-path "")))
-  ;;            given-project-path
-  ;;          (my-interactive-tools/select-directory-using-dired))))
-  ;; (setq magit-display-buffer-function #'my-window-tools/magit-display-buffer)
-  ;; (setq new-frame
-  ;;       (make-frame
-  ;;        `((name . ,(file-name-nondirectory
-  ;;                    (directory-file-name project-path))))))
+        ;; data
+        (cell-sheet-create "20" "20")
+
+        ;; config
+        (find-file my-paths/default-config-file)
+        (toggle-truncate-lines 1)
+        (ibuffer)
+        (goto-char (point-min))
+
+        ;; vc
+        (project-vc-dir)
+
+        ;; terminal
+        (project-dired)
+        (scratch-buffer)
+        (vterm)
+
+        ;; logs
+        (find-file my-paths/default-log-file)
+        (view-echo-area-messages)
+        
+        ;; edit
+        (dashboard-open))
+
+      ;; Load `IDE' window-tree from the stored file.
+      (let ((ide-file (expand-file-name "IDE.el" my-paths/desktop-layout-folder)))
+        
+        (setq my-window-state/ide
+              (with-temp-buffer
+                (insert-file-contents ide-file)
+                (read (current-buffer)))))
+      
+      (window-state-put my-window-state/ide (frame-root-window frame))
+      
+      ;; tag the windows in the frame.
+      (let ((tag-list (list  'edit 'data 'config 'logs 'vc 'terminal)))
+        (my-window-tools/tag-windows-by-list frame tag-list))
+      (global-tab-line-mode)
+      (message "Created %s frame!" frame-class)
+      frame)))
 
 
-
-  ;; Prompt user to select directory
-  (interactive "DSelect project directory: ")
-  ;; (setq debug-on-error t)
-
-  ;; This `let' uses dired to help the user navigate to a directory
-  (let
-      ((project-path
-        (my-strings/ensure-directory-path    ; ensure the path ends in a '/'
-         (if
-             (and
-              given-project-path
-              (not (string= given-project-path "")))
-             given-project-path
-           (my-interactive-tools/select-directory-using-dired))))
-       )
-
-    ;; If speedbar is open, close it.
-    (when
-        (sr-speedbar-exist-p)
-      (sr-speedbar-close))
-
-    ;; set global variables
-    (defconst ide-init/default-config-file
-      (expand-file-name "conf.org" user-emacs-directory)
-      "Path to the literate config file.")
-    (defconst ide-init/default-log-file
-      (expand-file-name "init.log" user-emacs-directory)
-      "Path to the init log file.")
-
-    ;; Here we create a new frame and name it.
-    (let
-        ((new-frame
-          (make-frame
-           `((name . ,(file-name-nondirectory
-                       (directory-file-name project-path)))))))
-
-      (with-selected-frame new-frame
-        (let* (
-               (frame-name (frame-parameter nil 'name))
-               (top-left  (selected-window))
-               (bottom-left
-                (split-window-below
-                 (floor (* 3.0 (/ (frame-height) 4.0)))))
-               (top-right-sub-upper
-                (split-window-right
-                 (floor (* 2 (/ (frame-width) 3.0)))))
-               (top-right-sub-lower
-                (progn
-                  (select-window top-right-sub-upper)
-                  (split-window-vertically)))
-               (bottom-middle
-                (progn
-                  (select-window bottom-left)
-                  (split-window-right (floor (/ (frame-width) 3.0)))))
-               (bottom-right
-                (progn
-                  (select-window bottom-middle)
-                  (split-window-right)))
-               )
-
-          ;; set the current directory to the project root.
-          (cd project-path)
-          (setq default-directory project-path)
-
-          ;; Create and assign buffers to the windows
-
-          (progn
-            (set-window-buffer bottom-left (get-buffer-create "logs"))
-            (with-current-buffer "logs"
-              (tab-line-mode 1)))
-
-          (progn
-            (set-window-buffer  top-right-sub-upper (get-buffer-create "data"))
-            (with-current-buffer "data"
-              (tab-line-mode 1)))
-
-          (progn
-            (set-window-buffer top-right-sub-lower (get-buffer-create "config"))
-            (with-current-buffer "config"
-              (tab-line-mode 1)))
-
-          (progn
-            (set-window-buffer bottom-middle (get-buffer-create "vc"))
-            (with-current-buffer "vc"
-              (tab-line-mode 1)))
-
-          (progn
-            (set-window-buffer bottom-right (get-buffer-create "terminal"))
-            (with-current-buffer "terminal"
-              (tab-line-mode 1)))
-
-          ;; Speedbar (create from the edit window before creating a buffer)
-          (with-selected-window top-left
-            (sr-speedbar-open))
-
-          (progn
-            (set-window-buffer top-left (get-buffer-create "edit"))
-            (with-current-buffer "edit"
-              (tab-line-mode 1)))
-
-          ;; Naming the windows uniquely based on frame
-
-          (let ((speedbar-win (sr-speedbar-select-window)))
-            (set-window-parameter
-             speedbar-win 'name (concat frame-name "-[speedbar]"))
-            ;; (set-window-parameter speedbar-win  'tag 'speedbar)
-            ;;  (my-window-tools/add-window speedbar-win 'speedbar)
-            ;; (my-os-tools/set-sr-speedbar-directory-to-file-path project-path)
-            )
-
-          (set-window-parameter
-           top-left 'name (concat frame-name "-top-middle-[edit]"))
-          ;; Assigning the 'edit tag to the window and adding it to the
-          ;; my-window-tools/buffer-window-map hash table.
-          (set-window-parameter top-left 'tag 'edit)
-          (my-window-tools/add-window top-left 'edit)
-
-          (set-window-parameter
-           top-right-sub-upper
-           'name (concat frame-name "-top-right-upper-[data]"))
-          ;; Assigning the 'data tag to the window and adding it to the
-          ;; my-window-tools/buffer-window-map hash table.
-          (set-window-parameter top-right-sub-upper 'tag 'data)
-          (my-window-tools/add-window top-right-sub-upper 'data)
-
-          (set-window-parameter
-           top-right-sub-lower
-           'name (concat frame-name "-top-right-lower-[config]"))
-          ;; Assigning the 'config tag to the window and adding it to the
-          ;; my-window-tools/buffer-window-map hash table.
-          (set-window-parameter top-right-sub-lower 'tag 'config)
-          (my-window-tools/add-window top-right-sub-lower 'config)
-
-          (set-window-parameter
-           bottom-left
-           'name (concat frame-name "-bottom-left-[logs]"))
-          ;; Assigning the 'logs tag to the window and adding it to the
-          ;; my-window-tools/buffer-window-map hash table.
-          (set-window-parameter bottom-left 'tag 'logs)
-          (my-window-tools/add-window bottom-left 'logs)
-
-          (set-window-parameter
-           bottom-middle
-           'name (concat frame-name "-bottom-middle-[vc]"))
-          ;; Assigning the 'vc tag to the window and adding it to the
-          ;; my-window-tools/buffer-window-map hash table.
-          (set-window-parameter bottom-middle 'tag 'vc)
-          (my-window-tools/add-window bottom-middle 'vc)
-
-          (set-window-parameter
-           bottom-right
-           'name (concat frame-name "-bottom-right-[terminal]"))
-          ;; Assigning the 'terminal tag to the window and adding it to the
-          ;; my-window-tools/buffer-window-map hash table.
-          (set-window-parameter bottom-right 'tag 'terminal)
-          (my-window-tools/add-window bottom-right 'terminal)
-
-          ;; Side windows: top right upper
-          (with-selected-window top-right-sub-upper
-            (cell-sheet-create "20" "20")
-            (my-tab-line/close-specific-buffer "*scratch*"))
-
-          ;; Side windows: top right lower
-          (with-selected-window top-right-sub-lower
-            (find-file ide-init/default-config-file)
-            (toggle-truncate-lines 1)
-            (ibuffer)
-            (my-tab-line/close-specific-buffer "*scratch*"))
-
-          ;; Bottom windows: bottom middle
-          (with-selected-window bottom-middle
-            (project-vc-dir)
-            (my-tab-line/close-specific-buffer "*scratch*"))
-
-          ;; Bottom windows: bottom right
-          ;; do this last so any windows containing only scratch buffers
-          ;; don't get deleted before they are populated.
-          (with-selected-window bottom-right
-            (project-dired)
-            (scratch-buffer)
-            (vterm))
-
-          ;; Bottom windows: bottom left
-          (with-selected-window bottom-left
-            (find-file ide-init/default-log-file)
-            (view-echo-area-messages)
-            (my-tab-line/close-specific-buffer "*scratch*"))
-
-          ;;  (with-selected-window top-left
-          ;;   (my-os-tools/set-sr-speedbar-directory-to-file-path project-path)
-          ;;    (message "speedbar directory set at %s" project-path))
-
-          ;;(select-window top-left)
-
-          ;; Main window
-          (with-selected-window top-left
-            (dashboard-open)
-            (my-tab-line/close-specific-buffer "*scratch*")
-            )
-          )
-        )
-      )
-    )
-  )
 
 (defun my-ui/startup-layout()
   "Reset the Emacs session to the default window layout.
@@ -299,4 +144,5 @@ closed as a result of this action."
                                                                                   ; LocalWords:  speedbar dired
                                                                                   ; LocalWords:  magit bufler
                                                                                   ; LocalWords:  sr vc
+                                                                                  ; LocalWords:  tabline
 
