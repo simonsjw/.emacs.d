@@ -329,14 +329,14 @@
 
             (holiday-fixed 1 26 "Australia Day")                                  ; Always Jan 26
             
-            (holiday-sexp                                                         ; If Jan 26 is a weekend, observe the following Monday
-             (let* ((year (or displayed-year (calendar-current-year)))            ; Use displayed-year if available, else fallback to current year
-                    (dow (calendar-day-of-week (list 1 26 year))))
-               (cond
-                ((= dow 6) (list 1 28 year))                                      ; Saturday -> holiday on Monday (the 28th)
-                ((= dow 0) (list 1 27 year))                                      ; Sunday -> holiday on Monday (the 27th)
-                (t nil)))
-             "Australia Day (Observed)")
+            ;; (holiday-sexp                                                         ; If Jan 26 is a weekend, observe the following Monday
+            ;;  (let* ((year (or displayed-year (calendar-current-year)))            ; Use displayed-year if available, else fallback to current year
+            ;;         (dow (calendar-day-of-week (list 1 26 year))))
+            ;;    (cond
+            ;;     ((= dow 6) (list 1 28 year))                                      ; Saturday -> holiday on Monday (the 28th)
+            ;;     ((= dow 0) (list 1 27 year))                                      ; Sunday -> holiday on Monday (the 27th)
+            ;;     (t nil)))
+            ;;  "Australia Day (Observed)")
 
             (holiday-fixed 4 25 "Anzac Day")
             (holiday-float 5 0 2 "Mother's Day")
