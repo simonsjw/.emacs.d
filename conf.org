@@ -349,7 +349,7 @@ This means all variables with external origins in emacs are specified here.
   (use-package delight)
 
   ;;;; Set up logging
-  (require 'custom-logging-config)
+  (require 'logging-config)
   (require 'system-tools)
 
   (log/debug :fn 'early-init
@@ -428,7 +428,6 @@ This means all variables with external origins in emacs are specified here.
 
   ;;; imports and declarations
   (require 'bind-key)                                                              ; if you use any :bind variant
-  ;;(require 'custom-logging-config)
   (require 'custom-path-support)
   (require 'elisp-packages)
 
@@ -566,14 +565,14 @@ This means all variables with external origins in emacs are specified here.
 
  [[file:./custom-modules/treesit-support.el][Packages and configuration for Tree-sitter]]
 
- [[file:./custom-modules/custom-undo-tree-support.el][Packages and configuration for undo-tree]]
+ [[file:./custom-modules/undo-tree-support.el][Packages and configuration for undo-tree]
   -  [[https://gitlab.com/tsc25/undo-tree/-/blob/master/undo-tree.el][undo-tree]]              Save undo histories and access them in an intuitive way.
 
 #+begin_src emacs-lisp :tangle ./init.el
 
   ;; IDE configuration.
   (require 'treesit-support)
-  (require 'custom-undo-tree-support)
+  (require 'undo-tree-support)
 
 #+end_src
 
@@ -626,18 +625,18 @@ This means all variables with external origins in emacs are specified here.
 
  [[file:./custom-modules/modeline-support.el][Custom Modeline support]]
 
- [[file:./custom-modules/custom-spreadsheet-support.el][Custom Spreadsheet support]]
+ [[file:./custom-modules/spreadsheet-support.el][Custom Spreadsheet support]]
   - [[https://gitlab.com/dto/cell-mode][Cell-Mode]]               A spreadsheet with cell-mode (see the emacs conference [[https://emacsconf.org/2019/talks/18/][for 2019]])
 
 #+begin_src emacs-lisp :tangle ./init.el
 
   ;; user interface
-  (require 'custom-ui-config)
+  (require 'ui-config)
   (require 'ibuffer-support)
   (require 'tabline-support)
   (require 'custom-speedbar-support)
   (require 'modeline-support)
-  (require 'custom-spreadsheet-support)
+  (require 'spreadsheet-support)
 
 #+end_src
 
@@ -654,19 +653,19 @@ This means all variables with external origins in emacs are specified here.
   (require 'custom-ide-config)
 
   ;; Debugger support
-  (require 'custom-debugger-support)
+  (require 'debugger-support)
 
   ;; Handle writing config (Latex and the like)
   (require 'writing-config)
 
 #+end_src
 
- [[file:./custom-modules/custom-fileFormat-support.el][Support for file formatting]]
+ [[file:./custom-modules/fileFormat-support.el][Support for file formatting]]
 
 #+begin_src emacs-lisp :tangle ./init.el
 
   ;; Additional file format support.
-  (require 'custom-fileFormat-support)
+  (require 'fileFormat-support)
 
 #+end_src
 
@@ -747,7 +746,7 @@ Load the summary page code then set up the startup configuration.  Finalize the 
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-  (require 'custom-terminal-support)
+  (require 'terminal-support)
   (require 'summary-support)
   (require 'system-window-management)
   (require 'startup-config)

@@ -1,25 +1,22 @@
 ;;; custom-startup-config.el --- Emacs configuration -*- mode: emacs-lisp; lexical-binding: t; -*-
 
 ;;; License
-;; Copyright (C) 2022
+;; Copyright (C) 2025
 ;; SPDX-License-Identifier: MIT
 
-;; Author: Simon Watson, Erik Lundstedt, System Crafters Community
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-
-;; Configuration for speedbar, a file-tree (and more), that comes
-;; builtin to Emacs it also has integration with some packages like
-;; Rmail.
+;; Configuration for speedbar, a file-tree (and more), that comes builtin to
+;; Emacs it also has integration with some packages like Rmail.
 
 ;;; Code:
 
 ;; Imports
 (require 'summary-support)
-(require 'custom-logging-config)
 (require 'system-window-management)
-(require 'custom-ui-config)
+(require 'ui-config)
 (require 'system-tools)
 
 (declare-function speedbar "speedbar")
@@ -113,8 +110,6 @@ The frame has a current working directory PROJECT-PATH."
       (global-tab-line-mode)
       (message "Created %s frame!" frame-class)
       frame)))
-
-
 
 (defun my-ui/startup-layout()
   "Reset the Emacs session to the default window layout.

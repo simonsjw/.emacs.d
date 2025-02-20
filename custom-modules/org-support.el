@@ -91,7 +91,6 @@
   (require 'org-roam-dailies)                                                     ; Ensure the keymap is available
   (org-roam-db-autosync-mode))                                                    ; ensure org-roam looks after itself.
 
-(require 'custom-logging-config)
 (require 'org)
 (require 'org-agenda)
 (require 'org-capture)

@@ -31,8 +31,6 @@
 
 (declare-function dired-get-file-for-visit "dired")
 
-(require 'custom-logging-config)
-
 ;;;; Emacs Lisp logging helpers
 
 ;; Define an advice function to be used for implicit logging.

@@ -40,8 +40,7 @@
 (declare-function sr-speedbar-refresh-turn-off "sr-speedbar")
 (declare-function sr-speedbar-close "sr-speedbar")
 
-(require 'custom-logging-config)
-(require 'custom-ui-config)
+(require 'ui-config)
 
 
 ;;; Code:

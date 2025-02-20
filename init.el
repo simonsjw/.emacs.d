@@ -69,7 +69,7 @@
 (use-package delight)
 
 ;;;; Set up logging
-(require 'custom-logging-config)
+(require 'logging-config)
 (require 'system-tools)
 
 (log/debug :fn 'early-init
@@ -148,7 +148,6 @@
 
 ;;; imports and declarations
 (require 'bind-key)                                                              ; if you use any :bind variant
-;;(require 'custom-logging-config)
 (require 'custom-path-support)
 (require 'elisp-packages)
 
@@ -247,7 +246,7 @@
 
 ;; IDE configuration.
 (require 'treesit-support)
-(require 'custom-undo-tree-support)
+(require 'undo-tree-support)
 
 ;;; Configuration phase
 
@@ -256,12 +255,12 @@
 (require 'completion-support)
 
 ;; user interface
-(require 'custom-ui-config)
+(require 'ui-config)
 (require 'ibuffer-support)
 (require 'tabline-support)
 (require 'custom-speedbar-support)
 (require 'modeline-support)
-(require 'custom-spreadsheet-support)
+(require 'spreadsheet-support)
 
 ;; Flymake configuration
 (require 'custom-flymake-config)
@@ -270,13 +269,13 @@
 (require 'custom-ide-config)
 
 ;; Debugger support
-(require 'custom-debugger-support)
+(require 'debugger-support)
 
 ;; Handle writing config (Latex and the like)
 (require 'writing-config)
 
 ;; Additional file format support.
-(require 'custom-fileFormat-support)
+(require 'fileFormat-support)
 
 ;; version control
 (require 'vc-support)
@@ -296,7 +295,7 @@
 ;; database integration and SQL support.
 (require 'db-support)
 
-(require 'custom-terminal-support)
+(require 'terminal-support)
 (require 'summary-support)
 (require 'system-window-management)
 (require 'startup-config)
@@ -343,17 +342,3 @@
 
 (provide 'init)
 ;;; init.el ends here
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-vc-selected-packages
-   '((no-littering :url
-		   "https://github.com/emacscollective/no-littering.git"))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
