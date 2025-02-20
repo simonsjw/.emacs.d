@@ -70,11 +70,11 @@
  '(speedbar-use-images t)                                                         ; Use icon images. (not needed with pretty-speedbar)
  '(speedbar-directory-button-trim-method 'trim)                                   ;    Indicates how the directory button will be displayed. Hide
                                                                                   ; Possible values are:
-                                                                                  ;       ‘span’ - span large directories over multiple lines.
-                                                                                  ;          ‘trim’ - trim large directories to only show the last few.
-                                                                                  ;          nil    - no trimming.
+                                                                                  ;       `span’ - span large directories over multiple lines.
+                                                                                  ;       `trim’ - trim large directories to only show the last few.
+                                                                                  ;       `nil'    - no trimming.
  '(speedbar-update-flag t)                                                        ; Auto-update when the attached frame changes directory
- '(semantic-sb-info-format-tag-function 'semantic-format-tag-short-doc)               ; Display a short form of TAG’s documentation.  (Comments, or docstring.)
+ '(semantic-sb-info-format-tag-function 'semantic-format-tag-short-doc)           ; Display a short form of TAG’s documentation.  (Comments, or docstring.)
                                                                                   ;     Optional argument PARENT is the parent type if TAG is a detail.
                                                                                   ;     Optional argument COLOR means highlight the prototype with font-lock colours.
                                                                                   ;     (fn TAG &optional PARENT COLOR)
@@ -82,18 +82,18 @@
  '(speedbar-show-unknown-files t)
  '(speedbar-smart-directory-expand-flag t)
  '(speedbar-directory-unshown-regexp "^\\(CVS\\|RCS\\|SCCS\\|\\.\\.*$\\)\\'")
- ;;'(speedbar-hide-button-brackets-flag t)                                          ; this stops icons being shown.
+ ;;'(speedbar-hide-button-brackets-flag t)                                        ; this stops icons being shown.
  
- ;; '(speedbar-frame-parameters                                                     ; set speedbar frame parameters (overwritten if sr-speedbar is used). 
- ;;   '((name . "*SPEEDBAR*")
- ;;     (title . "*SPEEDBAR*")
- ;;     (minibuffer . nil)
- ;;     (border-width . 10)
- ;;     (width . 40)
- ;;     (menu-bar-lines . 0)
- ;;     (tool-bar-lines . 0)
- ;;     (unsplittable . t)
- ;;     (left-fringe . 10)))
+ '(speedbar-frame-parameters                                                      ; set speedbar frame parameters (overwritten if sr-speedbar is used).
+   '((name . "*SPEEDBAR*")
+     (title . "*SPEEDBAR*")
+     (minibuffer . nil)
+     (border-width . 4)
+     (width . 40)
+     (menu-bar-lines . 0)
+     (tool-bar-lines . 0)
+     (unsplittable . t)
+     (left-fringe . 4)))
 
  '(speedbar-add-supported-extension
    '(
@@ -257,3 +257,4 @@ Current view is given in SPEEDBAR-VIEW."
                                                                                   ; LocalWords:  php
                                                                                   ; LocalWords:  cljs
                                                                                   ; LocalWords:  lua SCCS
+                                                                                  ; LocalWords:  minibuffer
