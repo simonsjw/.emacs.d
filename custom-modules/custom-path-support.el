@@ -59,6 +59,9 @@
 (defvar diary-file nil
   "Path to the Emacs diary file for built in diary functionality.")
 
+
+(defvar my-paths/desktop-layout-folder nil "Folder containing window-tree specifications for UI layouts.")
+
 (defvar my-paths/q-load-balancer-folder)
 (defvar my-paths/rainbow-mode)
 (defvar my-paths/systemd-mode)
@@ -161,6 +164,12 @@
         (expand-file-name
          "bmkp/emacs-bmk-bmenu-state.el" no-littering-var-directory))
   )
+
+;; UI configuration
+(setq my-paths/desktop-layout-folder
+      (expand-file-name
+       "desktop-layout/" no-littering-var-directory))
+
 
 ;; Yasnippet directories
 ;; ---------------------
@@ -318,6 +327,16 @@
         "^~/\\.emacs\\.d/init\\.log"
         "^~/\\.emacs\\.d/$"
         "^~/\\.emacs\\.d/conf\\.org$"))
+
+;; set global variables for 'special files'.
+(defconst my-paths/default-config-file
+  (expand-file-name "conf.org" user-emacs-directory)
+  "Path to the literate config file.")
+
+(defconst my-paths/default-log-file
+  (expand-file-name "init.log" user-emacs-directory)
+  "Path to the init log file.")
+
 
 (provide 'custom-path-support)
 ;;; custom-path-support.el ends here
