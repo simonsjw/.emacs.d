@@ -34,8 +34,6 @@
 (require 'custom-logging-config)
 
 ;;;; Emacs Lisp logging helpers
-;;   --------------------------
-
 
 ;; Define an advice function to be used for implicit logging.
 (defun my-log/advice (log-message &rest args)
@@ -101,7 +99,6 @@ If not supplied, the default names `idx' and `item' are used."
 
 
 ;;;; Dired tools
-;;   -----------
 
 (defun my-interactive-tools/select-directory-using-dired ()
   "Open a Dired buffer for directory selection and return the selected path."
@@ -116,7 +113,6 @@ If not supplied, the default names `idx' and `item' are used."
 
 
 ;;;; Image processing
-;;   ----------------
 
 (defun my-image-tools/create-image-icon (file &optional width height)
   "Create an image icon from FILE with optional WIDTH and HEIGHT."
@@ -133,7 +129,6 @@ If not supplied, the default names `idx' and `item' are used."
 
 
 ;;;; String processing
-;;   -----------------
 
 (defun my-strings/ensure-directory-path (path)
   "Ensure the directory PATH ends with a '/'."
@@ -181,14 +176,15 @@ a STRING."
   )
 
 
-(cl-defun my-strings/number-to-human-readable-file-sizes (number &optional (sigfigs 4) (prec 2) (strlength -1))
-  "Convert NUMBER to human-readable file size.
+(cl-defun my-strings/number-to-human-readable-string (number &optional (sigfigs 4) (prec 2) (strlength -1))
+  "Convert NUMBER to human-readable string.
 
 The NUMBER will have SIGFIGS significant figures to a precision of PREC if it is
-small enough to fit in the allowed significant figures.  If STRLENGTH is a
-positive number, then white-space will be used to ensure a minimum of that
-length string is returned with a letter at the end for large numbers or else
-a space so the units column is aligned."
+small enough to fit in the allowed significant figures.
+
+If STRLENGTH is a positive number, then white-space will be used to ensure a cc
+minimum of that length string is returned with a letter at the end for large
+numbers or else a space so the units column is aligned."
   (interactive)
   (let ((result
          (cond
@@ -226,7 +222,7 @@ present."
 
 
 ;;;; Frame management
-;;   ----------------
+
 (defun my-frame-tools/delete-frame-by-name (frame-name)
   "Delete a frame by its name FRAME-NAME."
   (interactive "sEnter frame name to delete: ")  ; Prompt for frame name
@@ -254,7 +250,6 @@ present."
     frame-object))
 
 
-
 (defun my-frame-tools/set-current-frame-name (name)
   "Set the name of the current frame to NAME."
   (interactive "sEnter new frame name: ")                                         ; Prompt for the frame name interactively
@@ -276,7 +271,6 @@ If FRAME is nil, use the current frame."
 
 
 ;;;; BUFFER management
-;;   -----------------
 
 (defun my-buffer-tools/show-buffer-from-first-line (buffer)
   "Show BUFFER starting from the first line."
@@ -433,7 +427,6 @@ my-buffer-tools/display-buffer-by-name-and-tag"
     nil))
 
 ;;;; TOOLS FOR USE IN BUFFER
-;;   -----------------------
 
 (defun my-buffer-tools/insert-blank-line-at-start ()
   "Insert a blank line at the start of the current buffer, even if it's read-only."
@@ -531,7 +524,8 @@ to buffer here, the check needs to be made."
                      (float (- fill-column even-max-length)) 2)))))
     (comment-box beg end (- pad 2))))
 
-;; ---end of TOOLS FOR THE FILE SYSTEM---
+;; ---end of TOOLS FOR USE IN BUFFER---
+
 
 ;;;; TOOLS FOR THE FILE SYSTEM
 ;;   -------------------------
@@ -542,7 +536,8 @@ to buffer here, the check needs to be made."
     (message "creating %s" dir)
     (make-directory dir t)))
 
-;; ---end of TOOLS FOR USE IN BUFFER---
+;; ---end of TOOLS FOR THE FILE SYSTEM---
+
 
 ;;;; TOOLS FOR THEME SUPPORT
 ;;   -----------------------
@@ -654,7 +649,6 @@ If `sr-speedbar' is not open, open it first."
 ;; ---end of TOOLS USING THE OS---
 
 ;;;; TOOLS FOR LANGUAGE & DICTIONARIES
-;;   --------------------------
 
 (defun my-dictionary/use-american ()
   "Switch to American English dictionary."
