@@ -29,13 +29,55 @@
 ;; my-project/add-parent-directory
 ;; my-project/remove-parent-directory
 
+
+;; (defun project-remember-projects-under (dir &optional recursive)
+;;   "Index all projects below a directory DIR.
+;; If RECURSIVE is non-nil, recurse into all subdirectories to find
+;; more projects.  After finishing, a message is printed summarizing
+;; the progress.  The function returns the number of detected
+;; projects."
+;;   (interactive "DDirectory: \nP")
+;;   (project--ensure-read-project-list)
+
+;;   (message "%s" recursive)
+;;   (let ((dirs (if recursive
+;;                   (directory-files-recursively dir "" t)
+;;                 (directory-files dir t)))
+;;         (known (make-hash-table :size (* 2 (length project--list))
+;;                                 :test #'equal))
+;;         (count 0))
+;;     (dolist (project (mapcar #'car project--list))
+;;       (puthash project t known))
+;;     (message "subdirs: %s" dirs)
+;;     (dolist (subdir dirs)
+;;       (when-let (((file-directory-p subdir))
+;;                  (project (project--find-in-directory subdir))
+;;                  (project-root (project-root project))
+;;                  ((not (gethash project-root known))))
+;;         (message "project: %s:"( project-root project))
+;;         (project-remember-project project t)
+;;         (puthash project-root t known)
+;;         (message "Found %s..." project-root)
+;;         (setq count (1+ count))))
+;;     (if (zerop count)
+;;         (message "No projects were found")
+;;       (project--write-project-list)
+;;       (message "%d project%s were found"
+;;                count (if (= count 1) "" "s")))
+;;     count))
+
+
+
 (defun my-project/load-workspace-directories ()
   "Load `my-project/workspace-list' from the stored file."
-  (let ((workspaces-file my-project/workspace-list-file))
-    (when (file-exists-p workspaces-file)
-      (with-temp-buffer
-        (insert-file-contents workspaces-file)
-        (setq my-project/workspace-list (read (current-buffer)))))))
+  (let* ((workspaces-file my-project/workspace-list-file)
+         (workspaces-list (when (file-exists-p workspaces-file)
+                            (with-temp-buffer
+                              (insert-file-contents workspaces-file)
+                              (read (current-buffer))))))
+
+    (setq my-project/workspace-list workspaces-list)))
+
 
 (defun my-project/scan-workspaces ()
   "Interactively scan for new projects.
@@ -43,12 +85,16 @@
 The list of directories in `my-project/workspace-list' will be scanned
 recursively for projects."
   (interactive)
+  
   (mapc (lambda (parent-dir)
-          (let ((absolute-parent-dir (file-truename parent-dir)))
-            (message "scanning: %s" absolute-parent-dir)
+          (let ((absolute-parent-dir (file-truename (car parent-dir))))
+            ;; Process the directory string here.
+            (message "Scanning directory: %s" absolute-parent-dir)
             (project-remember-projects-under absolute-parent-dir 1)))             ; Add the directories to the load-path.
         my-project/workspace-list)
+
   )
+
 
 (defun my-project/save-workspace-directories ()
   "Save the current value of `my-project/workspace-list' to file.
