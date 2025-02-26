@@ -9,6 +9,8 @@
 
 (require 'menu-keys-support)
 
+(declare-function eldoc-box-hover-mode "eldoc-box")
+
 (defvar display-line-numbers-type)                                                ; variable from display-line-numbers - show relative or absolute line numbers.
 
 ;; Provide an autosave hook.
@@ -22,6 +24,9 @@
   "Set useful layout tweeks for programming modes."
   (interactive)
 
+  (require 'eldoc)
+  (require 'eldoc-box)
+  (eldoc-mode 1)                                                                  ; enable eldoc-mode.
   ;; Set programming modes to pick up the custom prog-mode face.
   ;; (after theme-support has defined the face.)
   (when (facep 'my-font-faces/prog-mode-face)
@@ -30,8 +35,6 @@
   (setq-local display-line-numbers-type 'absolute)
   (display-line-numbers-mode)                                                     ; activate line numbers.
   (set-face-attribute 'line-number nil :height 0.8)
-
-  ;; show org-links: [[http://reddit.com/][reddit]]
   
 
   ;; Auto-save files.
