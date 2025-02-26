@@ -166,7 +166,8 @@
 
 
 ;; temp as we move to frame specific assignment.
-(setq my-window-tools/frame-map `((:IDE . ,my-window-tools/IDE-buffer-window-map)))
+(setq my-window-tools/frame-map
+      `((:IDE . ,my-window-tools/IDE-buffer-window-map)))
 
 
 (defvar my-window-tools/whitelabel-buffers '("*SPEEDBAR*"
@@ -302,7 +303,8 @@ speedbar when the window that contains it no longer exists."
 ;;    in any testing.
 
 
-(defun my-window-tools/assign-buffer-to-window (buffer &optional frame output-only)
+(defun my-window-tools/assign-buffer-to-window (buffer
+                                                &optional frame output-only)
   "Assign BUFFER to an appropriate window in FRAME based on its tag.
 
 If OUTPUT-ONLY is non-nil, this function will only determine the target window
@@ -476,12 +478,13 @@ buffer."
 ;; defined by `my-window-tools/default-tag'.
 
 
-(defun my-window-tools/find-frame-by-project-root (project-root)
+(defun my-window-tools/find-frame-by-project-root (project-root-of-frame)
   "Find the frame associated with the given PROJECT-ROOT.
 PROJECT-ROOT is the root directory of the project to find the frame for."
   (catch 'found
     (dolist (frame (frame-list))
-      (when (string= (my-window-tools/frame-project-root frame) project-root)
+      (when (string=
+             (my-window-tools/frame-project-root frame) project-root-of-frame)
         (throw 'found frame)))))
 
 
