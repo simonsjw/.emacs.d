@@ -534,6 +534,41 @@ to buffer here, the check needs to be made."
     (message "creating %s" dir)
     (make-directory dir t)))
 
+
+(defun my-on-disk-tools/summary-path (path)
+  "Return a summarized version of PATH, with project name if applicable."
+  (let* ((home-dir (expand-file-name "~/"))
+         (proj (project-current))                                                 ; Check if the path is in a project.el project
+         (path-name (if proj
+                        (concat (project-name proj) ": ")
+                      (if (string-prefix-p home-dir path)
+                          "home: "
+                        "")))
+
+         (path-root (if proj
+                        (project-root proj)
+                      (if (string-prefix-p home-dir path)
+                          home-dir
+                        nil)))
+         
+         (rel-path (if path-root
+                       (file-relative-name path path-root)
+                     path))
+         (components (split-string rel-path "/" t))                               ; Split, omit empty strings
+         
+         (max-width (- (window-width) (length path-name) 5))                      ; Room for ": " and " ... "
+         (comp-count (length components))
+         (keep-each-side (max 1 (/ (- max-width (length " ... ")) 2))))
+    (if (> comp-count (* 2 keep-each-side))
+        ;; Truncate with " ... " if too many components
+        (let* ((start-comps (seq-take components keep-each-side))
+               (end-comps (seq-take-last components keep-each-side))
+               (start (string-join start-comps "/"))
+               (end (string-join end-comps "/")))
+          (format "%s%s ... %s" path-name start end))
+      ;; Otherwise show full path
+      (format "%s%s" path-name rel-path))))
+
 ;; ---end of TOOLS FOR THE FILE SYSTEM---
 
 
