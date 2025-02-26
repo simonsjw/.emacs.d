@@ -53,6 +53,8 @@
 (declare-function treesit-fold-indicators-mode "treesit-fold")
 (declare-function pyvenv-activate pyvenv)
 
+(declare-function my-outline-mode/outline-level "ui-config")
+
 (declare-function python-shell-switch-to-shell "python")
 (declare-function python-shell-send-buffer "python")
 (declare-function python-shell-send-region "python")
@@ -67,8 +69,6 @@
 (declare-function anaconda-mode-find-references "anaconda-mode")
 (declare-function anaconda-mode-find-assignments "anaconda-mode")
 (declare-function anaconda-mode-show-doc "anaconda-mode")
-
-(declare-function eldoc-box-hover-mode "eldoc-box")
 
 (use-package pythonic)
 (use-package pyvenv)
@@ -137,7 +137,7 @@ active environment."
 (let ((conda-home (getenv "CONDA_PREFIX")))
   (pyvenv-activate conda-home))
 
-;; settings for python-mode.
+;;;; settings for python-mode.
 (defun my-lang/python-mode-setup ()
   "Central function to hook into `python-mode' for python functionality."
   (message
@@ -145,18 +145,14 @@ active environment."
    (current-time-string))
 
   (require 'treesit-fold)
-  (require 'eldoc)
   (require 'pythonic)
   ;; (require 'anaconda-mode)
   (require 'numpydoc)
   (require 'pyvenv)
-  (require 'eldoc-box)
   (require 'dape)
   (require 'reformatter)
 
-  ;; enable eldoc-mode.
-  (eldoc-mode 1)
-  
+
   ;; start up Eglot in this mode.
   (eglot-ensure)
 
@@ -166,28 +162,27 @@ active environment."
   (my-lang-python/update-python-path)
   
   ;; switch on hover at point mode.
-  (eldoc-box-hover-at-point-mode nil)
-  (when (eldoc-doc-buffer)
-    (eldoc-box-help-at-point))
+  ;; (eldoc-box-hover-at-point-mode nil)
+  ;; (when (eldoc-doc-buffer)
+  ;;   (eldoc-box-help-at-point))
   
   (reformatter-define python-format
     :program "ruff"
     :args '("format")
     :lighter " PF")  ; remove ref on modeline.
   
-;;;;; Set up outline
+   ;;;;; Set up outline
 
   ;; Set up customisations for outline-minor-mode.
   (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons
   (setq-local outline-blank-line t)                                               ; Blank line before headers
   (setq-local outline-minor-mode-highlight t)                                     ; Font-lock outlines
-  (setq-local outline-regexp "##+")                                               ; Match `;;;`
+  (setq-local outline-regexp "^[[:space:]]*##+")                                  ; Match `##' and more.
   (setq-local outline-start "#")                                                  ; Start marker
   (setq-local outline-level #'my-outline-mode/outline-level)                      ; Custom level function
   (outline-minor-mode 1)                                                          ; Use outline-minor-mode
 
-
-;;;;; Folding
+   ;;;;; Folding
 
   ;; Set the fringe mode for python-ts-mode folding.
   (set-fringe-mode '(12 . 12))
@@ -197,20 +192,19 @@ active environment."
   ;; Enable treesit-fold-indicators-mode
   (treesit-fold-indicators-mode 1)
 
-
   ;; You will probably want to tweak this variable, it determines how
   ;; quickly the completion prompt provides LSP suggestions when
   ;; typing. Be careful if you set it to 0 in a large project!
   (customize-set-variable 'corfu-auto-delay 0.25)
 
   ;; Enable Anaconda mode for Python code navigation and documentation
-  ;;(anaconda-mode)
+  ;; (anaconda-mode)
 
   ;; Do not enable blacken mode for automatic code formatting
   ;; (blacken-mode)
 
   ;; Enable isort for Python import sorting
-  ;;(python-isort-on-save-mode)
+  ;; (python-isort-on-save-mode)
 
   ;; Enable Ya-snippets.
   (yas-minor-mode)
@@ -218,8 +212,8 @@ active environment."
   ;; Add my/update-python-path function to pyvenv activation.
   (add-hook 'pyvenv-post-activate-hooks 'my-lang-python/update-python-path)
 
-;;;;; IDE layout
-  ;;  ----------
+   ;;;;; IDE layout
+  
   ;; Provide a function to set the fill column indicator.
   ;; This has a default of 80 but can be set on a per mode basis.
   ;; Set the preferred fill column indicator for the mode and activate it.
@@ -241,10 +235,8 @@ active environment."
   ;; [pycodestyle]
   ;; max-line-length = 88
 
-  ;; Start python interpreter
-  ;;  (my-lang-python/start-or-switch-to-python-shell)
-
-;;;;; IDE functionality map
+   ;;;;; IDE functionality map
+  
   ;; compiling the code (Not applicable)
   ;; (keymap-set python-ts-mode-map "C-c C-c C-u" #)
 
@@ -268,8 +260,8 @@ active environment."
   ;; (keymap-set python-ts-mode-map "C-c C-f b" #'blacken-buffer)
   ;;  (keymap-set python-ts-mode-map "C-c C-f r" #'blacken-buffer)
 
-;;;;; Errors/linting
-  ;; --------------
+   ;;;;; Errors/linting
+
   ;; list errors in buffer
   (keymap-set python-ts-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)
   ;; list errors in minibuffer
@@ -284,8 +276,8 @@ active environment."
   ;; go to previous error.
   (keymap-set python-ts-mode-map "C-c e l" #'flymake-goto-prev-error)
 
-;;;;; Variable/function references
-  ;; ----------------------------
+   ;;;;; Variable/function references
+
   ;; xref-find-definitions
   ;; (keymap-set python-ts-mode-map "M-." #'anaconda-mode-find-definitions)
   ;; xref-find-references
@@ -293,7 +285,8 @@ active environment."
   ;; xref-find-assignments
   ;;  (keymap-set python-ts-mode-map "M-=" #'anaconda-mode-find-assignments)
 
-;;;;; add-missing-dependencies
+   ;;;;; add-missing-dependencies
+  
   (keymap-set python-ts-mode-map "C-c i f" #'python-fix-imports)
   
   (message
@@ -303,7 +296,6 @@ active environment."
 (add-hook 'python-ts-mode-hook #'my-lang/python-mode-setup)
 
 ;; Make sure that files with the suffix .p are recognised as python files.
-
 (add-to-list 'auto-mode-alist '("\\.p\\'" . python-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
 
@@ -327,3 +319,4 @@ active environment."
                                                                                   ; LocalWords:  eldoc defun minibuffer pycodestyle pycomplete gitlab melpa
                                                                                   ; LocalWords:  pythonic dape yasnippet debugpy adapter
                                                                                   ; LocalWords:  customisations
+                                                                                  ; LocalWords:  ui
