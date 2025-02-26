@@ -118,15 +118,11 @@ The default windows will be created and the default buffers assigned to them.
  If those buffers are not present, they will be opened.  No buffers should be
 closed as a result of this action."
   (interactive)
-  ;; (my-frame-tools/set-current-frame-name "startup")
-  (my-ui/create-project-frame user-emacs-directory)
-  ;;  (my-frame-tools/delete-frame-by-name "startup")
-  )
-
-
+  (my-ui/create-project-frame user-emacs-directory))
 
 (defalias 'IDE-refresh 'my-ui/startup-layout
   "Alias for `my-ui/startup-layout' to refresh the Emacs session layout.")
+
 
 ;; Use the function on startup
 ;;(add-hook 'emacs-startup-hook 'my-ui/startup-layout)
