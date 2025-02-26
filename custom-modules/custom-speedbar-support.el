@@ -9,7 +9,7 @@
 ;;; Commentary:
 
 ;; This file was made with outline-minor-mode in mind
-;; and therefore have ";;;+"-comments as headders.
+;; and therefore have ";;;+"-comments as headers.
 
 ;; Configuration for speedbar, a file-tree (and more), that comes
 ;; builtin to Emacs it also has integration with some packages like
@@ -24,8 +24,9 @@
 (defvar speedbar-file-unshown-regexp)
 (defvar speedbar-directory-arguments)
 (defvar speedbar-add-supported-extension)
-(defvar my-speedbar/speedbar-filter-state nil
-  "Holds the current state of the filter in speedbar.")
+(defvar my-speedbar/speedbar-filter-state t
+  "Variable to hold the state of the filter in speedbar.
+Used in `my-speedbar/toggle-filter'.  t or nil.")
 
 (defvar sr-speedbar-auto-refresh)
 (defvar sr-speedbar-max-width)
@@ -62,10 +63,123 @@
 (use-package sr-speedbar)
 (use-package pretty-speedbar)
 
+;;;; functions:
+;;   ----------
+(eval-after-load 'speedbar
+  '(progn
+     (defun speedbar-directory-buttons (directory _index)
+       "Set the header line to a summarized version of DIRECTORY.
+INDEX is unused but required by the caller."
+       (with-current-buffer speedbar-buffer
+         (setq header-line-format
+               (propertize (my-on-disk-tools/summary-path directory)
+                           'face 'speedbar-directory-face))
+         (speedbar-with-writable
+           (insert "\n"))))))
 
-;;; Customise Speedbar and Related elements.
+(defun my-speedbar/toggle ()
+  "Select the current top-left window and run `sr-speedbar-toggle'.
+
+Current means in the currently selected frame."
+  (interactive)
+  (let ((top-left-window
+         (car (sort (window-list)
+                    (lambda (w1 w2)
+                      (let ((edges1 (window-edges w1))
+                            (edges2 (window-edges w2)))
+                        (or (< (nth 1 edges1) (nth 1 edges2))                     ; Compare top edges
+                            (and (= (nth 1 edges1) (nth 1 edges2))
+                                 (< (nth 0 edges1) (nth 0 edges2))))))))))
+    (select-window top-left-window))
+  (sr-speedbar-toggle))
+
+(defun my-sr-speedbar/go-home ()
+  "Switch sr-speedbar to home directory if in file mode.
+TODO: make this also work with SPEEDBAR."
+  (interactive)
+  (when (and (bound-and-true-p speedbar-frame)                                    ; Speedbar frame exists
+             (eq speedbar-frame (selected-frame))                                 ; Speedbar window is active
+             (eq speedbar-buffer (current-buffer))                                ; In Speedbar buffer
+             (string-equal speedbar-initial-expansion-list-name "files"))         ; In file mode
+    (my-os-tools/set-sr-speedbar-directory-to-file-path
+     (expand-file-name "~/"))))
+
+
+
+;; This function overrides the original speedbar function so that
+;; the correct speedbar width is reported when speedbar is not the only
+;; window in a frame.
+(defun speedbar-frame-width ()
+  "Return the width of the sr-speedbar window, or a default value."
+  (if (and (boundp 'sr-speedbar-window) sr-speedbar-window)
+      (window-width sr-speedbar-window)                                           ; Use sr-speedbar window width
+    30))                                                                          ; Fallback default width
+
+(defun my-speedbar/calc-relative-path-str ()
+  "This function calculates a string for the relative path to the project root.
+
+If no project root is found fallback to `parent/current-directory'."
+  (let* (
+         (current-dir default-directory)
+         (project-root-path project-root))
+    
+    (relative-path
+     (if project-root-path
+         (file-relative-name current-dir project-root-path)
+       (concat
+        (file-name-nondirectory
+         (directory-file-name
+          (file-name-directory current-dir)))
+        "/" (file-name-nondirectory current-dir))))
+    )
+  relative-path)
+
+(defun my-speedbar/toggle-filter ()
+  "Toggle the visibility of dotfiles in speedbar."
+  (interactive)
+  (if my-speedbar/speedbar-filter-state
+      (setq my-speedbar/speedbar-filter-state nil)
+    (setq my-speedbar/speedbar-filter-state t))
+  ;; Check if the current regexp hides dot files
+  (if my-speedbar/speedbar-filter-state
+      ;; If dot files are hidden, modify regexp to show them
+      (progn
+        ;; Hide dot files, directories beginning with "_", and specific VCS directories
+        ;; but always show the `..' file.
+        (setq speedbar-directory-unshown-regexp "^\\(\\.[^/.].*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$")
+
+        ;; (setq speedbar-directory-unshown-regexp "^\\(\\.[^/.][^/]*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$")
+
+        ;;  (setq speedbar-directory-unshown-regexp "^\\(\\.[^/]*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$")
+        (setq speedbar-file-unshown-regexp "^\\(\\.[^/]*\\|CVS\\|RCS\\|SCCS\\)$"))
+    ;; If dot files are shown, modify regexp to hide them
+    (progn
+      ;; the dot here is the folder denoting the current folder.
+      ;; (just gives a recursive tree)
+      (setq speedbar-directory-unshown-regexp "^\\.$")
+      (setq speedbar-file-unshown-regexp "^$")))
+  ;; Refresh speedbar to apply changes
+  (speedbar-refresh))
+
+;; get the name of the available views from
+;; speedbar-initial-expansion-mode-alist
+(defun my-speedbar/switch-speedbar-view (speedbar-view)
+  "Temporarily switch to quick-buffers expansion list.
+Useful for quickly switching to an open buffer.
+Current view is given in SPEEDBAR-VIEW."
+  (interactive)
+  (speedbar-change-initial-expansion-list speedbar-view))
+
+;;;; Customise Speedbar and Related elements
+;;   ---------------------------------------
+
+
+;; Variable to hold the state of the filter in speedbar.  t or nil.
+;; used in `my-speedbar/toggle-filter'.
+(setq my-speedbar/speedbar-filter-state t)
+
+
 (custom-set-variables
-;;;; Customise Speedbar
  '(speedbar-indentation-width 3)                                                  ; Increase the indentation for better usability.
  '(speedbar-use-images t)                                                         ; Use icon images. (not needed with pretty-speedbar)
  '(speedbar-directory-button-trim-method 'trim)                                   ;    Indicates how the directory button will be displayed. Hide
@@ -113,7 +227,7 @@
  '(sr-speedbar-width 40)
  '(sr-speedbar-right-side nil)
 
-;;;; Customize icons (need to run `pretty-speedbar-generate' on change)
+;;;;; Customize icons (need to run `pretty-speedbar-generate' on change)
  '(pretty-speedbar-icon-size 20)                                                  ; Icon height in pixels.
 
  '(pretty-speedbar-font "Symbols Nerd Font Mono")
@@ -130,16 +244,16 @@
  '(pretty-speedbar-tag '("\uf02b"))                                               ;  Single tag icon. Most frequent tag icon.
  )
 
-;;; set base colour scheme for pretty-speedbar. 
-`(setq pretty-speedbar-icon-fill ,info-theme-light-white)                         ; Fill color for all non-folder icons. white: #FFFFFF
-`(setq pretty-speedbar-icon-stroke ,info-theme-dark-red)                          ; Stroke color for all non-folder icons. light grey: #DCDCDC
-`(setq pretty-speedbar-icon-folder-fill ,info-theme-dark-red)                     ; Fill color for all folder icons: purple (fuchia?): #D9B3FF
-`(setq pretty-speedbar-icon-folder-stroke ,info-theme-dark-red)                   ; Stroke color for all folder icons: deep magenta: #CC00CC
-`(setq pretty-speedbar-about-fill ,info-theme-dark-red)                           ; Fill color for all icons placed to the right of the file name, including checks and locks.lighter gray: EFEFEF
-`(setq pretty-speedbar-about-stroke ,info-theme-light-white)                      ; Stroke color for all icons placed to the right of the file name, including checks and locks.
-`(setq pretty-speedbar-signs-fill ,info-theme-light-white)                        ; Fill color for plus and minus signs used on non-folder icons. darkblue/magenta: #594968
+;;;;; set base colour scheme for pretty-speedbar.
+(setq pretty-speedbar-icon-fill info-theme-light-white                            ; Fill color for all non-folder icons. white: #FFFFFF
+      pretty-speedbar-icon-stroke info-theme-dark-red                             ; Stroke color for all non-folder icons. light grey: #DCDCDC
+      pretty-speedbar-icon-folder-fill info-theme-dark-red                        ; Fill color for all folder icons: purple (fuchsia?): #D9B3FF
+      pretty-speedbar-icon-folder-stroke info-theme-dark-red                      ; Stroke color for all folder icons: deep magenta: #CC00CC
+      pretty-speedbar-about-fill info-theme-dark-red                              ; Fill color for all icons placed to the right of the file name, including checks and locks. lighter gray: #EFEFEF
+      pretty-speedbar-about-stroke info-theme-light-white                         ; Stroke color for all icons placed to the right of the file name, including checks and locks.
+      pretty-speedbar-signs-fill info-theme-light-white)                          ; Fill color for plus and minus signs used on non-folder icons. darkblue/magenta: #594968
 
-;;;; Customise the speedbar faces. 
+;;;;; Customise the speedbar faces. 
 (custom-set-faces
  `(speedbar-button-face ((t (:foreground ,info-theme-white-grey))))
  `(speedbar-directory-face ((t (:foreground ,info-theme-white-grey))))
@@ -151,66 +265,8 @@
                                          :forground  ,info-theme-white-grey
                                          :background ,info-theme-dark-blue)))))
 
-
-;; This function overrides the original speedbar function so that
-;; the correct speedbar width is reported when speedbar is not the only
-;; window in a frame. 
-(defun speedbar-frame-width ()
-  "Return the width of the sr-speedbar window, or a default value."
-  (if (and (boundp 'sr-speedbar-window) sr-speedbar-window)
-      (window-width sr-speedbar-window)                                           ; Use sr-speedbar window width
-    30))                                                                          ; Fallback default width
-
-(defun my-speedbar/calc-relative-path-str ()
-  "This function calculates a string for the relative path to the project root.
-
-If no project root is found fallback to `parent/current-directory'."
-  (let* (
-         (current-dir default-directory)
-         (project-root-path project-root))
-    
-    (relative-path
-     (if project-root-path
-         (file-relative-name current-dir project-root-path)
-       (concat
-        (file-name-nondirectory
-         (directory-file-name
-          (file-name-directory current-dir)))
-        "/" (file-name-nondirectory current-dir))))
-    )
-  relative-path)
-
-;; (add-hook 'speedbar-mode-hook 'my-speedbar-display-parent-directory)
-
-(setq my-speedbar/speedbar-filter-state t)
-
-(defun my-speedbar/toggle-filter ()
-  "Toggle the visibility of dotfiles in speedbar."
-  (interactive)
-  (if my-speedbar/speedbar-filter-state
-      (setq my-speedbar/speedbar-filter-state nil)
-    (setq my-speedbar/speedbar-filter-state t))
-  ;; Check if the current regexp hides dot files
-  (if my-speedbar/speedbar-filter-state
-      ;; If dot files are hidden, modify regexp to show them
-      (progn
-        ;; Hide dot files, directories beginning with "_", and specific VCS directories
-        ;; but always show the `..' file.
-        (setq speedbar-directory-unshown-regexp "^\\(\\.[^/.].*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$")
-
-        ;; (setq speedbar-directory-unshown-regexp "^\\(\\.[^/.][^/]*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$")
-
-        ;;  (setq speedbar-directory-unshown-regexp "^\\(\\.[^/]*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$")
-        (setq speedbar-file-unshown-regexp "^\\(\\.[^/]*\\|CVS\\|RCS\\|SCCS\\)$"))
-    ;; If dot files are shown, modify regexp to hide them
-    (progn
-      ;; the dot here is the folder denoting the current folder.
-      ;; (just gives a recursive tree)
-      (setq speedbar-directory-unshown-regexp "^\\.$")
-      (setq speedbar-file-unshown-regexp "^$")))
-  ;; Refresh speedbar to apply changes
-  (speedbar-refresh))
-
+;;; Hooks
+;;  -----
 
 (add-hook 'speedbar-mode-hook
           (lambda ()
@@ -227,15 +283,9 @@ If no project root is found fallback to `parent/current-directory'."
             (define-key speedbar-mode-map "." 'my-speedbar/toggle-filter)))
 
 
-;; get the name of the available views from
-;; speedbar-initial-expansion-mode-alist
-(defun my-speedbar/switch-speedbar-view (speedbar-view)
-  "Temporarily switch to quick-buffers expansion list.
-Useful for quickly switching to an open buffer.
-Current view is given in SPEEDBAR-VIEW."
-  (interactive)
-  (speedbar-change-initial-expansion-list speedbar-view))
 
+;;; Key-maps
+;;  -------- 
 ;; set up key-bindings for `quick-buffers' and `info' (files is already f)
 (keymap-set
  speedbar-mode-map
@@ -246,6 +296,12 @@ Current view is given in SPEEDBAR-VIEW."
  speedbar-mode-map
  "i" #'(lambda () (interactive)
          (my-speedbar/switch-speedbar-view  "Info")))
+
+;; Bind to 'h' in Speedbar mode map
+(with-eval-after-load 'speedbar
+  (define-key speedbar-mode-map (kbd "h") #'my-speedbar/go-home))
+
+(global-set-key (kbd "C-c s") 'my-speedbar/toggle)                                ; Bind `my-speedbar/toggle' to "C-c s" for convenience
 
 (provide 'custom-speedbar-support)
 ;;; custom-speedbar-support.el ends here
@@ -258,3 +314,5 @@ Current view is given in SPEEDBAR-VIEW."
                                                                                   ; LocalWords:  cljs
                                                                                   ; LocalWords:  lua SCCS
                                                                                   ; LocalWords:  minibuffer
+                                                                                  ; LocalWords:  tooltips
+                                                                                  ; LocalWords:  propertized
