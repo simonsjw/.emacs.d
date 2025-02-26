@@ -1,5 +1,4 @@
 ;;; custom-defaults-config.el --- Defaults for the Emacs setup config  -*- lexical-binding: t; -*-
-;; outline-regexp: ";;;+"
 ;; Copyright (C) 2023
 ;; SPDX-License-Identifier: MIT
 
@@ -19,8 +18,8 @@
 
 ;;;; Global Settings
 
-(setq-default lexical-binding t)                                               ; set variable scoping to be within the functions called by default as per modern languages.
-(set-default-coding-systems 'utf-8)                                            ; set default coding system.
+(setq-default lexical-binding t)                                                  ; set variable scoping to be within the functions called by default as per modern languages.
+(set-default-coding-systems 'utf-8)                                               ; set default coding system.
 
 (defvar my-paths/ispell-word-replacement)
 (defvar custom-info-dir)
@@ -106,8 +105,8 @@ file paths.")
   (interactive)
   (let ((file (dired-get-file-for-visit)))
     (if (file-directory-p file)
-        (dired-find-alternate-file)  ; function run if file is a directory
-      (dired-find-file-other-window)))) ;function run if file is a file. 
+        (dired-find-alternate-file)                                               ; function run if file is a directory
+      (dired-find-file-other-window))))                                           ; function run if file is a file.
 
 (add-hook 'dired-mode-hook
           (lambda ()
@@ -240,7 +239,7 @@ file paths.")
 (customize-set-variable 'consult-flyspell-always-check-buffer nil)
 
 ;;;; correction at point functions
-;; There are two useful functions for correcting words at a point: 
+;; There are two useful functions for correcting words at a point:
 ;; *  flyspell-auto-correct-word
 ;;    This function automatically corrects the word that's
 ;;    currently under or immediately before the cursor (point).
