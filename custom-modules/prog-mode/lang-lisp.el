@@ -76,7 +76,7 @@
 
 ;;; Code:
 
-;;;; Emacs lisp
+;;;; Settings for Emacs lisp
 (defun my-lang/elisp-mode-setup ()
   "Custom setup for `emacs-lisp-mode`."
   ;; You will probably want to tweak this variable, it determines how
@@ -104,7 +104,7 @@
   ;;(flymake-show-buffer-diagnostics)
 
 
-;;;;; IDE layout
+   ;;;;; IDE layout
 
   ;; Provide a function to set the fill column indicator.
   ;; This has a default of 80 but can be set on a per mode basis.
@@ -116,19 +116,18 @@
   (setq comment-column 82)                                                        ; Column to indent right-margin comments to. 
   (display-fill-column-indicator-mode 1)                                          ; show the visual prompt. 
 
-;;;;;; Set up outline
+   ;;;;; Set up outline
 
   ;; Set up customizations for outline-minor-mode.
   (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons
   (setq-local outline-blank-line t)                                               ; Blank line before headers
-  (setq-local outline-minor-mode-highlight 'override)                                     ; Font-lock outlines
-  
-  (setq-local outline-regexp "^[[:space:]]*;;;+")                                              ; Match `;;;`
+  (setq-local outline-minor-mode-highlight t)                                     ; Font-lock outlines
+  (setq-local outline-regexp "^[[:space:]]*;;;+")                                 ; Match `;;;' and more. 
   (setq-local outline-start ";;")                                                 ; Start marker
   (setq-local outline-level #'my-outline-mode/outline-level)                      ; Custom level function
   (outline-minor-mode 1)                                                          ; Use outline-minor-mode
-
-;;;;; IDE functionality map
+  
+   ;;;;; IDE functionality map
 
   ;; compiling the code (Not applicable)
   ;; (keymap-set python-ts-mode-map "C-c C-c C-u" #)
@@ -161,8 +160,8 @@
 
   ;; fix whitespace
   (keymap-set emacs-lisp-mode-map "C-c C-w" #'whitespace-cleanup)
-
-  ;;; Errors/linting
+  
+   ;;; Errors/linting
 
   ;; list errors in buffer
   (keymap-set emacs-lisp-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)
@@ -197,7 +196,8 @@
     "Use this function in elisp code to trigger a debug statement with
 a message telling you which statement you are at."
     (message "At %s" msg)
-    (debug)))
+    (debug))
+  )
 
 ;;(add-hook 'python-ts-mode-hook #'my/python-start-or-switch-to-shell)
 (add-hook 'emacs-lisp-mode-hook #'my-lang/elisp-mode-setup)
