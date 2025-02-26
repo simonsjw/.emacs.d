@@ -56,7 +56,8 @@ Used in `my-speedbar/toggle-filter'.  t or nil.")
 (declare-function speedbar-refresh "speedbar")
 (declare-function speedbar-change-initial-expansion-list "speedbar")
 (declare-function speedbar-add-supported-extension "speedbar")
-
+(declare-function my-os-tools/set-sr-speedbar-directory-to-file-path "system-tools")
+(declare-function my-on-disk-tools/summary-path "system-tools")
 
 ;;; Code:
 
@@ -115,24 +116,6 @@ TODO: make this also work with SPEEDBAR."
       (window-width sr-speedbar-window)                                           ; Use sr-speedbar window width
     30))                                                                          ; Fallback default width
 
-(defun my-speedbar/calc-relative-path-str ()
-  "This function calculates a string for the relative path to the project root.
-
-If no project root is found fallback to `parent/current-directory'."
-  (let* (
-         (current-dir default-directory)
-         (project-root-path project-root))
-    
-    (relative-path
-     (if project-root-path
-         (file-relative-name current-dir project-root-path)
-       (concat
-        (file-name-nondirectory
-         (directory-file-name
-          (file-name-directory current-dir)))
-        "/" (file-name-nondirectory current-dir))))
-    )
-  relative-path)
 
 (defun my-speedbar/toggle-filter ()
   "Toggle the visibility of dotfiles in speedbar."
@@ -299,7 +282,7 @@ Current view is given in SPEEDBAR-VIEW."
 
 ;; Bind to 'h' in Speedbar mode map
 (with-eval-after-load 'speedbar
-  (define-key speedbar-mode-map (kbd "h") #'my-speedbar/go-home))
+  (define-key speedbar-mode-map (kbd "h") #'my-sr-speedbar/go-home))
 
 (global-set-key (kbd "C-c s") 'my-speedbar/toggle)                                ; Bind `my-speedbar/toggle' to "C-c s" for convenience
 
