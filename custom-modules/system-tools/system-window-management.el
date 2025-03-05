@@ -51,6 +51,7 @@
 (setq my-window-tools/IDE-buffer-window-map
       '((:names   . (("*dape-shell*" . terminal)
                      ("*scratch*" . terminal)
+                     ("*MATLAB*" . terminal)
                      ("*Checkdoc Status*" . data)
                      ("*SQL Results*" . data)
                      ("*Backtrace*" . data)
