@@ -596,7 +596,7 @@ This means all variables with external origins in emacs are specified here.
   -  [[https://gitlab.com/OlMon/consult-flyspell][consult-flyspell]]       Integrate flyspell with consult.
   -  [[https://github.com/mohkale/consult-yasnippet][consult-yasnippet]]      A consulting-read interface for yasnippet.
 
- [[file:./custom-modules/custom-ui-config.el][Packages for User Interface functionality]]
+ [[file:./custom-modules/ui-config.el][Packages for User Interface functionality]]
   -  imenu-list
   -  nerd-icons
   -  elisp-demos
