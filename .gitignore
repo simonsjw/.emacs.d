@@ -36,3 +36,4 @@ var/**/dape/dape-breakpoints
 var/**/bmkp/bookmark-default.el
 custom-packages/worg/
 elpa/
+tree-sitter-backup/
