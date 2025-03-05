@@ -106,7 +106,6 @@ TODO: make this also work with SPEEDBAR."
      (expand-file-name "~/"))))
 
 
-
 ;; This function overrides the original speedbar function so that
 ;; the correct speedbar width is reported when speedbar is not the only
 ;; window in a frame.

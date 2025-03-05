@@ -315,8 +315,8 @@ active environment."
 (provide 'lang-python)
 ;;; lang-python.el ends here
 
-                                                                                  ; LocalWords:  pyvenv isort numpydoc el CONDA WORKON ENV serviceEnv lang keymap
-                                                                                  ; LocalWords:  eldoc defun minibuffer pycodestyle pycomplete gitlab melpa
-                                                                                  ; LocalWords:  pythonic dape yasnippet debugpy adapter
-                                                                                  ; LocalWords:  customisations
-                                                                                  ; LocalWords:  ui
+;; LocalWords:  pyvenv isort numpydoc el CONDA WORKON ENV serviceEnv lang keymap
+;; LocalWords:  eldoc defun minibuffer pycodestyle pycomplete gitlab melpa
+;; LocalWords:  pythonic dape yasnippet debugpy adapter
+;; LocalWords:  customisations
+;; LocalWords:  ui
