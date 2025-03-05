@@ -76,6 +76,71 @@
 ;; |treesit-fold-toggle 	       | toggle the syntax node at `point'.
 
 
+;; Note the version numbers set below. These were selected where 
+;; this code was sourced since that version was known to work 
+;; with that app and emacs:
+;; https://github.com/mickeynp/combobulate
+(defvar treesit-language-source-alist
+  nil 
+  "The variable treesit-language-source-alist is a simple alist that
+expects a form in the format of
+    (LANG . (URL REVISION SOURCE-DIR CC C++))
+Only LANG and URL are mandatory.")
+
+(setq treesit-language-source-alist
+ '((css
+     .
+     ("https://github.com/tree-sitter/tree-sitter-css" "v0.20.0"))
+    (go
+     .
+     ("https://github.com/tree-sitter/tree-sitter-go" "v0.20.0"))
+    (html
+     .
+     ("https://github.com/tree-sitter/tree-sitter-html" "v0.20.1"))
+    (javascript
+     .
+     ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.20.1" "src"))
+    (json
+     .
+     ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
+    (markdown
+     .
+     ("https://github.com/ikatyang/tree-sitter-markdown" "v0.7.1"))
+    (matlab
+     .
+     ("https://github.com/acristoffers/tree-sitter-matlab"))             ; added by simon watson
+    (python
+     .
+     ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
+    (rust
+     .
+     ("https://github.com/tree-sitter/tree-sitter-rust" "v0.21.2"))
+    (toml
+     .
+     ("https://github.com/tree-sitter/tree-sitter-toml" "v0.5.1"))
+    (tsx
+     .
+     ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
+    (typescript
+     .
+     ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))
+    (yaml
+     .
+     ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))))
+
+
+(defun my-treesitter/setup-install-grammars ()
+  "Install Tree-sitter grammars if they are absent."
+  (interactive)
+  (dolist (grammar
+           treesit-language-source-alist)
+    
+    ;; Only install `grammar' if we don't already have it
+    ;; installed. However, if you want to *update* a grammar then
+    ;; this obviously prevents that from happening.
+    (unless (treesit-language-available-p (car grammar))
+      (treesit-install-language-grammar (car grammar)))))
+
 ;; ensure we are enabling ts functionality in the lang major modes.
 (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode))
 
@@ -99,10 +164,13 @@ Useful for implementing toggles for the mode in hydras."
       (setq fold-state 'unfolded)))
   (message "fold-state: %s" fold-state))
 
-(when (locate-library "combobulate")
-  ;; perhaps too gross of an application, but the *-ts-modes
-  ;; eventually derive from this mode.
-  (add-hook 'prog-mode-hook #'combobulate-mode))
+;;; customization
+
+
+;; Ensure tree-sitter-major-mode-language-alist exists and add the matlab-mode entry
+(unless (boundp 'tree-sitter-major-mode-language-alist)
+  (setq tree-sitter-major-mode-language-alist '()))
+(add-to-list 'tree-sitter-major-mode-language-alist '(matlab-mode . matlab))
 
 (defun my-treesitter/add-treesit-fold-to-context-menu ()
   "Add treesit-fold-toggle to the right-click context menu.
@@ -117,12 +185,23 @@ it whenever treesitter-fold is active. "
        :visible (bound-and-true-p treesit-fold-mode)])))
 
 ;;; hooks
+
+;; perhaps too gross of an application, but the *-ts-modes
+;; eventually derive from this mode.
+(when (locate-library "combobulate")
+
+  (add-hook 'prog-mode-hook #'combobulate-mode))
+
 ;; Ensure the context menu for treesit-fold menu appears on right-click
 (add-hook 'treesit-fold-mode-hook
           #'my-treesitter/add-treesit-fold-to-context-menu)
 
-;;; customization
-;; (empty)
+;; Ensure native fontlocking is disabled in matlab-mode in favour of tree-sit.
+;; (add-hook 'matlab-mode-hook
+;;           (lambda ()
+;;             (treesit-hl-mode)
+;;             (font-lock-mode -1)))
+
 
 (provide 'treesit-support)
 ;;; treesit-support.el ends here
