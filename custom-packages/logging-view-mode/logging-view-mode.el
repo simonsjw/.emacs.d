@@ -1,7 +1,7 @@
 ;;; logging-view-mode.el --- Major mode for viewing log files -*- lexical-binding: t; -*-
 
 ;; Author: Simon Watson
-;; Version: 1.4
+;; Version: 1.7
 ;; Keywords: logs, tools
 ;; URL: tbc
 
@@ -9,12 +9,13 @@
 
 ;; A major mode for viewing and interacting with log files.
 ;; Features:
-;; - Syntax highlighting for log components.
+;; - Syntax highlighting for log components
+;;       (timestamp-based with multi-line support).
 ;; - Interactive mode line buttons to filter log types.
 
 ;;; Code:
 
-;; Define custom faces
+;; Define custom faces (unchanged)
 (defface logging-view-timestamp-face
   `((t (:foreground ,info-theme-flat-green)))
   "Face for log timestamps."
@@ -55,35 +56,38 @@
   "Face for log objects."
   :group 'logging-view)
 
-
-;; Define font-lock keywords
-;; "\\[\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\.[0-9]\\{6\\}\\)"
+;; Define font-lock keywords with improved timestamp detection
 (defvar logging-view-font-lock-keywords
-  (let* (
-         ;; Define regex patterns for each component
-         (timestamp-regex
-          (concat "\\[\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} "
-                  "[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\.[0-9]\\{6\\}\\)"))
-         (logtype-regex "; \\(INFO\\|WARNING\\|ERROR\\|DEBUG\\);")
-         (location-regex "; \\([^]]+\\)\\]")
-         (message-regex "\\]\\(.*?\\);")
-         (obj-regex ";\\([^;]+\\);"))
-    `(
-      (,timestamp-regex 1 'logging-view-timestamp-face)
-      (,logtype-regex 1
-                      (cond
-                       ((string-equal (match-string 1) "INFO")
-                        'logging-view-logtype-info-face)
-                       ((string-equal (match-string 1) "WARNING")
-                        'logging-view-logtype-warning-face)
-                       ((string-equal (match-string 1) "ERROR")
-                        'logging-view-logtype-error-face)
-                       ((string-equal (match-string 1) "DEBUG")
-                        'logging-view-logtype-debug-face)))
-      (,location-regex 1 'logging-view-location-face)
-      (,message-regex 1 'logging-view-message-face)
-      (,obj-regex 1 'logging-view-obj-face)
-      )))
+  (let* ((entry-regex
+          (concat
+           "^\\(\\[\\)"                                                           ; Group 1: Opening bracket (unformatted)
+           "\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} "
+           "[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\.[0-9]\\{6\\}\\); "           ; Group 2: Timestamp
+           "\\(INFO\\|WARNING\\|ERROR\\|DEBUG\\); "                               ; Group 3: Log type
+           "\\([^]]+\\)\\]"                                                       ; Group 4: Location
+           "\\([^;]+\\);"                                                         ; Group 5: Message (up to first ;)
+           "\\(.*\\(?:\n\\(?:[^[]\\|\\]\\).*\\)*\\)"                              ; Group 6: Object (until next timestamp)
+           "\\(;\\)"                                                              ; Group 7: Trailing semicolon
+           ))
+         ;; Stricter timestamp detection: must start with [YYYY-MM-DD
+         (next-timestamp "^\\[[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} "))
+    `((,entry-regex
+       (1 nil)                                                                    ; Opening bracket: no face (white)
+       (2 'logging-view-timestamp-face)                                           ; Timestamp
+       (3 (cond
+           ((string-equal (match-string 3) "INFO")
+            'logging-view-logtype-info-face)
+           ((string-equal (match-string 3) "WARNING")
+            'logging-view-logtype-warning-face)
+           ((string-equal (match-string 3) "ERROR")
+            'logging-view-logtype-error-face)
+           ((string-equal (match-string 3) "DEBUG")
+            'logging-view-logtype-debug-face)))
+       (4 'logging-view-location-face)  ; Location
+       (5 'logging-view-message-face prepend)  ; Message
+       (6 'logging-view-obj-face prepend)  ; Object
+       (7 nil)  ; Trailing semicolon: no face (white)
+       ))))
 
 ;; Define buffer-local variables for filters and overlays
 (defvar-local logging-view-active-filters (make-hash-table :test 'equal)
@@ -92,7 +96,7 @@
 (defvar-local logging-view-overlays nil
   "List of overlays used to hide filtered log entries.")
 
-;; Toggle filter function
+;; Toggle filter function (unchanged)
 (defun logging-view-toggle-filter (logtype)
   "Toggle the filter for LOGTYPE."
   (interactive)
@@ -102,37 +106,34 @@
   (logging-view-apply-filters)
   (logging-view-update-modeline))
 
-;; Apply filters to buffer using overlays
+;; Apply filters to buffer using overlays with improved timestamp detection
 (defun logging-view-apply-filters ()
   "Apply log type filters to the buffer using overlays."
   (save-excursion
-    (remove-overlays (point-min) (point-max) 'logging-view t)                     ; Remove existing log entry overlays
-    (setq logging-view-overlays nil)                                              ; Reset the overlay list
+    (remove-overlays (point-min) (point-max) 'logging-view t)
+    (setq logging-view-overlays nil)
     (goto-char (point-min))
-    (let ((start-regex "^\\[[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\.[0-9]\\{6\\}; \\(INFO\\|WARNING\\|ERROR\\|DEBUG\\); \\([^]]+\\)\\]"))
+    ;; Stricter timestamp detection: must start with [YYYY-MM-DD
+    (let ((start-regex "^\\[[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\.[0-9]\\{6\\}; \\(INFO\\|WARNING\\|ERROR\\|DEBUG\\);"))
       (while (re-search-forward start-regex nil t)
         (let ((entry-start (match-beginning 0))
               (logtype (match-string 1)))
-          ;; Find the end of the current log entry
+          ;; Find the end of the current log entry (next timestamp or buffer end)
           (if (re-search-forward start-regex nil t)
-              (let ((entry-end (match-beginning 0)))
-                (goto-char entry-end))
-            ;; If no next entry, set end to end of buffer
+              (progn
+                (goto-char (match-beginning 0))
+                (beginning-of-line))
             (goto-char (point-max)))
           (let ((entry-end (point)))
-            ;; Adjust entry-end to include the final newline if present
-            (when (and (> entry-end entry-start)
-                       (eq (char-before entry-end) ?\n))
-              (setq entry-end (1+ entry-end)))
-            ;; Decide whether to hide or show the entry
+            ;; Apply overlay if filtered
             (unless (or (hash-table-empty-p logging-view-active-filters)
                         (gethash logtype logging-view-active-filters))
               (let ((ov (make-overlay entry-start entry-end)))
                 (overlay-put ov 'invisible t)
-                (overlay-put ov 'logging-view t)                                  ; Tag to identify the overlay
+                (overlay-put ov 'logging-view t)
                 (push ov logging-view-overlays)))))))))
 
-;; Update mode line
+;; Update mode line (unchanged)
 (defun logging-view-update-modeline ()
   "Update the mode line buttons based on active filters."
   (setq-local mode-line-format
@@ -146,11 +147,11 @@
                " "
                (logging-view-create-button "DEBUG"))))
 
-;; Create mode line button using propertize with correct buffer capture
+;; Create mode line button (unchanged)
 (defun logging-view-create-button (logtype)
   "Create a mode line button for LOGTYPE."
   (let* ((active (gethash logtype logging-view-active-filters))
-         (buffer (current-buffer)))                                               ; Capture the current buffer
+         (buffer (current-buffer)))
     (concat
      (propertize (concat " " logtype " ")
                  'face (cond
@@ -164,54 +165,67 @@
                          'logging-view-logtype-debug-face))
                  'help-echo (concat "Toggle " logtype " logs")
                  'mouse-face 'mode-line-highlight
-                 'local-map (let ((map (make-sparse-keymap)))
-                              (define-key map [mode-line mouse-1]
-                                          `(lambda ()
-                                             (interactive)
-                                             (with-current-buffer ,buffer
-                                               (logging-view-toggle-filter
-                                                ,logtype))))
-                              map)
+                 'local-map
+                 (let ((map (make-sparse-keymap)))
+                   (define-key map [mode-line mouse-1]
+                               `(lambda ()
+                                  (interactive)
+                                  (with-current-buffer ,buffer
+                                    (logging-view-toggle-filter ,logtype))))
+                   map)
                  'cursor 'pointer)
-     ;; Visual indicator for active filters
      (when active
-       (propertize "*"
-                   'face '(:foreground "white" :background "red"))))))
+       (propertize "*" 'face '(:foreground "white" :background "red"))))))
 
-;; Initialize modeline
+;; Initialize modeline (unchanged)
 (defun logging-view-initialize-modeline ()
   "Initialize the mode line with filter buttons."
   (logging-view-update-modeline))
 
-;; Handle buffer changes to update overlays dynamically
+;; Handle buffer changes (unchanged)
 (defun logging-view-after-change-function (beg end len)
-  "Function to handle buffer changes and update overlays.
-BEG, END, and LEN are the standard parameters for `after-change-functions`."
-  ;; Re-apply filters to ensure new entries are handled
+  "Function to handle buffer changes and update overlays."
   (logging-view-apply-filters))
 
-;; Define the major mode
+;; Define the major mode with format detection
 (define-derived-mode logging-view-mode fundamental-mode "LogView"
   "Major mode for viewing log files."
-  (setq font-lock-defaults '(logging-view-font-lock-keywords))
+  
   (setq buffer-read-only t)
+  
   ;; Initialize buffer-local variables
   (setq logging-view-active-filters (make-hash-table :test 'equal))
   (setq logging-view-overlays nil)
-  ;; Initialize modeline
-  (logging-view-initialize-modeline)
-  ;; Apply initial filters
-  (logging-view-apply-filters)
-  ;; Add hook to handle buffer changes
-  (add-hook 'after-change-functions #'logging-view-after-change-function nil t))
+  
+  ;; Check first character to determine format (JSON support TBD)
+  (goto-char (point-min))
+  (if (eq (char-after) ?{)
 
-;; Clean up overlays and hooks when exiting the mode
+      ;; JSON: use JSON based formatting
+      (message "JSON logging detected - support coming in step 2!")
+    
+    ;; Non-JSON: Use timestamp-based parsing
+    
+    ;; if a part of the buffer falls back on a default face, it is because the
+    ;; regexp font-lock matching limits have been reached. That is only likely
+    ;; for the text in the Object portion of the buffer so we default all text
+    ;; to that.
+    (set (make-local-variable 'face-remapping-alist)
+         '((font-lock-string-face logging-view-obj-face)))
+    
+    (setq font-lock-defaults '(logging-view-font-lock-keywords))
+    
+    (logging-view-initialize-modeline)
+    (logging-view-apply-filters)
+    (add-hook
+     'after-change-functions #'logging-view-after-change-function nil t)))
+
+;; Clean up overlays and hooks (unchanged)
 (defun logging-view-exit-mode ()
   "Clean up overlays and hooks when exiting `logging-view-mode`."
   (remove-overlays (point-min) (point-max) 'logging-view t)
   (setq logging-view-overlays nil)
   (remove-hook 'after-change-functions #'logging-view-after-change-function t)
-  ;; Reset mode line
   (force-mode-line-update))
 
 (add-hook 'kill-buffer-hook #'logging-view-exit-mode nil t)
