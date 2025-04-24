@@ -42,80 +42,80 @@ export JUPYTER_ANACONDA_ENVIRONMENT="gpt4"
 ** External dependencies
 Make sure you have the following external dependencies:
 
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| Dependency                 | Install expression                         | Associated mode      | Additional info         |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| imagemagik                 | sudo apt install                           | Global               | Convert image files and |
-|                            | imagemagik                                 |                      | other goodies.          |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| latex                      | sudo apt install                           | projectile           | fast search tool for    |
-|                            | silversearcher-ag                          |                      | text files              |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| texlive-full               | sudo apt install                           | tex-mode             | fast search tool for    |
-|                            | texlive-full                               |                      | text files.             |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| pandoc                     | sudo apt install                           | writing modes        | convert/manage latex,   |
-|                            | pandoc                                     |                      | markdown and others     |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| markdownlint-cli           | npm install -g                             | flymake-markdownlint | flymake plugin to       |
-|                            | markdownlint-cli                           |                      | lint markdown.          |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| texlab                     | sudo apt install                           | tex-mode             | tex language server     |
-|                            | silversearcher-ag                          |                      | for eglot.              |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| git-man                    | sudo apt install                           | magit                | Use git manual with     |
-|                            | git-man                                    |                      | magit.                  |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| shfmt                      | sudo apt install                           | bash-ts-mode         | format bash scripts.    |
-|                            | shfmt                                      |                      |                         |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| bash-language-server       | snap install                               | bash-ts-mode         | LSP for bash-ts-mode    |
-|                            | bash-language-server                       | shell-script-mode    | with eglot.             |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| ruff        (1 of 2)       | pip install ruff                           | python-ts-mode       | Python language server  |
-|                            |                                            |                      | (linting/ formatting)   |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| basedpyright(2 of 2)       | pip install                                | python-ts-mode       | Python language server  |
-|                            | basedpyright                               |                      | (docs/ navigation)      |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| vega                       | npm install -g vega                        | vega-view            | allows edit and         |
-|                            | vega-lite vega-cli                         |                      | generation of vega      |
-|                            |                                            |                      | visuals in Emacs.       |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| shellcheck                 | [[https://github.com/koalaman/shellcheck][shellcheck]]                                 | bash-mode            | lint bash code.         |
-|                            | cabal (to install from source)             |                      |                         |
-|                            | add to path:                               |                      |                         |
-|                            | export PATH="$PATH:/home/simon/.cabal/bin" |                      |                         |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| png                        | npm install -g                             | vega-view            | generate png rather     |
-|                            | canvas                                     |                      | than svg - more         |
-|                            |                                            |                      | efficient for dealing   |
-|                            |                                            |                      | with thousands of       |
-|                            |                                            |                      | data points.            |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| php & php-pgsql            | sudo apt install                           | sql-mode             | integrate postgres to   |
-|                            | php php-pgsql                              |                      | web page.               |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| postgres                   | sudo apt install                           | sql-mode             | Open source database.   |
-|                            | postgresql                                 |                      |                         |
-|                            | doc-postgresql                             |                      |                         |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| pq                         | sudo apt-get install                       | sql-mode             | library for interacting |
-|                            | postgresql libpq-dev                       |                      | with postgres           |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| pgFormatter                | [[https://github.com/darold/pgFormatter/tree/master][pgFormatter]]                                | sql-mode             | format sql code for     |
-|                            |                                            |                      | postgresql.             |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| ss                         | sudo apt install ss                        | loadbalancer         | check for used ports    |
-|                            | (if not installed by                       |                      | on the system.          |
-|                            | default)                                   |                      |                         |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-| emacswiki                  | cd .crafted-emacs                          |                      | The emacs wiki is       |
-|                            | git clone                                  |                      | full of useful          |
-|                            | [[https://github.com/emacsmirror/emacswiki.org.git][emacswiki]]                                  |                      | functionality.          |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
-|                            |                                            |                      |                         |
-|----------------------------+--------------------------------------------+----------------------+-------------------------|
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| Dependency           | Install expression                         | Associated mode      | Additional info         |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| imagemagik           | sudo apt install                           | Global               | Convert image files and |
+|                      | imagemagik                                 |                      | other goodies.          |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| latex                | sudo apt install                           | projectile           | fast search tool for    |
+|                      | silversearcher-ag                          |                      | text files              |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| texlive-full         | sudo apt install                           | tex-mode             | fast search tool for    |
+|                      | texlive-full                               |                      | text files.             |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| pandoc               | sudo apt install                           | writing modes        | convert/manage latex,   |
+|                      | pandoc                                     |                      | markdown and others     |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| markdownlint-cli     | npm install -g                             | flymake-markdownlint | flymake plugin to       |
+|                      | markdownlint-cli                           |                      | lint markdown.          |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| texlab               | sudo apt install                           | tex-mode             | tex language server     |
+|                      | silversearcher-ag                          |                      | for eglot.              |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| git-man              | sudo apt install                           | magit                | Use git manual with     |
+|                      | git-man                                    |                      | magit.                  |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| shfmt                | sudo apt install                           | bash-ts-mode         | format bash scripts.    |
+|                      | shfmt                                      |                      |                         |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| bash-language-server | snap install                               | bash-ts-mode         | LSP for bash-ts-mode    |
+|                      | bash-language-server                       | shell-script-mode    | with eglot.             |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| ruff        (1 of 2) | pip install ruff                           | python-ts-mode       | Python language server  |
+|                      |                                            |                      | (linting/ formatting)   |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| basedpyright(2 of 2) | pip install                                | python-ts-mode       | Python language server  |
+|                      | basedpyright                               |                      | (docs/ navigation)      |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| vega                 | npm install -g vega                        | vega-view            | allows edit and         |
+|                      | vega-lite vega-cli                         |                      | generation of vega      |
+|                      |                                            |                      | visuals in Emacs.       |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| shellcheck           | [[https://github.com/koalaman/shellcheck][shellcheck]]                            | bash-mode            | lint bash code.         |
+|                      | cabal (to install from source)             |                      |                         |
+|                      | add to path:                               |                      |                         |
+|                      | export PATH="$PATH:/home/simon/.cabal/bin" |                      |                         |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| png                  | npm install -g                             | vega-view            | generate png rather     |
+|                      | canvas                                     |                      | than svg - more         |
+|                      |                                            |                      | efficient for dealing   |
+|                      |                                            |                      | with thousands of       |
+|                      |                                            |                      | data points.            |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| php & php-pgsql      | sudo apt install                           | sql-mode             | integrate postgres to   |
+|                      | php php-pgsql                              |                      | web page.               |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| postgres             | sudo apt install                           | sql-mode             | Open source database.   |
+|                      | postgresql                                 |                      |                         |
+|                      | doc-postgresql                             |                      |                         |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| pq                   | sudo apt-get install                       | sql-mode             | library for interacting |
+|                      | postgresql libpq-dev                       |                      | with postgres           |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| pgFormatter          | [[https://github.com/darold/pgFormatter/tree/master][pgFormatter]]                           | sql-mode             | format sql code for     |
+|                      |                                            |                      | postgresql.             |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| ss                   | sudo apt install ss                        | loadbalancer         | check for used ports    |
+|                      | (if not installed by                       |                      | on the system.          |
+|                      | default)                                   |                      |                         |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+| emacswiki            | cd .crafted-emacs                          |                      | The emacs wiki is       |
+|                      | git clone                                  |                      | full of useful          |
+|                      | [[https://github.com/emacsmirror/emacswiki.org.git][emacswiki]]                             |                      | functionality.          |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
+|                      |                                            |                      |                         |
+|----------------------+--------------------------------------------+----------------------+-------------------------|
 
 ** Image magik security policy update.
 Remember to change the security policies in image magik to allow production of pdfs.
@@ -278,22 +278,40 @@ General principle is that any default settings not set here (so set in the modul
 This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
-  ;;; init.el -- Simon's Emacs user customization file -*- lexical-binding: t; -*-
+      ;;; init.el -- Simon's Emacs user customization file -*- lexical-binding: t; -*-
 
-  ;;; Commentary:
+      ;;; Commentary:
   ;; This file is generated from config.org.  If you want to edit the
   ;; configuration, DO NOT edit init.el, edit config.org, instead.  Note that by
   ;; default, init.el is the target of the tangle as specified by #+PROPERTY in
   ;; line 3.
-  
-  ;;; Code:
 
-  ;;;; Set up package.el
+      ;;; Code:
+
+      ;;;; Set up package.el
   ;;(unless (package-installed-p 'use-package)
   ;;  (package-refresh-contents)
   ;; (package-install 'use-package))
 
   ;; (require 'package)
+
+
+  ;; first ensure we have the paths defined that we need.
+
+  (setq envvar/SYSTEM_NAME (getenv "MY_NAME"))
+
+  ;; Use the `envvar/SYSTEM_NAME` environment variable to set machine specific
+  ;; locations for use with no littering.
+  (setq no-littering-var-directory
+        (expand-file-name (concat "var/"  envvar/SYSTEM_NAME )
+                        	user-emacs-directory))
+
+
+  (setq no-littering-etc-directory
+        (expand-file-name (concat "etc/" envvar/SYSTEM_NAME)
+                     	user-emacs-directory))
+
+
   (require 'use-package)
 
   (setq package-archives
@@ -307,6 +325,8 @@ This means all variables with external origins in emacs are specified here.
           ("nongnu" . 1)
           ("melpa" . 0)
           ("elpa-devel" . 0)))
+
+      ;;;; Settings to help compilation.
 
   ;; Ensure files are compiled natively and byte-wise.
   (use-package compile-angel
@@ -322,6 +342,17 @@ This means all variables with external origins in emacs are specified here.
 
     (compile-angel-on-load-mode)
     (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode))
+
+  (defvar comp-speed 1 "Set native compilation.")
+  (setq comp-speed 1)
+
+  ;; Ensure that quitting only occurs once Emacs finishes native compiling,
+  ;; preventing incomplete or leftover compilation files in `/tmp`.
+  (setq native-comp-async-query-on-exit t)
+  (setq confirm-kill-processes t)
+
+  ;; Non-nil means to native compile packages as part of their installation.
+  (setq package-native-compile t)
 
   (require 'use-package)
 
@@ -348,7 +379,7 @@ This means all variables with external origins in emacs are specified here.
   ;; ensure we can control how minor modes are shown in the modeline. 
   (use-package delight)
 
-  ;;;; Set up logging
+      ;;;; Set up logging
   (require 'logging-config)
   (require 'system-tools)
 
@@ -378,7 +409,7 @@ This means all variables with external origins in emacs are specified here.
              :msg "no-littering etc directory set"
              :obj no-littering-etc-directory)
 
-  ;;;; custom.el
+      ;;;; custom.el
   (defvar custom-file nil"Set location of custom.el.")
   (setq custom-file
         (expand-file-name"custom.el" no-littering-etc-directory))
@@ -393,14 +424,6 @@ This means all variables with external origins in emacs are specified here.
     (log/debug :fn 'early-init
                :msg "Added custom-modules to load-path."
                :obj obj))
-
-
-  ;;;; Settings to help compilation.
-  (defvar comp-speed nil "Set native compilation.")
-  (setq comp-speed 1)
-
-  (defvar package-native-compile)
-  (setq package-native-compile t)
 
 
   ;; Record the filepath settings in the log.
@@ -426,9 +449,9 @@ This means all variables with external origins in emacs are specified here.
   (use-package bind-key)
   (use-package helpful :ensure t)
 
-  ;;; imports and declarations
+      ;;; imports and declarations
   (require 'bind-key)                                                              ; if you use any :bind variant
-  (require 'custom-path-support)
+  (load-file (expand-file-name  "custom-modules/custom-path-support.el" user-emacs-directory))
   (require 'elisp-packages)
 
   ;; ensure the correct org-mode is sourced.
@@ -601,7 +624,7 @@ This means all variables with external origins in emacs are specified here.
   -  nerd-icons
   -  elisp-demos
   -  helpful
-  -  [[https://www.emacswiki.org/emacs/BookmarkPlu][Bookmark+]]              Improved bookmarking; loaded at the end of the process because of its many dependencies.
+  -  [[https://www.emacswiki.org/emacs/BookmarkPlus][Bookmark+]]              Improved bookmarking; loaded at the end of the process because of its many dependencies.
   -  [[https://www.emacswiki.org/emacs/DiredPlus][Dired+]]                 Improved Dired; loaded at the end of the process because of its many dependencies.
   -  [[https://www.emacswiki.org/emacs/InfoPlus][Info+]]                  Additional functionality for navigating help/Info files in emacs.
 
@@ -704,15 +727,16 @@ These links take you to the languages set up with Emacs.
 
   ;; programming languages
   (require 'lang--prog-mode)
-  (require 'lang-lisp)
-  (require 'lang-rust)
-  (require 'lang-python)
-  (require 'lang-q)
-  (require 'lang-systemd)
-  (require 'lang-web)
   (require 'lang-bash)
   (require 'lang-docker)
+  (require 'lang-lisp)
+  (require 'lang-matlab)
+  (require 'lang-python)
+  (require 'lang-q)
+  (require 'lang-rust)
+  (require 'lang-systemd)
   (require 'lang-vega)
+  (require 'lang-web)
 
 #+end_src
 
