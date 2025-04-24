@@ -2,7 +2,7 @@
 
 ;;; Commentary:
 
-;; A starter config for editing Matlab code. 
+;; A starter config for editing Matlab code.
 ;;
 ;; Prerequisites:
 ;;
@@ -31,7 +31,7 @@
 (defun my-lang/matlab-mode-setup ()
   "Central function to hook into `python-mode' for python functionality."
   (message
-   "[%s ; DEBUG; my-lang-python/matlab-mode-setup]starting loading the defun ; ;"
+   "[%s ; DEBUG; my-lang/matlab-mode-setup]starting loading the defun ; ;"
    (current-time-string))
 
 
@@ -161,7 +161,7 @@
 
 ;; linting Matlab code. 
 ;; setup mlint for warnings and errors highlighting
-(add-to-list 'mlint-programs "/usr/local/MATLAB/R2024b/bin/glnxa64/mlint")        ; add mlint program for linux
+;;(add-to-list 'mlint-programs "/usr/local/MATLAB/R2024b/bin/glnxa64/mlint")        ; add mlint program for linux
 
 (setq matlab-show-mlint-warnings t)                                               ; show linting warnings by default.
 
