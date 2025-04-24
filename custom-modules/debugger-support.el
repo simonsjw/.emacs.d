@@ -106,21 +106,6 @@
   )
 
 
-(defun my-dape/setup (config-symbol)
-  "Initialize Dape using CONFIG-SYMBOL without`display-buffer-alist'."
-  (interactive
-   (list
-    (intern
-     (completing-read "Choose dape config: " (mapcar #'car dape-configs)))))
-  (let ((display-buffer-alist nil))  ;; Temporarily clear
-    ;; Retrieve the full plist configuration for the chosen symbol
-    (let ((config (alist-get config-symbol dape-configs)))
-      (unless config
-        (error "Configuration not found for %s" config-symbol))
-      ;; Pass the full plist to `dape`
-      (dape config))))
-
-
 ;; The latest version of jsonrpc is needed. You need to swap it in the
 ;; existing Emacs files then rebuild. This issue will be resolved in Emacs 30.
 
@@ -190,7 +175,7 @@
   ;; (add-hook 'dape-compile-hook 'kill-buffer)
 
   ;; Ensure dape opens in the project root.
-  (setq dape-cwd-fn #'project-root))
+  (setq dape-cwd-fn (lambda () (expand-file-name (nth 2 (project-current))))))
 
 ;; add dape config for python (debugging)
 ;; note debugpy must be installed in the environment in use.
@@ -206,10 +191,26 @@
 ;;                  modes (python-ts-mode python-mode)
 ;;                  command ,(or "python" (error "Command not set"))
 ;;                  command-args ["-m" "debugpy.adapter"]
-;;                  :type "python" ;;"executable"
+;;                  :type "python"                                                ; other choice is "executable"
 ;;                  :request "launch"
 ;;                  :cwd dape-cwd-fn
 ;;                  :program (lambda () (buffer-file-name)) )))
+
+;; (add-to-list 'dape-configs
+;;              `(bash-debug-custom
+;;                modes (bash-ts-mode)
+;;                command "node"
+;;                command-args (,(file-name-concat "~/.emacs.d/debug-adapters/bash-debug/extension/out/bashDebug.js"))
+;;                :request "launch"
+;;                :type "bash"
+;;                :program ,(lambda () (buffer-file-name))
+;;                :cwd ,default-directory
+;;                fn (lambda (config)
+;;                     (let ((bashdb-dir (file-name-concat "~/.emacs.d/debug-adapters/bash-debug/extension/bashdb_dir")))
+;;                       (thread-first config
+;;                                     (plist-put :pathBashdbLib bashdb-dir)
+;;                                     (plist-put :pathBashdb (file-name-concat bashdb-dir "bashdb"))
+;;                                     (plist-put :env `(:BASHDB_HOME ,bashdb-dir)))))))
 
 (add-hook 'dape-start-hook
           (lambda ()
