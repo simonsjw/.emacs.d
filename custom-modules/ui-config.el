@@ -20,8 +20,148 @@
 
 ;;; Code:
 
-(use-package bookmark+
-  :vc (:url "https://github.com/emacsmirror/bookmark-plus.git"))
+
+;;;; linkd:
+;;
+;;  Make hypertext with active links in any buffer
+;;
+;;
+;;(@* "Overview") ----------------------------------------------------
+;;
+;;  Linkd-mode is a major mode that automatically recognizes and
+;;  processes certain S-expressions, called "links", embedded in plain
+;;  text files.  Links may be followed by invoking certain interactive
+;;  functions when point is on the link text.  Links may also be
+;;  interpreted as marking up the surrounding text.  Different types
+;;  of links have different behaviors when followed, and they may have
+;;  different interpretations as markup.
+;;
+;;  With Linkd mode, you can do the following:
+;;  * Embed hyperlinks to files, webpages, or documentation into
+;;    any type of text file in any major mode.
+;;  * Delimit and name regions of text ("blocks") in these text files.
+;;    See (@> "Stars")
+;;  * Extract and send blocks to other programs for processing.
+;;    See (@> "Processing blocks")
+;;  * Identify and mark locations and concepts in source code.
+;;    See (@> "Tags")
+;;  * Embed active data objects ("datablocks") into text files.
+;;    See (@> "Datablocks")
+;;  * Convert Lisp source-code listings to LaTeX for publication.
+;;    See (@> "Exporting to LaTeX")
+;;  * Define new link behaviors.
+;;
+;;  For detailed information about using linkd-mode, see the online
+;;  manual: http://dto.github.com/notebook/linkd.html.
+
+(let ((crnt-package-dir "/home/simon/sync/primary/dotfiles/emacs/.emacs.d/emacs-wiki/linkd/")
+      (emacswiki-base "https://www.emacswiki.org/emacs/download/")
+      (package-files '("linkd.el")))
+  (require 'url)
+  (add-to-list 'load-path crnt-package-dir)
+  (make-directory crnt-package-dir t)
+  (mapcar (lambda (arg)
+            (let ((local-file (concat crnt-package-dir arg)))
+              (unless (file-exists-p local-file)
+                (url-copy-file (concat emacswiki-base arg) local-file t)
+                (native-compile-async
+                 (list (expand-file-name local-file crnt-package-dir)) nil t))))
+          package-files))
+
+
+
+;;;; Bookmark+:
+;;
+;;    Documentation for the Bookmark+ package, which provides
+;;    extensions to standard library `bookmark.el'.
+;;
+;;    The Bookmark+ libraries are these:
+;;
+;;    `bookmark+.el'     - main (driver) library
+;;    `bookmark+-mac.el' - Lisp macros
+;;    `bookmark+-lit.el' - (optional) code for highlighting bookmarks
+;;    `bookmark+-bmu.el' - code for the `*Bookmark List*' (bmenu)
+;;    `bookmark+-1.el'   - other required code (non-bmenu)
+;;    `bookmark+-key.el' - key and menu bindings
+;;
+;;    `bookmark+-doc.el' - documentation (comment-only - this file)
+;;    `bookmark+-chg.el' - change log (comment-only file)
+;;
+;;    The documentation includes how to byte-compile and install
+;;    Bookmark+.  It is also available in these ways:
+;;
+;;    1. From the bookmark list (`C-x x e' or `C-x r l'):
+;;       Use `?' to show the current bookmark-list status and general
+;;       help, then click link `Doc in Commentary' or link `Doc on the
+;;       Web'.
+;;
+;;    2. From the Emacs-Wiki Web site:
+;;       https://www.emacswiki.org/emacs/BookmarkPlus.
+;;    
+;;    3. From the Bookmark+ group customization buffer:
+;;       `M-x customize-group bookmark-plus', then click link
+;;       `Commentary'.
+;;
+;;    (The commentary links in #1 and #3 work only if put you this
+;;    library, `bookmark+-doc.el', in your `load-path'.)
+;;
+;;    More Bookmark+ description below.
+;;
+;;    To report Bookmark+ bugs: `M-x customize-group bookmark-plus'
+;;    and then follow (e.g. click) the link `Send Bug Report', which
+;;    helps you prepare an email to the author Drew Adams.
+
+(let* ((bookmarkplus-dir "/home/simon/sync/primary/dotfiles/emacs/.emacs.d/emacs-wiki/bookmark+/")
+       (macros-file-already-exists-p
+        (file-exists-p (concat bookmarkplus-dir "bookmark+-mac.el")))
+       (emacswiki-base "https://www.emacswiki.org/emacs/download/")
+       (bookmark-files '("bookmark+.el" "bookmark+-mac.el" "bookmark+-bmu.el"
+                         "bookmark+-key.el" "bookmark+-lit.el" "bookmark+-1.el"
+                         "bookmark+-chg.el" "bookmark+-doc.el"))
+       (other-files
+        (remove (expand-file-name "bookmark+-mac.el" bookmarkplus-dir)
+                (directory-files bookmarkplus-dir t "\\.el$"))))
+  
+  (require 'url)
+  (add-to-list 'load-path bookmarkplus-dir)
+  (make-directory bookmarkplus-dir t)
+  (mapcar (lambda (arg)
+            (let ((local-file (concat bookmarkplus-dir arg)))
+              (unless (file-exists-p local-file)
+                (url-copy-file
+                 (concat emacswiki-base arg) local-file t))))
+          bookmark-files)
+  
+  ;; Handle native compilation.
+  (unless macros-file-already-exists-p
+    ;; if bookmark+-mac.el has just been downloaded, it is compiled first to
+    ;; provide needed functionality before the other files can be compiled.)
+    (emacs-lisp-native-compile
+     (list (expand-file-name "bookmark+-mac.el" bookmarkplus-dir)) nil t)
+    ;; Compile all other .el files, excluding bookmark+-mac.el
+    (emacs-lisp-native-compile other-files nil t)))
+
+;; This variable prevents a feature in bookmark+ that allows multiple bookmarks
+;; with the same name. In theory, it propertizes the names so then contain all
+;; bookmark details. In practice, this causes problems when saving to file.
+(defvar bmkp-propertize-bookmark-names-flag
+  nil "Non-nil means bookmark titles are propertized.")
+(setq bmkp-propertize-bookmark-names-flag nil)
+
+;; These mappings are made in custom-path-support.el.
+;;
+;; The location of the default bookmark desktop directory bmkp is set under
+;;     no-littering-var-directory
+;; the variable files for bookmark+ (and bookmark) are in bmkp.
+;; bmkp-desktop-default-directory is set to bmkp/desktops
+;;     - this is where desktop bookmarks are stored.
+;; bmkp-bmenu-state-file is set to bmkp/emacs-bmk-bmenu-state.el
+;;     - this is where the current state of the list-bookmark buffer is stored.
+;; bookmark-default-file is set to bmkp/bookmark-default.bmk
+;;     - this is the default location for bookmark files.
+
+(require 'bookmark+)                                                              ; commands usually have a bmkp prefix.
+
 (use-package info+
   :vc (:url "https://github.com/emacsmirror/info-plus.git"))
 (use-package dired+
@@ -37,7 +177,7 @@
 (require 'outline)
 (require 'easymenu)
 
-(require 'bookmark+)                                                              ; commands usually have a bmkp prefix.
+
 (require 'dired+)                                                                 ; commands usually have a diredp prefix.
 (require 'info+)
 (require 'page-break-lines)
@@ -63,7 +203,6 @@
 
 
 ;; replace form-feed with clean lines.
-
 (global-page-break-lines-mode 1)
 
 
@@ -75,13 +214,13 @@
 (defun my-outline-mode/outline-level (&optional outline-start)
   "Calculate the outline level from the number of characters in START-STRING.
 
-If OUTLINE-START is not provided, default to the length of `outline-regexp'
-minus one.  It also accounts for leading white-space.  A typical formatting
-expression for an Elisp script might be:
+  If OUTLINE-START is not provided, default to the length of `outline-regexp'
+  minus one.  It also accounts for leading white-space.  A typical formatting
+  expression for an Elisp script might be:
   ;; Local Variables:
   ;; outline-regexp:  \"^[[:space:]]*;;;+\"  ; note that ^[[:space:]]* allows
-                                             ; white-space in front of the
-                                             ; outline mark.
+                                                                                  ; white-space in front of the
+                                                                                  ; outline mark.
   ;; outline-start:  \";;\"
   ;; outline-level: my-outline-mode/outline-level
   ;; End:"
@@ -409,3 +548,5 @@ parameters for the minibuffer function."
 
                                                                                   ; LocalWords:  ibuffer Ediff Elisp
                                                                                   ; LocalWords:  Dired ediff
+                                                                                  ; LocalWords:  propertized
+                                                                                  ; LocalWords:  propertizes
