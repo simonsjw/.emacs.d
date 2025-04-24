@@ -661,23 +661,23 @@ USED-PORTS:  the ports that are not available."
         (unless (member port used-ports)
           (push port available-ports))))))
 
-(defun my-os-tools/set-sr-speedbar-directory-to-file-path (file-path)
-  "Set the sr-speedbar directory to FILE-PATH and refresh it.
-If `sr-speedbar' is not open, open it first."
-  (interactive "DDirectory: ")
-  (let ((expanded-path (expand-file-name file-path)))
-    (when (file-directory-p expanded-path)
-      ;; Open sr-speedbar if it's not already open
-      (unless
-          (sr-speedbar-exist-p)
-        (sr-speedbar-open))
-      ;; Set the default directory
-      (setq default-directory expanded-path)
-      ;; Clear speedbar cache and force refresh
-      (speedbar-refresh)
-      (sr-speedbar-refresh)
-      ;; Display a message indicating the new directory
-      (message "sr-speedbar directory set to %s" expanded-path))))
+;; (defun my-os-tools/set-sr-speedbar-directory-to-file-path (file-path)
+;;   "Set the sr-speedbar directory to FILE-PATH and refresh it.
+;; If `sr-speedbar' is not open, open it first."
+;;   (interactive "DDirectory: ")
+;;   (let ((expanded-path (expand-file-name file-path)))
+;;     (when (file-directory-p expanded-path)
+;;       ;; Open sr-speedbar if it's not already open
+;;       (unless
+;;           (sr-speedbar-exist-p)
+;;         (sr-speedbar-open))
+;;       ;; Set the default directory
+;;       (setq default-directory expanded-path)
+;;       ;; Clear speedbar cache and force refresh
+;;       (speedbar-refresh)
+;;       (sr-speedbar-refresh)
+;;       ;; Display a message indicating the new directory
+;;       (message "sr-speedbar directory set to %s" expanded-path))))
 
 ;; ---end of TOOLS USING THE OS---
 
