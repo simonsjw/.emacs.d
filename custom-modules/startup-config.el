@@ -51,7 +51,7 @@ The frame has a current working directory PROJECT-PATH."
          (frame
           (make-frame `(
                         (UI-TYPE . ,frame-class)
-                        (width . 200) (height . 75)
+                        (width . 300) (height . 75)
                         (bottom-divider-width . 5) (right-divider-width . 5)
                         ))))
     
