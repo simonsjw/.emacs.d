@@ -28,6 +28,9 @@
   "Variable to hold the state of the filter in speedbar.
 Used in `my-speedbar/toggle-filter'.  t or nil.")
 
+(defvar speedbar-breadcrumbs-updating nil "This variable is t when running.
+Use it to stop erroneous recursion.")
+
 (defvar sr-speedbar-auto-refresh)
 (defvar sr-speedbar-max-width)
 (defvar sr-speedbar-width)
@@ -66,17 +69,6 @@ Used in `my-speedbar/toggle-filter'.  t or nil.")
 
 ;;;; functions:
 ;;   ----------
-(eval-after-load 'speedbar
-  '(progn
-     (defun speedbar-directory-buttons (directory _index)
-       "Set the header line to a summarized version of DIRECTORY.
-INDEX is unused but required by the caller."
-       (with-current-buffer speedbar-buffer
-         (setq header-line-format
-               (propertize (my-on-disk-tools/summary-path directory)
-                           'face 'speedbar-directory-face))
-         (speedbar-with-writable
-           (insert "\n"))))))
 
 (defun my-speedbar/toggle ()
   "Select the current top-left window and run `sr-speedbar-toggle'.
@@ -152,9 +144,10 @@ Current view is given in SPEEDBAR-VIEW."
   (interactive)
   (speedbar-change-initial-expansion-list speedbar-view))
 
+
+
 ;;;; Customise Speedbar and Related elements
 ;;   ---------------------------------------
-
 
 ;; Variable to hold the state of the filter in speedbar.  t or nil.
 ;; used in `my-speedbar/toggle-filter'.
