@@ -1,4 +1,4 @@
-personal_ws-1.1 en 67 
+personal_ws-1.1 en 70 
 ARGS
 Backtrace
 Bunnings
@@ -40,6 +40,7 @@ gitignore
 gmail
 hdb
 hoc
+http
 https
 ipynb
 ipython
@@ -59,9 +60,11 @@ rlwrap
 scipy
 setq
 speedbar
+str
 sym
 tmp
 txt
+urls
 usr
 vterm
 ws
