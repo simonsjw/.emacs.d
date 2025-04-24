@@ -32,13 +32,16 @@
 (defvar org-preview-latex-image-directory)
 (defvar save-sql-history-dir)
 
+(defvar project-templates-archive nil
+  "Path to the project templates archive file.")
+
 (defvar yasnippets-directory-personal)
 (defvar yasnippets-directory-default)
 (defvar yasnippets-directory-yasmate)
 (defvar yas-snippet-dirs)
 
-(defvar bookmark-default-file)
-(defvar bmkp-desktop-default-directory)
+;;(defvar bookmark-default-file)
+;;(defvar bmkp-desktop-default-directory)
 
 (defvar dape-default-breakpoints-file)
 
@@ -60,7 +63,8 @@
   "Path to the Emacs diary file for built in diary functionality.")
 
 
-(defvar my-paths/desktop-layout-folder nil "Folder containing window-tree specifications for UI layouts.")
+(defvar my-paths/desktop-layout-folder nil
+  "Folder containing `window-tree' specifications for UI layouts.")
 
 (defvar my-paths/q-load-balancer-folder)
 (defvar my-paths/rainbow-mode)
@@ -88,20 +92,42 @@
     (message "creating %s" dir)
     (make-directory dir t)))
 
+;;;; no-littering
+;;   ------------
+;; no-littering package is central to the directory organisation in this
+;; setup
 (message
  "no-littering var directory set: %s" no-littering-var-directory)
 (message
  "no-littering etc directory set: %s" no-littering-etc-directory)
 
-;; GPG application:
-;; (setq epg-gpg-program "/usr/bin/gpg")
-
+;;;; Emacs internal Directory
+;;   -----------------------
 ;; set a path to local custom packages.
 (setq custom-packages-dir
       (expand-file-name "custom-packages/" user-emacs-directory))
 
+;; set a path to local custom modules.
+(setq custom-modules-dir
+      (expand-file-name "custom-modules/" user-emacs-directory))
+
+;; set a path to local custom modules.
+(setq custom-system-tools-dir
+      (expand-file-name "custom-modules/system-tools/" user-emacs-directory))
+
+;; set a path to local custom modules.
+(setq custom-prog-mode-dir
+      (expand-file-name "custom-modules/prog-mode/" user-emacs-directory))
+
 ;; set a path to custom documentation to be searchable with `info'.
-(setq custom-info-dir (expand-file-name "docs" user-emacs-directory))
+(setq custom-info-dir
+      (expand-file-name "docs" user-emacs-directory))
+
+
+
+;;;; GPG application
+;;   ---------------
+;; (setq epg-gpg-program "/usr/bin/gpg")
 
 ;; Automatically create the auto-save and backup directories if they don't
 ;; exist
@@ -141,38 +167,59 @@
 ;; (add-to-list 'treesit-load-path  (expand-file-name "~/.emacs.d/tree-sitter/"))
 ;; (add-to-list 'treesit-extra-load-path  (expand-file-name "~/.emacs.d/tree-sitter/"))
 
-;; Bookmark+
-;; ---------
-;; These all need to be applied after the bookmark+ library is loaded.
 
+;;;; Bookmark+
+;;   ---------
+;; The location of the default bookmark desktop directory bmkp is set under
+;;     no-littering-var-directory
+;; the variable files for bookmark+ (and bookmark) are in bmkp.
+;; bmkp-desktop-default-directory is set to bmkp/desktops
+;;     - this is where desktop bookmarks are stored.
+;; bmkp-bmenu-state-file is set to bmkp/emacs-bmk-bmenu-state.el
+;;     - this is where the current state of the list-bookmark buffer is stored.
+;; bookmark-default-file is set to bmkp/bookmark-default.bmk
+;;     - this is the default location for bookmark files.
 (with-eval-after-load 'bookmark+
 
   ;; Set the default location of bookmarks.
+  (setq bmkp-current-bookmark-file
+        (expand-file-name
+         "bmkp/bookmark-default.bmk" no-littering-var-directory))
+  
+  ;; Set the default location of bookmarks.
   (setq bookmark-default-file
         (expand-file-name
-         "bmkp/bookmark-default.el" no-littering-var-directory))
+         "bmkp/bookmark-default.bmk" no-littering-var-directory))
   
   ;; Set the location of the default bookmark desktop directory.
   (setq
    bmkp-desktop-default-directory
    (expand-file-name "bmkp/desktops" no-littering-var-directory))
-
+  
+  ;; ensure the desktop file exists.
   (my-on-disk-tools/ensure-directory-exists
    bmkp-desktop-default-directory)
   
   (setq bmkp-bmenu-state-file
         (expand-file-name
          "bmkp/emacs-bmk-bmenu-state.el" no-littering-var-directory))
+  
+  ;; ensure bookmarks are loaded.
+  (bookmark-load bmkp-current-bookmark-file)
   )
 
-;; UI configuration
+
+
+;;;; UI configuration
+;;   ----------------
+;; note this is different to the bookmark desktop.
 (setq my-paths/desktop-layout-folder
       (expand-file-name
        "desktop-layout/" no-littering-var-directory))
 
 
-;; Yasnippet directories
-;; ---------------------
+;;;; Yasnippet directories
+;;   ---------------------
 ;; (no-littering only sets the yasnippet personal directory automatically)
 (with-eval-after-load 'yasnippet
   (progn
@@ -198,15 +245,19 @@
               "package/archives/elpa/yasnippet-snippets-1.0/snippets/"
               no-littering-etc-directory)
             ,(expand-file-name
-              "yasnippet/yasmate/snippets/" ;; the yasmate collection
+              "yasnippet/yasmate/snippets/"                                       ; the yasmate collection
               no-littering-var-directory))))
 
   ;; ensure the yasnippet directories exist.
   (my-on-disk-tools/ensure-directory-exists yasnippets-directory-personal)
   (my-on-disk-tools/ensure-directory-exists yasnippets-directory-yasmate))
 
-;; Projects.el
-;; -----------
+;;;; Projects.el
+;;   -----------
+;; Set the location of the project template archive.
+(setq project-templates-archive
+      (expand-file-name "var/project-templates.tar.xz" user-emacs-directory))
+
 ;; Set location of saved project paths and master work-spaces containing
 ;; multiple projects.
 
@@ -217,18 +268,23 @@
 (my-on-disk-tools/ensure-directory-exists
  (expand-file-name "projects/" no-littering-var-directory))
 
-;; Dape
-;; ----
-;; Set location of saved breakpoints.
-(setq dape-default-breakpoints-file
-      (expand-file-name "dape/dape-breakpoints" no-littering-var-directory)
-      )
-(my-on-disk-tools/ensure-directory-exists
- (expand-file-name "dape" no-littering-var-directory)
- )
+;;;; Dape
+;;   ----
+;; Set the location of the bash adaptor. (note - etc not var)
+(setq dape-adaptor-directory-bash
+      (expand-file-name "dape/adaptors/bash-debug" no-littering-etc-directory))
 
-;; Org Mode
-;; --------
+(my-on-disk-tools/ensure-directory-exists dape-adaptor-directory-bash)
+
+;; Set location of saved breakpoints (note - var not etc)
+(setq dape-default-breakpoints-file
+      (expand-file-name "dape/dape-breakpoints" no-littering-var-directory))
+
+(my-on-disk-tools/ensure-directory-exists
+ (expand-file-name "dape" no-littering-var-directory))
+
+;;;; Org Mode
+;;   --------
 (setq org-directory "~/Documents/org") ; Path to org data.
 
 (setq org-contacts-directory                                                      ; Path to the Emacs contacts file for org contacts functionality.
@@ -269,13 +325,14 @@
   "Path for the directory used to cache latex images.")
 
 
+;;;; Dictionary settings
+;;   -------------------
 ;; Set up dictionary paths
 (setq ispell-personal-dictionary
       (expand-file-name ".aspell.en.pws" user-emacs-directory))
 
 (setq my-paths/ispell-word-replacement
       (expand-file-name ".aspell.en.prepl" user-emacs-directory))
-
 
 (setq save-sql-history-dir
       (expand-file-name "sql-history/" no-littering-var-directory))
@@ -345,3 +402,4 @@
                                                                                   ; LocalWords:  recentf
                                                                                   ; LocalWords:  loadbalancer
                                                                                   ; LocalWords:  Dape emacs init
+                                                                                  ; LocalWords:  bmk
