@@ -241,7 +241,7 @@ the tags will be reused cyclically."
   "Get the project root directory for BUFFER using the project.el package."
   (with-current-buffer buffer
     (when (project-current)
-      (expand-file-name (cdr (project-current))))))
+      (expand-file-name (nth 2 (project-current))))))
 
 
 (defun my-window-tools/buffer-project-root (buffer)
