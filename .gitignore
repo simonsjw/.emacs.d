@@ -13,6 +13,7 @@ etc/**/gnupg
 etc/**/gnus
 etc/**/package
 etc/**/straight
+etc/**/dape/adapters/
 var/**/.cache_latex
 var/**/anaconda-mode
 var/**/auto-save
@@ -36,4 +37,10 @@ var/**/dape/dape-breakpoints
 var/**/bmkp/bookmark-default.el
 custom-packages/worg/
 elpa/
+emacs-wiki/
 tree-sitter-backup/
+etc/INFODYNAMICS/dape/adapters/bash-debug/extension/.github/
+etc/INFODYNAMICS/dape/adapters/bash-debug/extension/bashdb_dir/
+etc/INFODYNAMICS/dape/adapters/bash-debug/extension/images/
+etc/INFODYNAMICS/dape/adapters/bash-debug/extension/
+etc/INFODYNAMICS/dape/adapters/bash-debug/
