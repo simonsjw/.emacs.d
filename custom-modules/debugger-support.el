@@ -219,6 +219,41 @@
               (message "debugpy configuration missing in dape-configs"))))
 
 
+(defun my-dape/get-dape-adapter-names()
+  "This function provides a list of available adapter setup names.
+The names are sourced from dape-configs written to messages and saved to
+variable my-dape/adapter-names as well as returned by the function."
+  (interactive)
+  (require 'dape)
+  (setq my-dape/adapter-names (mapcar #'car dape-configs))
+  (message "\nList of Debug Tools:\n") ; Header
+  (let ((index 1))
+    (dolist (str my-dape/adapter-names)
+      (message "%2d. %s" index str)
+      (setq index (1+ index))))
+  my-dape/adapter-names)
+
+
+;; Define the variable if it doesn't exist
+(defvar my-dape/current-config nil
+  "Stores the current Dape configuration settings.")
+
+(defun get-dape-config-settings (key)
+  "Retrieve settings for a Dape configuration by KEY."
+  (interactive
+   (list
+    (completing-read "Select Dape configuration: "
+                     (mapcar #'car dape-configs) nil t)))
+  (require 'dape)
+  (let* ((symbol-key (intern key)) ; Convert string to symbol
+         (config (assoc symbol-key dape-configs)))
+    (if config
+        (let ((settings (cdr config)))
+          (setq my-dape/current-config settings)
+          (message "Settings for %s: %s" key settings)
+          settings)
+      (message "No settings found for %s" key)
+      nil)))
 
 ;; (straight-rebuild-package "dape")
 (provide 'debugger-support)
