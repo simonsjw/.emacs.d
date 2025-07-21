@@ -59,7 +59,6 @@ Use it to stop erroneous recursion.")
 (declare-function speedbar-refresh "speedbar")
 (declare-function speedbar-change-initial-expansion-list "speedbar")
 (declare-function speedbar-add-supported-extension "speedbar")
-(declare-function my-os-tools/set-sr-speedbar-directory-to-file-path "system-tools")
 (declare-function my-on-disk-tools/summary-path "system-tools")
 
 ;;; Code:
@@ -67,8 +66,33 @@ Use it to stop erroneous recursion.")
 (use-package sr-speedbar)
 (use-package pretty-speedbar)
 
+;; memory-object-tree - custom package to visualise artefacts in memory.
+(add-to-list 'load-path my-paths/memory-object-tree-folder)
+(use-package memory-object-tree
+  :ensure nil  ; Indicates this is a local package, not from a repository
+  :demand t    ; Forces the package to load immediately at startup
+  )
+
 ;;;; functions:
 ;;   ----------
+
+(defun my-speedbar/set-sr-speedbar-directory-to-file-path (file-path)
+  "Set the sr-speedbar directory to FILE-PATH and refresh it.
+If `sr-speedbar' is not open, open it first."
+  (interactive "DDirectory: ")
+  (let ((expanded-path (expand-file-name file-path)))
+    (when (file-directory-p expanded-path)
+      ;; Open sr-speedbar if it's not already open
+      (unless
+          (sr-speedbar-exist-p)
+        (sr-speedbar-open))
+      ;; Set the default directory
+      (setq default-directory expanded-path)
+      ;; Clear speedbar cache and force refresh
+      (speedbar-refresh)
+      (sr-speedbar-refresh)
+      ;; Display a message indicating the new directory
+      (message "sr-speedbar directory set to %s" expanded-path))))
 
 (defun my-speedbar/toggle ()
   "Select the current top-left window and run `sr-speedbar-toggle'.
@@ -94,7 +118,7 @@ TODO: make this also work with SPEEDBAR."
              (eq speedbar-frame (selected-frame))                                 ; Speedbar window is active
              (eq speedbar-buffer (current-buffer))                                ; In Speedbar buffer
              (string-equal speedbar-initial-expansion-list-name "files"))         ; In file mode
-    (my-os-tools/set-sr-speedbar-directory-to-file-path
+    (my-speedbar/set-sr-speedbar-directory-to-file-path
      (expand-file-name "~/"))))
 
 
@@ -209,7 +233,7 @@ Current view is given in SPEEDBAR-VIEW."
  '(pretty-speedbar-folder '("\uf07b" t))                                          ;  Closed folder icon.
  '(pretty-speedbar-folder-open '("\uf07c" t))                                     ;  Open folder icon.
  '(pretty-speedbar-blank-page '("\uf15b"))                                        ;  Used for plus and minus file icons.
- '(pretty-speedbar-page  '("\uf15c"))                                             ;  Default file icon. 
+ '(pretty-speedbar-page  '("\uf15c"))                                             ;  Default file icon.
  '(pretty-speedbar-box-closed  '("\uebb4"))                                       ;  Closed box icon with plus added during generation.
  '(pretty-speedbar-box-open  '("\uebb5" ))                                        ;  Open box icon with minus added during generation. 
  '(pretty-speedbar-book '("\uf02d"))                                              ;  Book icon used for documentation available. 
