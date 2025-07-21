@@ -167,65 +167,7 @@ It respects `nerd-icons-color-icons'."
               (abbreviate-file-name buffer-file-name)))
         filename))))
 
-;; ;;;; Cursor wrapping
-;; ;; wrap cursor movement at top and bottom of ibuffer.
-;; ;; original code from brust at https://www.emacswiki.org/emacs/IbufferMode
-;; (defun my-ibuffer/advance-motion (direction)
-;;   "A function to move the cursor in a given DIRECTION."
-;;   (forward-line direction)
-;;   (beginning-of-line)
-;;   (if (not (get-text-property (point) 'ibuffer-filter-group-name))
-;;       t
-;;     (ibuffer-skip-properties '(ibuffer-filter-group-name)
-;;                              direction)
-;;     nil))
 
-;; (defun my-ibuffer/previous-line (&optional arg)
-;;   "Move backwards ARG lines, wrapping around the list if necessary."
-;;   (interactive "P")
-;;   (or arg (setq arg 1))
-;;   (let (err1 err2)
-;;     (while (> arg 0)
-;;       (cl-decf arg)
-;;       (setq err1 (my-ibuffer/advance-motion -1)
-;;             err2 (if (not (get-text-property (point) 'ibuffer-title))
-;;                      t
-;;                    (goto-char (point-max))
-;;                    (beginning-of-line)
-;;                    (ibuffer-skip-properties '(ibuffer-summary
-;;                                               ibuffer-filter-group-name)
-;;                                             -1)
-;;                    nil)))
-;;     (and err1 err2)))
-
-;; (defun my-ibuffer/next-line (&optional arg)
-;;   "Move forward ARG lines, wrapping around the list if necessary."
-;;   (interactive "P")
-;;   (or arg (setq arg 1))
-;;   (let (err1 err2)
-;;     (while (> arg 0)
-;;       (cl-decf arg)
-;;       (setq err1 (my-ibuffer/advance-motion 1)
-;;             err2 (if (not (get-text-property (point) 'ibuffer-summary))
-;;                      t
-;;                    (goto-char (point-min))
-;;                    (beginning-of-line)
-;;                    (ibuffer-skip-properties '(ibuffer-summary
-;;                                               ibuffer-filter-group-name
-;;                                               ibuffer-title)
-;;                                             1)
-;;                    nil)))
-;;     (and err1 err2)))
-
-;; (defun my-ibuffer/ibuffer-next-header ()
-;;   "Move forwards between headers using key binding."
-;;   (interactive)
-;;   (while (my-ibuffer/next-line)))
-
-;; (defun my-ibuffer/previous-header ()
-;;   "Move backwards between headers using key binding."
-;;   (interactive)
-;;   (while (my-ibuffer/previous-line)))
 
 
 ;; Replace the `Size' column showing the size of the buffer with a human 
@@ -259,10 +201,61 @@ It respects `nerd-icons-color-icons'."
 ;; ibuffer.
 (customize-set-variable 'ibuffer-old-time 24)
 ;; Use header-line
-(customize-set-variable 'ibuffer-use-header-line t)
+(customize-set-variable 'ibuffer-use-header-line nil)
 
 (custom-set-faces
  '(ibuffer-header-face ((t (:foreground "cyan" :weight bold :underline t)))))
+
+;;;; Use header line for column headers
+
+(defun my-ibuffer/make-header-line ()
+  "Set up a clickable header line for ibuffer.
+Each header cell is clickable and calls `ibuffer-do-sort-by` with the corresponding sort key."
+  (let ((columns '(("  MVRL" . "")
+                   ("Name                          " . "name")
+                   (" Size " . "size")
+                   ("Mode          " . "mode")
+                   ("VC status" . "vc")
+                   ("Path/Process                       " . "Path/Process")))
+        (header ""))
+    (dolist (col columns)
+      (let ((col-name (car col))
+            (sort-key (cdr col)))
+        (setq header
+              (concat header
+                      (propertize (format " %s " col-name)
+                                  'mouse-face 'highlight
+                                  'help-echo (format "Sort by %s" col-name)
+                                  'local-map (let ((map (make-sparse-keymap)))
+                                               (define-key map [header-line mouse-1]
+                                                           `(lambda ()
+                                                              (interactive)
+                                                              (ibuffer-do-sort-by ,sort-key)))
+                                               map))
+                      "|"))))
+    header))
+
+(defun my-ibuffer/insert-header-override ()
+  "Override ibuffer's header insertion to do nothing."
+  nil)
+
+(advice-add 'ibuffer-insert-header :override #'my-ibuffer/insert-header-override)
+
+;; (defun my-ibuffer/setup-header-line ()
+;;   "Configure ibuffer to use a header-line for its column headers."
+;;   ;; Remove the default in-buffer header (if any)
+;;   (setq ibuffer-formats
+;;         '((mark modified read-only " "
+;;                 (name 18 18 :left)
+;;                 " "
+;;                 (size 9 -1 :right)
+;;                 " "
+;;                 (mode 16 16 :left))))
+;;   ;; Set our custom header line.
+;;   (setq header-line-format (my-ibuffer/make-header-line)))
+
+;; (add-hook 'ibuffer-mode-hook 'my-ibuffer-setup-header-line)
+
 
 
 ;; Modify the default ibuffer-formats. Note the two lists allow us to switch
@@ -301,17 +294,6 @@ It respects `nerd-icons-color-icons'."
 ;;       "    MRVL Name                                 Size  Mode              VC_Status  Filename/Process")
 
 
-
-
-;; Here you may adjust by replacing :right with :center or :left
-;; According to taste, if you want the icon further from the name
-;; " " (icon 2 2)
-;; (name 18 18 :left :elide)
-;; " " (size-h 9 -1 :right)
-
-;; (name 16 -1)
-
-
 ;;; Keybindings:
 
 ;; (define-key ibuffer-mode-map (kbd "<up>") 'my-ibuffer/previous-line)
@@ -326,12 +308,17 @@ It respects `nerd-icons-color-icons'."
   
   ;; Define a function to set the font in ibuffer.
   ;; (face-remap-add-relative 'default  :height 90)
+
+
+  ;; apply filter groups by vc-root. 
+  ;; (ibuffer-vc-set-filter-groups-by-vc-root)
   
+  (setq header-line-format (my-ibuffer/make-header-line))
+
   ;; sort ibuffer by vc status. 
   ;;(ibuffer-do-sort-by-vc-status)
 
-  ;; apply filter groups by vc-root. 
-  (ibuffer-vc-set-filter-groups-by-vc-root)
+
   )
 ;;  - then add it to a hook.
 (add-hook 'ibuffer-mode-hook 'my-ibuffer/ibuffer-mode-config-hook)
