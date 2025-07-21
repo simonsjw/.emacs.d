@@ -1,11 +1,19 @@
-;;;; Emacs Bookmark Format Version 1;;;; -*- coding: utf-8-emacs; mode: lisp-data -*-
+;;;; Emacs Bookmark Format Version 1;;;; -*- coding: utf-8; mode: lisp-data -*-
 ;;; This format is meant to be slightly human-readable;
 ;;; nevertheless, you probably don't want to edit it.
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
-(("python" (filename . "/mnt/HDD04_WDD_08TB/workspace/python/")
+((".profile"
+ (filename . "~/sync/primary/dotfiles/shell/INFODYNAMICS/.profile")
+ (buffer-name . ".profile")
+ (front-context-string . "\n# set PATH so i") (rear-context-string)
+ (front-context-region-string) (rear-context-region-string)
+ (visits . 0) (time 26678 62139 280943 877000)
+ (created 26678 62139 280943 877000) (position . 1))
+("python" (filename . "/mnt/HDD04_WDD_08TB/workspace/python/")
  (position . 0) (created 26628 28288 797444 985000))
-("workspace" (filename . "/mnt/HDD04_WDD_08TB/workspace/")
- (position . 0) (created 26628 28910 500166 159000))
+("workspace" (end-position . 1) (time 26648 11058 149446 942000)
+ (visits . 0) (filename . "/mnt/HDD04_WDD_08TB/workspace/")
+ (position . 1) (created 26628 28910 500166 159000))
 ("no_backup HDD04" (filename . "/mnt/HDD04_WDD_08TB/no_backup/")
  (position . 0) (created 26628 28211 6630 17000))
 ("org" (buffer-name . "Org Parent Directory")
@@ -100,7 +108,7 @@
  (buffer-name . ".bash_profile")
  (front-context-string . "#!/usr/bin/env b") (rear-context-string)
  (front-context-region-string) (rear-context-region-string)
- (visits . 1) (time 26361 61730 258776 797000)
+ (visits . 2) (time 26678 62005 917884 21000)
  (created 26095 40858 738205 676000) (position . 1))
 ("index.php" (filename . "/var/www/www.entropik.org/index.php")
  (buffer-name . "index.php")
@@ -112,7 +120,6 @@
  (buffer-name . ".bashrc")
  (front-context-string . "#!/bin/bash\n\n# ~") (rear-context-string)
  (front-context-region-string) (rear-context-region-string)
- (visits . 2) (time 26361 65341 898942 555000)
+ (visits . 5) (time 26693 8680 895945 816000)
  (created 26095 40797 112043 363000) (position . 1))
-
 )
