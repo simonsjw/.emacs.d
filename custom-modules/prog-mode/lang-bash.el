@@ -31,6 +31,29 @@
 (defun my-lang/bash-mode-setup ()
   "Setup function for `bash-ts-mode`."
 
+  ;; set up dape to work with the
+
+  (require 'dape)
+
+
+  ;; [stderr]  node:internal/modules/cjs/loader:1137
+  ;; [stderr]    throw err;
+  ;; [stderr]    ^
+  ;; [stderr]  
+  ;; [stderr]  Error: Cannot find module '/home/simon/sync/primary/bin/~/.emacs.d/debug-adapters/bash-debug/extension/out/bashDebug.js'
+  ;; [stderr]      at Module._resolveFilename (node:internal/modules/cjs/loader:1134:15)
+  ;; [stderr]      at Module._load (node:internal/modules/cjs/loader:975:27)
+  ;; [stderr]      at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:128:12)
+  ;; [stderr]      at node:internal/main/run_main_module:28:49 {
+  ;; [stderr]    code: 'MODULE_NOT_FOUND',
+  ;; [stderr]    requireStack: []
+  ;; [stderr]  }
+  ;; [stderr]  
+  ;; [stderr]  Node.js v18.19.1
+
+
+
+
   ;; Use Eglot if bash-language-server is available
   (if (executable-find "bash-language-server")
       (eglot-ensure)
@@ -53,7 +76,7 @@
 
   ;; Set the fringe mode for python-ts-mode folding.
   (set-fringe-mode '(12 . 12))
-  
+
   ;; Enable treesit-fold-mode
   (treesit-fold-mode 1)
   ;; Enable treesit-fold-indicators-mode
@@ -69,11 +92,11 @@
   (yas-minor-mode 1)
 
 ;;;;; IDE layout
-  
+
   ;; Provide a function to set the fill column indicator.
   ;; This has a default of 80 but can be set on a per mode basis.
   ;; Set the preferred fill column indicator for the mode and activate it.
-  
+
   (setq display-fill-column-indicator-column 88)                                  ; comment indent
   (setq fill-column 88)                                                           ; Column beyond which line wrapping occurs if it is activated.
   (setq comment-fill-column 250)                                                  ; Column to use for wrapping comment lines.
