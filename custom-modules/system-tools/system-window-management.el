@@ -112,8 +112,11 @@
                ("Ediff Config" . config)
                ("Ilist" . config)
                (".gitignore" . vc)
-               ("vc-dir" . vc)
-               ("log-edit-files" . vc)))  ; Note: If conflicting with above, choose one
+               ("*vc*" . vc)
+               ("*vc-dir*" . vc)
+               ("*vc-log-edit-files*" . vc)
+               ("*vc-log*" . vc)
+               ("*log-edit-files*" . vc)))  ; Note: If conflicting with above, choose one
     (:regexps . (("^documentation$" . config)          ; Exact match for "documentation"
                  ("^README.*" . config)                ; Starting with "README" + any chars
                  (".*\\.conf$" . config)               ; Any chars + literal ".conf" at end
