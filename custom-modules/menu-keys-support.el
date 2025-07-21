@@ -58,7 +58,7 @@ These are available in `prog-mode'."
 (keymap-set
  'my-key-maps/prog-mode-comment-map "f" 'fill-comment-paragraph)
 (keymap-set
- 'my-key-maps/prog-mode-comment-map "B" 'my-in-buffer-tools/comment-box-filled)
+ 'my-key-maps/prog-mode-comment-map "a" 'my-in-buffer-tools/comment-align-buffer)
 (keymap-set
  'my-key-maps/prog-mode-comment-map "b" 'comment-box)
 ;; (keymap-set
@@ -86,8 +86,8 @@ These are available in `prog-mode'."
     ["Format Comment" :enable nil]
     ["Align Comment" comment-indent :keys "C-c c TAB" :help "Align comment"]
     ["Fill Comment Paragraph" fill-comment-paragraph :keys "C-c c f" :help "Fill comment paragraph"]
-    ["Add Filled Box Around Comment" my-in-buffer-tools/comment-box-filled :keys "C-c d B" :help "Add filled box around comment"]
     ["Add Box Around Comment" comment-box :keys "C-c c b" :help "Add box around comment"]
+    ["Align All Comments" my-in-buffer-tools/comment-align-buffer :keys "C-c c a" :help "Align all inline comments in buffer to comment column"]
     ;; ["Check Comment Spellings in Buffer" checkdoc-ispell-comments :keys "C-c c s" :help "Check comment spellings in buffer"]
     ;; ["Check Comment Spellings at Point" ispell-comment-or-string-at-point :keys "C-c c p" :help "Check comment spellings at point"]
     ;; ["Set Comment Column to Cursor" set-comment-set-column :keys "C-c c x" :help "Set comment column to cursor"]
@@ -147,7 +147,7 @@ These are available in `prog-mode'."
 
 (define-key
  global-map [menu-bar windows shrink-window]
- '(menu-item "Decrease Height" shrink-window))                   ; Custom binding
+ '(menu-item "Decrease Height" shrink-window))                                    ; Custom binding
 
 (define-key
  global-map [menu-bar windows enlarge-window-horizontally]
