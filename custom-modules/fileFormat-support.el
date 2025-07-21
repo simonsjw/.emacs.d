@@ -11,13 +11,17 @@
 
 ;; packages
 (use-package csv-mode)
+(use-package dotenv-mode)
 
+;;;; .env files
+;;   ----------
+;; support additional file extensions such as `.env.test' with this major mode.
+(add-to-list 'auto-mode-alist '("\\.env\\..*\\'" . dotenv-mode))
 
 ;;;; CSV formatted files
 ;;   -------------------
 (add-to-list 'auto-mode-alist '("\\.csv\\'\\|\\.CSV\\'" . csv-mode))
 (customize-set-variable 'csv-align-mode t)
-
 
 ;;;; JSON formatted files
 ;;   --------------------
