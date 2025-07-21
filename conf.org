@@ -146,15 +146,15 @@ These are all in =.emacs.d/custom-modules/=
 Define settings for =early-init.el=.
 
 #+begin_src emacs-lisp :tangle ./early-init.el
-;;; early-init.el --- Emacs early initialization for Crafted Emacs  -*- lexical-binding: t; no-byte-compile: t -*-
+;; early-init.el --- Emacs early initialization for Crafted Emacs  -*- lexical-binding: t; no-byte-compile: t -*-
 
 ;;; Commentary:
 ;;  Work that is done before Emacs can be initialised.
 ;;  Mainly setting up the package management process and
 ;;  then setting a few variables needed to initialise the ide.
 
- ;;; Code:
- ;;; Base file paths needed for package management
+;;; Code:
+;;  Base file paths needed for package management
 ;; set paths used in package management before no-littering is set up to
 ;; respect no-littering file paths.
 ;; Use the `MY_NAME` environment variable to set machine specific
@@ -195,10 +195,6 @@ Define settings for =early-init.el=.
              (expand-file-name "prog-mode/" modules-user-dir))                    ; set up the custom modules which are specific to languages under prog-mode.
        (setq my-filepaths/eln-cache
              (expand-file-name "eln-cache/" no-littering-etc-directory))          ; Set up the eln-cache path.
-       ;; Set up package.el
-    ;;   (setq package-user-dir
-     ;;        (expand-file-name "package/" no-littering-etc-directory))
-  ;;     (setq package-gnupghome-dir (concat package-user-dir "gnupg/"))
        )
       )
 
@@ -231,12 +227,12 @@ Default is 800 kilobytes.  Measured in bytes.")
 (defvar load-prefer-newer nil "loading preference.")
 (setq load-prefer-newer t)
 
- ;;;; UI configuration
+;;;; UI configuration
 ;; Remove some unneeded UI elements (the user can turn back on anything they wish)
 (add-to-list 'default-frame-alist '(background-color . "#1B152D"))
 (add-to-list 'default-frame-alist '(foreground-color . "#EEEEEC"))
 
-;; (setq inhibit-startup-screen t                                                    ; stop the default splash screen
+;; (setq inhibit-startup-screen t                                                 ; stop the default splash screen
 ;;       inhibit-startup-message t
 ;;       inhibit-startup-echo-area-message t)
 ;; (setq initial-scratch-message nil)                                             ; remove the message in the scratch buffer.
@@ -258,7 +254,7 @@ Default is 800 kilobytes.  Measured in bytes.")
 ;;     (add-to-list 'default-frame-alist '(width  . 300))
 
 (provide 'early-init)
- ;;; early-init.el ends here
+;;; early-init.el ends here
                                                                                   ; LocalWords:  gnupg
                                                                                   ; LocalWords:  ACA
 
@@ -278,29 +274,28 @@ General principle is that any default settings not set here (so set in the modul
 This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
-      ;;; init.el -- Simon's Emacs user customization file -*- lexical-binding: t; -*-
+;; init.el -- Simon's Emacs user customization file -*- lexical-binding: t; -*-
 
-      ;;; Commentary:
-  ;; This file is generated from config.org.  If you want to edit the
-  ;; configuration, DO NOT edit init.el, edit config.org, instead.  Note that by
-  ;; default, init.el is the target of the tangle as specified by #+PROPERTY in
-  ;; line 3.
+;;; Commentary:
+;; This file is generated from config.org.  If you want to edit the
+;; configuration, DO NOT edit init.el, edit config.org, instead.  Note that by
+;; default, init.el is the target of the tangle as specified by #+PROPERTY in
+;; line 3.
 
-      ;;; Code:
+;;; Code:
 
-      ;;;; Set up package.el
-  ;;(unless (package-installed-p 'use-package)
-  ;;  (package-refresh-contents)
-  ;; (package-install 'use-package))
+;;;; Set up package.el
+;;(unless (package-installed-p 'use-package)
+;;  (package-refresh-contents)
+;; (package-install 'use-package))
 
-  ;; (require 'package)
+;; (require 'package)
 
-
-  ;; first ensure we have the paths defined that we need.
+;; first ensure we have the paths defined that we need.
   (setq envvar/SYSTEM_NAME (getenv "MY_NAME"))
 
 
-  ;; Step 1: Define no-littering paths early
+;; Step 1: Define no-littering paths early
   (eval-and-compile
     (defvar no-littering-var-directory
       (expand-file-name "data/" user-emacs-directory)
@@ -309,7 +304,7 @@ This means all variables with external origins in emacs are specified here.
       (expand-file-name "config/" user-emacs-directory)
       "Directory for configuration data, set early for compile-angel."))
 
-  ;; Step 2: Function to check and clone no-littering
+;; Step 2: Function to check and clone no-littering
   (defun my-ensure-no-littering ()
     "Check if no-littering exists at ~/.emacs.d/no-littering, clone if missing."
     (let ((no-littering-dir (expand-file-name "no-littering/" user-emacs-directory))
@@ -329,12 +324,12 @@ This means all variables with external origins in emacs are specified here.
       ;; Ensure the directory is added to load-path
       (add-to-list 'load-path no-littering-dir)))
 
-  ;; Step 3: Ensure no-littering directories exist
+;; Step 3: Ensure no-littering directories exist
   (dolist (dir (list no-littering-var-directory no-littering-etc-directory))
     (unless (file-directory-p dir)
       (make-directory dir t)))
 
-  ;; Step 4: Check and clone no-littering, then compile and load
+;; Step 4: Check and clone no-littering, then compile and load
   (my-ensure-no-littering)
   ;; Optionally native compile no-littering after cloning
   (let ((no-littering-el (expand-file-name "no-littering/no-littering.el" user-emacs-directory)))
@@ -345,7 +340,7 @@ This means all variables with external origins in emacs are specified here.
   (message "no-littering var directory set: %s" no-littering-var-directory)
   (message "no-littering etc directory set: %s" no-littering-etc-directory)
 
-  ;; Step 5: Configure compile-angel
+;; Step 5: Configure compile-angel
   (use-package compile-angel
     :ensure t
     :demand t
@@ -360,18 +355,18 @@ This means all variables with external origins in emacs are specified here.
     (compile-angel-on-load-mode)
     (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode))
 
-  ;; Step 6: Load custom-path-support.el
+;; Step 6: Load custom-path-support.el
   (load-file (expand-file-name "custom-modules/custom-path-support.el" user-emacs-directory))
 
   (defvar comp-speed 1 "Set native compilation.")
   (setq comp-speed 1)
 
-  ;; Ensure that quitting only occurs once Emacs finishes native compiling,
-  ;; preventing incomplete or leftover compilation files in `/tmp`.
+;; Ensure that quitting only occurs once Emacs finishes native compiling,
+;; preventing incomplete or leftover compilation files in `/tmp`.
   (setq native-comp-async-query-on-exit t)
   (setq confirm-kill-processes t)
 
-  ;; Non-nil means to native compile packages as part of their installation.
+;; Non-nil means to native compile packages as part of their installation.
   (setq package-native-compile t)
 
   (setq package-archives
@@ -393,11 +388,11 @@ This means all variables with external origins in emacs are specified here.
      use-package-always-ensure t                                                    ; once working - remove this and save elpa package store to git repo.
      use-package-expand-minimally t))
 
-  ;; Install `no-littering' if necessary
-  ;; (unless (package-installed-p 'no-littering)
-  ;;   (unless package-archive-contents
-  ;;     (package-refresh-contents))
-  ;;   (package-install 'no-littering))
+;; Install `no-littering' if necessary
+;; (unless (package-installed-p 'no-littering)
+;;   (unless package-archive-contents
+;;     (package-refresh-contents))
+;;   (package-install 'no-littering))
 
   ;; (use-package no-littering
   ;;   :ensure t
@@ -481,20 +476,20 @@ This means all variables with external origins in emacs are specified here.
   (use-package bind-key)
   (use-package helpful :ensure t)
 
-      ;;; imports and declarations
+;;; imports and declarations
   (require 'bind-key)                                                              ; if you use any :bind variant
   (load-file (expand-file-name  "custom-modules/custom-path-support.el" user-emacs-directory))
   (require 'elisp-packages)
 
-  ;; ensure the correct org-mode is sourced.
-  ;; install the org package before it is used - otherwise it causes conflict.
-  ;; (add-to-list
-  ;;  'load-path
-  ;;  (expand-file-name "custom-modules/org-support.el" user-emacs-directory))
+;; ensure the correct org-mode is sourced.
+;; install the org package before it is used - otherwise it causes conflict.
+;; (add-to-list
+;;  'load-path
+;;  (expand-file-name "custom-modules/org-support.el" user-emacs-directory))
   (require 'org-support)
 
 
-  ;; ensure tangling functionality is set up with org mode.
+;; ensure tangling functionality is set up with org mode.
   (add-hook
    'org-mode-hook
    (lambda ()
@@ -535,7 +530,7 @@ This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-  ;;; Load current environmental variables
+;;; Load current environmental variables
   (defun load-environment-variables-from-file (file-path)
     "Load environment variables from a file specified by FILE-PATH."
     (with-temp-buffer

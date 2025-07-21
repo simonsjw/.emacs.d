@@ -1,12 +1,12 @@
-;;; early-init.el --- Emacs early initialization for Crafted Emacs  -*- lexical-binding: t; no-byte-compile: t -*-
+;; early-init.el --- Emacs early initialization for Crafted Emacs  -*- lexical-binding: t; no-byte-compile: t -*-
 
 ;;; Commentary:
 ;;  Work that is done before Emacs can be initialised.
 ;;  Mainly setting up the package management process and
 ;;  then setting a few variables needed to initialise the ide.
 
- ;;; Code:
- ;;; Base file paths needed for package management
+;;; Code:
+;;  Base file paths needed for package management
 ;; set paths used in package management before no-littering is set up to
 ;; respect no-littering file paths.
 ;; Use the `MY_NAME` environment variable to set machine specific
@@ -47,10 +47,6 @@
              (expand-file-name "prog-mode/" modules-user-dir))                    ; set up the custom modules which are specific to languages under prog-mode.
        (setq my-filepaths/eln-cache
              (expand-file-name "eln-cache/" no-littering-etc-directory))          ; Set up the eln-cache path.
-       ;; Set up package.el
-    ;;   (setq package-user-dir
-     ;;        (expand-file-name "package/" no-littering-etc-directory))
-  ;;     (setq package-gnupghome-dir (concat package-user-dir "gnupg/"))
        )
       )
 
@@ -83,12 +79,12 @@ Default is 800 kilobytes.  Measured in bytes.")
 (defvar load-prefer-newer nil "loading preference.")
 (setq load-prefer-newer t)
 
- ;;;; UI configuration
+;;;; UI configuration
 ;; Remove some unneeded UI elements (the user can turn back on anything they wish)
 (add-to-list 'default-frame-alist '(background-color . "#1B152D"))
 (add-to-list 'default-frame-alist '(foreground-color . "#EEEEEC"))
 
-;; (setq inhibit-startup-screen t                                                    ; stop the default splash screen
+;; (setq inhibit-startup-screen t                                                 ; stop the default splash screen
 ;;       inhibit-startup-message t
 ;;       inhibit-startup-echo-area-message t)
 ;; (setq initial-scratch-message nil)                                             ; remove the message in the scratch buffer.
@@ -110,6 +106,6 @@ Default is 800 kilobytes.  Measured in bytes.")
 ;;     (add-to-list 'default-frame-alist '(width  . 300))
 
 (provide 'early-init)
- ;;; early-init.el ends here
+;;; early-init.el ends here
                                                                                   ; LocalWords:  gnupg
                                                                                   ; LocalWords:  ACA
