@@ -40,8 +40,8 @@
 (defvar yasnippets-directory-yasmate)
 (defvar yas-snippet-dirs)
 
-;;(defvar bookmark-default-file)
-;;(defvar bmkp-desktop-default-directory)
+;; (defvar bookmark-default-file)
+;; (defvar bmkp-desktop-default-directory)
 
 (defvar dape-default-breakpoints-file)
 
@@ -270,11 +270,16 @@
 
 ;;;; Dape
 ;;   ----
-;; Set the location of the bash adaptor. (note - etc not var)
-(setq dape-adaptor-directory-bash
-      (expand-file-name "dape/adaptors/bash-debug" no-littering-etc-directory))
+;; Set the location of the adapters.
+(setq dape-adapter-dir
+      (expand-file-name "dape/adapters/" no-littering-etc-directory))
 
-(my-on-disk-tools/ensure-directory-exists dape-adaptor-directory-bash)
+;; Set the location of the bash adapter. (note - etc not var)
+(setq dape-adapter-directory-bash
+      (expand-file-name "dape/adapters/bash-debug" no-littering-etc-directory))
+
+
+(my-on-disk-tools/ensure-directory-exists dape-adapter-directory-bash)
 
 ;; Set location of saved breakpoints (note - var not etc)
 (setq dape-default-breakpoints-file
@@ -349,6 +354,10 @@
 ;;       (expand-file-name
 ;;        (concat user-emacs-directory "etc/images/pretty-speedbar-icons/")))
 
+
+;; define a path to the object-memory-tree custom package.
+(setq my-paths/memory-object-tree-folder
+      (concat user-emacs-directory "custom-packages/memory-object-tree/"))
 
 ;; define a path to the q custom package
 (setq my-paths/q-load-balancer-folder
