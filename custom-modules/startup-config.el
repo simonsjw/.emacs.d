@@ -37,79 +37,103 @@
 (defvar my-paths/default-config-file)
 (defvar my-paths/default-log-file)
 
+
 (defun my-ui/create-project-frame (project-path)
   "Create a new frame with a UI-TYPE of IDE.
 The frame has a current working directory PROJECT-PATH."
   (interactive)
-
-
-  ;; set the current directory to the project root.
   (cd project-path)
   (setq default-directory project-path)
+  (message "Project path set to: %s" project-path)
 
-  (let* ((frame-class 'IDE)
-         (frame
-          (make-frame `(
-                        (UI-TYPE . ,frame-class)
-                        (width . 300) (height . 75)
-                        (bottom-divider-width . 5) (right-divider-width . 5)
-                        ))))
-    
-    (with-selected-frame frame
+  (let ((existing-ide-frame
+         (seq-find (lambda (f) (eq (frame-parameter f 'UI-TYPE) 'IDE))
+                   (frame-list))))
+    (if existing-ide-frame
+        (progn
+          (select-frame-set-input-focus existing-ide-frame)
+          (message "IDE frame already exists; focusing it.")
+          existing-ide-frame)
+      (let* ((frame-class 'IDE)
+             (frame (make-frame `((UI-TYPE . ,frame-class)
+                                  (width . 300) (height . 75)
+                                  (bottom-divider-width . 5)
+                                  (right-divider-width . 5)
+                                  (visibility . nil)  ; Make the new frame invisible.
+                                  (no-focus-on-map . t)
+                                  (inhibit-switch-frame . t)))))
+        ;; Load the IDE layout from file
+        (let ((ide-file
+               (expand-file-name "IDE.el" my-paths/desktop-layout-folder)))
+          (if (file-readable-p ide-file)
+              (setq my-window-state/ide
+                    (with-temp-buffer
+                      (insert-file-contents ide-file)
+                      (read (current-buffer))))
+            (error "IDE.el not found or unreadable: %s" ide-file)))
+        (message "IDE layout loaded from IDE.el")
 
-      (setq frame-title-format
-            '((:eval
-               (concat "IDE:  " (buffer-name)))))
-      (progn
-        (get-buffer-create "sr-speedbar")
-        (get-buffer-create "edit")
-        (get-buffer-create "logs")
-        (get-buffer-create "data")
-        (get-buffer-create "config")
-        (get-buffer-create "vc")
-        (get-buffer-create "terminal")
-        (get-buffer-create "edit")
+        (let ((old-frame (selected-frame))
+              (old-buffer (current-buffer)))
+          (unwind-protect
+              (with-selected-frame frame
+                ;; Temporarily allow same-window displays (confined to this invisible frame)
+                (my-window-tools/with-temporary-display-buffer-settings
+                 '((display-buffer-alist (".*" . (display-buffer-same-window)))
+                   (switch-to-buffer-obey-display-actions . nil)
+                   (pop-up-windows . nil)
+                   (pop-up-frames . nil))
+                 (lambda ()
+                   (message "Starting buffer creation in new frame...")
+                   (dashboard-open)
+                   (message "Opened dashboard")
+                   (cell-sheet-create "20" "20")
+                   (message "Opened cell-sheet")
+                   (with-current-buffer (get-buffer-create "*Ibuffer*")
+                     (unless (eq major-mode 'ibuffer-mode)
+                       (ibuffer-mode))
+                     (ibuffer-update nil t)
+                     (goto-char (point-min)))
+                   (message "Opened Ibuffer")
+                   (find-file-noselect my-paths/default-log-file)
+                   (message "Opened logfile")
+                   (vc-dir project-path)
+                   (vc-dir-hide-up-to-date)
+                   (message "Opened vc-dir")
+                   (scratch-buffer)
+                   (message "Opened scratch-buffer")
+                   (vterm nil)
+                   (message "Opened vterm")
+                   (dired project-path)
+                   (message "Opened dired")
+                   (dolist (req-buf '("*Emacs*" "*cell sheet*" "*Ibuffer*" "init.log" "*vc-dir*" "*scratch*"))
+                     (unless (get-buffer req-buf)
+                       (message "Warning: Required buffer %s not created!" req-buf)))
+                   (message "Buffer creation complete")))
 
-        ;; data
-        (cell-sheet-create "20" "20")
+                (condition-case err
+                    (progn
+                      (window-state-put my-window-state/ide (frame-root-window frame))
+                      (let ((tag-list (list 'edit 'data 'config 'logs 'vc 'terminal)))
+                        (my-window-tools/tag-windows-by-list frame tag-list))
+                      (message "Window layout applied to new frame"))
+                  (error (message "Layout apply error: %s | Check missing buffers?" err)))
 
-        ;; config
-        (find-file my-paths/default-config-file)
-        (toggle-truncate-lines 1)
-        (ibuffer)
-        (goto-char (point-min))
+                (setq frame-title-format
+                      '((:eval (concat "IDE: " (buffer-name)))))
+                (global-tab-line-mode))
 
-        ;; vc
-        (project-vc-dir)
+            (when (frame-live-p old-frame)
+              (select-frame old-frame 'norecord))
+            (when (buffer-live-p old-buffer)
+              (set-buffer old-buffer))))
 
-        ;; terminal
-        (project-dired)
-        (scratch-buffer)
-        (vterm)
+        (make-frame-visible frame)
+        (message "Created %s frame with layout applied!" frame-class)
+        frame))))
 
-        ;; logs
-        (find-file my-paths/default-log-file)
-        (view-echo-area-messages)
-        
-        ;; edit
-        (dashboard-open))
 
-      ;; Load `IDE' window-tree from the stored file.
-      (let ((ide-file (expand-file-name "IDE.el" my-paths/desktop-layout-folder)))
-        
-        (setq my-window-state/ide
-              (with-temp-buffer
-                (insert-file-contents ide-file)
-                (read (current-buffer)))))
-      
-      (window-state-put my-window-state/ide (frame-root-window frame))
-      
-      ;; tag the windows in the frame.
-      (let ((tag-list (list  'edit 'data 'config 'logs 'vc 'terminal)))
-        (my-window-tools/tag-windows-by-list frame tag-list))
-      (global-tab-line-mode)
-      (message "Created %s frame!" frame-class)
-      frame)))
+
 
 (defun my-ui/startup-layout()
   "Reset the Emacs session to the default window layout.
@@ -123,17 +147,8 @@ closed as a result of this action."
 (defalias 'IDE-refresh 'my-ui/startup-layout
   "Alias for `my-ui/startup-layout' to refresh the Emacs session layout.")
 
-
 ;; Use the function on startup
 ;;(add-hook 'emacs-startup-hook 'my-ui/startup-layout)
 
-
 (provide 'startup-config)
 ;;; startup-config.el ends here
-
-
-                                                                                  ; LocalWords:  speedbar dired
-                                                                                  ; LocalWords:  magit bufler
-                                                                                  ; LocalWords:  sr vc
-                                                                                  ; LocalWords:  tabline
-
