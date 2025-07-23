@@ -19,17 +19,29 @@
 (require 'ibuffer-vc)
 (require 'nerd-icons)
 
+;; Set explicit column names for headers (ensure all are defined)
+(put 'mark 'ibuffer-column-name "")
+(put 'icon 'ibuffer-column-name "")
+(put 'modified 'ibuffer-column-name "M")
+(put 'vc-status-mini 'ibuffer-column-name "V")
+(put 'read-only 'ibuffer-column-name "R")
+(put 'locked 'ibuffer-column-name "L")
+(put 'name 'ibuffer-column-name "Name")
+(put 'size-h 'ibuffer-column-name "Size")
+(put 'mode+ 'ibuffer-column-name "Mode")
+(put 'vc-status 'ibuffer-column-name "VC status")
+(put 'filename-and-process+vc 'ibuffer-column-name "Filename/Process")
+
 ;;; Code:
 
-
 ;;;; Ibuffer column definitions
-
 
 (defgroup nerd-icons-ibuffer nil
   "Display nerd icons in ibuffer."
   :group 'nerd-icons
   :group 'ibuffer
-  :link '(url-link :tag "Homepage" "https://github.com/seagle0128/nerd-icons-ibuffer"))
+  :link '(url-link :tag "Homepage"
+                   "https://github.com/seagle0128/nerd-icons-ibuffer"))
 
 (defface nerd-icons-ibuffer-icon-face
   '((t (:inherit default)))
@@ -78,11 +90,9 @@ It respects `nerd-icons-color-icons'."
   :group 'nerd-icons-ibuffer
   :type 'boolean)
 
-
-
 ;; For alignment, the size of the name field should be the width of an icon
 
-;; create an icon for the entry from nerd-icons.
+;; Create an icon for the entry from nerd-icons.
 (define-ibuffer-column icon
   (:name "" :inline t)
   (if nerd-icons-ibuffer-icon
@@ -117,48 +127,45 @@ It respects `nerd-icons-color-icons'."
          " "))
     ""))
 
-
 (define-ibuffer-column mode+
   (:name "Mode"
-         :inline t
-         :header-mouse-map ibuffer-mode-header-map
-         :props ('font-lock-face 'nerd-icons-ibuffer-mode-face
-                                 'mouse-face 'highlight
-	                         'keymap ibuffer-mode-name-map
-	                         'help-echo "mouse-2: filter by this mode"))
+   :inline t
+   :header-mouse-map ibuffer-mode-header-map
+   :props ('font-lock-face 'nerd-icons-ibuffer-mode-face
+           'mouse-face 'highlight
+           'keymap ibuffer-mode-name-map
+           'help-echo "mouse-2: filter by this mode"))
   (format-mode-line mode-name nil nil (current-buffer)))
-
 
 (define-ibuffer-column filename-and-process+vc
   (:name "Filename/Process"
-         :props ('font-lock-face 'nerd-icons-ibuffer-file-face)
-         :header-mouse-map ibuffer-filename/process-header-map
-         :summarizer
-         (lambda (strings)
-           (setq strings (delete "" strings))
-           (let ((procs 0)
-	         (files 0))
-             (dolist (string strings)
-               (when (get-text-property 1 'ibuffer-process string)
-                 (setq procs (1+ procs)))
-	       (setq files (1+ files)))
-             (concat (cond ((zerop files) "No files")
-		           ((= 1 files) "1 file")
-		           (t (format "%d files" files)))
-	             ", "
-	             (cond ((zerop procs) "no processes")
-		           ((= 1 procs) "1 process")
-		           (t (format "%d processes" procs)))))))
-  
+   :props ('font-lock-face 'nerd-icons-ibuffer-file-face)
+   :header-mouse-map ibuffer-filename/process-header-map
+   :summarizer
+   (lambda (strings)
+     (setq strings (delete "" strings))
+     (let ((procs 0)
+           (files 0))
+       (dolist (string strings)
+         (when (get-text-property 1 'ibuffer-process string)
+           (setq procs (1+ procs)))
+         (setq files (1+ files)))
+       (concat (cond ((zerop files) "No files")
+                     ((= 1 files) "1 file")
+                     (t (format "%d files" files)))
+               ", "
+               (cond ((zerop procs) "no processes")
+                     ((= 1 procs) "1 process")
+                     (t (format "%d processes" procs)))))))
   (let ((proc (get-buffer-process buffer))
-	(filename (ibuffer-make-column-filename buffer mark)))
+        (filename (ibuffer-make-column-filename buffer mark)))
     (if proc
-	(concat (propertize (format "(%s %s)" proc (process-status proc))
-			    'font-lock-face 'italic
+        (concat (propertize (format "(%s %s)" proc (process-status proc))
+                            'font-lock-face 'italic
                             'ibuffer-process proc)
-		(if (> (length filename) 0)
-		    (format " %s" filename)
-		  ""))
+                (if (> (length filename) 0)
+                    (format " %s" filename)
+                  ""))
       ;; below logic used from ibuffer-vc
       (if buffer-file-name
           (let ((root (cdr (ibuffer-vc-root buffer))))
@@ -167,102 +174,58 @@ It respects `nerd-icons-color-icons'."
               (abbreviate-file-name buffer-file-name)))
         filename))))
 
+;; Make VC status header clickable
+(defvar ibuffer-vc-status-header-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [header-line mouse-1]
+      (lambda () (interactive) (ibuffer-do-sort-by-vc-status)))
+    (define-key map [header-line mouse-2]
+      (lambda () (interactive) (ibuffer-do-sort-by-vc-status)))
+    map)
+  "Keymap for mouse clicks on the 'VC status' header in ibuffer.")
 
+(define-ibuffer-column vc-status
+  (:name "VC status"
+   :header-mouse-map ibuffer-vc-status-header-map)
+  (ibuffer-vc--status-string))
 
-
-;; Replace the `Size' column showing the size of the buffer with a human 
+;; Replace the `Size' column showing the size of the buffer with a human
 ;; readable alternative.
 ;; (see [[https://www.emacswiki.org/emacs/IbufferMode][IbufferMode]])
 (define-ibuffer-column size-h
   (:name " Size"
-         :inline t
-         :summarizer
-         (lambda (column-strings)
-           (let ((total 0))
-             (dolist (string column-strings)
-               (setq total
-                     (+
-                      (float
-                       (my-strings/human-readable-file-sizes-to-bytes string))
-                      total)))
-             (my-strings/bytes-to-human-readable-file-sizes total)))              ; :summarizer nil
-         )
+   :inline t
+   :header-mouse-map ibuffer-size-header-map
+   :summarizer
+   (lambda (column-strings)
+     (let ((total 0))
+       (dolist (string column-strings)
+         (setq total
+               (+
+                (float
+                 (my-strings/human-readable-file-sizes-to-bytes string))
+                total)))
+       (my-strings/bytes-to-human-readable-file-sizes total))))
   (my-strings/bytes-to-human-readable-file-sizes (buffer-size)))
-
 
 ;;; Customization:
 
-;; prefer the more full-featured built-in ibuffer for managing
-;; buffers.
+;; Prefer the more full-featured built-in ibuffer for managing buffers.
 (keymap-global-set "<remap> <list-buffers>" #'ibuffer-list-buffers)
-;; turn on forward and backward movement cycling
+;; Turn on forward and backward movement cycling
 (customize-set-variable 'ibuffer-movement-cycle t)
-;; the number of hours before a buffer is considered "old" by
-;; ibuffer.
+;; The number of hours before a buffer is considered "old" by ibuffer.
 (customize-set-variable 'ibuffer-old-time 24)
-;; Use header-line
+;; Disable native header-line for filters (we'll use it for columns)
 (customize-set-variable 'ibuffer-use-header-line nil)
 
 (custom-set-faces
  '(ibuffer-header-face ((t (:foreground "cyan" :weight bold :underline t)))))
 
-;;;; Use header line for column headers
-
-(defun my-ibuffer/make-header-line ()
-  "Set up a clickable header line for ibuffer.
-Each header cell is clickable and calls `ibuffer-do-sort-by` with the corresponding sort key."
-  (let ((columns '(("  MVRL" . "")
-                   ("Name                          " . "name")
-                   (" Size " . "size")
-                   ("Mode          " . "mode")
-                   ("VC status" . "vc")
-                   ("Path/Process                       " . "Path/Process")))
-        (header ""))
-    (dolist (col columns)
-      (let ((col-name (car col))
-            (sort-key (cdr col)))
-        (setq header
-              (concat header
-                      (propertize (format " %s " col-name)
-                                  'mouse-face 'highlight
-                                  'help-echo (format "Sort by %s" col-name)
-                                  'local-map (let ((map (make-sparse-keymap)))
-                                               (define-key map [header-line mouse-1]
-                                                           `(lambda ()
-                                                              (interactive)
-                                                              (ibuffer-do-sort-by ,sort-key)))
-                                               map))
-                      "|"))))
-    header))
-
-(defun my-ibuffer/insert-header-override ()
-  "Override ibuffer's header insertion to do nothing."
-  nil)
-
-(advice-add 'ibuffer-insert-header :override #'my-ibuffer/insert-header-override)
-
-;; (defun my-ibuffer/setup-header-line ()
-;;   "Configure ibuffer to use a header-line for its column headers."
-;;   ;; Remove the default in-buffer header (if any)
-;;   (setq ibuffer-formats
-;;         '((mark modified read-only " "
-;;                 (name 18 18 :left)
-;;                 " "
-;;                 (size 9 -1 :right)
-;;                 " "
-;;                 (mode 16 16 :left))))
-;;   ;; Set our custom header line.
-;;   (setq header-line-format (my-ibuffer/make-header-line)))
-
-;; (add-hook 'ibuffer-mode-hook 'my-ibuffer-setup-header-line)
-
-
-
 ;; Modify the default ibuffer-formats. Note the two lists allow us to switch
 ;; between two views using the command ibuffer-switch-format.
 (setq ibuffer-formats
       '(
-        
         ;; Default view
         ;; elide is the number of characters to limit the column at.
         ((mark 1)
@@ -275,60 +238,69 @@ Each header cell is clickable and calls `ibuffer-do-sort-by` with the correspond
          (name 30 30 :left :elide)
          " "
          (size-h 10 -1 :right)
-         "  "
+         "   "
          (mode+ 16 16 :left :elide)
          "  "
          (vc-status 10 10 :left)
          " "
-         (filename-and-process+vc 50 50 :left :elide)                             ; filename-and-process (incorporates logic from vc-relative-file.
-         )
+         (filename-and-process+vc 50 50 :left :elide)) ; filename-and-process (incorporates logic from vc-relative-file.
         ;; Summary view
         (mark
          " "
          (name 16 -1)
          " "
-         filename-and-process)
-        ))
-
-;; (setq-local header-line-format
-;;       "    MRVL Name                                 Size  Mode              VC_Status  Filename/Process")
-
-
-;;; Keybindings:
-
-;; (define-key ibuffer-mode-map (kbd "<up>") 'my-ibuffer/previous-line)
-;; (define-key ibuffer-mode-map (kbd "<down>") 'my-ibuffer/next-line)
-;; (define-key ibuffer-mode-map (kbd "<right>") 'my-ibuffer/previous-header)
-;; (define-key ibuffer-mode-map (kbd "<left>") 'my-ibuffer/next-header)
+         filename-and-process)))
 
 ;;; Hooks:
 
-(defun my-ibuffer/ibuffer-mode-config-hook ()
-  "Set up the ibuffer."
-  
-  ;; Define a function to set the font in ibuffer.
-  ;; (face-remap-add-relative 'default  :height 90)
+;; Override to prevent in-buffer column header insertion
+(defun my-ibuffer/insert-header-override (_format)
+  "Override ibuffer's header insertion to do nothing."
+  nil)
 
+(advice-add 'ibuffer-update-title-and-summary :override #'my-ibuffer/insert-header-override)
 
-  ;; apply filter groups by vc-root. 
-  ;; (ibuffer-vc-set-filter-groups-by-vc-root)
-  
-  (setq header-line-format (my-ibuffer/make-header-line))
+;; Build clickable header-line string aligned to formats
+(defun my-ibuffer/build-header-line ()
+  "Create a clickable header-line string based on ibuffer-formats."
+  (let* ((format (or (ibuffer-current-format t)
+                     (error "No current format: %S" ibuffer-formats)))  ; Debug if nil
+         (window-width (window-width))  ; Respect current window width
+         (header "")
+         (total-width 0))
+    (dolist (col format)
+      (if (stringp col)
+          (progn
+            (setq header (concat header col))
+            (cl-incf total-width (length col)))
+        (let* ((sym (if (symbolp col) col (car col)))
+               (rest (if (symbolp col) nil (cdr col)))
+               (min (or (pop rest) 0))
+               (max (or (pop rest) -1))
+               (align (or (pop rest) :left))
+               (elide (or (pop rest) nil))
+               (name (or (get sym 'ibuffer-column-name) (symbol-name sym)))  ; Fallback to symbol
+               (hmap (get sym 'header-mouse-map))
+               (len (length name))
+               (padded (ibuffer-format-column name (max 0 (- min len)) align)))
+          (when hmap
+            (setq padded (propertize padded 'mouse-face 'highlight 'keymap hmap 'help-echo (format "Click to sort by %s" sym))))
+          (setq header (concat header padded))
+          (cl-incf total-width min)))
+      (message "Col: %S, Header so far: %S, Total width: %d" col header total-width))  ; Debug each step
+    ;; Truncate or pad to window width
+    (let ((current-width (string-width header)))
+      (if (> current-width window-width)
+          (substring header 0 window-width)
+        (concat header (make-string (- window-width current-width) ?\s))))))
 
-  ;; sort ibuffer by vc status. 
-  ;;(ibuffer-do-sort-by-vc-status)
+(defun my-ibuffer/ibuffer-config-hook (&rest _)
+  "Set up the ibuffer header after update."
+  (when (eq major-mode 'ibuffer-mode)
+    (setq header-line-format (my-ibuffer/build-header-line))))
 
-
-  )
-;;  - then add it to a hook.
-(add-hook 'ibuffer-mode-hook 'my-ibuffer/ibuffer-mode-config-hook)
-
+;; Advice to run config after ibuffer-update
+(advice-add 'ibuffer-update :after #'my-ibuffer/ibuffer-config-hook)
 
 (provide 'ibuffer-support)
 ;;; ibuffer-support.el ends here
-
-
-                                                                                  ; LocalWords:  ibuffer
-                                                                                  ; LocalWords:  brust
-                                                                                  ; LocalWords:  IbufferMode
-                                                                                  ; LocalWords:  defun
