@@ -219,6 +219,7 @@
       (message "[%s; INFO; %s] %s"
                (format-time-string "%Y-%m-%d %H:%M:%S")
                fn full-msg))))
+
 ;; Advise events to log automatically.
 (defvar log/targets '(message provide use-package defconst defvar)
   "Events to log; customize to enable/disable.")
@@ -296,7 +297,7 @@
           (setq log-content
                 (concat log-content
                         (buffer-string)
-                        "\n\n;; ---------- Separator for " buf " ----------\n\n")))))
+                        "\n\n;; ---------- End of " buf " ----------\n\n")))))
     ;; Write all contents to init.log, overwriting without prompt
     (when (not (string-empty-p log-content))
       (let ((coding-system-for-write 'utf-8)) ; Ensure consistent encoding
@@ -332,7 +333,8 @@
 
   ;; Apply to existing buffers safely
   (log/apply-view-mode-to-buffer "*Messages*")
-  (log/apply-view-mode-to-buffer "*Warnings*"))
+  (log/apply-view-mode-to-buffer "*Warnings*")
+  (add-to-list 'auto-mode-alist '("\\<init\\.log\\'" . logging-view-mode)))
 
 
 
