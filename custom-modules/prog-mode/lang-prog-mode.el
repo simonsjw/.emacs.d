@@ -1,4 +1,4 @@
-;;; lang--prog-mode.el --- parent mode for programming -*- lexical-binding: t; -*-
+;;; lang-prog-mode.el --- parent mode for programming -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 
@@ -87,5 +87,5 @@
 ;; add the programming mode config to prog-mode
 (add-hook 'prog-mode-hook #'my-prog-mode/programming-mode-config-hook)
 
-(provide 'lang--prog-mode)
-;;; lang--prog-mode.el ends here
+(provide 'lang-prog-mode)
+;;; lang-prog-mode.el ends here
