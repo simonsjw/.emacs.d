@@ -51,9 +51,15 @@ The frame has a current working directory PROJECT-PATH."
                    (frame-list))))
     (if existing-ide-frame
         (progn
+          (unless (frame-parameter existing-ide-frame 'custom-window-management)
+            (set-frame-parameter existing-ide-frame 'custom-window-management t)
+            (log/debug :fn 'my-ui/create-project-frame
+                       :msg "Tagged existing IDE frame"
+                       :obj (list :frame existing-ide-frame)))
           (select-frame-set-input-focus existing-ide-frame)
           (message "IDE frame already exists; focusing it.")
           existing-ide-frame)
+      
       (let* ((frame-class 'IDE)
              (frame (make-frame `((UI-TYPE . ,frame-class)
                                   (width . 300) (height . 75)
@@ -61,7 +67,12 @@ The frame has a current working directory PROJECT-PATH."
                                   (right-divider-width . 5)
                                   (visibility . nil)  ; Make the new frame invisible.
                                   (no-focus-on-map . t)
-                                  (inhibit-switch-frame . t)))))
+                                  (inhibit-switch-frame . t)
+                                  (custom-window-management . t)))))
+        (log/debug :fn 'my-ui/create-project-frame
+                   :msg "Created new frame"
+                   :obj (list :frame frame :params (frame-parameters frame)))
+        
         ;; Load the IDE layout from file
         (let ((ide-file
                (expand-file-name "IDE.el" my-paths/desktop-layout-folder)))

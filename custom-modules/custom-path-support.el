@@ -23,6 +23,8 @@
   (warn
    "no-littering-etc-directory is not set. Please ensure it is set in init.el"))
 
+
+(defvar my-paths/eln-cache)
 (defvar epg-gpg-program)
 (defvar custom-info-dir)
 (defvar custom-packages-dir)
@@ -78,7 +80,6 @@
 
 ;;; Packages:
 
-(use-package no-littering)
 
 ;;; Code:
 
@@ -103,26 +104,51 @@
 
 ;;;; Emacs internal Directory
 ;;   -----------------------
+
+;; set up my eln-cache. 
+(setq my-paths/eln-cache
+      (expand-file-name "eln-cache/" no-littering-etc-directory))
+(my-on-disk-tools/ensure-directory-exists my-paths/eln-cache)
+
 ;; set a path to local custom packages.
 (setq custom-packages-dir
       (expand-file-name "custom-packages/" user-emacs-directory))
+
+(add-to-list 'load-path custom-packages-dir)
 
 ;; set a path to local custom modules.
 (setq custom-modules-dir
       (expand-file-name "custom-modules/" user-emacs-directory))
 
+(add-to-list 'load-path custom-modules-dir)
+
 ;; set a path to local custom modules.
 (setq custom-system-tools-dir
       (expand-file-name "custom-modules/system-tools/" user-emacs-directory))
+
+(add-to-list 'load-path custom-system-tools-dir)
 
 ;; set a path to local custom modules.
 (setq custom-prog-mode-dir
       (expand-file-name "custom-modules/prog-mode/" user-emacs-directory))
 
+(add-to-list 'load-path custom-prog-mode-dir)
+
 ;; set a path to custom documentation to be searchable with `info'.
 (setq custom-info-dir
       (expand-file-name "docs" user-emacs-directory))
 
+(add-to-list 'load-path custom-info-dir)
+
+;;(log/debug :fn 'init
+;;           :msg "Current load-path:"
+;;           :obj (format "%s" load-path))
+
+
+;;;; custom.el
+(defvar custom-file nil "Set location of custom.el.")
+(setq custom-file
+      (expand-file-name "custom.el" no-littering-etc-directory))
 
 
 ;;;; GPG application
@@ -203,9 +229,6 @@
   (setq bmkp-bmenu-state-file
         (expand-file-name
          "bmkp/emacs-bmk-bmenu-state.el" no-littering-var-directory))
-  
-  ;; ensure bookmarks are loaded.
-  (bookmark-load bmkp-current-bookmark-file)
   )
 
 
@@ -407,8 +430,8 @@
 (provide 'custom-path-support)
 ;;; custom-path-support.el ends here
 
-                                                                                  ; LocalWords:  pws prepl systemd
-                                                                                  ; LocalWords:  recentf
-                                                                                  ; LocalWords:  loadbalancer
-                                                                                  ; LocalWords:  Dape emacs init
-                                                                                  ; LocalWords:  bmk
+;; LocalWords:  pws prepl systemd
+;; LocalWords:  recentf
+;; LocalWords:  loadbalancer
+;; LocalWords:  Dape emacs init
+;; LocalWords:  bmk

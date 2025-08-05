@@ -4,7 +4,8 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(bmkp-last-as-first-bookmark-file "~/.emacs.d/var/INFODYNAMICS/bmkp/bookmark-default.bmk")
+ '(bmkp-last-as-first-bookmark-file
+   "/home/simon/.emacs.d/var/INFODYNAMICS/bmkp/bookmark-default.bmk")
  '(bookmark-save-flag 1)
  '(icon-preference '(symbol image text emoji))
  '(outline-minor-mode-cycle t)
@@ -47,6 +48,7 @@
  '(pretty-speedbar-page '(""))
  '(pretty-speedbar-tag '(""))
  '(pretty-speedbar-tags '(""))
+ '(project-vc-name "")
  '(safe-local-variable-values '((eval olivetti-set-width 160)))
  '(semantic-sb-info-format-tag-function 'semantic-format-tag-short-doc)
  '(speedbar-add-supported-extension

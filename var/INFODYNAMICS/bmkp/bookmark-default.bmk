@@ -95,7 +95,7 @@
  (filename . "/home/simon/.emacs.d/custom-modules/") (position . 1)
  (created 26106 34677 977601 717000))
 ("conf.org" (tags "emacs") (end-position . 1)
- (time 26108 47564 342289 588000) (visits . 1)
+ (time 26763 24956 697809 530000) (visits . 2)
  (filename . "/home/simon/.emacs.d/conf.org") (position . 1)
  (created 26103 36582 373264 556000))
 ("init.log" (tags "emacs") (filename . "~/.emacs.d/init.log")
