@@ -41,7 +41,7 @@
   :group 'logging-view)
 
 (defface logging-view-logtype-fatal-face
-  `((t (:foreground ,info-theme-flat-red :weight bold :underline t)))  ; New for FATAL/EMERGENCY
+  `((t (:foreground ,info-theme-flat-red :weight bold :underline t)))
   "Face for FATAL/EMERGENCY log type."
   :group 'logging-view)
 
@@ -68,12 +68,12 @@
   (let* ((entry-regex
           (concat
            "^[^[]*\\[\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\); " ; any characters before the first `[' are ignored. This covers for the blocks added by log-view-mode. 
-           "\\(INFO\\|:emergency\\|:error\\|:warning\\|:debug\\); "
+           "\\(INFO\\|:emergency\\|:error\\|:warning\\|:debug\\); "                                         ;
            "\\([^\]]+\\)] "
-           "\\([^;].*\\|;[^ ].*|; [^O].*\\|; O[^b].*\\|; Ob[^j].*|; Obj[^:].*\\); "
+           "\\([^;].*\\|;[^ ].*|; [^O].*\\|; O[^b].*\\|; Ob[^j].*|; Obj[^:].*\\); " ;
            "\\(Obj: .*\\)")))
     `((,entry-regex
-       (1 'logging-view-timestamp-face)                                          ; timestamp
+       (1 'logging-view-timestamp-face)                                           ; timestamp
        (2 (cond                                                                   ; log level
            ((string-equal (match-string 2) "INFO")
             'logging-view-logtype-info-face)
@@ -85,9 +85,9 @@
             'logging-view-logtype-error-face)
            ((string-equal (match-string 2) ":debug")
             'logging-view-logtype-debug-face)))
-       (3 'logging-view-location-face)                                           ; Origin
-       (4 'logging-view-message-face prepend)                                    ; log message
-       (5 'logging-view-obj-face prepend)))))                                    ; Any payload.
+       (3 'logging-view-location-face)                                            ; Origin
+       (4 'logging-view-message-face prepend)                                     ; log message
+       (5 'logging-view-obj-face prepend)))))                                     ; Any payload.
 
 ;; Buffer-local variables for filters and overlays (unchanged)
 (defvar-local logging-view-active-filters (make-hash-table :test 'equal)
@@ -115,7 +115,7 @@
     (goto-char (point-min))
     (let
         ((start-regex
-          "^\\[[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}; \\(INFO\\|:emergency\\|:error\\|:warning\\|:debug\\);"))
+          "^\\[[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}; \\(INFO\\|:emergency\\|:error\\|:warning\\|:debug\\);")) ;
       (while (re-search-forward start-regex nil t)
         (let ((entry-start (match-beginning 0))
               (logtype (match-string 1)))
@@ -165,7 +165,7 @@
                         ((string-equal logtype ":error")
                          'logging-view-logtype-error-face)
                         ((string-equal logtype ":emergency")
-                         'logging-view-logtype-error-face)  ; Reuse error face
+                         'logging-view-logtype-error-face)                        ; Reuse error face
                         ((string-equal logtype ":debug")
                          'logging-view-logtype-debug-face))
                  'help-echo (concat "Toggle " logtype " logs")

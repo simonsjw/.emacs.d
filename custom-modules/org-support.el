@@ -572,7 +572,7 @@ Pipe indicates that DONE and CANCELLED are both final states to be chosen.")
 ;; ----end Org abbreviations----
 
 (defun my-org/open-org-agenda-files ()
-  "Sequentially open each file in `org-agenda-files'."
+  "Sequentially open each file in 'org-agenda-files'."
   (dolist (file org-agenda-files)
     (when (file-exists-p file)                                                    ; Ensure the file exists
       (find-file file)                                                            ; Open the file in the current window
