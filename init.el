@@ -6,247 +6,208 @@
 ;; default, init.el is the target of the tangle as specified by #+PROPERTY in
 ;; line 3.
 
+(defvar no-littering-var-directory (expand-file-name (concat "var/"  envvar/SYSTEM_NAME )
+                      	                             user-emacs-directory)
+  "Define the path `no-littering-var-directory`.")
+(defvar no-littering-etc-directory (expand-file-name (concat "etc/"  envvar/SYSTEM_NAME )
+                      	                             user-emacs-directory)
+  "Define the path `no-littering-etc-directory`.")
+
 ;;; Code:
+(use-package menu-keys-support
+  :ensure nil  ; Local file, not a package
+  :load-path "custom-modules/")
 
-;;;; Set up package.el
-;;(unless (package-installed-p 'use-package)
-;;  (package-refresh-contents)
-;; (package-install 'use-package))
-
-;; (require 'package)
-
-;; first ensure we have the paths defined that we need.
-  (setq envvar/SYSTEM_NAME (getenv "MY_NAME"))
+(use-package lang-prog-mode
+  :ensure nil
+  :load-path "custom-modules/prog-mode/")
 
 
 ;; Step 1: Define no-littering paths early
-  (eval-and-compile
-    (defvar no-littering-var-directory
-      (expand-file-name "data/" user-emacs-directory)
-      "Directory for variable data, set early for compile-angel.")
-    (defvar no-littering-etc-directory
-      (expand-file-name "config/" user-emacs-directory)
-      "Directory for configuration data, set early for compile-angel."))
+;; (eval-and-compile
+;;   (defvar no-littering-var-directory
+;;     (expand-file-name "data/" user-emacs-directory)
+;;     "Directory for variable data, set early for compile-angel.")
+;;   (defvar no-littering-etc-directory
+;;     (expand-file-name "config/" user-emacs-directory)
+;;     "Directory for configuration data, set early for compile-angel."))
 
 ;; Step 2: Function to check and clone no-littering
-  (defun my-ensure-no-littering ()
-    "Check if no-littering exists at ~/.emacs.d/no-littering, clone if missing."
-    (let ((no-littering-dir (expand-file-name "no-littering/" user-emacs-directory))
-          (no-littering-file (expand-file-name "no-littering/no-littering.el" user-emacs-directory))
-          (git-url "https://github.com/emacscollective/no-littering.git"))
-      (if (file-exists-p no-littering-file)
-          (message "no-littering found at %s" no-littering-dir)
-        (progn
-          (message "no-littering not found, attempting to clone...")
-          (if (executable-find "git")
-              (progn
-                (shell-command (format "git clone %s %s" git-url no-littering-dir))
-                (if (file-exists-p no-littering-file)
-                    (message "Successfully cloned no-littering to %s" no-littering-dir)
-                  (error "Failed to clone no-littering: %s not found" no-littering-file)))
-            (error "Git not found on system, cannot clone no-littering"))))
-      ;; Ensure the directory is added to load-path
-      (add-to-list 'load-path no-littering-dir)))
+(defun my-ensure-no-littering ()
+  "Check if no-littering exists at ~/.emacs.d/no-littering, clone if missing."
+  (let ((no-littering-dir (expand-file-name "no-littering/" user-emacs-directory))
+        (no-littering-file (expand-file-name "no-littering/no-littering.el" user-emacs-directory))
+        (git-url "https://github.com/emacscollective/no-littering.git"))
+    (if (file-exists-p no-littering-file)
+        (message "no-littering found at %s" no-littering-dir)
+      (progn
+        (message "no-littering not found, attempting to clone...")
+        (if (executable-find "git")
+            (progn
+              (shell-command (format "git clone %s %s" git-url no-littering-dir))
+              (if (file-exists-p no-littering-file)
+                  (message "Successfully cloned no-littering to %s" no-littering-dir)
+                (error "Failed to clone no-littering: %s not found" no-littering-file)))
+          (error "Git not found on system, cannot clone no-littering"))))
+    ;; Ensure the directory is added to load-path
+    (add-to-list 'load-path no-littering-dir)))
 
 ;; Step 3: Ensure no-littering directories exist
-  (dolist (dir (list no-littering-var-directory no-littering-etc-directory))
-    (unless (file-directory-p dir)
-      (make-directory dir t)))
+(dolist (dir (list no-littering-var-directory no-littering-etc-directory))
+  (unless (file-directory-p dir)
+    (make-directory dir t)))
 
 ;; Step 4: Check and clone no-littering, then compile and load
-  (my-ensure-no-littering)
-  ;; Optionally native compile no-littering after cloning
-  (let ((no-littering-el (expand-file-name "no-littering/no-littering.el" user-emacs-directory)))
-    (when (file-exists-p no-littering-el)
-      (native-compile no-littering-el)))
-  (require 'no-littering)
-  ;; Log directories for debugging
-  (message "no-littering var directory set: %s" no-littering-var-directory)
-  (message "no-littering etc directory set: %s" no-littering-etc-directory)
+(my-ensure-no-littering)
+;; Optionally native compile no-littering after cloning
+(let ((no-littering-el (expand-file-name "no-littering/no-littering.el" user-emacs-directory)))
+  (when (file-exists-p no-littering-el)
+    (native-compile no-littering-el)))
+(require 'no-littering)
+;; Log directories for debugging
+(message "no-littering var directory set: %s" no-littering-var-directory)
+(message "no-littering etc directory set: %s" no-littering-etc-directory)
 
 ;; Step 5: Configure compile-angel
-  (use-package compile-angel
-    :ensure t
-    :demand t
-    :config
-    ;; Set `compile-angel-verbose' to nil to silence compile-angel.
-    (setq compile-angel-verbose t)
-    
-    ;; Enable native-compilation only
-    (setq compile-angel-enable-byte-compile nil)
-    (setq compile-angel-enable-native-compile t)   ; ensure we native compile only. 
+(use-package compile-angel
+  :ensure t
+  :demand t
+  :config
+  ;; Set `compile-angel-verbose' to nil to silence compile-angel.
+  (setq compile-angel-verbose t)
+  
+  ;; Enable native-compilation only
+  (setq compile-angel-enable-byte-compile nil)
+  (setq compile-angel-enable-native-compile t)   ; ensure we native compile only. 
 
-    (compile-angel-on-load-mode)
-    (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode))
+  (compile-angel-on-load-mode)
+  (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode))
 
 ;; Step 6: Load custom-path-support.el
-  (load-file (expand-file-name "custom-modules/custom-path-support.el" user-emacs-directory))
+(load-file (expand-file-name "custom-modules/custom-path-support.el" user-emacs-directory))
 
-  (defvar comp-speed 1 "Set native compilation.")
-  (setq comp-speed 1)
+(defvar comp-speed 1 "Set native compilation.")
+(setq comp-speed 1)
 
 ;; Ensure that quitting only occurs once Emacs finishes native compiling,
 ;; preventing incomplete or leftover compilation files in `/tmp`.
-  (setq native-comp-async-query-on-exit t)
-  (setq confirm-kill-processes t)
+(defvar native-comp-async-query-on-exit t "Ensure that quitting only occurs once Emacs finishes native compiling.")
+(setq native-comp-async-query-on-exit t)
+(setq confirm-kill-processes t)
 
 ;; Non-nil means to native compile packages as part of their installation.
-  (setq package-native-compile t)
+(setq package-native-compile t)
 
-  (setq package-archives
-        '(("gnu" . "https://elpa.gnu.org/packages/")
-          ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-          ("melpa" . "https://melpa.org/packages/")
-          ("elpa-devel" . "https://elpa.gnu.org/devel/")))
+(setq package-archives
+      '(("gnu" . "https://elpa.gnu.org/packages/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+        ("melpa" . "https://melpa.org/packages/")
+        ("elpa-devel" . "https://elpa.gnu.org/devel/")))
 
-  (setq package-archive-priorities
-        '(("gnu" . 2)
-          ("nongnu" . 1)
-          ("melpa" . 0)
-          ("elpa-devel" . 0)))
+(setq package-archive-priorities
+      '(("gnu" . 2)
+        ("nongnu" . 1)
+        ("melpa" . 0)
+        ("elpa-devel" . 0)))
 
-  (require 'use-package)
+(require 'use-package)
 
-  (eval-and-compile
-    (setq
-     use-package-always-ensure t                                                    ; once working - remove this and save elpa package store to git repo.
-     use-package-expand-minimally t))
+(eval-and-compile
+  (setq
+   use-package-always-ensure t                                                    ; once working - remove this and save elpa package store to git repo.
+   use-package-expand-minimally t))
 
-;; Install `no-littering' if necessary
-;; (unless (package-installed-p 'no-littering)
-;;   (unless package-archive-contents
-;;     (package-refresh-contents))
-;;   (package-install 'no-littering))
+;; ensure we can control how minor modes are shown in the modeline. 
+(use-package delight)
 
-  ;; (use-package no-littering
-  ;;   :ensure t
-  ;;   :demand t
-  ;;   :vc (:url "https://github.com/emacscollective/no-littering.git"))
+      ;;;; Set up logging
+(require 'logging-config)
+(require 'system-tools)
 
+;;(when (file-exists-p log/init-log)
+;;(delete-file log/init-log))
 
-  ;; Load `no-littering'
-  ;;(require 'no-littering)
-
-  ;; ensure we can control how minor modes are shown in the modeline. 
-  (use-package delight)
-
-                  ;;;; Set up logging
-  (require 'logging-config)
-  (require 'system-tools)
-
-  (log/debug :fn 'early-init
-             :msg (concat "collected base paths from env vars, defined "
-                          "eln-cache, no-littering-var-directory & "
-                          "no-littering-etc-directory.")
-             :obj user-emacs-directory)
-
-  (when (file-exists-p log/init-log)
-    (delete-file log/init-log))
-
-  (log/debug :fn 'early-init
-             :msg "loaded system tools."
-             :obj user-emacs-directory)
+(log/debug :fn 'init
+           :msg "loaded system tools."
+           :obj user-emacs-directory)
 
 
-  (defvar my/REPO_LIST nil"The path to a list of git projects on the system.")
-  (setq my/REPO_LIST (getenv"REPO_LIST"))
+(defvar my/REPO_LIST nil"The path to a list of git projects on the system.")
+(setq my/REPO_LIST (getenv"REPO_LIST"))
 
-  ;; This is the way we define a custom variable and add it to a group.
-  ;; (defcustom var-name default-value doc-string
-  ;;  :type 'type
-  ;;  :group 'group)
+;; This is the way we define a custom variable and add it to a group.
+;; (defcustom var-name default-value doc-string
+;;  :type 'type
+;;  :group 'group)
 
-  (log/debug :fn 'early-init
-             :msg "no-littering etc directory set"
-             :obj no-littering-etc-directory)
+;; Record the filepath settings in the log.
+(let
+    ((native-comp-eln-load-path-string
+      (mapconcat 'identity native-comp-eln-load-path" ;\n     "))
+     (user-dir-payload
+      "\n   (package-user-dir: %s;")
+     (eln-dir-list-payloads
+      "\n   native-comp-eln-load-path-strings:\n      %s")
+     (eln-dir-list-ending-payload")"))
 
-      ;;;; custom.el
-  (defvar custom-file nil"Set location of custom.el.")
-  (setq custom-file
-        (expand-file-name"custom.el" no-littering-etc-directory))
-
-  (let
-      ((obj
-        (concat"\n   ("
-               (replace-regexp-in-string
-                ";"";\n     "
-                (mapconcat 'identity load-path";")) ")" )))
-    
-    (log/debug :fn 'early-init
-               :msg "Added custom-modules to load-path."
-               :obj obj))
-
-
-  ;; Record the filepath settings in the log.
-  (let
-      ((native-comp-eln-load-path-string
-        (mapconcat 'identity native-comp-eln-load-path" ;\n     "))
-       (user-dir-payload
-        "\n   (package-user-dir: %s;")
-       (eln-dir-list-payloads
-        "\n   native-comp-eln-load-path-strings:\n      %s")
-       (eln-dir-list-ending-payload")"))
-
-    (log/info :fn 'early-init
-              :msg "Set package-user-dir and eln-cache directory."
-              :obj (format
-                    (concat
-                     user-dir-payload
-                     eln-dir-list-payloads eln-dir-list-ending-payload)
-                    package-user-dir
-                    native-comp-eln-load-path-string)))
+  (log/info :fn 'init
+            :msg "Set package-user-dir and eln-cache directory."
+            :obj (format
+                  (concat
+                   user-dir-payload
+                   eln-dir-list-payloads eln-dir-list-ending-payload)
+                  package-user-dir
+                  native-comp-eln-load-path-string)))
 
 
-  (use-package bind-key)
-  (use-package helpful :ensure t)
+(use-package bind-key)
+(use-package helpful :ensure t)
 
-;;; imports and declarations
-  (require 'bind-key)                                                              ; if you use any :bind variant
-  (load-file (expand-file-name  "custom-modules/custom-path-support.el" user-emacs-directory))
-  (require 'elisp-packages)
+    ;;; imports and declarations
+(require 'bind-key)                                                              ; if you use any :bind variant
+(require 'elisp-packages)
 
 ;; ensure the correct org-mode is sourced.
 ;; install the org package before it is used - otherwise it causes conflict.
 ;; (add-to-list
 ;;  'load-path
 ;;  (expand-file-name "custom-modules/org-support.el" user-emacs-directory))
-  (require 'org-support)
-
+(require 'org-support)
 
 ;; ensure tangling functionality is set up with org mode.
-  (add-hook
-   'org-mode-hook
-   (lambda ()
-     (add-hook 'after-save-hook 'org-babel-tangle
-               'run-at-end
-               'only-in-org-mode)))
+(add-hook
+ 'org-mode-hook
+ (lambda ()
+   (add-hook 'after-save-hook 'org-babel-tangle
+             'run-at-end
+             'only-in-org-mode)))
+
+(log/info :fn 'init
+          :msg "----Begin init.el processing----"
+          :obj t)
+
+(let
+    ((native-comp-eln-load-path-string
+      (mapconcat 'identity native-comp-eln-load-path ";\n      "))
+     (eln-cache-fp-payload
+      "\n   custom eln-cache: %s;")
+     (user-dir-payload
+      "\n   (package-user-dir: %s;")
+     (eln-dir-list-payloads
+      "\n   native-comp-eln-load-path-strings:\n      %s")
+     (eln-dir-list-ending-payload ")"))
 
   (log/info :fn 'init
-            :msg "----Begin init.el processing----"
-            :obj t)
-
-  (let
-      ((native-comp-eln-load-path-string
-        (mapconcat 'identity native-comp-eln-load-path ";\n      "))
-       (eln-cache-fp-payload
-        "\n   custom eln-cache: %s;")
-       (user-dir-payload
-        "\n   (package-user-dir: %s;")
-       (eln-dir-list-payloads
-        "\n   native-comp-eln-load-path-strings:\n      %s")
-       (eln-dir-list-ending-payload ")"))
-
-    (log/info :fn 'init
-              :msg "check values of  package-user-dir and eln-cache directory."
-              :obj (format
-                    (concat
-                     user-dir-payload
-                     eln-cache-fp-payload
-                     eln-dir-list-payloads
-                     eln-dir-list-ending-payload)
-                    package-user-dir
-                    my-filepaths/eln-cache
-                    native-comp-eln-load-path-string)))
+            :msg "check values of  package-user-dir and eln-cache directory."
+            :obj (format
+                  (concat
+                   user-dir-payload
+                   eln-cache-fp-payload
+                   eln-dir-list-payloads
+                   eln-dir-list-ending-payload)
+                  package-user-dir
+                  my-paths/eln-cache
+                  native-comp-eln-load-path-string)))
 
 ;;; Load current environmental variables
   (defun load-environment-variables-from-file (file-path)
@@ -272,7 +233,7 @@
 
 ;;; Initial phase.
 (log/info :fn 'init
-          :msg "----Begin loading base functionality.----"
+          :msg "----Begin loading base functionality from custom-defaults-config.----"
           :obj t)
 
 (require 'custom-defaults-config)
@@ -295,7 +256,7 @@
 
 
 (log/info :fn 'init
-          :msg "----Initial configuration complete----"
+          :msg "----Load of base functionality complete----"
           :obj t)
 
 ;; IDE configuration.
@@ -316,6 +277,11 @@
 (require 'modeline-support)
 (require 'spreadsheet-support)
 
+;; activate the logging view. 
+(use-package logging-view-mode
+  :ensure nil  ; Local file, not a package
+  :load-path my-paths/logging-view-mode)
+
 ;; Flymake configuration
 (require 'custom-flymake-config)
 
@@ -335,7 +301,7 @@
 (require 'vc-support)
 
 ;; programming languages
-(require 'lang--prog-mode)
+(require 'lang-prog-mode)
 (require 'lang-bash)
 (require 'lang-matlab)
 (require 'lang-docker)
@@ -369,19 +335,14 @@
 ;; All config and support files are now loaded.
 
 ;; Profile emacs startup
-(defun crafted-startup-example/display-startup-time ()
+(defun my-startup/display-startup-time ()
   "Display the startup time after Emacs is fully initialized."
-  (let*
-      ((init-time (emacs-init-time))
-       (logMessage (format "Crafted Emacs loaded in %s." init-time)))
-    (progn
-      (message (concat "\n" logMessage "\n"))
       (log/info :fn 'init
-                :msg logMessage
-                :obj t))))
+                :msg (format "Emacs loaded in %s." (emacs-init-time))
+                :obj t))
 
 (add-hook
- 'emacs-startup-hook #'crafted-startup-example/display-startup-time)
+ 'emacs-startup-hook #'my-startup/display-startup-time)
 
 ;; start the server if its not already running.
 ;; To shutdown the server use the below: 
