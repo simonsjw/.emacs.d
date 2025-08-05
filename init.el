@@ -6,14 +6,15 @@
 ;; default, init.el is the target of the tangle as specified by #+PROPERTY in
 ;; line 3.
 
-(defvar no-littering-var-directory (expand-file-name (concat "var/"  envvar/SYSTEM_NAME )
-                      	                             user-emacs-directory)
+
+(defvar no-littering-var-directory (expand-file-name (concat "var/"  (getenv "MY_NAME"))
+                        	                     user-emacs-directory)
   "Define the path `no-littering-var-directory`.")
-(defvar no-littering-etc-directory (expand-file-name (concat "etc/"  envvar/SYSTEM_NAME )
-                      	                             user-emacs-directory)
+(defvar no-littering-etc-directory (expand-file-name (concat "etc/"  (getenv "MY_NAME"))
+                        	                     user-emacs-directory)
   "Define the path `no-littering-etc-directory`.")
 
-;;; Code:
+  ;;; Code:
 (use-package menu-keys-support
   :ensure nil  ; Local file, not a package
   :load-path "custom-modules/")
@@ -120,7 +121,7 @@
 ;; ensure we can control how minor modes are shown in the modeline. 
 (use-package delight)
 
-      ;;;; Set up logging
+        ;;;; Set up logging
 (require 'logging-config)
 (require 'system-tools)
 
@@ -163,7 +164,7 @@
 (use-package bind-key)
 (use-package helpful :ensure t)
 
-    ;;; imports and declarations
+      ;;; imports and declarations
 (require 'bind-key)                                                              ; if you use any :bind variant
 (require 'elisp-packages)
 
