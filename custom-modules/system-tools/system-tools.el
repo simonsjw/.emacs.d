@@ -20,6 +20,7 @@
 ;;; Code:
 (defvar ispell-dictionary)
 (defvar org-link-abbrev-alist)
+
 (declare-function speedbar-refresh "speedbar")
 
 (declare-function sr-speedbar-exist-p "sr-speedbar")
@@ -30,45 +31,6 @@
 (declare-function org-link-abbrev-alist "ol")
 
 (declare-function dired-get-file-for-visit "dired")
-
-;;;; Emacs Lisp logging helpers
-
-;; Define an advice function to be used for implicit logging.
-(defun my-log/advice (log-message &rest args)
-  "Log the a LOG-MESSAGE of any function by wrapping with an advice.
-Additional ARGS are captured in a secondary field."
-  (let ((feature (car args)))
-    (log/info :fn 'init
-              :msg (concat log-message (symbol-name feature))
-              :obj (cdr args))))
-
-;; Add the advice to the `provide' function if required by settings
-;; from log/log-table.
-(if (eq  t
-         (plist-get (log/get-log-type-by-index log/type-special-form-provide)
-                    :active))
-    (advice-add
-     'provide
-     :before (lambda (&rest args)
-               (apply 'my-log/advice "provide: " args))))
-
-(if (eq  t
-         (plist-get (log/get-log-type-by-index log/type-function-message)
-                    :active))
-    (advice-add
-     'message
-     :before (lambda (&rest args)
-               (apply 'my-log/advice "message: " args))))
-
-;; Add the advice to the `use-package' function if required by settings
-;; from log/log-table.
-(if (eq  t
-         (plist-get (log/get-log-type-by-index log/type-macro-use-package)
-                    :active))
-    (advice-add
-     'use-package
-     :before (lambda (&rest args)
-               (apply 'my-log/advice "use-package: " args))))
 
 ;;;; Hash table management
 
@@ -504,23 +466,25 @@ buffer."
         (message "Longest line length in the region: %d" max-length))
     max-length))
 
+(defun my-in-buffer-tools/comment-align-buffer (beg end)
+  "Apply `comment-indent' to lines with an inline comment in region or buffer.
 
-(defun my-in-buffer-tools/comment-box-filled (beg end)
-  "Comment out the BEG .. END region, inside a box extended to `fill-column'.
+If no region is active, operates on the entire buffer.
+ARGS:
+  BEG - the beginning of the region (if selected)
+  END - the end of the region (if selected)"
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end))
+                 (list (point-min) (point-max))))
+  (save-excursion
+    (goto-char beg)
+    (while (< (point) end)
+      (let ((limit (line-end-position)))
+        (if (and comment-start
+                 (re-search-forward (regexp-quote comment-start) limit t))
+            (comment-indent)))
+      (forward-line 1))))
 
-Note that `*r' in the interactive expression means read beg end from the current
-buffer and ensure the buffer is writable or else exit.  This differs from `r'
-since `r' does not check to ensure the buffer is writable.  Since we do write
-to buffer here, the check needs to be made."
-  (interactive "*r")
-  (let* ((max-length
-          (my-in-buffer-tools/length-longest-line-in-region beg end))
-         (even-max-length (+ max-length (% max-length 2)))
-         (pad (max 1
-                   (round
-                    (/
-                     (float (- fill-column even-max-length)) 2)))))
-    (comment-box beg end (- pad 2))))
 
 ;; ---end of TOOLS FOR USE IN BUFFER---
 
@@ -660,24 +624,6 @@ USED-PORTS:  the ports that are not available."
       (let ((port (+ start i)))
         (unless (member port used-ports)
           (push port available-ports))))))
-
-;; (defun my-os-tools/set-sr-speedbar-directory-to-file-path (file-path)
-;;   "Set the sr-speedbar directory to FILE-PATH and refresh it.
-;; If `sr-speedbar' is not open, open it first."
-;;   (interactive "DDirectory: ")
-;;   (let ((expanded-path (expand-file-name file-path)))
-;;     (when (file-directory-p expanded-path)
-;;       ;; Open sr-speedbar if it's not already open
-;;       (unless
-;;           (sr-speedbar-exist-p)
-;;         (sr-speedbar-open))
-;;       ;; Set the default directory
-;;       (setq default-directory expanded-path)
-;;       ;; Clear speedbar cache and force refresh
-;;       (speedbar-refresh)
-;;       (sr-speedbar-refresh)
-;;       ;; Display a message indicating the new directory
-;;       (message "sr-speedbar directory set to %s" expanded-path))))
 
 ;; ---end of TOOLS USING THE OS---
 
