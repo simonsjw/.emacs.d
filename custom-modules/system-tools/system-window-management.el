@@ -100,6 +100,7 @@
                ("log-edit-files" . logs)                                          ; Note: Duplicate in original with .vc; using .logs here—resolve if needed
                ("Org Babel Results" . logs)
                ("vc" . logs)
+               ("*Load-History*" .logs)
                ("RE-Builder" . config)
                ("Anaconda" . config)
                ("conf.org" . config)
