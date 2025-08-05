@@ -163,9 +163,8 @@ Define settings for =early-init.el=.
   (defvar user-emacs-directory nil "The Emacs base directory.")
   (setq user-emacs-directory (getenv "USER_EMACS_DIRECTORY"))
 
-  (defvar envvar/SYSTEM_NAME nil
+  (defvar envvar/SYSTEM_NAME (getenv "MY_NAME")
     "The name of the system on which we are currently running Emacs.")
-  (setq envvar/SYSTEM_NAME (getenv "MY_NAME"))
 
   ;; Use the `envvar/SYSTEM_NAME` environment variable to set machine specific
   ;; locations for use with no littering.
@@ -173,7 +172,7 @@ Define settings for =early-init.el=.
   (defvar no-littering-var-directory nil
     "Create the path `no-littering-var-directory`.")
   (setq no-littering-var-directory
-        (expand-file-name (concat "var/"  envvar/SYSTEM_NAME )
+        (expand-file-name (concat "var/" envvar/SYSTEM_NAME )
                         	user-emacs-directory))
 
   (defvar no-littering-etc-directory nil
@@ -274,18 +273,19 @@ This means all variables with external origins in emacs are specified here.
   ;; default, init.el is the target of the tangle as specified by #+PROPERTY in
   ;; line 3.
 
-  (defvar no-littering-var-directory (expand-file-name (concat "var/"  envvar/SYSTEM_NAME )
-                        	                             user-emacs-directory)
+
+  (defvar no-littering-var-directory (expand-file-name (concat "var/"  (getenv "MY_NAME"))
+                          	                     user-emacs-directory)
     "Define the path `no-littering-var-directory`.")
-  (defvar no-littering-etc-directory (expand-file-name (concat "etc/"  envvar/SYSTEM_NAME )
-                        	                             user-emacs-directory)
+  (defvar no-littering-etc-directory (expand-file-name (concat "etc/"  (getenv "MY_NAME"))
+                          	                     user-emacs-directory)
     "Define the path `no-littering-etc-directory`.")
 
-  ;;; Code:
+    ;;; Code:
   (use-package menu-keys-support
     :ensure nil  ; Local file, not a package
     :load-path "custom-modules/")
-  
+
   (use-package lang-prog-mode
     :ensure nil
     :load-path "custom-modules/prog-mode/")
@@ -349,7 +349,11 @@ This means all variables with external origins in emacs are specified here.
     (setq compile-angel-enable-native-compile t)   ; ensure we native compile only. 
 
     (compile-angel-on-load-mode)
-    (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode))
+    (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode)
+    (add-hook 'after-init-hook
+              (lambda ()
+                (when (get-buffer "*Compile-Log*")
+                  (bury-buffer "*Compile-Log*")))))
 
   ;; Step 6: Load custom-path-support.el
   (load-file (expand-file-name "custom-modules/custom-path-support.el" user-emacs-directory))
@@ -388,7 +392,7 @@ This means all variables with external origins in emacs are specified here.
   ;; ensure we can control how minor modes are shown in the modeline. 
   (use-package delight)
 
-        ;;;; Set up logging
+          ;;;; Set up logging
   (require 'logging-config)
   (require 'system-tools)
 
@@ -408,30 +412,11 @@ This means all variables with external origins in emacs are specified here.
   ;;  :type 'type
   ;;  :group 'group)
 
-  ;; Record the filepath settings in the log.
-  (let
-      ((native-comp-eln-load-path-string
-        (mapconcat 'identity native-comp-eln-load-path" ;\n     "))
-       (user-dir-payload
-        "\n   (package-user-dir: %s;")
-       (eln-dir-list-payloads
-        "\n   native-comp-eln-load-path-strings:\n      %s")
-       (eln-dir-list-ending-payload")"))
-
-    (log/info :fn 'init
-              :msg "Set package-user-dir and eln-cache directory."
-              :obj (format
-                    (concat
-                     user-dir-payload
-                     eln-dir-list-payloads eln-dir-list-ending-payload)
-                    package-user-dir
-                    native-comp-eln-load-path-string)))
-
 
   (use-package bind-key)
   (use-package helpful :ensure t)
 
-      ;;; imports and declarations
+        ;;; imports and declarations
   (require 'bind-key)                                                              ; if you use any :bind variant
   (require 'elisp-packages)
 
@@ -454,28 +439,6 @@ This means all variables with external origins in emacs are specified here.
             :msg "----Begin init.el processing----"
             :obj t)
 
-  (let
-      ((native-comp-eln-load-path-string
-        (mapconcat 'identity native-comp-eln-load-path ";\n      "))
-       (eln-cache-fp-payload
-        "\n   custom eln-cache: %s;")
-       (user-dir-payload
-        "\n   (package-user-dir: %s;")
-       (eln-dir-list-payloads
-        "\n   native-comp-eln-load-path-strings:\n      %s")
-       (eln-dir-list-ending-payload ")"))
-
-    (log/info :fn 'init
-              :msg "check values of  package-user-dir and eln-cache directory."
-              :obj (format
-                    (concat
-                     user-dir-payload
-                     eln-cache-fp-payload
-                     eln-dir-list-payloads
-                     eln-dir-list-ending-payload)
-                    package-user-dir
-                    my-paths/eln-cache
-                    native-comp-eln-load-path-string)))
 
 #+end_src
 
