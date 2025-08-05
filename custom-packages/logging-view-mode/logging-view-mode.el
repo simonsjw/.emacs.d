@@ -21,7 +21,7 @@
   :group 'logging-view)
 
 (defface logging-view-logtype-info-face
-  `((t (:foreground ,info-theme-faded-lime :weight bold)))
+  `((t (:foreground ,info-theme-bold-code-green :weight bold)))
   "Face for INFO log type."
   :group 'logging-view)
 
@@ -46,7 +46,7 @@
   :group 'logging-view)
 
 (defface logging-view-location-face
-  `((t (:foreground ,info-theme-magenta)))
+  `((t (:foreground ,info-theme-faded-lime)))
   "Face for log location/origin."
   :group 'logging-view)
 
@@ -56,7 +56,7 @@
   :group 'logging-view)
 
 (defface logging-view-obj-face
-  `((t (:foreground ,info-theme-light-orange)))
+  `((t (:foreground ,info-theme-flat-yellow)))
   "Face for log objects."
   :group 'logging-view)
 
@@ -67,35 +67,27 @@
 (defvar logging-view-font-lock-keywords
   (let* ((entry-regex
           (concat
-           "^\\(\\[\\)"
-           "\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\)"
-           "\\(; \\)"
-           "\\(INFO\\|emergency\\|error\\|warning\\|debug\\)"
-           "\\(; \\)"
-           "\\([^\]]+\\)"
-           "\\(]\\) "
-           "\\(\\([^;]*\\)\\|\\(;[^ ]*\\)|\\(; [^O]*\\)\\|\\(; O[^b]*\\)\\|\\(; Ob[^j]*\\)\\)"
-           "\\(.*\\)")))
+           "^[^[]*\\[\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\); " ; any characters before the first `[' are ignored. This covers for the blocks added by log-view-mode. 
+           "\\(INFO\\|:emergency\\|:error\\|:warning\\|:debug\\); "
+           "\\([^\]]+\\)] "
+           "\\([^;].*\\|;[^ ].*|; [^O].*\\|; O[^b].*\\|; Ob[^j].*|; Obj[^:].*\\); "
+           "\\(Obj: .*\\)")))
     `((,entry-regex
-       (1 nil)                                                                    ; Opening bracket
-       (2 'logging-view-timestamp-face)                                           ; timestamp
-       (3 nil)                                                                    ; semi-colon
-       (4 (cond                                                                   ; log level
-           ((string-equal (match-string 3) "INFO")
+       (1 'logging-view-timestamp-face)                                          ; timestamp
+       (2 (cond                                                                   ; log level
+           ((string-equal (match-string 2) "INFO")
             'logging-view-logtype-info-face)
-           ((string-equal (match-string 3) "warning")
+           ((string-equal (match-string 2) ":warning")
             'logging-view-logtype-warning-face)
-           ((string-equal (match-string 3) "error")
+           ((string-equal (match-string 2) ":error")
             'logging-view-logtype-error-face)
-           ((string-equal (match-string 3) "emergency")
+           ((string-equal (match-string 2) ":emergency")
             'logging-view-logtype-error-face)
-           ((string-equal (match-string 3) "debug")
+           ((string-equal (match-string 2) ":debug")
             'logging-view-logtype-debug-face)))
-       (5 nil)                                                                    ; semi-colon
-       (6 'logging-view-location-face)                                            ; Origin
-       (7 nil)                                                                    ; Close brackets
-       (8 'logging-view-message-face prepend)                                     ; log message
-       (9 'logging-view-obj-face prepend)))))                                    ; Any payload.
+       (3 'logging-view-location-face)                                           ; Origin
+       (4 'logging-view-message-face prepend)                                    ; log message
+       (5 'logging-view-obj-face prepend)))))                                    ; Any payload.
 
 ;; Buffer-local variables for filters and overlays (unchanged)
 (defvar-local logging-view-active-filters (make-hash-table :test 'equal)
@@ -123,7 +115,7 @@
     (goto-char (point-min))
     (let
         ((start-regex
-          "^\\[[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}; \\(INFO\\|emergency\\|error\\|warning\\|debug\\);"))
+          "^\\[[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}; \\(INFO\\|:emergency\\|:error\\|:warning\\|:debug\\);"))
       (while (re-search-forward start-regex nil t)
         (let ((entry-start (match-beginning 0))
               (logtype (match-string 1)))
@@ -148,13 +140,13 @@
   (setq-local mode-line-format
               (list
                " LogView: "
-               (logging-view-create-button "emergency")
+               (logging-view-create-button ":emergency")
                " "
-               (logging-view-create-button "error")
+               (logging-view-create-button ":error")
                " "
-               (logging-view-create-button "warning")
+               (logging-view-create-button ":warning")
                " "
-               (logging-view-create-button "debug")
+               (logging-view-create-button ":debug")
                " "
                (logging-view-create-button "INFO"))))
 
@@ -168,13 +160,13 @@
                  'face (cond
                         ((string-equal logtype "INFO")
                          'logging-view-logtype-info-face)
-                        ((string-equal logtype "warning")
+                        ((string-equal logtype ":warning")
                          'logging-view-logtype-warning-face)
-                        ((string-equal logtype "error")
+                        ((string-equal logtype ":error")
                          'logging-view-logtype-error-face)
-                        ((string-equal logtype "emergency")
+                        ((string-equal logtype ":emergency")
                          'logging-view-logtype-error-face)  ; Reuse error face
-                        ((string-equal logtype "debug")
+                        ((string-equal logtype ":debug")
                          'logging-view-logtype-debug-face))
                  'help-echo (concat "Toggle " logtype " logs")
                  'mouse-face 'mode-line-highlight
@@ -195,7 +187,7 @@
   "Initialize the mode line with filter buttons."
   (logging-view-update-modeline))
 
-;; Handle buffer changes (unchanged)
+;; Handle buffer changes
 (defun logging-view-after-change-function (beg end len)
   "Function to handle buffer changes and update overlays."
   (logging-view-apply-filters))
@@ -218,7 +210,7 @@
   (logging-view-apply-filters)
   (add-hook 'after-change-functions #'logging-view-after-change-function nil t))
 
-;; Clean up (unchanged)
+;; Clean up
 (defun logging-view-exit-mode ()
   "Clean up overlays and hooks when exiting `logging-view-mode`."
   (remove-overlays (point-min) (point-max) 'logging-view t)
