@@ -34,18 +34,25 @@
 (defvar auctex-latexmk-inherit-TeX-PDF-mode)
 (defvar bibtex-dialect)
 
-(declare-function flyspell-mode-on "flyspell")
-(declare-function auto-fill-mode "simple")
 (declare-function LaTeX-math-mode "tex")
 (declare-function TeX-source-correlate-mode "tex")
-(declare-function yas-minor-mode-on "yasnippet")
-(declare-function conditionally-turn-on-pandoc "pandoc-mode")
 (declare-function TeX-revert-document-buffer "tex")
+(declare-function TeX-run-style-hooks "tex")
+(declare-function TeX-add-to-alist "tex")
+(declare-function TeX-add-style-hook "tex")
+
+(declare-function conditionally-turn-on-pandoc "pandoc-mode")
 (declare-function pdf-tools-install "pdf-tools")
 (declare-function auctex-latexmk-setup "auctex")
+(declare-function citar-embark-mode "citar-embark")
+
+(declare-function flyspell-mode-on "flyspell")
+(declare-function auto-fill-mode "simple")
+(declare-function yas-minor-mode-on "yasnippet")
+
 
 (use-package markdown-mode)                                                       ; Markdown support
-(use-package flymake-markdownlint)                                                ; lint markdown in flymake if markdownlint-cli is installed. 
+(use-package flymake-markdownlint)                                                ; lint markdown in flymake if markdownlint-cli is installed.
 (use-package pandoc-mode)
 (use-package olivetti)
 
@@ -80,14 +87,14 @@
 (use-package citar
   :custom
   (citar-bibliography (list (getenv "BIB_HOME")))                                 ; Wrap in `list` to ensure it's a list
-  :delight                                                                        ; hide from modeline. 
+  :delight                                                                        ; hide from modeline.
   :hook
   (LaTeX-mode . citar-capf-setup)
   (org-mode . citar-capf-setup))
 
 (use-package citar-embark
   :after citar embark
-  :delight                                                                        ; hide from modeline. 
+  :delight                                                                        ; hide from modeline.
   :no-require
   :config (citar-embark-mode))
 
@@ -108,8 +115,8 @@ function twice with different settings will not do what you
 think.  For example, if you wanted to use spaces instead of tabs
 globally except for in Makefiles, doing the following won't work:
 
-;; turns on global-whitespace-mode to use spaces instead of tabs
-(crafted-writing-configure-whitespace nil t)
+turns on `global-whitespace-mode' to use spaces instead of tabs:
+  (crafted-writing-configure-whitespace nil t)
 
 ;; overwrites the above to turn to use tabs instead of spaces,
 ;; does not turn off global-whitespace-mode, adds a hook to
@@ -192,7 +199,7 @@ Example usage:
   ;; turn on flyspell.
   (flyspell-mode-on)
 
-  ;; Point latex at the current directory. 
+  ;; Point latex at the current directory.
 
   ;; Delay Corfu drop-downs.
   (customize-set-variable 'corfu-auto-delay 0.25)
@@ -209,9 +216,10 @@ Example usage:
         reftex-plug-into-AUCTeX t
         ;; Set output directory for latexmk or other compilers
         TeX-output-dir (file-name-directory (buffer-file-name))
-        TeX-command-extra-options
-        (concat "-cd -output-directory="
-                (file-name-directory (buffer-file-name))))
+        ;; TeX-command-extra-options                                           ; redundant-
+        ;; (concat "-cd -output-directory="
+        ;;         (file-name-directory (buffer-file-name)))
+        )
 
   ;; Automatically refresh the PDF buffer after compilation to keep it up-to-date.
   (add-hook
@@ -238,7 +246,7 @@ Example usage:
   ;; (add-to-list 'LaTeX-indent-environment-list '("tikzpicture" current-indentation))
   (dolist (env '("lstlisting" "tikzcd" "tikzpicture"))
     (add-to-list
-     'LaTeX-indent-environment-list (cons env 'current-indentation)))
+     'LaTeX-indent-environment-list (list env 'current-indentation)))
 
   ;; Verbatim environments
   ;; Define `verbatim` environments to prevent LaTeX from auto-formatting text.
@@ -283,6 +291,7 @@ Example usage:
           bibtex-dialect 'biblatex))
   ;; when pdf-tools is loaded, apply settings.
   (with-eval-after-load 'pdf-tools
+    (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
     (setq-default pdf-view-display-size 'fit-width))
   )
 
@@ -297,4 +306,6 @@ Example usage:
 ;;; writing-config.el ends here
 
 
-                                                                                  ; LocalWords:  pandoc citar whitespace tex lstinline TikZ lstlisting LatexMk etal executables tikzpicture makefile Biber delims auctex yasnippet
+;; LocalWords: pandoc citar whitespace tex lstinline TikZ lstlisting LatexMk
+;; LocalWords: etal executables tikzpicture makefile Biber delims auctex
+;; LocalWords: yasnippet
