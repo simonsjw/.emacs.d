@@ -668,22 +668,6 @@ Pipe indicates that DONE and CANCELLED are both final states to be chosen.")
 ;;; org-support.el ends here
 
 
-                                                                                  ; LocalWords:  filenameing
-                                                                                  ; LocalWords:  Biber
-                                                                                  ; LocalWords:  luatex
-                                                                                  ; LocalWords:  LaTeX imagemagick
-                                                                                  ; LocalWords:  dvipng
-                                                                                  ; LocalWords:  png
-                                                                                  ; LocalWords:  dvi
-                                                                                  ; LocalWords:  pdf
-                                                                                  ; LocalWords:  dvipsnames
-                                                                                  ; LocalWords:  xcolor
-                                                                                  ; LocalWords:  LuaLaTeX
-                                                                                  ; LocalWords:  amssymb
-                                                                                  ; LocalWords:  amsfonts
-                                                                                  ; LocalWords:  amsmath
-                                                                                  ; LocalWords:  fontspec
-                                                                                  ; LocalWords:  color
-                                                                                  ; LocalWords:  graphicx
-                                                                                  ; LocalWords:  usepackage documentclass
-                                                                                  ; LocalWords:  setmainfont
+;; LocalWords:  filenameing Biber luatex LaTeX imagemagick dvipng png dvi pdf
+;; LocalWords:  dvipsnames xcolor LuaLaTeX amssymb amsfonts amsmath fontspec
+;; LocalWords:  color graphicx usepackage documentclass setmainfont
