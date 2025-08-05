@@ -287,7 +287,8 @@ It respects `nerd-icons-color-icons'."
             (setq padded (propertize padded 'mouse-face 'highlight 'keymap hmap 'help-echo (format "Click to sort by %s" sym))))
           (setq header (concat header padded))
           (cl-incf total-width min)))
-      (message "Col: %S, Header so far: %S, Total width: %d" col header total-width))  ; Debug each step
+      ;;(message "Col: %S, Header so far: %S, Total width: %d" col header total-width); Debug each step
+      )  
     ;; Truncate or pad to window width
     (let ((current-width (string-width header)))
       (if (> current-width window-width)
