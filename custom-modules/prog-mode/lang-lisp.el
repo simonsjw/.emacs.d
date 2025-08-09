@@ -224,7 +224,7 @@ a message telling you which statement you are at."
     (sly-editing-mode))
 
   (add-hook 'lisp-mode-hook #'my-lang/sly-mode-setup))
-    
+
 
 ;;; Clojure
 (with-eval-after-load "clojure-mode"
@@ -254,4 +254,4 @@ a message telling you which statement you are at."
 (provide 'lang-lisp)
 ;;; lang-lisp.el ends here
 
-                                                                                  ; LocalWords:  codeberg ui
+;; LocalWords:  codeberg ui flycheck clojure
