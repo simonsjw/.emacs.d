@@ -65,7 +65,7 @@
                            ))
     (:names . (("dape-shell" . terminal)
                ("scratch" . terminal)
-               ("MATLAB" . terminal)
+               ("*MATLAB*" . terminal)
                ("Checkdoc Status" . data)                                         ; Note: Appears twice in original; consolidated here
                ("SQL Results" . data)
                ("Backtrace" . data)
@@ -100,7 +100,7 @@
                ("log-edit-files" . logs)                                          ; Note: Duplicate in original with .vc; using .logs here—resolve if needed
                ("Org Babel Results" . logs)
                ("vc" . logs)
-               ("*Load-History*" .logs)
+               ("*Load-History*" . logs)
                ("RE-Builder" . config)
                ("Anaconda" . config)
                ("conf.org" . config)
@@ -214,7 +214,16 @@ the tags will be reused cyclically."
 
 
 (defconst my-window-tools/default-tag 'edit
-  "The default tag assigned to non-system buffers when no tag is found.")
+  "The default tag assigned to non-system buffers when no tag is found.
+
+This constant defines the fallback category for windows when a specific
+category match is not available.  In an IDE-like setup, this ensures that
+uncategorized or unmatched buffers are directed to a central 'edit' window,
+preventing unnecessary pop-ups and maintaining frame organization.
+
+Historical context: In Emacs window management, defaults like this help
+mitigate issues from older versions (pre-27) where display actions often
+led to fragmented frames without explicit fall-backs.")
 
 (defconst my-window-tools/tag-list '(edit logs config data terminal vc)
   "The tags assigned to non-system buffers.")
@@ -251,19 +260,42 @@ speedbar when the window that contains it no longer exists."
  'delete-frame-functions #'my-window-tools/close-sr-speedbar-on-frame-delete)
 
 
-
 (defun my-window-tools/get-window-for-window-category (target-window-category frame)
   "Retrieve the first window in FRAME associated with TARGET-WINDOW-CATEGORY.
 If no window is found, check for a window with `my-window-tools/default-tag'.
-Return the first matching window, or nil if none are found."
+Return the first matching window, or nil if none are found.
+
+TARGET-WINDOW-CATEGORY is the symbol (e.g., 'edit, 'logs) to search for.
+FRAME is the frame to search within (defaults to selected if nil).
+
+This function supports the principle of falling back to a default window
+to avoid popping up new ones unnecessarily, aligning with IDE workflows
+where buffers should consolidate into tagged windows.  It iterates over
+windows excluding minibuffers.
+
+Edge cases:
+- If multiple windows match, returns the first (order from `window-list`).
+- If no 'default-tag' window, returns nil (caller should handle pop-up).
+- Logs debug info for traceability in custom management frames.
+
+Returns: Window object or nil."
   (let ((windows (window-list frame 'no-minibuffer)))
+    ;; First, search for exact category match to prioritize specific tagging.
     (or (cl-loop for win in windows
-                 when (equal target-tag (window-parameter win 'tag))
+                 when (equal target-window-category
+                             (window-parameter win 'window-category))
                  return win)
+        ;; Fallback to default tag if no exact match, preventing pop-ups.
         (cl-loop for win in windows
                  when (equal my-window-tools/default-tag
                              (window-parameter win 'window-category))
-                 return win))))
+                 return win)
+        ;; If neither found, return nil and log for debugging.
+        (progn
+          (log/debug :fn 'my-window-tools/get-window-for-window-category
+                     :msg "No matching or default window found"
+                     :obj (list :category target-window-category :frame frame))
+          nil))))
 
 
 ;; ----------------------------------------------------------------------------
@@ -328,7 +360,6 @@ Utility function shows the tag associated with the current selected window."
 
   (interactive (list last-nonmenu-event))
   (mouse-minibuffer-check click)
-  ;;(interactive "e")  ; The 'e' here tells Emacs this function expects a mouse event.
   (let ((window (posn-window (event-start click))))
     (when (and (windowp window)                                                   ; Checks if the target is a window.
                (y-or-n-p "Are you sure you want to delete this window?"))
@@ -403,33 +434,119 @@ Utility function shows the tag associated with the current selected window."
   "Advice to inject a category into DISPLAY-BUFFER's action alist.
 This function wraps the original DISPLAY-BUFFER function to assign a category
 based on the buffer's name or mode, but only if the frame is tagged for custom
-window management.
+window management (i.e., IDE frames with 'custom-window-management t).
+
+For non-IDE frames, skips custom logic entirely, falling back to Emacs' default
+display behavior (e.g., 'other-window' opens in another window in the current
+frame without category injection or tagged reuse).
 
 ORIG-FUN is the original `display-buffer' function.
 BUFFER-OR-NAME is either a buffer object or its name.
 ACTION is an optional action alist or function specification.
-FRAME is the target frame, defaulting to the selected frame if nil."
-  (let* ((effective-frame (or frame (selected-frame)))                            ; Use selected frame if none specified
+FRAME is the target frame, defaulting to the selected frame if nil.
+
+Returns: The result of the original or modified `display-buffer' call
+ (typically a window).
+
+Edge cases:
+- If FRAME is nil, uses `selected-frame' — ensuring locality to the active
+  frame.
+- Non-IDE: No category determination or injection; pure default (e.g., for
+  rgrep links, behaves like `find-file-other-window').
+- IDE: Injects category from `my-buffer-tools/category-map', enabling tagged
+  window reuse.
+- Logs skips and assignments for debug.
+
+Historical context: Advices like this became common post-Emacs 24 to customize
+displays without globals, but frame checks (added in evolutions like Emacs 27)
+prevent interference in multi-frame setups, avoiding issues seen in early CEDET
+or ECB where defaults broke across frames."
+  (let* ((effective-frame (or frame (selected-frame)))                            ; Ensure locality to active frame if not specified.
          (use-custom
-          (frame-parameter effective-frame 'custom-window-management)))           ; Check if custom management is enabled
+          (frame-parameter effective-frame 'custom-window-management)))           ; Check for IDE tag.
     (if (not use-custom)
-        ;; Skip custom logic for non-IDE frames, log and apply original function
+        ;; Non-IDE: Skip all custom logic, apply original display-buffer with
+        ;; unmodified action.
+        ;; This ensures default behavior, e.g., 'other-window' reuses or splits
+        ;; in current frame.
         (progn
           (log/debug :fn 'my-assign-category-advice
-                     :msg "Non-IDE frame detected, skipping category assignment"
-                     :obj (list :buffer buffer-or-name :frame effective-frame))
+                     :msg "Non-IDE frame detected, skipping category assignment and using default display"
+                     :obj (list :buffer buffer-or-name
+                                :frame effective-frame :action action))
           (apply orig-fun buffer-or-name action frame))
-      ;; For IDE frames, proceed with custom category assignment
-      (let* ((buffer (get-buffer buffer-or-name))                                 ; Get or create the buffer
-             (category (when buffer (my-determine-buffer-category buffer))))      ; Determine category
+      ;; IDE: Proceed with category assignment and modified action.
+      (let* ((buffer (get-buffer buffer-or-name))                                 ; Get buffer for category check.
+             (category (when buffer (my-determine-buffer-category buffer))))      ; Use map for category.
         (when category
           (log/debug :fn 'my-assign-category-advice
-                     :msg "Assigned category"
-                     :obj (list :category category :buffer buffer-or-name
-                                :action action)))
-        ;; Process action and apply with the category
+                     :msg "IDE frame: Assigned category"
+                     :obj (list :category category
+                                :buffer buffer-or-name :action action)))
+        ;; Process action with category injection.
         (let ((new-action (my-process-display-action action category)))
           (apply orig-fun buffer-or-name (or new-action action) frame))))))
+
+
+(defun display-buffer-in-category-window (buffer alist)
+  "Display BUFFER in a window according to its category from ALIST.
+
+The 'window-category' of the window matches a category in ALIST.
+If no exact match is found, fall back to the default 'edit' window.
+If neither is available, pop up a new window and tag it with the category.
+
+BUFFER is the buffer to display.
+ALIST is the action alist, expected to contain '(category . SYMBOL).
+
+This function enforces IDE-like behavior: Prioritize reuse of tagged windows
+to maintain frame structure.  It uses
+`my-window-tools/get-window-for-window-category` for the search and fallback
+logic.
+
+Returns: The window where BUFFER is displayed, or nil on failure.
+
+Edge cases:
+- If category is nil, logs and falls back to pop-up (though advice should
+  prevent this).
+- Dedicated windows are skipped to avoid conflicts.
+- New pop-up windows inherit the category for future reuse.
+- Debug logs trace the decision process for troubleshooting.
+
+Historical context: Custom display functions like this extend Emacs' base
+`display-buffer` API (evolved since Emacs 24) to support tagged windows,
+common in packages like `perspective` or `tab-bar`.  Without fallback, it
+risks frame clutter, as seen in early ECB implementations."
+  (let* ((category (cdr (assq 'category alist)))
+         (frame (selected-frame))  ; Use current frame for IDE consistency.
+         (target-window
+          (when category
+            (my-window-tools/get-window-for-window-category category frame))))
+    (log/debug :fn 'display-buffer-in-category-window
+               :msg "Searching for window"
+               :obj (list :category category
+                          :buffer (buffer-name buffer) :frame frame))
+    (if target-window
+        (progn
+          ;; Reuse found window (exact or default fallback).
+          (log/debug :fn 'display-buffer-in-category-window
+                     :msg "Found matching or default window"
+                     :obj (list :window target-window
+                                :category (window-parameter
+                                           target-window 'window-category)))
+          (set-window-buffer target-window buffer)
+          target-window)
+      ;; No match or default: Fallback to pop-up and tag the new window.
+      (log/debug :fn 'display-buffer-in-category-window
+                 :msg "No matching or default window found, falling back to pop-up"
+                 :obj (list :category category :frame frame))
+      (let ((new-window (display-buffer-pop-up-window buffer alist)))             ; Alternative: display-buffer-in-child-frame if preferred.
+        (when new-window
+          (set-window-parameter new-window 'window-category category)
+          (log/debug :fn 'display-buffer-in-category-window
+                     :msg "Created and tagged new window"
+                     :obj (list :new-window new-window :category category)))
+        new-window))))
+
 
 (defun my-determine-buffer-category (buffer)
   "Determine the category for BUFFER based on its properties.
@@ -494,41 +611,107 @@ Logs the decision process at debug level."
                        :obj (list :buffer-name buf-name))
             nil)))))))                                                            ; Default to nil if no match
 
+
 (defun my-process-display-action (action category)
   "Process the DISPLAY-BUFFER action and inject the CATEGORY if applicable.
 Returns a new action structure or the original action if no change is needed.
 ACTION is the original action (function list, alist, or special value like t).
-CATEGORY is the buffer category to inject (e.g., 'logs)."
-  ;; Extract the functions and alist from the action
-  (let* ((action-functions
-          (cond
-           ((consp action)
-            (let ((car-action (car action)))
-              (if (listp car-action)
-                  car-action                                                      ; Already a list of functions; e.g., action = ((display-buffer-reuse-window display-buffer-pop-up-window) . ((inhibit-same-window . t)))
-                (list car-action))))                                              ; Single function: wrap in list; e.g., action = (display-buffer-pop-up-window . ((inhibit-same-window . t)))
-           (t nil)))                                                              ; No functions if not a cons; e.g., action = nil or action = t or action = ((inhibit-same-window . t)) (pure alist)
-         (action-alist
-          (cond
-           ((consp action) (cdr action))                                          ; Use cdr if action is a cons; e.g., action = ((display-buffer-reuse-window) . ((window-height . 0.3))), returns ((window-height . 0.3))
-           ((eq action t) nil)                                                    ; Special case: Treat t as empty alist; e.g., action = t (default display, often from find-file-other-window), returns nil to start fresh
-           (action action)                                                        ; Use action as alist if present; e.g., action = ((inhibit-same-window . t)), returns the alist directly (non-cons but assumed alist)
-           (t nil)))                                                              ; Default to empty alist if invalid; e.g., action = some-symbol (rare error case), returns nil to avoid crashes
-         (new-alist (if (and category (not (assq 'category action-alist)))
-                        (cons `(category . ,category) action-alist)               ; Inject category; e.g., if category = 'edit and action-alist = ((window-height . 0.3)), returns ((category . edit) (window-height . 0.3))
-                      action-alist)))                                             ; No change if category exists; e.g., if already ((category . logs)), returns unchanged
-    ;; Construct new action
-    (if action-functions
-        (cons action-functions new-alist)                                         ; (functions-list . alist); e.g., returns ((display-buffer-reuse-window) . ((category . edit)))
-      (if new-alist
-          (cons nil new-alist)                                                    ; (nil . alist) to force pure alist with default functions; e.g., returns (nil . ((category . edit)))
-        nil))))                                                                   ; No action if empty; e.g., if no category and empty alist, returns nil to use Emacs defaults
+CATEGORY is the buffer category to inject (e.g., 'logs).
+
+This function handles various forms of ACTION:
+- Nil or t: Treated as no specific functions or alist.
+- Symbol: If it's a function (e.g., 'display-buffer-same-window'), wrap it as
+  a single-function list.
+- Cons: If car is a symbol/function, treat as (function . alist); if car is a
+  list, treat as (function-list . alist); if not, assume pure alist.
+Special symbols like 'other-window' are translated to standard actions
+  (e.g., '(display-buffer-use-some-window (inhibit-same-window . t)))
+  to ensure compatibility across Emacs versions and avoid type errors in alist
+  operations.
+
+The category is injected into the alist only if not already present.  Debugging
+logs are added for traceability.
+
+To prevent errors in Emacs' internal action combination
+ (e.g., 'wrong-type-argument listp SYMBOL' from appending improper lists),
+always reconstruct as (functions . alist), with functions as nil (empty list)
+if absent.  This ensures car is a proper list, avoiding misinterpretation of
+pure alists as function lists.
+
+Historical context: Emacs' `display-buffer' actions evolved
+ (e.g., post-Emacs 27), shorthands like 'other-window' are often translated in
+`pop-to-buffer', but advices or older versions may pass them directly, leading
+to mismatches.  This robust parsing prevents errors like 'wrong-type-argument
+listp symbol' by ensuring action-alist is always a list or nil.  The explicit
+ (nil . alist) format aligns with best practices in packages like `consult' or
+`embark' to handle alist-only cases without append failures during action
+merging in `display-buffer'."
+  ;; Handle special shorthand symbols early to standardize the action format.
+  ;; This prevents downstream type errors when symbols are mistakenly treated
+  ;; as alists.
+  (when (eq action 'other-window)
+    (setq action '(display-buffer-use-some-window (inhibit-same-window . t)))
+    (log/debug :fn 'my-process-display-action
+               :msg "Translated 'other-window' to standard action"
+               :obj action))
+  
+  ;; Parse into functions and alist with robust type checks to handle diverse
+  ;; action formats.
+  ;; Ensures action-functions is a list of callable functions or nil, and
+  ;; action-alist is a proper alist or nil.
+  (let ((action-functions
+         (cond
+          ((null action) nil)                                                     ; No action: default to nil functions.
+          ((eq action t) nil)                                                     ; Special t: implies default behavior, no specific functions.
+          ((symbolp action)
+           (when (functionp action) (list action)))                               ; Single symbol: wrap if it's a valid display function.
+          ((consp action)
+           (let ((first (car action)))
+             (cond
+              ((symbolp first)
+               (when (functionp first) (list first)))                             ; (function . alist) form.
+              ((consp first)
+               (when (and (every #'symbolp first)
+                          (every #'functionp first))
+                 first))                                                          ; (function-list . alist) form.
+              (t nil))))                                                          ; Invalid: default to nil.
+          (t nil)))                                                               ; Fallback for unexpected types.
+        (action-alist
+         (cond
+          ((null action) nil)                                                     ; No action: empty alist.
+          ((eq action t) nil)                                                     ; Special t: empty alist.
+          ((symbolp action) nil)                                                  ; Single symbol: no alist.
+          ((consp action)
+           (if (or (symbolp (car action)) (consp (car action)))
+               (cdr action)                                                       ; Extract alist from (functions . alist).
+             action))                                                             ; Pure alist case.
+          (t nil))))                                                              ; Fallback.
+    
+    ;; Inject category if needed and log the processing for debug traceability.
+    ;; This ensures the category is added only once, preserving existing alist
+    ;; entries.
+    (let ((new-alist (if (and category (not (assq 'category action-alist)))
+                         (cons `(category . ,category) action-alist)
+                       action-alist)))
+      (log/debug :fn 'my-process-display-action
+                 :msg "Processed action"
+                 :obj (list :original-action action :category category
+                            :functions action-functions :new-alist new-alist))
+      
+      ;; Reconstruct the final action: Always (functions . alist) if either
+      ;; non-nil, with functions as nil (empty list) if absent.
+      ;; This prevents pure alist returns, avoiding Emacs' append errors on
+      ;; improper lists during action merging.
+      ;; If both nil, return nil for default behavior.
+      (if (or action-functions new-alist)
+          (cons action-functions new-alist)
+        nil))))
 
 (advice-add 'display-buffer :around #'my-assign-category-advice)
 
 
 (defun display-buffer-in-category-window (buffer alist)
-  "Display a BUFFER in a window according to its category,
+  "Display BUFFER in a window according to its category,
 
 The 'window-category' of the window matches a category in ALIST."
   (let* ((category (cdr (assq 'category alist)))
@@ -630,8 +813,5 @@ and 'pop-up-frames'.  The original values are restored afterwards."
 
 ;;; system-window-management.el ends here
 
-;; LocalWords:  Customize vc repl
-;; LocalWords:  elisp
-;; LocalWords:  tabline
-;; LocalWords:  defun
-;; LocalWords:  eldoc
+;; LocalWords:  Customize vc repl alists listp shorthands advices rgrep
+;; LocalWords:  elisp tabline defun eldoc
