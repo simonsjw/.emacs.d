@@ -264,7 +264,7 @@
 
 ;; Display load-history in a buffer.
 (defun log/display-load-history ()
-  "Display load-history in *Load-History* buffer with logging-view-mode."
+  "Display 'load-history' in *Load-History* buffer with 'logging-view-mode'."
   (interactive)
   (let ((buffer (get-buffer-create "*Load-History*")))
     (with-current-buffer buffer
@@ -273,22 +273,35 @@
         (dolist (file-entry load-history)
           (let ((file (car file-entry))
                 (entries (cdr file-entry)))
+            
             (dolist (entry entries)
-              (when (consp entry)
-                (pcase entry
-                  (`(defconst . ,symbol)
-                   (insert (format "[%s; debug; load-history] Defined const %s in %s; Obj: t\n"
-                                   (format-time-string "%Y-%m-%d %H:%M:%S") symbol file)))
-                  (`(defvar . ,symbol)
-                   (insert (format "[%s; debug; load-history] Defined var %s in %s; Obj: t\n"
-                                   (format-time-string "%Y-%m-%d %H:%M:%S") symbol file))))))))
-        (logging-view-mode)
-        (goto-char (point-min)))
-      (pop-to-buffer buffer))))
-  
+              (let ((timestamp (format-time-string "%Y-%m-%d %H:%M:%S")))
+                (cond
+                 ((consp entry)
+                  (let ((key (car entry))
+                        (value (cdr entry)))
+                    (insert (format "[%s; :debug; load-history] Defined %s %s in %s; Obj: t\n"
+                                    timestamp
+                                    (if (symbolp key) (symbol-name key) (prin1-to-string key))
+                                    (if (symbolp value) (symbol-name value) (prin1-to-string value))
+                                    file))))
+                 (t
+                  (insert (format "[%s; :debug; load-history] Used %s without defining in %s; Obj: t\n"
+                                  timestamp
+                                  (prin1-to-string entry)
+                                  file)))
+                 ))))
+          )
+        )
+      (logging-view-mode)
+      (goto-char (point-min))
+      )
+    (pop-to-buffer buffer)))
+
 ;; Save all log buffers to file on exit without prompting
 (defun log/save-all-to-file ()
   "Save contents of *Warnings*, *Messages*, and *Load-History* to init.log, overwriting without prompt."
+  (interactive)
   (let ((log-content ""))
     ;; Collect contents from each buffer if it exists
     (dolist (buf '("*Warnings*" "*Messages*" "*Load-History*"))
