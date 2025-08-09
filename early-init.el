@@ -15,9 +15,8 @@
 (defvar user-emacs-directory nil "The Emacs base directory.")
 (setq user-emacs-directory (getenv "USER_EMACS_DIRECTORY"))
 
-(defvar envvar/SYSTEM_NAME nil
+(defvar envvar/SYSTEM_NAME (getenv "MY_NAME")
   "The name of the system on which we are currently running Emacs.")
-(setq envvar/SYSTEM_NAME (getenv "MY_NAME"))
 
 ;; Use the `envvar/SYSTEM_NAME` environment variable to set machine specific
 ;; locations for use with no littering.
@@ -25,7 +24,7 @@
 (defvar no-littering-var-directory nil
   "Create the path `no-littering-var-directory`.")
 (setq no-littering-var-directory
-      (expand-file-name (concat "var/"  envvar/SYSTEM_NAME )
+      (expand-file-name (concat "var/" envvar/SYSTEM_NAME )
                       	user-emacs-directory))
 
 (defvar no-littering-etc-directory nil

@@ -82,7 +82,11 @@
   (setq compile-angel-enable-native-compile t)   ; ensure we native compile only. 
 
   (compile-angel-on-load-mode)
-  (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode))
+  (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode)
+  (add-hook 'after-init-hook
+            (lambda ()
+              (when (get-buffer "*Compile-Log*")
+                (bury-buffer "*Compile-Log*")))))
 
 ;; Step 6: Load custom-path-support.el
 (load-file (expand-file-name "custom-modules/custom-path-support.el" user-emacs-directory))
@@ -141,25 +145,6 @@
 ;;  :type 'type
 ;;  :group 'group)
 
-;; Record the filepath settings in the log.
-(let
-    ((native-comp-eln-load-path-string
-      (mapconcat 'identity native-comp-eln-load-path" ;\n     "))
-     (user-dir-payload
-      "\n   (package-user-dir: %s;")
-     (eln-dir-list-payloads
-      "\n   native-comp-eln-load-path-strings:\n      %s")
-     (eln-dir-list-ending-payload")"))
-
-  (log/info :fn 'init
-            :msg "Set package-user-dir and eln-cache directory."
-            :obj (format
-                  (concat
-                   user-dir-payload
-                   eln-dir-list-payloads eln-dir-list-ending-payload)
-                  package-user-dir
-                  native-comp-eln-load-path-string)))
-
 
 (use-package bind-key)
 (use-package helpful :ensure t)
@@ -186,29 +171,6 @@
 (log/info :fn 'init
           :msg "----Begin init.el processing----"
           :obj t)
-
-(let
-    ((native-comp-eln-load-path-string
-      (mapconcat 'identity native-comp-eln-load-path ";\n      "))
-     (eln-cache-fp-payload
-      "\n   custom eln-cache: %s;")
-     (user-dir-payload
-      "\n   (package-user-dir: %s;")
-     (eln-dir-list-payloads
-      "\n   native-comp-eln-load-path-strings:\n      %s")
-     (eln-dir-list-ending-payload ")"))
-
-  (log/info :fn 'init
-            :msg "check values of  package-user-dir and eln-cache directory."
-            :obj (format
-                  (concat
-                   user-dir-payload
-                   eln-cache-fp-payload
-                   eln-dir-list-payloads
-                   eln-dir-list-ending-payload)
-                  package-user-dir
-                  my-paths/eln-cache
-                  native-comp-eln-load-path-string)))
 
 ;;; Load current environmental variables
   (defun load-environment-variables-from-file (file-path)
