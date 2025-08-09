@@ -194,7 +194,7 @@ interactively with prompts for user input.
 - PROJECT-NAME (optional): A string specifying the name of the new project
   directory.  If not provided, the user is prompted to enter it.
 
-### Behavior:
+### Behaviour:
 1. Extracts the specified template from the archive to PARENT-DIR/PROJECT-NAME.
 2. Initializes a Git repository in the new project directory.
 3. Provides feedback via messages or errors if something goes wrong.
