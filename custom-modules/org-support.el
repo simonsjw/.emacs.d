@@ -653,9 +653,9 @@ Pipe indicates that DONE and CANCELLED are both final states to be chosen.")
 
 ;;; Define key-maps
 ;;;; Links
-(global-set-key (kbd "C-c l s") #'org-store-link)
-(global-set-key (kbd "C-c l i") #'org-insert-link-global)
-(global-set-key (kbd "C-c l o") #'org-open-at-point-global)
+;; (global-set-key (kbd "C-c l s") #'org-store-link)
+;; (global-set-key (kbd "C-c l i") #'org-insert-link-global)
+;; (global-set-key (kbd "C-c l o") #'org-open-at-point-global)
 
 ;;;; Agenda
 ;;(global-set-key (kbd "C-c a") #'org-agenda-list)
