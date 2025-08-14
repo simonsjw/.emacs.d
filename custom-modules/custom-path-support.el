@@ -291,6 +291,12 @@
 (my-on-disk-tools/ensure-directory-exists
  (expand-file-name "projects/" no-littering-var-directory))
 
+;;;; language servers
+
+;; LaTex lsp bin
+(setq lsp-bin-texlab
+      (expand-file-name
+       "lang-servers/texlab/texlab" no-littering-etc-directory))
 ;;;; Dape
 ;;   ----
 ;; Set the location of the adapters.
@@ -300,7 +306,6 @@
 ;; Set the location of the bash adapter. (note - etc not var)
 (setq dape-adapter-directory-bash
       (expand-file-name "dape/adapters/bash-debug" no-littering-etc-directory))
-
 
 (my-on-disk-tools/ensure-directory-exists dape-adapter-directory-bash)
 
@@ -382,6 +387,10 @@
 (setq my-paths/memory-object-tree-folder
       (concat user-emacs-directory "custom-packages/memory-object-tree/"))
 
+;; define a path to the combobulate custom package
+(setq my-paths/combobulate
+      (concat user-emacs-directory "custom-packages/combobulate/"))
+
 ;; define a path to the q custom package
 (setq my-paths/q-load-balancer-folder
       (concat user-emacs-directory "custom-packages/q-loadbalancer/"))
@@ -430,7 +439,7 @@
 (provide 'custom-path-support)
 ;;; custom-path-support.el ends here
 
-;; LocalWords:  pws prepl systemd
+;; LocalWords:  pws prepl systemd combobulate
 ;; LocalWords:  recentf
 ;; LocalWords:  loadbalancer
 ;; LocalWords:  Dape emacs init
