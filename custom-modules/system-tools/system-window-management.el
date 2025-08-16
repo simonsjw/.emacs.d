@@ -41,7 +41,6 @@
 
 (require 'ui-config)
 
-
 ;;; Code:
 
 (defvar switch-to-buffer-obey-display-actions t
@@ -51,10 +50,11 @@
   '(
     (:whitelist-names . ("*Completions*"                                          ; Completion dropdowns
                          "*Echo Area 0*"                                          ; Minibuffer echo areas
-                         "*Echo Area 1*"
+                         "*Echo Area 1*"                                          ; Minibuffer echo areas
                          "*Minibuf-0*"                                            ; Minibuffer internals
                          "*Minibuf-1*"
                          "*LV*"                                                   ; Temporary overlay buffers (e.g., from Hydra or similar)
+                         " *transient*"
                          "*company-documentation*"                                ; Company mode popups
                          "*corfu-popup*"                                          ; Corfu completion overlays
                          "*posframe-buffer*"                                      ; Posframe child frame buffers
@@ -128,14 +128,16 @@
                  ("^\\*Customize.*" . config)                                     ; Starting with literal "*Customize" + any chars
                  ("^\\*Ibuffer.*" . config)                                       ; Starting with literal "*Ibuffer" + any chars
                  (".*_types.py" . config)                                         ; Any chars + "_types.py"
+                 (".*\\.pdf$" . config)                                           ; Any chars + literal ".pdf" at end
                  ("^magit.*" . vc)                                                ; Starting with "magit" + any chars
-                 ("^vc-.*" . vc)                                                  ; Starting with "*vc-" + any chars
+                 ("^vc-.*" . vc)                                                  ; Starting with "vc-" + any chars
+                 ("^\\*vc-.*" . vc)                                                  ; Starting with "*vc-" + any chars
                  (".*Annotate .*" . vc)                                           ; Any chars + "Annotate " + any chars
                  (".*ede-proj.*" . vc)                                            ; Any chars + "ede-proj" + any chars
-                 (".*\\.pdf$" . data)                                             ; Any chars + literal ".pdf" at end
                  ("^\\*Flymake diagnostics.*" . data)                             ; Starting with literal "*Flymake diagnostics" + any chars
                  ("^flymake-.*" . data)                                           ; Starting with "flymake-" + any chars
                  (".*cell sheet.*" . data)                                        ; Any chars + "cell sheet" + any chars
+                 ("*\\.bib" . data)                                               ; Any chars + literal ".bib" at end
                  ("^Ediff A\\:.*" . data)                                         ; Starting with "Ediff A:" + any chars (escaped :)
                  ("^Ediff B\\:.*" . data)                                         ; Starting with "Ediff B:" + any chars (escaped :)
                  ("^magit-process:.*" . logs)                                     ; Starting with "magit-process:" + any chars
