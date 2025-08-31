@@ -65,7 +65,7 @@ The frame has a current working directory PROJECT-PATH."
                                   (width . 300) (height . 75)
                                   (bottom-divider-width . 5)
                                   (right-divider-width . 5)
-                                  (visibility . nil)  ; Make the new frame invisible.
+                                  (visibility . nil)                              ; Make the new frame invisible.
                                   (no-focus-on-map . t)
                                   (inhibit-switch-frame . t)
                                   (custom-window-management . t)))))
@@ -88,7 +88,8 @@ The frame has a current working directory PROJECT-PATH."
               (old-buffer (current-buffer)))
           (unwind-protect
               (with-selected-frame frame
-                ;; Temporarily allow same-window displays (confined to this invisible frame)
+                ;; Temporarily allow same-window displays
+                ;; (confined to this invisible frame)
                 (my-window-tools/with-temporary-display-buffer-settings
                  '((display-buffer-alist (".*" . (display-buffer-same-window)))
                    (switch-to-buffer-obey-display-actions . nil)
@@ -118,21 +119,31 @@ The frame has a current working directory PROJECT-PATH."
                    (message "Opened vterm")
                    (dired project-path)
                    (message "Opened dired")
-                   (dolist (req-buf '("*Emacs*" "*cell sheet*" "*Ibuffer*" "init.log" "*vc-dir*" "*scratch*"))
+                   (dolist (req-buf '("*Emacs*" "*cell sheet*" "*Ibuffer*"
+                                      "init.log" "*vc-dir*" "*scratch*"))
                      (unless (get-buffer req-buf)
-                       (message "Warning: Required buffer %s not created!" req-buf)))
+                       (message "Warning: Required buffer %s not created!"
+                                req-buf)))
                    (message "Buffer creation complete")))
 
                 (condition-case err
                     (progn
-                      (window-state-put my-window-state/ide (frame-root-window frame))
-                      (let ((tag-list (list 'edit 'data 'config 'logs 'vc 'terminal)))
+                      (window-state-put my-window-state/ide
+                                        (frame-root-window frame))
+                      (let ((tag-list
+                             (list 'edit 'data 'config 'logs 'vc 'terminal)))
                         (my-window-tools/tag-windows-by-list frame tag-list))
                       (message "Window layout applied to new frame"))
-                  (error (message "Layout apply error: %s | Check missing buffers?" err)))
-
+                  (error
+                   (message "Layout apply error: %s | Check missing buffers?"
+                            err)))
+                ;; ensure that only the IDE frames have their name
+                ;; prefixed 'IDE: '.
                 (setq frame-title-format
-                      '((:eval (concat "IDE: " (buffer-name)))))
+                      '((:eval
+                         (if (eq (frame-parameter nil 'UI-TYPE) 'IDE)
+                             (concat "IDE: " (buffer-name))
+                           "%b"))))
                 (global-tab-line-mode))
 
             (when (frame-live-p old-frame)
