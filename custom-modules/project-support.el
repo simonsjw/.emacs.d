@@ -30,42 +30,6 @@
 ;; my-project/remove-parent-directory
 
 
-;; (defun project-remember-projects-under (dir &optional recursive)
-;;   "Index all projects below a directory DIR.
-;; If RECURSIVE is non-nil, recurse into all subdirectories to find
-;; more projects.  After finishing, a message is printed summarizing
-;; the progress.  The function returns the number of detected
-;; projects."
-;;   (interactive "DDirectory: \nP")
-;;   (project--ensure-read-project-list)
-
-;;   (message "%s" recursive)
-;;   (let ((dirs (if recursive
-;;                   (directory-files-recursively dir "" t)
-;;                 (directory-files dir t)))
-;;         (known (make-hash-table :size (* 2 (length project--list))
-;;                                 :test #'equal))
-;;         (count 0))
-;;     (dolist (project (mapcar #'car project--list))
-;;       (puthash project t known))
-;;     (message "subdirs: %s" dirs)
-;;     (dolist (subdir dirs)
-;;       (when-let (((file-directory-p subdir))
-;;                  (project (project--find-in-directory subdir))
-;;                  (project-root (project-root project))
-;;                  ((not (gethash project-root known))))
-;;         (message "project: %s:"( project-root project))
-;;         (project-remember-project project t)
-;;         (puthash project-root t known)
-;;         (message "Found %s..." project-root)
-;;         (setq count (1+ count))))
-;;     (if (zerop count)
-;;         (message "No projects were found")
-;;       (project--write-project-list)
-;;       (message "%d project%s were found"
-;;                count (if (= count 1) "" "s")))
-;;     count))
-
 
 
 (defun my-project/load-workspace-directories ()
@@ -85,7 +49,7 @@
 The list of directories in `my-project/workspace-list' will be scanned
 recursively for projects."
   (interactive)
-  
+
   (mapc (lambda (parent-dir)
           (let ((absolute-parent-dir (file-truename (car parent-dir))))
             ;; Process the directory string here.
@@ -96,38 +60,15 @@ recursively for projects."
   )
 
 
+
+
 (defun my-project/save-workspace-directories ()
   "Save the current value of `my-project/workspace-list' to file.
 
 The file uses Emacs' project list format."
   (with-temp-file my-project/workspace-list-file
-    (insert ";;; -*- lisp-data -*-\n")
+    (insert ";;; -*- lisp-data -*-\n")                                            ;
     (insert (format "%S" my-project/workspace-list))))
-
-
-;; (defun my-project/save-workspace-directories ()
-;;   "Save `my-project/workspace-list` to `old_project_paths.el`,
-;; ensuring a distinct, cumulative set of paths over time."
-;;   (let* ((workspace-file "~/.emacs.d/var/projects/old_project_paths.el")
-;;          (existing-data (when (file-exists-p workspace-file)
-;;                           (with-temp-buffer
-;;                             (insert-file-contents workspace-file)
-;;                             (read (current-buffer)))))
-;;          ;; Ensure it's a proper list-of-lists format
-;;          (existing-paths (if (and existing-data (listp existing-data))
-;;                              existing-data
-;;                            '()))
-;;          ;; Convert current workspace list to list-of-lists format
-;;          (new-paths (mapcar #'list my-project/workspace-list))
-;;          ;; Merge and deduplicate
-;;          (updated-paths (delete-dups (append existing-paths new-paths))))
-
-;;     ;; Save back to file
-;;     (with-temp-file workspace-file
-;;       (insert ";;; -*- lisp-data -*-\n")
-;;       (insert (format "%S" updated-paths)))
-
-;;     (message "Saved workspace directories. Total: %d" (length updated-paths))))
 
 
 
@@ -254,7 +195,7 @@ interface for templates and standard directory/string prompts."
       (let ((status (call-process "tar" nil nil nil
                                   "--xz" "-xf" project-templates-archive
                                   "-C" project-dir
-                                  "--strip-components=2"                          ; strip the project-templates folder and the project type folder. 
+                                  "--strip-components=2"                          ; strip the project-templates folder and the project type folder.
                                   (concat "project-templates/" template "/"))))
         (unless (zerop status)
           (error "Failed to extract template: tar exited with status %d"
@@ -272,59 +213,374 @@ interface for templates and standard directory/string prompts."
                project-name parent-dir))))
 
 
-;;; Configuration phase
+
+;;; my-project.el --- Modular functions for managing and displaying Emacs projects with Git info
+
+;; Common logic (e.g., path formatting, grouping projects by workspaces,
+;; canonical path resolution) is extracted into separate functions.
+;; Duplicated code between `my-project-list' and
+;; `my-project/visualise-projects' is minimized by sharing utilities. The
+;; tabulated-list-mode display now includes all Git info columns (fixing the
+;; original mismatch between format and vector length). Error handling and
+;; checks for required variables are consistent.
 
 
-;; Load the parent directory paths.
-;; Paths project-list-file and my-project/workspace-list-file set in
-;; path-support.el.
-(my-project/load-workspace-directories)
+;; Fixes applied:
+;; - Dynamically construct the format string using nested `format' calls, e.g.,
+;;   (format (format "%%-%ds" width) value).
+;;   Built format strings for headers and lines accordingly.
+;; - excludes :path, which is handled separately).
+;; - Adjusted padding for project paths (indented by 2 spaces) to fit within
+;;   :path width.
+;; - Use left-aligned columns using %%-%ds for better readability.
+;; - Ensured consistent handling for non-Git projects with fallback "-" in
+;;   columns.
 
-;; (project-remember-projects-under DIR &optional RECURSIVE)
-;; (project-remember-project PR &optional NO-WRITE)
+;; Assumptions:
+;; - `project--list' and `my-project/workspace-list' are defined elsewhere
+;;   (e.g., via project.el customisation).
+;; - Projects and workspaces are directory paths.
+;; - Only Git backend is supported via VC, but extensible if needed.
+;; - Clicking or RET on a project path invokes `project-switch-project'.
+
+(defvar my-project/format-max-path-length 60
+  "Maximum length for path display before truncation.")
+
+(defvar my-project/format-max-remote-length 50
+  "Maximum length for remote URL display before truncation.")
+
+(defvar my-project/column-widths
+  '(:path 65 :backend 10 :branch 15 :status 10 :upstream 20 :commit 15
+          :remote 65 :stash 20)
+  "Plist of column widths for text-based project display.")
+
+(defun my-project/format-path (path)
+  "Format PATH for display, truncating if longer than
+ `my-project/format-max-path-length'."
+  (let ((l (length path)))
+    (if (<= l my-project/format-max-path-length)
+        path
+      (concat (substring path 0 20) " ... " (substring path (- l 35) l)))))
+
+(defun my-project/format-remote (remote)
+  "Format REMOTE URL for display, truncating if longer than
+ `my-project/format-max-remote-length'."
+  (if (string-match-p "^\\(no remote\\|none\\|N/A\\)$" remote)
+      remote
+    (let ((l (length remote)))
+      (if (<= l my-project/format-max-remote-length)
+          remote
+        (concat (substring remote 0 20) "..." (substring remote (- l 35) l))))))
+
+(defun my-project/get-canonical-pairs (dirs)
+  "Return a list of (original . canonical-directory) pairs for DIRS.
+Canonical paths resolve symlinks and expand to absolute paths."
+  (mapcar (lambda (orig)
+            (cons orig
+                  (file-name-as-directory
+                   (file-truename (expand-file-name orig)))))
+          dirs))
 
 
-;; (expand-file-name "/mnt/HDD04_WDD_08TB/workspace/")
+(defun my-project/get-grouped-projects ()
+  "Group projects by workspace and return a cons cell.
 
-;; (defun my-project/add-projects-from-csv (csv-file)
-;;   "Add projects to Projectile from a CSV-FILE path.
+The cons cell is (PROJECT-GROUPS . UNGROUPED-PROJECTS).
 
-;; The first column of the CSV contains the project paths."
-;;   (interactive "fCSV File: ")
-;;   (with-temp-buffer
-;;     (insert-file-contents csv-file)
-;;     (forward-line 1)                                                              ; Skip the header line
-;;     (while (not (eobp))
-;;       (let* ((line (buffer-substring-no-properties
-;;                     (line-beginning-position) (line-end-position)))
-;;              (fields (split-string line ","))
-;;              (project-path (car fields)))
-;;         (setq project-path                                                        ; Remove quotes around the path
-;;               (replace-regexp-in-string "\"" "" project-path))
-;;         (message "Processing path: %s" project-path)                              ; Debug: Print the current path
-;;         (when (and project-path (file-directory-p project-path))
-;;           (with-eval-after-load 'projectile                                       ; Ensure Projectile is loaded before calling its functions
-;;             (if (projectile-project-p project-path)
-;;                 (message "Skipping known project: %s" project-path)
-;;               (progn
-;;                 (projectile-add-known-project project-path)
-;;                 (message "Added project: %s" project-path)))))
-;;         (forward-line 1)))))
+This function organizes Emacs projects (from `project--list') under workspaces
+ (from `my-project/workspace-list').  It resolves paths to canonical forms to
+handle symlinks and absolute paths accurately.  Projects are grouped under the
+workspace with the longest matching prefix (deepest nesting).  Ungrouped
+projects are those without any matching workspace.
+
+Returns:
+- PROJECT-GROUPS: A hash table where keys are original workspace paths
+  (strings), and values are lists of project pairs
+  (original-path . canonical-path), sorted alphabetically by original path.
+- UNGROUPED-PROJECTS: A list of project pairs not matching any workspace, sorted
+  alphabetically by original path.
+
+Handles cases where `my-project/workspace-list' or `project--list' are unbound
+or empty by signaling a user-error if neither provides data.
+
+Depends on `my-project/get-canonical-pairs' to create (original . canonical)
+pairs."
+  (let* ((workspaces-orig (progn
+                            (if (boundp 'my-project/workspace-list)               ; Check if custom workspace list variable is bound.
+                                nil
+                              (my-project/load-workspace-directories))            ; If not bound, use `my-project/workspace-list' to load it.
+                            (mapcar #'car my-project/workspace-list)))            ; Extract the car (first element) of each item, assuming it's a list of cons or lists where car is the path.
+         (projects-orig (if (boundp 'project--list)                               ; Check if project.el's project list is bound.
+                            (mapcar #'car project--list)                          ; Extract car (path) from each project entry.
+                          nil))                                                   ; If not, set to nil.
+         (workspace-pairs
+          (my-project/get-canonical-pairs (or workspaces-orig '())))              ; Convert workspace paths to (original . canonical) pairs, using empty list if nil.
+         (project-pairs                                                           ;
+          (my-project/get-canonical-pairs (or projects-orig '())))                ; Similarly for projects.
+         (project-groups (make-hash-table :test 'equal))                          ; Create a hash table with string keys (original workspaces) using equal for comparison.
+         (ungrouped-projects nil))                                                ; Initialise list for projects without matching workspaces.
+    (unless (or workspaces-orig projects-orig)                                    ; If both originals are nil or empty.
+      (user-error "No workspaces or projects available to display"))              ; Signal an error to the user.
+    ;; Initialize hash table with empty lists for each workspace.
+    (dolist (ws-orig workspaces-orig)                                             ; Loop over each original workspace path.
+      (puthash ws-orig nil project-groups))                                       ; Insert key with empty list value.
+    ;; Group projects under the deepest matching workspace.
+    (dolist (proj-pair project-pairs)                                             ; Loop over each project pair.
+      (let* ((proj-canon (cdr proj-pair))                                         ; Extract canonical project path.
+             (matching-ws nil))                                                   ; Initialise list for matching workspace pairs.
+        (dolist (ws-pair workspace-pairs)                                         ; Loop over workspace pairs.
+          (when (string-prefix-p (cdr ws-pair) proj-canon)                        ; Check if workspace canonical is prefix of project canonical.
+            (push ws-pair matching-ws)))                                          ; If yes, add to matching list.
+        (if matching-ws                                                           ; If there are matches.
+            (let* ((best-ws-pair (car
+                                  (sort matching-ws
+                                        (lambda (a b) (> (length (cdr a))
+                                                         (length (cdr b)))))))    ; Sort matches by canonical length descending, take first (longest/deepest).
+                   (best-ws-orig (car best-ws-pair)))                             ; Get original path of best workspace.
+              (puthash best-ws-orig
+                       (cons proj-pair (gethash best-ws-orig project-groups))
+                       project-groups))                                           ; Prepend project pair to the list for that workspace.
+          (push proj-pair ungrouped-projects))))                                  ; If no match, add to ungrouped.
+    ;; Sort projects within each group and ungrouped list alphabetically by
+    ;; original path.
+    (dolist (ws-orig workspaces-orig)                                             ; Loop over workspaces again.
+      (puthash ws-orig (sort (gethash ws-orig project-groups)                     ; Get current list, sort it.
+                             (lambda (a b) (string< (car a) (car b))))            ; Compare original paths (cars) lexicographically.
+               project-groups))                                                   ; Update hash table with sorted list.
+    (setq ungrouped-projects
+          (sort ungrouped-projects (lambda (a b) (string< (car a) (car b)))))     ; Sort ungrouped list similarly.
+    (cons project-groups ungrouped-projects)))                                    ; Return cons of hash table and ungrouped list.
+
+(defun my-project/git-repo-info (dir)
+  "Return a property list (plist) of Git repository information for DIR.
+
+Default to nil if DIR is not a Git repo.
+
+This function queries the Git repository at DIR using Emacs' built-in Version
+Control (VC) functions.  It gathers details like branch, status, upstream,
+commit hash, remote URL, and stash presence.  Errors during Git commands are
+caught and messaged, returning nil.
+
+Arguments:
+- DIR: A string representing the directory path to check.
+
+Returns:
+- A plist with keys :backend (always 'Git if repo), :branch, :status ('clean'
+  or 'dirty'), :upstream, :commit (short hash), :remote (origin URL),
+  :stash (status string).
+- nil if not a Git repo or on error.
+
+Handles empty outputs and fatal errors from Git by providing fallback values
+like 'no commits' or 'none'."
+  (let ((default-directory (file-truename (expand-file-name dir))))               ; Set default-directory to the true, expanded path of DIR to run commands there.
+    (when (eq (vc-responsible-backend default-directory) 'Git)                    ; Check if VC backend for this dir is Git; if not, return nil implicitly.
+      (condition-case err                                                         ; Catch any errors during the following block.
+          (let* ((branch
+                  (string-trim
+                   (or
+                    (vc-git--run-command-string nil
+                                                "rev-parse"
+                                                "--abbrev-ref"
+                                                "HEAD")
+                    "")))                                                         ; Run git rev-parse to get branch name, trim, fallback to empty.
+                 (status-output
+                  (vc-git--run-command-string nil
+                                              "status" "--porcelain"))            ; Run git status in porcelain format for easy parsing.
+                 (status
+                  (if (string-empty-p (or status-output ""))
+                      "clean" "dirty"))                                           ; Determine if repo is clean (no changes) or dirty.
+                 (upstream
+                  (string-trim
+                   (or (vc-git--run-command-string
+                        nil
+                        "rev-parse"
+                        "--abbrev-ref"
+                        "--symbolic-full-name"
+                        "@{upstream}")
+                       "")))                                                      ; Get upstream branch name.
+                 (commit
+                  (string-trim
+                   (or (vc-git--run-command-string
+                        nil "rev-parse" "--short" "HEAD")
+                       "")))                                                      ; Get short commit hash of HEAD.
+                 (remote
+                  (string-trim
+                   (or (vc-git--run-command-string
+                        nil "remote" "get-url" "origin")
+                       "")))                                                      ; Get URL of origin remote.
+                 (stash-output
+                  (vc-git--run-command-string nil "stash" "list"))                ; List stashes.
+                 (stash
+                  (if (string-empty-p (or stash-output ""))
+                      "Nothing stashed" "Stashed changes exist")))                ; Determine if stashes exist.
+            (list :backend 'Git                                                   ; Start building the plist with backend.
+                  :branch (if (string-empty-p branch) "no commits" branch)        ; Fallback if no branch.
+                  :status status                                                  ; Clean or dirty.
+                  :upstream (if (or
+                                 (string-empty-p upstream)
+                                 (string-match-p "fatal" upstream))
+                                "none" upstream)                                  ; Handle no upstream or errors.
+                  :commit (if (string-empty-p commit) "no commits" commit)        ; Fallback if no commits.
+                  :remote (if (or
+                               (string-empty-p remote)
+                               (string-match-p "fatal" remote))
+                              "no remote" remote)                                 ; Handle no remote or errors.
+                  :stash stash))                                                  ; Stash status.
+        (error (message "Error getting Git info for %s: %s"
+                        dir (error-message-string err))                           ; On error, message the issue.
+               nil)))))                                                           ; Return nil on error.
+
+
+(defun my-project/visualise-projects ()
+  "Display a navigable list of projects grouped by workspaces.
+
+The list is displayed in a plain-text buffer with Git information.
+
+This interactive function organizes and displays Emacs projects (sourced from
+ `project--list') grouped under workspaces (from `my-project/workspace-list').
+It creates or switches to the buffer \"*Organized Projects*\", populates it
+with a header, grouped and ungrouped project entries, and enables navigation
+modes.  Each project path is interactive: pressing RET or clicking `mouse-1'
+invokes `project-switch-project' on the project's canonical path.
+
+The display includes:
+- Workspace names (formatted paths).
+- Project paths (indented, formatted, propertized for interactivity).
+- Git information columns: Backend, Branch, Status, Upstream, Commit,
+  Remote (truncated if long), Stash.
+- \"Other Projects\" section for ungrouped projects.
+- Fallback \"-\" for non-Git projects or missing info.
+
+Paths are formatted using `my-project/format-path' (truncating long paths).
+Remotes use `my-project/format-remote'.
+Git info is fetched via `my-project/git-repo-info'.
+Grouping uses `my-project/get-grouped-projects'.
+
+The buffer is set to read-only with `view-mode' for easy navigation
+ (q to quit, n/p for lines). `tab-line-mode' is enabled for tabbed interface.
+
+No arguments. Called interactively via M-x or bound key.
+
+Depends on:
+- `my-project/get-grouped-projects', `my-project/format-path',
+  `my-project/format-remote', `my-project/git-repo-info',
+  `my-project/column-widths'.
+- Emacs packages: project.el, vc-git.
+
+Errors if no projects or workspaces available
+ (via `my-project/get-grouped-projects')."
+  (interactive)                                                                   ; Mark this function as callable via M-x or key bindings.
+  (let* ((grouped (my-project/get-grouped-projects))                              ; Call grouping function to get cons of hash table and ungrouped list.
+         (project-groups (car grouped))                                           ; Extract hash table of grouped projects (workspace -> list of pairs).
+         (ungrouped-projects (cdr grouped))                                       ; Extract list of ungrouped project pairs.
+         (col-widths my-project/column-widths)                                    ; Get column widths plist for formatting.
+         (header-fmt (concat (format "%%-%ds" (plist-get col-widths :path))       ; Build format string for header: left-aligned with widths.
+                             (format "%%-%ds" (plist-get col-widths :backend))
+                             (format "%%-%ds" (plist-get col-widths :branch))
+                             (format "%%-%ds" (plist-get col-widths :status))
+                             (format "%%-%ds" (plist-get col-widths :upstream))
+                             (format "%%-%ds" (plist-get col-widths :commit))
+                             (format "%%-%ds" (plist-get col-widths :remote))
+                             (format "%%-%ds" (plist-get col-widths :stash))
+                             "\n"))
+         (line-fmt (concat (format "%%-%ds" (plist-get col-widths :backend))      ; Build format string for Git info columns (excludes path).
+                           (format "%%-%ds" (plist-get col-widths :branch))
+                           (format "%%-%ds" (plist-get col-widths :status))
+                           (format "%%-%ds" (plist-get col-widths :upstream))
+                           (format "%%-%ds" (plist-get col-widths :commit))
+                           (format "%%-%ds" (plist-get col-widths :remote))
+                           (format "%%-%ds" (plist-get col-widths :stash))))
+         (propertize-project                                                      ; Define lambda to add text properties and keymap to project path text.
+          (lambda (display-text canonical-path)
+            (propertize display-text                                              ; Apply properties to the display text.
+                        'project-path canonical-path                              ; Store canonical path for later retrieval.
+                        'mouse-face 'highlight                                    ; Highlight on mouse hover.
+                        'help-echo "RET or click: Switch to this project"         ; Tooltip text.
+                        'keymap
+                        (let ((map (make-sparse-keymap)))                         ; Create a new keymap.
+                          (define-key
+                           map (kbd "RET")                                        ; Bind RET key.
+                           (lambda () (interactive)                               ; Lambda for RET: interactive to allow command execution.
+                             (project-switch-project
+                              (get-text-property (point) 'project-path))))        ; Switch to project using property at point.
+                          (define-key
+                           map [mouse-1]                                          ; Bind mouse-1 click.
+                           (lambda (event) (interactive "e")                      ; Lambda with event arg, interactive with "e" for event.
+                             (project-switch-project
+                              (get-text-property (point) 'project-path))))        ; Switch using property.
+                          map)))))                                                ; Return the keymap.
+    ;; Create or switch to buffer and clear it.
+    (switch-to-buffer (get-buffer-create "*Organized Projects*"))                 ; Switch to or create the named buffer.
+    (erase-buffer)                                                                ; Clear all content in the buffer.
+    ;; Insert header row.
+    (insert (format header-fmt "Path" "Backend" "Branch" "Status" "Upstream"
+                    "Commit" "Remote" "Stash"))                                   ; Insert formatted header labels.
+    (insert (make-string (+ (plist-get col-widths :path)                          ; Create a separator line of dashes.
+                            (plist-get col-widths :backend)
+                            (plist-get col-widths :branch)
+                            (plist-get col-widths :status)
+                            (plist-get col-widths :upstream)
+                            (plist-get col-widths :commit)
+                            (plist-get col-widths :remote)
+                            (plist-get col-widths :stash)) ?-))
+    (insert "\n")                                                                 ; Newline after separator.
+    ;; Insert grouped projects.
+    (dolist (ws-orig (sort (hash-table-keys project-groups) #'string<))           ; Loop over sorted workspace original paths (alphabetical).
+      (insert (format "%s\n" (my-project/format-path ws-orig)))                   ; Insert formatted workspace name followed by newline.
+      (dolist (proj-pair (gethash ws-orig project-groups))                        ; Loop over project pairs for this workspace.
+        (let* ((proj-orig (car proj-pair))                                        ; Extract original project path.
+               (proj-canon (cdr proj-pair))                                       ; Extract canonical project path.
+               (info (my-project/git-repo-info proj-canon))                       ; Get Git info plist for the project.
+               (display-path
+                (format (format "  %%-%ds" (- (plist-get col-widths :path) 2))    ; Format indented path, left-aligned, adjusted for indent.
+                        (my-project/format-path proj-orig))))
+          (insert (concat                                                         ; Build and insert the line string.
+                   (funcall propertize-project display-path proj-canon)           ; Propertized path text.
+                   (if info                                                       ; If Git info available.
+                       (format line-fmt                                           ; Format Git columns.
+                               (plist-get info :backend)
+                               (plist-get info :branch)
+                               (plist-get info :status)
+                               (plist-get info :upstream)
+                               (plist-get info :commit)
+                               (my-project/format-remote
+                                (plist-get info :remote))
+                               (plist-get info :stash))
+                     (format line-fmt "-" "-" "-" "-" "-" "-" "-"))               ; Fallback dashes.
+                   "\n"))))                                                       ; Newline at end.
+      (insert "\n"))                                                              ; Extra newline after group.
+    ;; Insert ungrouped projects.
+    (insert "Other Projects\n")                                                   ; Insert section header.
+    (dolist (proj-pair ungrouped-projects)                                        ; Loop over ungrouped pairs.
+      (let* ((proj-orig (car proj-pair))                                          ; Original path.
+             (proj-canon (cdr proj-pair))                                         ; Canonical path.
+             (info (my-project/git-repo-info proj-canon))                         ; Git info.
+             (display-path
+              (format
+               (format "  %%-%ds" (- (plist-get col-widths :path) 2))             ; Formatted indented path.
+               (my-project/format-path proj-orig))))
+        (insert (concat                                                           ; Build and insert line.
+                 (funcall propertize-project display-path proj-canon)             ; Propertized path.
+                 (if info                                                         ; If info.
+                     (format line-fmt                                             ; Format Git info.
+                             (plist-get info :backend)
+                             (plist-get info :branch)
+                             (plist-get info :status)
+                             (plist-get info :upstream)
+                             (plist-get info :commit)
+                             (my-project/format-remote
+                              (plist-get info :remote))
+                             (plist-get info :stash))
+                   (format line-fmt "-" "-" "-" "-" "-" "-" "-"))                 ; Fallback.
+                 "\n"))))                                                         ; Newline.
+    (goto-char (point-min))                                                       ; Move cursor to buffer start.
+    (view-mode 1)                                                                 ; Enable view-mode (read-only, navigation keys).
+    (tab-line-mode 1)))                                                           ; Enable tab-line-mode for tabs if supported.
 
 
 
-
-
-
-;; Call this function with the path to your CSV file
-;; (let ((REPO_LIST (getenv "REPO_LIST")))
-;;   (my/add-projects-from-csv REPO_LIST))
 
 (provide 'project-support)
 ;;; project-support.el ends here
 
-                                                                                  ; LocalWords:  simon
-                                                                                  ; LocalWords:  emacs
-                                                                                  ; LocalWords:  mapc
-                                                                                  ; LocalWords:  WDD
-                                                                                  ; LocalWords:  dotfiles
+;; LocalWords:  simon emacs mapc WDD  dotfiles workspaces backend
