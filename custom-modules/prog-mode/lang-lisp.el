@@ -125,6 +125,12 @@
   (setq-local outline-regexp "^[[:space:]]*;;;+")                                 ; Match `;;;' and more. 
   (setq-local outline-start ";;")                                                 ; Start marker
   (setq-local outline-level #'my-outline-mode/outline-level)                      ; Custom level function
+
+  ;; Move outline indicators to the right fringe
+  (setq-local fringe-indicator-alist
+              (cons '(outline . (right-fringe . left-fringe))
+                    (assq-delete-all 'outline fringe-indicator-alist)))
+  
   (outline-minor-mode 1)                                                          ; Use outline-minor-mode
   
    ;;;;; IDE functionality map
