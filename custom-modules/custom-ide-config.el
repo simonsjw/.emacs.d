@@ -86,13 +86,18 @@
 
   ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("ruff" "server")))
   ;;  (add-hook 'python-ts-mode 'eglot-ensure)
-  (add-to-list 'eglot-server-programs
-               '((python-mode python-ts-mode) . ("basedpyright-langserver" "--stdio")))
+  
+  (add-to-list
+   'eglot-server-programs
+   '((python-mode python-ts-mode) . ("basedpyright-langserver" "--stdio")))
+
+  (add-to-list 'eglot-server-programs `(LaTeX-mode . (,lsp-bin-texlab)))
   
   ;; If bash-language-server is installed, configure Eglot LSP for Bash
   (when (executable-find "bash-language-server")
-    (add-to-list 'eglot-server-programs
-                 '((bash-mode bash-ts-mode) . ("bash-language-server" "start"))))
+    (add-to-list
+     'eglot-server-programs
+     '((bash-mode bash-ts-mode) . ("bash-language-server" "start"))))
 
   ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ;; Documentation/help setup
