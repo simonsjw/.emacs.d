@@ -130,7 +130,18 @@ The matching bracket info is shown if the cursor is near a bracket.")
                 mode-line-misc-info
                 mode-line-end-spaces))
 
+;;; Define Org key maps
+;;;; Links
+;; (global-set-key (kbd "C-c l s") #'org-store-link)
+;; (global-set-key (kbd "C-c l i") #'org-insert-link-global)
+;; (global-set-key (kbd "C-c l o") #'org-open-at-point-global)
 
+;;;; Agenda
+;;(global-set-key (kbd "C-c a") #'org-agenda-list)
+(global-set-key (kbd "C-c a") #'my-org/open-agenda)
+
+;;;; Org Capture
+;; (global-set-key (kbd "C-c c") #'org-capture)
 
 (provide 'modeline-support)
 ;;; modeline-support.el ends here
