@@ -22,7 +22,14 @@
   :vc (:url "https://github.com/emacs-tree-sitter/treesit-fold.git")
   :ensure t)
 
-;; (use-package combobulate)
+(use-package combobulate
+  :custom
+  ;; You can customize Combobulate's key prefix here.
+  ;; Note that you may have to restart Emacs for this to take effect!
+  (combobulate-key-prefix "C-c o")
+  :hook ((prog-mode . combobulate-mode))
+  ;; The directory containing Combobulate's source code.
+  :load-path (my-paths/combobulate))
 
 ;; (use-package treesit-auto
 ;;   :ensure t
@@ -80,12 +87,13 @@
 ;; this code was sourced since that version was known to work 
 ;; with that app and emacs:
 ;; https://github.com/mickeynp/combobulate
-(defvar treesit-language-source-alist
-  nil 
-  "The variable treesit-language-source-alist is a simple alist that
-expects a form in the format of
-    (LANG . (URL REVISION SOURCE-DIR CC C++))
-Only LANG and URL are mandatory.")
+;; (defvar treesit-language-source-alist
+;;   nil 
+;;   "The variable treesit-language-source-alist is a simple alist that
+;; expects a form in the format of
+;;     (LANG . (URL REVISION SOURCE-DIR CC C++))
+;; Only LANG and URL are mandatory.")
+
 
 (setq treesit-language-source-alist
       '((bash
@@ -131,6 +139,27 @@ Only LANG and URL are mandatory.")
          .
          ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))))
 
+;;; LaTeX mode
+
+(add-to-list 'treesit-language-source-alist
+             '(latex "file:///home/simon/sync/primary/dotfiles/emacs/local-treesitter-repo/tree-sitter-latex"
+                     nil    ; REVISION (nil for current local state)
+                     "src"  ; SOURCE-DIR
+                     "cc"   ; CC compiler
+                     nil))  ; C++ compiler (set to "c++" if scanner.cc exists)
+
+(require 'treesit)
+(require 'auctex)
+;;(defvar latex-ts-mode-map (make-sparse-keymap) "Keymap for latex-ts-mode.")
+;; (define-derived-mode latex-ts-mode text-mode "LaTeX[TS]"
+;;   "Major mode for LaTeX with tree-sitter."
+;;   (setq-local treesit-font-lock-defaults ;; Define font-lock rules here if needed
+;;               ;; ... (consult treesit docs for examples)
+;;               )
+;;   (treesit-major-mode-setup))
+;; (add-to-list 'major-mode-remap-alist '(latex-mode . latex-ts-mode))
+
+;;; Helper functions
 
 (defun my-treesitter/setup-install-grammars ()
   "Install Tree-sitter grammars if they are absent."
