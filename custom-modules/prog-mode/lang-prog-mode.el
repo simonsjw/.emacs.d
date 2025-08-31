@@ -21,16 +21,24 @@
   (when buffer-file-name
     (setq-local compilation-ask-about-save nil)))
 
+(require 'insert-shebang)
+(setq insert-shebang-file-types
+      '(("py" . "python") ("groovy" . "groovy") ("fish" . "fish")
+        ("robot" . "robot") ("rb" . "ruby") ("lua" . "lua") ("php" . "php")
+        ("sh" . "bash") ("pl" . "perl") ("raku" . "raku") ("q" . "q")
+        ("sh" . "sh")))
+(setq insert-shebang-ignore-extensions '("txt" "org" "el" "tex" "csv" "pdf"
+                                         "json"))
+
 ;; Configuration for all programming modes.
 (defun my-prog-mode/programming-mode-config-hook ()
   "Set useful layout tweeks for programming modes."
   (interactive)
-  (require 'insert-shebang)
   
   (customize-set-variable 'insert-shebang-file-types
-                         (cons '("q" . "q") insert-shebang-file-types))
+                          (cons '("q" . "q") insert-shebang-file-types))
   (customize-set-variable 'insert-shebang-file-types
-                        (cons '("sh" . "sh") insert-shebang-file-types))
+                          (cons '("sh" . "sh") insert-shebang-file-types))
   (require 'eldoc)
   (require 'eldoc-box)
   (eldoc-mode 1)                                                                  ; enable eldoc-mode.
