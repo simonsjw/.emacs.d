@@ -76,51 +76,107 @@ Use it to stop erroneous recursion.")
 ;;;; functions:
 ;;   ----------
 
-(defun my-speedbar/set-sr-speedbar-directory-to-file-path (file-path)
-  "Set the sr-speedbar directory to FILE-PATH and refresh it.
+(defun my-speedbar/set-speedbar-directory-to-file-path (file-path)
+  "Set the speedbar directory to FILE-PATH and refresh it.
 If `sr-speedbar' is not open, open it first."
   (interactive "DDirectory: ")
   (let ((expanded-path (expand-file-name file-path)))
     (when (file-directory-p expanded-path)
       ;; Open sr-speedbar if it's not already open
-      (unless
-          (sr-speedbar-exist-p)
-        (sr-speedbar-open))
       ;; Set the default directory
       (setq default-directory expanded-path)
-      ;; Clear speedbar cache and force refresh
       (speedbar-refresh)
-      (sr-speedbar-refresh)
+      ;; Clear speedbar cache and force refresh
       ;; Display a message indicating the new directory
-      (message "sr-speedbar directory set to %s" expanded-path))))
+      (message "speedbar directory set to %s" expanded-path))))
+
+
+;; DEPRECIATE - USE SPEEDBAR FUNCTIONS IN PREFERENCE TO SR-SPEEDBAR WHERE I CAN.
+;; (defun my-speedbar/set-sr-speedbar-directory-to-file-path (file-path)
+;;   "Set the sr-speedbar directory to FILE-PATH and refresh it.
+;; If `sr-speedbar' is not open, open it first."
+;;   (interactive "DDirectory: ")
+;;   (let ((expanded-path (expand-file-name file-path)))
+;;     (when (file-directory-p expanded-path)
+;;       ;; Open sr-speedbar if it's not already open
+;;       (unless
+;;           (sr-speedbar-exist-p)
+;;         (sr-speedbar-open))
+;;       ;; Set the default directory
+;;       (setq default-directory expanded-path)
+;;       ;; Clear speedbar cache and force refresh
+;;       (speedbar-refresh)
+;;       (sr-speedbar-refresh)
+;;       ;; Display a message indicating the new directory
+;;       (message "sr-speedbar directory set to %s" expanded-path))))
 
 (defun my-speedbar/toggle ()
-  "Select the current top-left window and run `sr-speedbar-toggle'.
+  "If the selected frame is an IDE, open `sr-speedbar' else open `speedbar'.
 
-Current means in the currently selected frame."
+In the case where `sr-speedbar' is opened, it is opened in the  top-left window
+using `sr-speedbar-toggle'."
   (interactive)
-  (let ((top-left-window
-         (car (sort (window-list)
-                    (lambda (w1 w2)
-                      (let ((edges1 (window-edges w1))
-                            (edges2 (window-edges w2)))
-                        (or (< (nth 1 edges1) (nth 1 edges2))                     ; Compare top edges
-                            (and (= (nth 1 edges1) (nth 1 edges2))
-                                 (< (nth 0 edges1) (nth 0 edges2))))))))))
-    (select-window top-left-window))
-  (sr-speedbar-toggle))
+  (let ((my-selected-frame-name (frame-parameter nil 'name))
+        (my-selected-frame (selected-frame)))
+    (if (string-prefix-p "IDE:" (frame-parameter nil 'name))
+        (progn
+          (log/debug :fn 'my-speedbar/toggle
+                     :msg "Frame is an IDE - use sr-speedbar."
+                     :obj (list :name my-selected-frame-name
+                                :frame my-selected-frame))
+          (let ((top-left-window
+                 (car
+                  (sort (window-list)
+                        (lambda (w1 w2)
+                          (let ((edges1 (window-edges w1))
+                                (edges2 (window-edges w2)))
+                            (or (< (nth 1 edges1) (nth 1 edges2))                     ; Compare top edges
+                                (and (= (nth 1 edges1) (nth 1 edges2))
+                                     (< (nth 0 edges1) (nth 0 edges2))))))))))
+            (select-window top-left-window))
+          (sr-speedbar-toggle))
+      (progn
+        (log/debug :fn 'my-speedbar/toggle
+                   :msg "Frame is not an IDE - use speedbar. "
+                   :obj (list :name my-selected-frame-name
+                              :frame my-selected-frame))
+        (speedbar))
+      )
+    )
+  )
 
-(defun my-sr-speedbar/go-home ()
-  "Switch sr-speedbar to home directory if in file mode.
-TODO: make this also work with SPEEDBAR."
+;; DEPRECIATE - USE SPEEDBAR FUNCTIONS IN PREFERENCE TO SR-SPEEDBAR WHERE I CAN.
+;; (defun my-sr-speedbar/go-home ()
+;;   "Switch sr-speedbar to home directory if in file mode.
+;; TODO: make this also work with SPEEDBAR."
+;;   (interactive)
+;;   (when (and (bound-and-true-p speedbar-frame)                                    ; Speedbar frame exists
+;;              (eq speedbar-frame (selected-frame))                                 ; Speedbar window is active
+;;              (eq speedbar-buffer (current-buffer))                                ; In Speedbar buffer
+;;              (string-equal speedbar-initial-expansion-list-name "files"))         ; In file mode
+;;     (my-speedbar/set-sr-speedbar-directory-to-file-path
+;;      (expand-file-name "~/"))))
+
+
+(defun my-speedbar/go-home ()
+  "Switch SPEEDBAR to home directory if in file mode."
   (interactive)
   (when (and (bound-and-true-p speedbar-frame)                                    ; Speedbar frame exists
              (eq speedbar-frame (selected-frame))                                 ; Speedbar window is active
              (eq speedbar-buffer (current-buffer))                                ; In Speedbar buffer
              (string-equal speedbar-initial-expansion-list-name "files"))         ; In file mode
-    (my-speedbar/set-sr-speedbar-directory-to-file-path
+    (my-speedbar/set-speedbar-directory-to-file-path
      (expand-file-name "~/"))))
 
+(defun my-speedbar/go-workspace ()
+  "Switch SPEEDBAR to the workspace directory if in file mode."
+  (interactive)
+  (when (and (bound-and-true-p speedbar-frame)                                    ; Speedbar frame exists
+             (eq speedbar-frame (selected-frame))                                 ; Speedbar window is active
+             (eq speedbar-buffer (current-buffer))                                ; In Speedbar buffer
+             (string-equal speedbar-initial-expansion-list-name "files"))         ; In file mode
+    (my-speedbar/set-speedbar-directory-to-file-path
+     (expand-file-name "/mnt/HDD04_WDD_08TB/workspace/"))))
 
 ;; This function overrides the original speedbar function so that
 ;; the correct speedbar width is reported when speedbar is not the only
@@ -180,7 +236,7 @@ Current view is given in SPEEDBAR-VIEW."
 
 (custom-set-variables
  '(speedbar-indentation-width 3)                                                  ; Increase the indentation for better usability.
- '(speedbar-use-images t)                                                         ; Use icon images. (not needed with pretty-speedbar)
+ ;; '(speedbar-use-images t)                                                         ; Use icon images. (not needed with pretty-speedbar)
  '(speedbar-directory-button-trim-method 'trim)                                   ;    Indicates how the directory button will be displayed. Hide
                                                                                   ; Possible values are:
                                                                                   ;       `span’ - span large directories over multiple lines.
@@ -198,8 +254,9 @@ Current view is given in SPEEDBAR-VIEW."
  ;;'(speedbar-hide-button-brackets-flag t)                                        ; this stops icons being shown.
  
  '(speedbar-frame-parameters                                                      ; set speedbar frame parameters (overwritten if sr-speedbar is used).
-   '((name . "*SPEEDBAR*")
-     (title . "*SPEEDBAR*")
+   '(
+     ;; (name . "*SPEEDBAR*")
+     ;; (title . "*SPEEDBAR*")
      (minibuffer . nil)
      (border-width . 4)
      (width . 40)
@@ -296,22 +353,16 @@ Current view is given in SPEEDBAR-VIEW."
  "i" #'(lambda () (interactive)
          (my-speedbar/switch-speedbar-view  "Info")))
 
-;; Bind to 'h' in Speedbar mode map
+;; Bind 'h' & 'w' in Speedbar mode map
 (with-eval-after-load 'speedbar
-  (define-key speedbar-mode-map (kbd "h") #'my-sr-speedbar/go-home))
+  (define-key speedbar-mode-map (kbd "w") #'my-speedbar/go-workspace)
+  (define-key speedbar-mode-map (kbd "h") #'my-speedbar/go-home))
+
 
 (global-set-key (kbd "C-c s") 'my-speedbar/toggle)                                ; Bind `my-speedbar/toggle' to "C-c s" for convenience
 
 (provide 'custom-speedbar-support)
 ;;; custom-speedbar-support.el ends here
 
-                                                                                  ; LocalWords:  FFFFFF shellscript fnl sp Makefile
-                                                                                  ; LocalWords:  Lua JVM html
-                                                                                  ; LocalWords:  makefile
-                                                                                  ; LocalWords:  toml
-                                                                                  ; LocalWords:  php
-                                                                                  ; LocalWords:  cljs
-                                                                                  ; LocalWords:  lua SCCS
-                                                                                  ; LocalWords:  minibuffer
-                                                                                  ; LocalWords:  tooltips
-                                                                                  ; LocalWords:  propertized
+;; LocalWords:  FFFFFF shellscript fnl sp Makefile Lua JVM html makefile toml
+;; LocalWords:  php cljs lua SCCS minibuffer tooltips propertized
