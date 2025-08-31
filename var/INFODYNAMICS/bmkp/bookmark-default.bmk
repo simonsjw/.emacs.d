@@ -2,12 +2,20 @@
 ;;; This format is meant to be slightly human-readable;
 ;;; nevertheless, you probably don't want to edit it.
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
-((".profile"
+((".bash_aliases"
+ (filename
+  . "~/sync/primary/dotfiles/shell/INFODYNAMICS/.bash_aliases")
+ (buffer-name . ".bash_aliases")
+ (front-context-string . "#!/bin/bash\n\n# e") (rear-context-string)
+ (front-context-region-string) (rear-context-region-string)
+ (visits . 0) (time 26785 25791 223816 664000)
+ (created 26785 25791 223816 664000) (position . 1))
+(".profile"
  (filename . "~/sync/primary/dotfiles/shell/INFODYNAMICS/.profile")
  (buffer-name . ".profile")
  (front-context-string . "\n# set PATH so i") (rear-context-string)
  (front-context-region-string) (rear-context-region-string)
- (visits . 0) (time 26678 62139 280943 877000)
+ (visits . 1) (time 26785 25326 107527 319000)
  (created 26678 62139 280943 877000) (position . 1))
 ("python" (filename . "/mnt/HDD04_WDD_08TB/workspace/python/")
  (position . 0) (created 26628 28288 797444 985000))
@@ -83,13 +91,13 @@
  (position . 215) (filename . "   - no file -")
  (desktop-file . "~/.emacs.d/var/INFODYNAMICS/bmkp/desktops/IDE")
  (handler . bmkp-jump-desktop))
-("custom.el" (tags "emacs")
+("custom.el" (end-position . 32) (tags "emacs")
  (filename . "~/.emacs.d/etc/INFODYNAMICS/custom.el")
  (buffer-name . "custom.el")
  (front-context-string . "(custom-set-vari") (rear-context-string)
  (front-context-region-string) (rear-context-region-string)
- (visits . 0) (time 26107 48561 655539 239000)
- (created 26107 48561 655539 239000) (position . 1))
+ (visits . 1) (time 26786 26950 160922 712000)
+ (created 26107 48561 655539 239000) (position . 32))
 ("custom-modules" (tags "emacs") (end-position . 1)
  (time 26106 34695 462425 68000) (visits . 0)
  (filename . "/home/simon/.emacs.d/custom-modules/") (position . 1)
@@ -108,7 +116,7 @@
  (buffer-name . ".bash_profile")
  (front-context-string . "#!/usr/bin/env b") (rear-context-string)
  (front-context-region-string) (rear-context-region-string)
- (visits . 2) (time 26678 62005 917884 21000)
+ (visits . 3) (time 26785 25349 374213 948000)
  (created 26095 40858 738205 676000) (position . 1))
 ("index.php" (filename . "/var/www/www.entropik.org/index.php")
  (buffer-name . "index.php")
@@ -120,6 +128,6 @@
  (buffer-name . ".bashrc")
  (front-context-string . "#!/bin/bash\n\n# ~") (rear-context-string)
  (front-context-region-string) (rear-context-region-string)
- (visits . 5) (time 26693 8680 895945 816000)
+ (visits . 6) (time 26785 25370 275633 225000)
  (created 26095 40797 112043 363000) (position . 1))
 )
