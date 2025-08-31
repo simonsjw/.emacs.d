@@ -61,6 +61,8 @@
   :config
   (pdf-tools-install))
 
+(use-package cdlatex)
+
 ;; LaTeX support - uses Auctex
 ;; only install and load auctex when the latex executable is found,
 ;; otherwise it crashes when loading
@@ -97,6 +99,51 @@
   :delight                                                                        ; hide from modeline.
   :no-require
   :config (citar-embark-mode))
+
+
+;;; Set fancy icons in citar.
+(defvar citar-indicator-notes-icons
+  (citar-indicator-create
+   :symbol (nerd-icons-mdicon
+            "nf-md-notebook"
+            :face 'nerd-icons-blue
+            :v-adjust -0.3)
+   :function #'citar-has-notes
+   :padding "  "
+   :tag "has:notes"))
+
+(defvar citar-indicator-links-icons
+  (citar-indicator-create
+   :symbol (nerd-icons-octicon
+            "nf-oct-link"
+            :face 'nerd-icons-orange
+            :v-adjust -0.1)
+   :function #'citar-has-links
+   :padding "  "
+   :tag "has:links"))
+
+(defvar citar-indicator-files-icons
+  (citar-indicator-create
+   :symbol (nerd-icons-faicon
+            "nf-fa-file"
+            :face 'nerd-icons-green
+            :v-adjust -0.1)
+   :function #'citar-has-files
+   :padding "  "
+   :tag "has:files"))
+
+(setq citar-indicators
+      (list citar-indicator-files-icons
+            citar-indicator-notes-icons
+            citar-indicator-links-icons))
+
+;; ;; Ensure that flymake ignores unused references in the master ref.bib file.
+;; (defun my-ignore-ref-bib-diagnostics (report fn)
+;;   "Ignore 'unused-entry' diagnostics for 'ref.bib' in REPORT."
+;;   (unless (string= (buffer-file-name) "ref.bib")
+;;     (funcall fn report)))
+;; (add-hook 'flymake-diagnostic-functions
+;;           #'my-ignore-ref-bib-diagnostics)
 
 ;;; Whitespace
 (defun crafted-writing-configure-whitespace
@@ -186,7 +233,53 @@ Example usage:
     (customize-set-variable 'markdown-enable-html t)
     (add-hook 'markdown-mode-hook #'conditionally-turn-on-pandoc)))
 
-;; Check for `latex`
+;;; PDF support fix
+;; When you attempt to scroll before the first page or after
+;;  the last, you get an error. I would prefer that rather
+;;  the attempt is ignored.
+(with-eval-after-load "pdf-view"
+  (defun pdf-view-scroll-up-or-next-page (&optional arg)
+    "Scroll page up ARG lines if possible, else go to the next page.
+When `pdf-view-continuous' is non-nil, scrolling upward at the
+bottom edge of the page moves to the next page.  Otherwise, go to
+next page only on typing SPC (ARG is nil)."
+    (interactive "P")
+    (if (or pdf-view-continuous (null arg))
+        (let ((hscroll (window-hscroll))
+              (cur-page (pdf-view-current-page)))
+          (when (or (= (window-vscroll) (image-scroll-up arg))
+                    ;; Workaround rounding/off-by-one issues.
+                    (memq pdf-view-display-size
+                          '(fit-height fit-page fit-width)))
+            (pdf-view-next-page-command)
+            (when (/= cur-page (pdf-view-current-page))
+              (image-bob)
+              (image-bol 1))
+            (set-window-hscroll (selected-window) hscroll)))
+      (image-scroll-up arg)))
+
+  (defun pdf-view-scroll-down-or-previous-page (&optional arg)
+    "Scroll page down ARG lines if possible, else go to the previous page.
+When `pdf-view-continuous' is non-nil, scrolling downward at the
+top edge of the page moves to the previous page.  Otherwise, go
+to previous page only on typing DEL (ARG is nil)."
+    (interactive "P")
+    (if (or pdf-view-continuous (null arg))
+        (let ((hscroll (window-hscroll))
+              (cur-page (pdf-view-current-page)))
+          (when (or (= (window-vscroll) (image-scroll-down arg))
+                    ;; Workaround rounding/off-by-one issues.
+                    (memq pdf-view-display-size
+                          '(fit-height fit-page fit-width)))
+            (pdf-view-previous-page-command)
+            (when (/= cur-page (pdf-view-current-page))
+              (image-eob)
+              (image-bol 1))
+            (set-window-hscroll (selected-window) hscroll)))
+      (image-scroll-down arg)))
+  )
+
+;;; LaTeX support
 (defun my-lang-tex/latex-warning-if-no-executable ()
   "Notify if `latex` executable not found."
   (unless (executable-find "latex")
@@ -196,10 +289,34 @@ Example usage:
   "Configure LaTeX environment for writing and editing."
   (my-lang-tex/latex-warning-if-no-executable)
 
+  ;;;;; Set up outline
+
+  ;; Set up customisations for outline-minor-mode.
+  (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons
+  (setq-local outline-blank-line t)                                               ; Blank line before headers
+  (setq-local outline-minor-mode-highlight t)                                     ; Font-lock outlines
+  (setq-local outline-regexp "^[[:space:]]*##+")                                  ; Match `##' and more.
+  (setq-local outline-start "#")                                                  ; Start marker
+  (setq-local outline-level #'my-outline-mode/outline-level)                      ; Custom level function
+  (outline-minor-mode 1)                                                          ; Use outline-minor-mode
+
+  ;;;;; Folding
+  ;; Set the fringe mode for folding.
+  (set-fringe-mode '(12 . 12))
+
+  ;; display line numbers.
+  (display-line-numbers-mode 1)
+
+  ;; turn on Eglot.
+  (eglot-ensure)
+
   ;; turn on flyspell.
   (flyspell-mode-on)
+  (my-flymake/show-project-diagnostics)
 
-  ;; Point latex at the current directory.
+  ;; turn on cdlatex (makes writing latex faster)
+  (turn-on-cdlatex)
+
 
   ;; Delay Corfu drop-downs.
   (customize-set-variable 'corfu-auto-delay 0.25)
@@ -211,14 +328,11 @@ Example usage:
                            (string-match "main\\.tex" (buffer-file-name)))
                        "main"
                      nil)
-        TeX-engine 'luatex                                                     ; Use LuaLaTeX as the default LaTeX engine.
-        TeX-PDF-mode t                                                         ; Ensure AUCTeX generates PDFs by default
+        TeX-engine 'luatex                                                        ; Use LuaLaTeX as the default LaTeX engine.
+        TeX-PDF-mode t                                                            ; Ensure AUCTeX generates PDFs by default
         reftex-plug-into-AUCTeX t
         ;; Set output directory for latexmk or other compilers
         TeX-output-dir (file-name-directory (buffer-file-name))
-        ;; TeX-command-extra-options                                           ; redundant-
-        ;; (concat "-cd -output-directory="
-        ;;         (file-name-directory (buffer-file-name)))
         )
 
   ;; Automatically refresh the PDF buffer after compilation to keep it up-to-date.
@@ -226,9 +340,9 @@ Example usage:
    'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
 
   ;; Enable useful modes
-  (TeX-source-correlate-mode 1)                                                ; Enable source correlation to map between source code and PDF viewer.
-  (auto-fill-mode 1)                                                           ; Automatically enable `auto-fill-mode` for line wrapping in LaTeX files.
-  (LaTeX-math-mode 1)                                                          ; Enables `LaTeX-math-mode` for easier input of math symbols.
+  (TeX-source-correlate-mode 1)                                                   ; Enable source correlation to map between source code and PDF viewer.
+  (auto-fill-mode 1)                                                              ; Automatically enable `auto-fill-mode` for line wrapping in LaTeX files.
+  (LaTeX-math-mode 1)                                                             ; Enables `LaTeX-math-mode` for easier input of math symbols.
   (yas-minor-mode-on)
 
   ;; Turn on RefTeX, a powerful tool for managing references, citations, and
@@ -262,8 +376,8 @@ Example usage:
     (add-to-list 'LaTeX-verbatim-macros-with-delims macro))
 
   ;; parentheses
-  (electric-pair-mode 1) ; auto-insert matching bracket
-  (show-paren-mode 1)    ; turn on paren match highlighting
+  (electric-pair-mode 1)                                                          ; auto-insert matching bracket
+  (show-paren-mode 1)                                                             ; turn on paren match highlighting
 
   ;; Enable electric pairs for sub- and superscripts, braces, and `$` symbols.
   ;; This makes it easier to enter LaTeX math environments and brackets.
@@ -284,28 +398,35 @@ Example usage:
   ;; message the user if the latex executable is not found
   (when (and (executable-find "latexmk") (require 'auctex-latexmk nil 'noerror))
     (auctex-latexmk-setup)
-    ;; ("Biber" "biber %s" TeX-run-BibTeX nil t :help "Run Biber")
-
     (setq TeX-command-default "LatexMk"
           auctex-latexmk-inherit-TeX-PDF-mode t
           bibtex-dialect 'biblatex))
+
+  ;; Ensure the compilation is shown in-buffer.
+  (setq TeX-show-compilation t)
+
+  (add-to-list 'TeX-command-list
+               '("Biber" "biber %s" TeX-run-BibTeX nil t :help "Run Biber"))
+  (setq TeX-command-BibTeX "Biber")
+
   ;; when pdf-tools is loaded, apply settings.
   (with-eval-after-load 'pdf-tools
     (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
     (setq-default pdf-view-display-size 'fit-width))
+
+
+  ;; switch on tree-sitter parsing.
+  (treesit-major-mode-setup)
   )
 
 ;; Hook the function to LaTeX mode
 (add-hook 'LaTeX-mode-hook 'my-lang-tex/latex-setup)
 
 
-;; provide a means of calling a temp org buffer without underlying file.
-;;(global-set-key (kbd "C-c t") 'my-buffer-tools/open-temp-org-buffer)
-
 (provide 'writing-config)
 ;;; writing-config.el ends here
 
 
 ;; LocalWords: pandoc citar whitespace tex lstinline TikZ lstlisting LatexMk
-;; LocalWords: etal executables tikzpicture makefile Biber delims auctex
+;; LocalWords: etal executables tikzpicture makefile Biber delims auctex LaTeX
 ;; LocalWords: yasnippet
