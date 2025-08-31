@@ -651,19 +651,6 @@ Pipe indicates that DONE and CANCELLED are both final states to be chosen.")
     (kill-buffer base-buffer)))
 
 
-;;; Define key-maps
-;;;; Links
-;; (global-set-key (kbd "C-c l s") #'org-store-link)
-;; (global-set-key (kbd "C-c l i") #'org-insert-link-global)
-;; (global-set-key (kbd "C-c l o") #'org-open-at-point-global)
-
-;;;; Agenda
-;;(global-set-key (kbd "C-c a") #'org-agenda-list)
-(global-set-key (kbd "C-c a") #'my-org/open-agenda)
-
-;;;; Org Capture
-(global-set-key (kbd "C-c c") #'org-capture)
-
 (provide 'org-support)
 ;;; org-support.el ends here
 
