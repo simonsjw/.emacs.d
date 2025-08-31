@@ -180,6 +180,23 @@ These are available in `prog-mode'."
 (define-key global-map [menu-bar windows windmove-right]
             '(menu-item "Move to Window Right" windmove-right))
 
+;;; Define Org-mode key-maps
+;;;; Links
+;; (global-set-key (kbd "C-c l s") #'org-store-link)
+;; (global-set-key (kbd "C-c l i") #'org-insert-link-global)
+;; (global-set-key (kbd "C-c l o") #'org-open-at-point-global)
+
+;;;; Agenda
+;;(global-set-key (kbd "C-c a") #'org-agenda-list)
+(global-set-key (kbd "C-c a") #'my-org/open-agenda)
+
+;;;; Org Capture
+(global-set-key (kbd "C-c c") #'org-capture)
+
+(with-eval-after-load 'pdf-tools
+  (define-key pdf-view-mode-map
+              (kbd "<down-mouse-1>") 'pdf-view-mouse-set-region))
+
 
 (provide 'menu-keys-support)
 ;;; menu-keys-support.el ends here
