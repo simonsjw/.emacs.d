@@ -1,4 +1,4 @@
-;;; vc-support.el --- git/github support for the crafted setup   -*- lexical-binding: t; -*-
+;;; vc-support.el --- git/github support -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022
 ;; SPDX-License-Identifier: MIT
@@ -24,139 +24,28 @@
 ;;; config phase
 
 
-
-
-
 ;;    These bindings are strongly recommended, but we cannot use them by default, because the
 ;;    C-c <LETTER> namespace is strictly reserved for bindings added by the user
 ;;    (see (elisp)Key Binding Conventions).
 
 
-;; The below function is part of work to manage collection of local repos.
-;; (defun my-display-csv-as-org-table (csv-file)
-;;   "Display CSV data from CSV-FILE in an Org table format."
-;;   (interactive "fCSV File: ")
-;;   (let ((buffer (generate-new-buffer (concat (file-name-base csv-file) "-table"))))
-;;     (with-current-buffer buffer
-;;       (insert-file-contents csv-file)
-;;       (org-mode)
-;;       (org-table-convert-region (point-min) (point-max) '(4)) ; Adjust the separator if needed
-;;       (switch-to-buffer buffer))))
-
-;; To hide a column in the current org table, place the cursor on the desired column and run:
-;; (defun my-org-table-hide-column ()
-;;   "Hide the current column in an Org table."
-;;   (interactive)
-;;   (org-table-hide-column))
-
-;; To move a column left or right, place the cursor on the desired column and run:
-;; (defun my-org-table-move-column (direction)
-;;   "Move the current column in an Org table left or right.
-;; DIRECTION should be 'left or 'right."
-;;   (interactive "sDirection (left/right): ")
-;;   (cond ((string= direction "left") (org-table-move-column-left))
-;;         ((string= direction "right") (org-table-move-column-right))
-;;         (t (message "Invalid direction. Use 'left or 'right."))))
 
 ;; Bind these functions to keys or call them interactively with M-x
-
-;; (defvar-local my-org-hidden-columns-overlays nil
-;;   "List of overlays hiding columns in the current org table.")
-
-;; (defun my-org-hide-column ()
-;;   "Hide the current column in an Org table."
-;;   (interactive)
-;;   (unless (org-at-table-p)
-;;     (error "Not at an org table"))
-;;   (let* ((col (org-table-current-column))
-;;          (beg (point-min))
-;;          (end (point-max))
-;;          (re (concat "^[|]\\(?:[^|\n]*[|]\\){" (number-to-string (1- col)) "}\\([^|\n]+\\)")))
-;;     (save-excursion
-;;       (goto-char (point-min))
-;;       (while (re-search-forward re end t)
-;;         (let* ((match-beg (match-beginning 1))
-;;                (match-end (match-end 1))
-;;                (ov (make-overlay match-beg match-end)))
-;;           (overlay-put ov 'invisible t)
-;;           (push ov my-org-hidden-columns-overlays))))))
-
-;; (defun my-org-unhide-columns ()
-;;   "Unhide all hidden columns in the current Org table."
-;;   (interactive)
-;;   (mapc 'delete-overlay my-org-hidden-columns-overlays)
-;;   (setq my-org-hidden-columns-overlays nil))
-
-
-;; non-interactive use.
-;;(my-display-csv-as-org-table
-;; "/home/simon/sync/primary/dotfiles/git/repoList.csv")
-
-;; interactive use.
-;; (defun open-my-repo-list ()
-;;   "Open my repository list CSV as an Org table."
-;;   (interactive)
-;;   (my-display-csv-as-org-table my/REPO_LIST))
-
-;;
-;; This functionality hides and shows the full path to your repo list.
-;; (defvar my-org-table-repo-col-visible nil
-;;   "State of the 'Repository' column visibility, t for full paths, nil for shortened paths.")
-
-;; (defun my-toggle-repo-path-display ()
-;;   "Toggle the display format of the 'Repository' column between full and shortened paths."
-;;   (interactive)
-;;   (unless (org-at-table-p)
-;;     (error "Not at an org table"))
-;;   (let* ((table-begin (org-table-begin))
-;;          (table-end (org-table-end))
-;;          ;; regex to capture the content of the first column
-;;          (re "^|\\([^|]+\\)|")
-;;          (header-line (line-number-at-pos table-begin)))
-;;     (save-excursion
-;;       (goto-char table-begin)
-;;       (forward-line 1) ;; Skip the header line
-;;       (let ((inhibit-read-only t)) ;; In case the buffer is read-only
-;;         ;; Search and update each occurrence in the first column
-;;         (while (search-forward-regexp re table-end t)
-;;           (let* ((match-str (match-string 1))
-;;                  (path-parts (split-string match-str "/"))
-;;                  (new-text (if (and (not my-org-table-repo-col-visible) (> (length path-parts) 2))
-;;                                ;; Show only the last two parts of the path
-;;                                (concat "|.../" (string-join (last path-parts 2) "/") "|")
-;;                              ;; Show the full path
-;;                              (concat "|" match-str "|"))))
-;;             (replace-match new-text t t nil 1)))))
-;;     (setq my-org-table-repo-col-visible (not my-org-table-repo-col-visible))
-;;     ;; Color the header line
-;;     (save-excursion
-;;       (goto-char table-begin)
-;;       (let ((overlay (make-overlay (line-beginning-position) (line-end-position))))
-;;         (overlay-put overlay 'face '(:foreground "white"))
-;;         ;; Store the overlay so it can be removed later
-;;         (setq my-org-table-header-overlay overlay)))))
-
-;; (defun my-remove-header-color ()
-;;   "Remove the color of the header line."
-;;   (interactive)
-;;   (when (overlayp my-org-table-header-overlay)
-;;     (delete-overlay my-org-table-header-overlay)
-;;     (setq my-org-table-header-overlay nil)))
 
 
 
 ;; Customize display-buffer-alist for *vc-log*
 ;; Control how *vc-log* is displayed using display-buffer-alist.
-(with-eval-after-load 'system-window-management
-  (add-to-list 'display-buffer-alist
-               '("^\\*vc-log\\*"
-                 (display-buffer-reuse-window
-                  display-buffer-same-window)))
+;; (with-eval-after-load 'system-window-management
+;;   (add-to-list 'display-buffer-alist
+;;                '("^\\*vc-log\\*"
+;;                  (display-buffer-reuse-window
+;;                   display-buffer-same-window)))
 
-  (add-to-list 'display-buffer-alist
-               '("^\\*log-edit-files\\*"
-                 (display-buffer-reuse-window
-                  display-buffer-same-window))))
+;;   (add-to-list 'display-buffer-alist
+;;                '("^\\*log-edit-files\\*"
+;;                  (display-buffer-reuse-window
+;;                   display-buffer-same-window))))
 
 
 ;;;; Git Submodule  Support
