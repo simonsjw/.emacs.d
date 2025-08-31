@@ -48,13 +48,15 @@
 
 (defvar my-buffer-tools/category-map
   '(
-    (:whitelist-names . ("*Completions*"                                          ; Completion dropdowns
+    (:whitelist-names . ("*Speedbar*"
+                         "*SPEEDBAR*"
+                         "*SR-SPEEDBAR*"
+                         "*Completions*"                                          ; Completion dropdowns
                          "*Echo Area 0*"                                          ; Minibuffer echo areas
                          "*Echo Area 1*"                                          ; Minibuffer echo areas
                          "*Minibuf-0*"                                            ; Minibuffer internals
                          "*Minibuf-1*"
                          "*LV*"                                                   ; Temporary overlay buffers (e.g., from Hydra or similar)
-                         " *transient*"
                          "*company-documentation*"                                ; Company mode popups
                          "*corfu-popup*"                                          ; Corfu completion overlays
                          "*posframe-buffer*"                                      ; Posframe child frame buffers
@@ -183,7 +185,7 @@
                (compilation-mode . logs)
                (debugger-mode . logs)
                (vc-dir . vc))))
-  "Mapping of buffer properties to window categories.")
+  "Mapping of buffer properties to window categories.  Any name beginning with a space is white listed automatically.")
 
 
 ;; temp as we move to frame specific assignment.
@@ -436,7 +438,7 @@ Utility function shows the tag associated with the current selected window."
 ;; ----------------------------------------------------------------------------
 
 
-(defun my-assign-category-advice (orig-fun buffer-or-name &optional action frame)
+(defun my-window-tools/assign-category-advice (orig-fun buffer-or-name &optional action frame)
   "Advice to inject a category into the `DISPLAY-BUFFER' action alist.
 This function wraps the original `DISPLAY-BUFFER' function to assign a category
 based on the buffer\'s name or mode, but only if the frame is tagged for custom
@@ -457,7 +459,7 @@ Returns: The result of the original or modified `display-buffer' call
 Edge cases:
 - If FRAME is nil, uses `selected-frame' — ensuring locality to the active
   frame.
-- Non-IDE: No category determination or injection; pure default (e.g., for        ;
+- Non-IDE: No category determination or injection; pure default (e.g., for
   rgrep links, behaves like `find-file-other-window').
 - IDE: Injects category from `my-buffer-tools/category-map', enabling tagged
   window reuse.
@@ -476,21 +478,25 @@ or ECB where defaults broke across frames."
         ;; This ensures default behavior, e.g., 'other-window' reuses or splits
         ;; in current frame.
         (progn
-          (log/debug :fn 'my-assign-category-advice
+          (log/debug :fn 'my-window-tools/assign-category-advice
                      :msg "Non-IDE frame detected, skipping category assignment and using default display"
                      :obj (list :buffer buffer-or-name
                                 :frame effective-frame :action action))
           (apply orig-fun buffer-or-name action frame))
       ;; IDE: Proceed with category assignment and modified action.
       (let* ((buffer (get-buffer buffer-or-name))                                 ; Get buffer for category check.
-             (category (when buffer (my-determine-buffer-category buffer))))      ; Use map for category.
+             (category
+              (when buffer
+                (my-window-tools/determine-buffer-category buffer))))             ; Use map for category.
         (when category
-          (log/debug :fn 'my-assign-category-advice
+          (log/debug :fn 'my-window-tools/assign-category-advice
                      :msg "IDE frame: Assigned category"
                      :obj (list :category category
                                 :buffer buffer-or-name :action action)))
         ;; Process action with category injection.
-        (let ((new-action (my-process-display-action action category)))
+        (let
+            ((new-action
+              (my-window-tools/process-display-action action category)))
           (apply orig-fun buffer-or-name (or new-action action) frame))))))
 
 
@@ -554,12 +560,13 @@ risks frame clutter, as seen in early ECB implementations."
         new-window))))
 
 
-(defun my-determine-buffer-category (buffer)
+(defun my-window-tools/determine-buffer-category (buffer)
   "Determine the category for BUFFER based on its properties.
 Returns a symbol (e.g., `edit', `logs') or nil if no category applies.
 BUFFER is the buffer to categorize.
 
 The category is derived from:
+- Buffers with names starting with a space are automatically whitelisted.
 - Whitelisted names or regexps (ignored if matched).
 - Exact buffer name matches.
 - Regex patterns on buffer names.
@@ -572,16 +579,18 @@ Logs the decision process at debug level."
             (cdr (assq :whitelist-names my-buffer-tools/category-map)))           ; Fetch whitelist names
            (whitelist-regexps
             (cdr (assq :whitelist-regexps my-buffer-tools/category-map))))        ; Fetch whitelist regexps
-      (log/debug :fn 'my-determine-buffer-category
+      (log/debug :fn 'my-window-tools/determine-buffer-category
                  :msg "Computing category"
                  :obj (list :buffer-name buf-name :major-mode buf-mode))
 
       ;; Check if buffer should be ignored based on whitelists
-      (if (or (member buf-name whitelist-names)                                   ; Exact match in whitelist names
-              (seq-some (lambda (re) (string-match-p re buf-name))
-                        whitelist-regexps))                                       ; Regex match
+      (if (or
+           (string-prefix-p " " buf-name)                                         ; Auto-whitelist if starts with space
+           (member buf-name whitelist-names)                                      ; Exact match in whitelist names
+           (seq-some (lambda (re) (string-match-p re buf-name))
+                     whitelist-regexps))                                          ; Regex match
           (progn
-            (log/debug :fn 'my-determine-buffer-category
+            (log/debug :fn 'my-window-tools/determine-buffer-category
                        :msg "Buffer whitelisted, no category assigned"
                        :obj (list :buffer-name buf-name))
             nil)                                                                  ; No category if whitelisted
@@ -592,13 +601,13 @@ Logs the decision process at debug level."
                (name-match (assoc buf-name names)))                               ; Check for exact name match
           (cond
            (name-match
-            (log/debug :fn 'my-determine-buffer-category
+            (log/debug :fn 'my-window-tools/determine-buffer-category
                        :msg "Matched by exact name"
                        :obj (list :match name-match))
             (cdr name-match))                                                     ; Return category from name match
            ((seq-some (lambda (pair)                                              ; Check regex matches
                         (when (string-match-p (car pair) buf-name)
-                          (log/debug :fn 'my-determine-buffer-category
+                          (log/debug :fn 'my-window-tools/determine-buffer-category
                                      :msg "Matched by regex"
                                      :obj (list :regex (car pair)
                                                 :category (cdr pair)))
@@ -606,13 +615,13 @@ Logs the decision process at debug level."
                       regexps))
            ((if-let ((mode-match (assoc buf-mode modes)))                         ; Check mode match
                 (progn
-                  (log/debug :fn 'my-determine-buffer-category
+                  (log/debug :fn 'my-window-tools/determine-buffer-category
                              :msg "Matched by mode"
                              :obj (list :mode buf-mode
                                         :category (cdr mode-match)))
                   (cdr mode-match))))
            (t
-            (log/debug :fn 'my-determine-buffer-category
+            (log/debug :fn 'my-window-tools/determine-buffer-category
                        :msg "No match found, falling back to default category"
                        :obj (list :buffer-name buf-name))
             my-window-tools/default-tag)                                          ; Returns 'edit
@@ -624,7 +633,7 @@ Logs the decision process at debug level."
   )
 
 
-(defun my-process-display-action (action category)
+(defun my-window-tools/process-display-action (action category)
   "Process the DISPLAY-BUFFER ACTION and inject the CATEGORY if applicable.
 Returns a new action structure or the original action if no change is needed.
 ACTION is the original action (function list, alist, or special value like t).
@@ -664,7 +673,7 @@ merging in `display-buffer'."
   ;; as alists.
   (when (eq action 'other-window)
     (setq action '(display-buffer-use-some-window (inhibit-same-window . t)))
-    (log/debug :fn 'my-process-display-action
+    (log/debug :fn 'my-window-tools/process-display-action
                :msg "Translated 'other-window' to standard action"
                :obj action))
 
@@ -709,7 +718,7 @@ merging in `display-buffer'."
           (new-functions (if category
                              '(display-buffer-in-category-window)                 ; Prioritize category reuse
                            action-functions)))                                    ; Else keep original
-      (log/debug :fn 'my-process-display-action
+      (log/debug :fn 'my-window-tools/process-display-action
                  :msg "Processed action"
                  :obj (list :original-action action :category category
                             :functions new-functions :new-alist new-alist))       ; Log new-functions
@@ -722,7 +731,7 @@ merging in `display-buffer'."
           (cons new-functions new-alist)
         nil))))
 
-(advice-add 'display-buffer :around #'my-assign-category-advice)
+(advice-add 'display-buffer :around #'my-window-tools/assign-category-advice)
 
 ;; Configure display-buffer-alist
 ;;   ------------------------------
