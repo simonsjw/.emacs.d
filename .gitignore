@@ -35,7 +35,6 @@ var/**/eshell/
 var/**/tramp/
 var/**/dape/dape-breakpoints
 var/**/bmkp/bookmark-default.el
-custom-packages/worg/
 elpa/
 emacs-wiki/
 tree-sitter-backup/
