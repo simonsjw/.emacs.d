@@ -65,7 +65,7 @@
 
 (load-file
  (expand-file-name
-  "custom-packages/vega-view.el" user-emacs-directory))
+  "custom-packages/vega-view/vega-view.el" user-emacs-directory))
 
 ;;; File associations:
 
