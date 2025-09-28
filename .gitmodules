@@ -30,4 +30,4 @@
 	url = git@github.com:holomorph/systemd-mode.git
 [submodule "custom-packages/worg"]
 	path = custom-packages/worg
-	url = git@git.sr.ht:~bzg/worg
+	url = https://git.sr.ht/~bzg/worg
