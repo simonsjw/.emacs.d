@@ -91,24 +91,6 @@ If `sr-speedbar' is not open, open it first."
       (message "speedbar directory set to %s" expanded-path))))
 
 
-;; DEPRECIATE - USE SPEEDBAR FUNCTIONS IN PREFERENCE TO SR-SPEEDBAR WHERE I CAN.
-;; (defun my-speedbar/set-sr-speedbar-directory-to-file-path (file-path)
-;;   "Set the sr-speedbar directory to FILE-PATH and refresh it.
-;; If `sr-speedbar' is not open, open it first."
-;;   (interactive "DDirectory: ")
-;;   (let ((expanded-path (expand-file-name file-path)))
-;;     (when (file-directory-p expanded-path)
-;;       ;; Open sr-speedbar if it's not already open
-;;       (unless
-;;           (sr-speedbar-exist-p)
-;;         (sr-speedbar-open))
-;;       ;; Set the default directory
-;;       (setq default-directory expanded-path)
-;;       ;; Clear speedbar cache and force refresh
-;;       (speedbar-refresh)
-;;       (sr-speedbar-refresh)
-;;       ;; Display a message indicating the new directory
-;;       (message "sr-speedbar directory set to %s" expanded-path))))
 
 (defun my-speedbar/toggle ()
   "If the selected frame is an IDE, open `sr-speedbar' else open `speedbar'.
@@ -145,17 +127,21 @@ using `sr-speedbar-toggle'."
     )
   )
 
-;; DEPRECIATE - USE SPEEDBAR FUNCTIONS IN PREFERENCE TO SR-SPEEDBAR WHERE I CAN.
-;; (defun my-sr-speedbar/go-home ()
-;;   "Switch sr-speedbar to home directory if in file mode.
-;; TODO: make this also work with SPEEDBAR."
-;;   (interactive)
-;;   (when (and (bound-and-true-p speedbar-frame)                                    ; Speedbar frame exists
-;;              (eq speedbar-frame (selected-frame))                                 ; Speedbar window is active
-;;              (eq speedbar-buffer (current-buffer))                                ; In Speedbar buffer
-;;              (string-equal speedbar-initial-expansion-list-name "files"))         ; In file mode
-;;     (my-speedbar/set-sr-speedbar-directory-to-file-path
-;;      (expand-file-name "~/"))))
+(defun my-speedbar/open-vterm-in-dir ()
+  "Open a vterm session in the directory under the cursor in Speedbar.
+
+This function retrieves the current directory from the Speedbar line,
+binds it as the default directory, and launches vterm with a buffer
+name indicating the directory.  If no directory is selected, it signals
+an error."
+  (interactive)
+  (let* ((dir (speedbar-line-directory))  ; Get the directory path from the current line.
+         (buf-name (concat "Vterm: " (file-name-nondirectory (directory-file-name dir)))))  ; Create a descriptive buffer name.
+    (if dir
+        (let ((default-directory dir))  ; Temporarily bind default-directory to the selected path.
+          (vterm buf-name))  ; Launch vterm in that directory.
+      (error "No directory selected in Speedbar"))))  ; Handle case where no dir is under cursor.
+
 
 
 (defun my-speedbar/go-home ()
@@ -352,6 +338,13 @@ Current view is given in SPEEDBAR-VIEW."
  speedbar-mode-map
  "i" #'(lambda () (interactive)
          (my-speedbar/switch-speedbar-view  "Info")))
+
+(add-hook 'speedbar-reconfigure-keymaps-hook
+          (lambda ()
+            "Hook function to add custom key bindings to Speedbar's mode map.
+This runs whenever Speedbar keymaps are regenerated, ensuring the
+binding persists across mode changes."
+            (define-key speedbar-mode-map (kbd "v") #'my-speedbar/open-vterm-in-dir)))
 
 ;; Bind 'h' & 'w' in Speedbar mode map
 (with-eval-after-load 'speedbar
