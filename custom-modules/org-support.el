@@ -22,7 +22,8 @@
 ;; shows as this: [[https://github.com/emacsmirror/org-link-beautify][org-link-beautify]].
 (use-package org-link-beautify
   :ensure t
-  :init (org-link-beautify-mode t))
+  :defer t
+  :hook (after-init . org-link-beautify-mode))
   
 ;; send alerts to the desktop (via `libnotify' here which should be already
 ;; built in Ubuntu).
