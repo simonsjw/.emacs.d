@@ -74,6 +74,32 @@ width and repositions headers accordingly."
                              'display `(space . (:width ,offset)))
           (forward-line 1))))))
 
+(defun my-ses/force-refresh-via-window-switch ()
+  "Force refresh of current SES buffer by briefly switching windows.
+This simulates user action of clicking out and back in, triggering redisplay.
+Variables:
+- orig-win: The originally selected window.
+Output: None (side-effect: buffer redisplay).
+Flow: Save current window, select next, then restore original."
+  (interactive)
+  (let ((orig-win (selected-window)))  ; Save current window
+    (select-window (next-window))      ; Switch to next window in list
+    (select-window orig-win)))         ; Switch back to original
+
+(defun my-ses/jump-to-ses-and-back ()
+  "Briefly switch to the 'spreadsheet.ses' buffer and back to original.
+This triggers redisplay in the 'spreadsheet.ses' buffer by activating it
+momentarily, which may resolve display artefacts in SES mode.
+Variables:
+- orig-buffer: The originally current buffer.
+Output: None (side-effect: buffer switch and potential redisplay).
+Flow: Save current buffer, switch to 'spreadsheet.ses', then restore original."
+  (interactive)
+  (let ((orig-buffer (current-buffer)))  ; Save current buffer
+    (when (get-buffer "spreadsheet.ses")  ; Check if target buffer exists
+      (switch-to-buffer "spreadsheet.ses")  ; Switch to SES buffer
+      (switch-to-buffer orig-buffer))))  ; Switch back to original
+
 ;; Hook this function to run after SES mode starts and line numbers are enabled
 ;;(add-hook 'ses-mode-hook #'my-ses/adjust-headers-for-line-numbers)
 ;;(add-hook 'window-configuration-change-hook
