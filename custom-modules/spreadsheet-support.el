@@ -11,179 +11,73 @@
 ;; configure a spreadsheet like buffer.
 
 ;;; Code:
+(use-package ses)
+;; (use-package ses
+;;   :ensure nil  ; Built-in, no need to install
+;;   :defer t     ; Load only when needed (e.g., on .ses file open)
+;;   :hook (ses-mode . my-ses/ses-mode-hook)
+;;   :custom
+;;   (ses-jump-cell-name-function #'upcase)  ; Default: uppercase cell names for jumps
+;;   (ses-jump-prefix-function #'ses-jump-prefix-numeric)  ; Interpret prefix args as row/column numbers
+;;   :config
+;;   (defun my-ses/ses-mode-hook ()
+;;     "Custom hook for SES mode: Define local printers if needed.
+;; This runs on SES buffer activation, ensuring printers are available
+;; without overriding globals.
+;; Prioritises efficiency by checking read-only status."
+;;     (when (and (eq major-mode 'ses-mode)
+;;                display-line-numbers
+;;                ses--cells))  ; Ensure SES data structures are initialised.
 
-(defvar my-paths/cell-mode)
-(add-to-list 'load-path my-paths/cell-mode)                                       ; Add directory to the load path
-(require 'cell-mode)
-
-;;; Look & Feel
-;; change the colouring to match our theme.
-;;(Using the customisation group 'cell' provided by the developer.)
-
-;; (defgroup cell nil
-;;   "Options for cell-mode."
-;;   :group 'applications)
-
-;;; Font locking
-
-;; Do not attempt to use defface since it's already used.
-;; instead redefine existing faces.
-;;
-;; This definition for 'cell-default-face' would be updated
-;; overwriting the definition. 
-;; 
-;; (defface cell-default-face
-;;   '((t (:foreground
-;;         "black")))
-;;   "Face for cells."
-;;   :group 'cell)
-;;
-;; is updated using:
-;;
-;; `(cell-default-face
-;;   ((t (:foreground
-;;        ,info-theme-white-grey
-;;        :box (:line-width 1
-;;                          :color ,info-theme-white-grey)))))
-;;
-
-(custom-set-faces
-
- ;;;; Define faces for cell-mode
+;;     ))
 
 
+(defun my-ses/create-new-ses (file-path)
+  "Create and save a new SES spreadsheet at FILE-PATH.
 
- ;; The default face before any modification. 
- ;; ------------------------------------------------------------
- ;; (defface cell-default-face
- ;;   '((t (:foreground
- ;;         "black")))
- ;;   "Face for cells."
- ;;   :group 'cell)
+This is a helper function for `my-open-or-create-spreadsheet` to
+initialize a new SES spreadsheet.
 
- `(cell-default-face
-   ((t (:foreground
-        ,info-theme-white-grey
-        :box (:line-width 1
-                          :color ,info-theme-white-grey)))))
+Args:
+  file-path (string): Full path where the new spreadsheet will be saved.
 
+Returns:
+  buffer: The buffer containing the new spreadsheet."
+  (find-file file-path)                                                           ; Create buffer for new file
+  (ses-mode)                                                                      ; Activate SES mode
+  ;; (ses-new)                             ; Initialize new SES spreadsheet
+  ;; (save-buffer)                         ; Save the new file
+                                                                                  ; Ensure SES buffer is narrowed after mode activation.
+  ;;(ses-setup)
+  (let ((orig-buf (current-buffer)))
+    (switch-to-buffer (get-buffer-create "*scratch*"))
+    (switch-to-buffer orig-buf)
+    (redisplay t))
+  (ses-renarrow-buffer))                                                               ; Return the buffer
 
- ;; (defface cell-action-face
- ;;   '((t (:foreground
- ;;         "yellow"
- ;;         :background "red"
- ;;         :bold t :weight bold)))
- ;;   "Face for cells that perform an action." :group 'cell)
+(defun my-ses/adjust-headers-for-line-numbers ()
+  "Adjust SES column headers to align when line numbers are enabled.
 
- ;; (defface cell-comment-face
- ;;   '((t (:foreground
- ;;         "dodger blue")))
- ;;   "Face for cells that simply label stuff."
- ;;   :group 'cell)
+Line numbers move the worksheet content right - the column headers need
+adjusting for this.  The function here calculates the offset from line number
+width and repositions headers accordingly."
+  (when (and (eq major-mode 'ses-mode)
+             display-line-numbers)
+    (let* ((max-lines (count-lines (point-min) (point-max)))
+           (num-width (length (number-to-string max-lines)))
+           (offset (* num-width (frame-char-width))))
+      ;; Adjust SES column header positions
+      (save-excursion
+        (goto-char (point-min))
+        (while (looking-at "^[A-Z]+")
+          (put-text-property (point) (1+ (point))
+                             'display `(space . (:width ,offset)))
+          (forward-line 1))))))
 
- `(cell-comment-face
-   ((t (:foreground
-        ,info-theme-bold-code-green
-        :box (:line-width 1
-                          :color ,info-theme-white-grey)))))
-
- ;; (defface cell-comment-2-face
- ;;   '((t (:foreground
- ;;         "hot pink" :slant italic :italic t)))
- ;;   "Face for cells that simply label stuff." :group 'cell)
-
- `(cell-comment-2-face
-   ((t (:foreground
-        ,info-theme-faded-lime
-        :box (:line-width 1
-                          :color ,info-theme-white-grey)))))
-
- ;; (defface cell-file-face
- ;;   '((t (:foreground
- ;;         "yellowgreen")))
- ;;   "Face for simple links to files." :group 'cell)
-
- ;; (defface cell-cursor-face
- ;;   '((t (:background
- ;;         "hot pink"
- ;;         :foreground "yellow"
- ;;         :box (:line-width 1 :color "magenta"))))
- ;;   "Face for selected cell." :group 'cell)
-
-
- `(cell-cursor-face
-   ((t (:background
-        ,info-theme-flat-green
-        :foreground ,info-theme-sharp-lime
-        :box (:line-width 1
-                          :color ,info-theme-white-grey)))))
- 
- ;; (defface cell-mark-face
- ;;   '((t (:background
- ;;         "yellow" :foreground "red")))
- ;;   "Face for marked cell." :group 'cell)
-
- ;; (defface cell-selection-face
- ;;   '((t (:background
- ;;         "pale green"
- ;;         :foreground "gray20"
- ;;         :box (:line-width 1 :color "pale green"))))
- ;;   "Face for multi-cell selection." :group 'cell)
-
- ;; (defface cell-text-face
- ;;   '((t (:foreground "yellow")))
- ;;   "Face for text entry cells." :group 'cell)
-
- 
- ;; Odd and Even column vertical formatting. 
- ;; ------------------------------------------------------------
- ;; (defface cell-blank-face
- ;;   '((t (:background 
- ;;         "wheat" 
- ;;         :box 
- ;;         (:line-width 1 :color "dark khaki"))))
- ;;   "Face for blank cells." :group 'cell)
-
- `(cell-blank-face
-   ((t (:background
-        ,info-theme-dark-blue
-        :box (:line-width 1
-                          :color ,info-theme-white-grey)))))
- ;; (defface cell-blank-odd-face
- ;;   '((t (:background 
- ;;         "cornsilk" 
- ;;         :box 
- ;;         (:line-width 1 :color "dark khaki"))))
- ;;   "Face for blank cells in odd columns" :group 'cell)
-
- `(cell-blank-odd-face
-   ((t (:background
-        ,info-theme-blue-steel
-        :box (:line-width 1
-                          :color ,info-theme-white-grey)))))
-
-
-
- ;; The horisontal and vertical numbering of cells in the sheet.
- ;; ------------------------------------------------------------
- ;; (defface cell-axis-face
- ;;   '((t :foreground "gray50" 
- ;;        :background "gray80" 
- ;;        :box (:line-width 1 :color "grey70")))
- ;;   "Face for numbered axes."  :group 'cell)
-
- ;; (defface cell-axis-odd-face
- ;;   '((t :foreground "gray50" 
- ;;        :background "gray90" 
- ;;        :box (:line-width 1 :color "grey70")))
- ;;   "Face for numbered axes in odd columns." :group 'cell)
-
- )
-
-
-;;; Keybindings
-
-
+;; Hook this function to run after SES mode starts and line numbers are enabled
+;;(add-hook 'ses-mode-hook #'my-ses/adjust-headers-for-line-numbers)
+;;(add-hook 'window-configuration-change-hook
+;;          #'my-ses/adjust-headers-for-line-numbers)
 
 (provide 'spreadsheet-support)
 ;;; spreadsheet-support.el ends here
