@@ -69,9 +69,8 @@
   "Folder containing `window-tree' specifications for UI layouts.")
 
 (defvar my-paths/q-load-balancer-folder)
-(defvar my-paths/rainbow-mode)
+;;(defvar my-paths/rainbow-mode)
 (defvar my-paths/systemd-mode)
-(defvar my-paths/cell-mode)
 (defvar my-paths/logging-view-mode)
 
 (defvar my-paths/ispell-word-replacement)
@@ -105,7 +104,7 @@
 ;;;; Emacs internal Directory
 ;;   -----------------------
 
-;; set up my eln-cache. 
+;; set up my eln-cache.
 (setq my-paths/eln-cache
       (expand-file-name "eln-cache/" no-littering-etc-directory))
 (my-on-disk-tools/ensure-directory-exists my-paths/eln-cache)
@@ -251,8 +250,8 @@
                             no-littering-var-directory))
     (setq yasnippets-directory-default
           (expand-file-name
-           "package/archives/elpa/yasnippet-snippets-1.0/snippets/"
-           no-littering-var-directory))
+           "yasnippet-snippets-1.0/snippets/"
+           package-user-dir))
     (setq yasnippets-directory-yasmate
           (expand-file-name
            "yasnippet/yasmate/snippets/" no-littering-var-directory))
@@ -261,15 +260,9 @@
     ;; no-littering only sets up a link to an empty
     ;; directory under etc.
     (setq yas-snippet-dirs
-          `(,(expand-file-name
-              "yasnippet/snippets/"
-              no-littering-var-directory)
-            ,(expand-file-name
-              "package/archives/elpa/yasnippet-snippets-1.0/snippets/"
-              no-littering-etc-directory)
-            ,(expand-file-name
-              "yasnippet/yasmate/snippets/"                                       ; the yasmate collection
-              no-littering-var-directory))))
+          `(,yasnippets-directory-personal
+            ,yasnippets-directory-default
+            ,yasnippets-directory-yasmate)))
 
   ;; ensure the yasnippet directories exist.
   (my-on-disk-tools/ensure-directory-exists yasnippets-directory-personal)
@@ -290,6 +283,13 @@
       (expand-file-name "projects/workspace-list.el" no-littering-var-directory))
 (my-on-disk-tools/ensure-directory-exists
  (expand-file-name "projects/" no-littering-var-directory))
+
+
+;;;; Spreadsheet
+;;   -----------
+(setq my-paths/spreadsheet-dir
+      (expand-file-name "spreadsheet" no-littering-var-directory))
+(my-on-disk-tools/ensure-directory-exists my-paths/spreadsheet-dir)
 
 ;;;; language servers
 
@@ -396,16 +396,12 @@
       (concat user-emacs-directory "custom-packages/q-loadbalancer/"))
 
 ;; define a path to the rainbow-mode custom package
-(setq my-paths/rainbow-mode
-      (concat user-emacs-directory "custom-packages/rainbow-mode/"))
+;; (setq my-paths/rainbow-mode
+;;       (concat user-emacs-directory "custom-packages/rainbow-mode/"))
 
 ;; define a path to the systemd-mode custom package
 (setq my-paths/systemd-mode
       (concat user-emacs-directory "custom-packages/systemd-mode/"))
-
-;; define a path to the cell-mode custom package
-(setq my-paths/cell-mode
-      (concat user-emacs-directory "custom-packages/cell-mode/"))
 
 ;; define a path to the logging-view-mode custom package
 (setq my-paths/logging-view-mode
