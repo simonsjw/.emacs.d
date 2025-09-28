@@ -578,7 +578,75 @@ Errors if no projects or workspaces available
     (tab-line-mode 1)))                                                           ; Enable tab-line-mode for tabs if supported.
 
 
+;; (make-vtable
+;;  :columns `(
+;;             (:name "Path"
+;;                    :width (plist-get col-widths :path)
+;;                    )
+;;             (:name "Status"
+;;                    :width (plist-get col-widths :status)
+;;                    )
+;;             (:name "Commit"
+;;                    :width (plist-get col-widths :commit)
+;;                    )
+;;             (:name "Branch"
+;;                    :width (plist-get col-widths :branch)
+;;                    )
+;;             (:name "Upstream"
+;;                    :width (plist-get col-widths :upstream)
+;;                    )
+;;             (:name "Remote"
+;;                    :width (plist-get col-widths :remote)
+;;                    )
+;;             (:name "Stash"
+;;                    :width (plist-get col-widths :stash)
+;;                    )
+;;             (:name "Backend"
+;;                    :width (plist-get col-widths :backend)
+;;                    )
+;;             )
 
+;;  :objects '(("Foo" 1034)
+;;             ("Gazonk" 45))
+
+;;  :objects-function (lambda ()
+;;                      (project-switch-project "/tmp/" t ".jpg'"))
+;;  :getter
+;;  ;; If given, this is a function that should return the values to use in the table,
+;;  ;; and will be called once for each element in the table (unless overridden by a column getter function).
+;;  ;;   Function: getter object index table
+;;  ;;   For a simple object (like a sequence), this function will typically just
+;;  ;;   return the element corresponding to the column index (zero-based), but
+;;  ;;   the function can do any computation it wants. If it’s more convenient to
+;;  ;;   write the function based on column names rather than the column index,
+;;  ;;   the vtable-column function can be used to map from index to name.
+;;  :separator-width 2
+;;  )
+;; (make-vtable
+;;  :columns `(( :name "Thumb" :width "500px"
+;;               :displayer
+;;               ,(lambda (value max-width table)
+;;                  (propertize "*" 'display
+;;                              (create-image value nil nil
+;;                                            :max-width max-width))))
+;;             (:name "Size" :width 10
+;;                    :formatter file-size-human-readable)
+;;             (:name "Time" :width 10 :primary ascend)
+;;             "Name")
+;;  :objects-function (lambda ()
+;;                      (directory-files "/tmp/" t "\\\\.jpg\\\\'"))
+;;  :actions '("RET" find-file)
+;;  :getter (lambda (object column table)
+;;            (pcase (vtable-column table column)
+;;              ("Name" (file-name-nondirectory object))
+;;              ("Thumb" object)
+;;              ("Size" (file-attribute-size (file-attributes object)))
+;;              ("Time" (format-time-string
+;;                       \"%F\" (file-attribute-modification-time
+;;                             (file-attributes object))))))
+;;  :separator-width 5
+;;  :keymap (define-keymap
+;;            "q" #'kill-buffer))
 
 (provide 'project-support)
 ;;; project-support.el ends here
