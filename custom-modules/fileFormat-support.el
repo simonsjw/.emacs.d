@@ -10,8 +10,15 @@
 ;;; Code:
 
 ;; packages
+(use-package vlf)
 (use-package csv-mode)
 (use-package dotenv-mode)
+
+;;;; Very Large Files (vlf)
+;;   ----------------------
+;; ensure vlf is used automatically.
+(custom-set-variables
+ '(vlf-application 'dont-ask))
 
 ;;;; .env files
 ;;   ----------
