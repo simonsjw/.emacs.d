@@ -36,7 +36,7 @@
 
 (defvar my-paths/default-config-file)
 (defvar my-paths/default-log-file)
-
+(defvar my-paths/spreadsheet-dir)
 
 (defun my-ui/create-project-frame (project-path)
   "Create a new frame with a UI-TYPE of IDE.
@@ -99,16 +99,18 @@ The frame has a current working directory PROJECT-PATH."
                    (message "Starting buffer creation in new frame...")
                    (dashboard-open)
                    (message "Opened dashboard")
-                   (cell-sheet-create "20" "20")
-                   (message "Opened cell-sheet")
+                   (my-ses/create-new-ses
+                    (expand-file-name
+                     "spreadsheet.ses" my-paths/spreadsheet-dir))
+                   (my-ses/force-refresh-via-window-switch)
+                   (message "Opened spreadsheet")
                    (with-current-buffer (get-buffer-create "*Ibuffer*")
                      (unless (eq major-mode 'ibuffer-mode)
                        (ibuffer-mode))
                      (ibuffer-update nil t)
                      (goto-char (point-min)))
                    (message "Opened Ibuffer")
-                   (find-file-noselect my-paths/default-log-file)
-                   (log/display-load-history)
+                   (view-echo-area-messages)
                    (message "Opened load history & log file.")
                    (vc-dir project-path)
                    (vc-dir-hide-up-to-date)
@@ -132,8 +134,9 @@ The frame has a current working directory PROJECT-PATH."
                                         (frame-root-window frame))
                       (let ((tag-list
                              (list 'edit 'data 'config 'logs 'vc 'terminal)))
-                        (my-window-tools/tag-windows-by-list frame tag-list))
-                      (message "Window layout applied to new frame"))
+                        (my-window-tools/tag-windows-by-list frame tag-list t))
+                      (message "Window layout applied to new frame.
+SET-QUIT-RESTORE set to t to prevent windows being deleted. "))
                   (error
                    (message "Layout apply error: %s | Check missing buffers?"
                             err)))
