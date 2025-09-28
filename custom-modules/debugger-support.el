@@ -132,8 +132,9 @@
   ;; Timeout is 30 seconds.
   (setq dape-request-timeout 60)
 
-  ;; Info buffers to the right
-  (setq dape-buffer-window-arrangement 'right)
+  ;; Info buffers to the right using 'right or nil to have the window manager
+  ;; control it.
+  (setq dape-buffer-window-arrangement nil)
 
   ;; Automatically enable dape-breakpoint-global-mode with dape-active-mode
   (add-hook 'dape-active-mode-hook #'my-dape/breakpoint-mode)
@@ -234,6 +235,7 @@ variable my-dape/adapter-names as well as returned by the function."
   my-dape/adapter-names)
 
 
+
 ;; Define the variable if it doesn't exist
 (defvar my-dape/current-config nil
   "Stores the current Dape configuration settings.")
@@ -254,6 +256,18 @@ variable my-dape/adapter-names as well as returned by the function."
           settings)
       (message "No settings found for %s" key)
       nil)))
+
+(defun my-dape/unset-window-dedication ()
+  "Unset dedication for windows showing Dape buffers.
+Ensures tagged windows remain reusable (e.g., for Ibuffer) without
+clutter.  Runs on UI updates for efficiency."
+  (dolist (win (window-list nil 'no-minibuffer))
+    (let ((buf (window-buffer win)))
+      (when (and (buffer-live-p buf)
+                 (string-match-p "^\\*dape-" (buffer-name buf)))
+        (set-window-dedicated-p win nil)))))
+
+(add-hook 'dape-update-ui-hook #'my-dape/unset-window-dedication)
 
 ;; (straight-rebuild-package "dape")
 (provide 'debugger-support)
