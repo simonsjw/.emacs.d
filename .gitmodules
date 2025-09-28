@@ -1,3 +1,33 @@
-[submodule "custom-packages/cell-mode"]
-	path = custom-packages/cell-mode
-	url = https://gitlab.com/dto/cell-mode.git
+[submodule "custom-packages/log-ts-mode"]
+	path = custom-packages/log-ts-mode
+	url = git@gitlab.com:simonsjw/log-ts-mode.git
+[submodule "custom-packages/logging-view-mode"]
+	path = custom-packages/logging-view-mode
+	url = git@gitlab.com:simonsjw/logging-view-mode.git
+[submodule "custom-packages/memory-object-tree"]
+	path = custom-packages/memory-object-tree
+	url = git@gitlab.com:simonsjw/memory-object-tree.git
+[submodule "custom-packages/project-overview"]
+	path = custom-packages/project-overview
+	url = git@gitlab.com:simonsjw/project-overview.git
+[submodule "custom-packages/q-loadbalancer"]
+	path = custom-packages/q-loadbalancer
+	url = git@gitlab.com:simonsjw/q-loadbalancer.git
+[submodule "custom-packages/vega-view."]
+	path = custom-packages/vega-view
+	url = git@gitlab.com:simonsjw/vega-view.git
+[submodule "custom-packages/window-tree"]
+	path = custom-packages/window-tree
+	url = git@gitlab.com:simonsjw/window-tree.git
+[submodule "custom-packages/combobulate"]
+	path = custom-packages/combobulate
+	url = git@github.com:mickeynp/combobulate.git
+[submodule "custom-packages/org-pretty-table"]
+	path = custom-packages/org-pretty-table
+	url = git@github.com:Fuco1/org-pretty-table.git
+[submodule "custom-packages/systemd-mode"]
+	path = custom-packages/systemd-mode
+	url = git@github.com:holomorph/systemd-mode.git
+[submodule "custom-packages/worg"]
+	path = custom-packages/worg
+	url = git@git.sr.ht:~bzg/worg
