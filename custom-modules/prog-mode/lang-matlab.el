@@ -84,6 +84,7 @@
   (flymake-show-project-diagnostics)
 
   ;; ensure memory-tree is available for inspection from speedbar.
+  (require 'matlab-mode)
   (require 'memory-object-tree)
   (require 'matlab-workspace-tree)
   (matlab-memory-tree-init)
@@ -133,6 +134,56 @@
   (display-fill-column-indicator-mode 1)                                          ; show the buffer line width.
 
   ;; (matlab-shell)                                                                ; ensure matlab is running.
+
+     ;;;;; IDE functionality map
+  
+  ;; compiling the code (Not applicable)
+  ;; (keymap-set python-ts-mode-map "C-c C-c C-u" #)
+
+  ;; debugging the code tbc
+  ;; (keymap-set python-ts-mode-map "C-c C-c C-k" #)
+
+  ;; document thing at point:
+  ;; (keymap-set python-ts-mode-map "C-c C-c C-r" #'eldoc)
+  ;;  (keymap-set python-ts-mode-map "M-?" #'anaconda-mode-show-doc)
+  ;; testing (tbd)
+  ;; (keymap-set python-ts-mode-map "C-c C-c C-t"
+  ;; #'projectile-test-project)
+
+  ;; running the code
+  ;;  (keymap-set python-ts-mode-map "C-c r b" #'eval-buffer)
+
+  ;; run an inferior python process
+  ;;  (keymap-set python-ts-mode-map "C-c r p" #'run-python)
+
+  ;; formatting
+  ;; (keymap-set python-ts-mode-map "C-c C-f b" #'blacken-buffer)
+  ;;  (keymap-set python-ts-mode-map "C-c C-f r" #'blacken-buffer)
+
+   ;;;;; Errors/linting
+
+  ;; list errors in buffer
+  ;;  (keymap-set python-ts-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)
+  ;; list errors in minibuffer
+  ;;  (keymap-set python-ts-mode-map "C-c e m" #'consult-flymake)
+  ;; list errors in project
+  ;;  (keymap-set
+  ;;   python-ts-mode-map "C-c e p" #'flymake-show-project-diagnostics)
+  ;; formatting errors (not applicable)
+  ;; (keymap-set python-ts-mode-map "C-c C-n" )
+  ;; go to next error
+  ;;  (keymap-set python-ts-mode-map "C-c e n" #'flymake-goto-next-error)
+  ;; go to previous error.
+  ;; (keymap-set python-ts-mode-map "C-c e l" #'flymake-goto-prev-error)
+
+   ;;;;; Variable/function references
+
+  ;; xref-find-definitions
+  ;; (keymap-set python-ts-mode-map "M-." #'anaconda-mode-find-definitions)
+  ;; xref-find-references
+  ;;  (keymap-set python-ts-mode-map "M-r" #'anaconda-mode-find-references)
+  ;; xref-find-assignments
+  ;;  (keymap-set python-ts-mode-map "M-=" #'anaconda-mode-find-assignments)
   
   (message
    "[%s ; DEBUG; my-lang/matlab-mode-setup]finished loading the defun ; ;"
@@ -160,7 +211,13 @@
 (add-hook 'matlab-mode-hook #'matlab-mode-treesit-setup)
 (add-hook 'matlab-mode-hook #'my-lang/matlab-mode-setup)
 
-
+;; advice:
+;; Stop an annoying back tab error when you accidentally go backwards at
+;; beginning of a terminal line. 
+(advice-add 'matlab-shell-delete-backwards-no-prompt :around
+            (lambda (orig-fun &rest args)
+              "Wrap matlab-shell-delete-backwards-no-prompt to ignore errors at prompt start."
+              (ignore-errors (apply orig-fun args))))
 
 (provide 'lang-matlab)
 ;;; lang-matlab.el ends here
