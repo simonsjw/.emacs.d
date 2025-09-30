@@ -68,10 +68,20 @@
                            "^\\*transient.*"                                      ; Transient (Magit-like) popups
                            "^\\*Embark.*"                                         ; Embark action menus
                            ))
-    (:names . (("dape-shell" . terminal)
-               ("scratch" . terminal)
-               ("*MATLAB*" . terminal)
-               ("Checkdoc Status" . data)                                         ; Note: Appears twice in original; consolidated here
+    (:names . (("spreadsheet-support.el" . edit)
+               ("*dape-info breakpoints*" . data)                                 ; Lowercase, exact match
+               ("*dape-info Breakpoints*". data)
+               ("*dape-info stack frames*" . data)                                ; Full phrasing, lowercase
+               ("*dape-info scope*" . data)                                       ; Lowercase
+               ("*dape-info Scope*". data) 
+               ("*dape-info threads*" . data)                                     ; Add missing
+               ("*dape-info watch*" . data)                                       ; Add missing
+               ("*dape-info sources*" . data)                                     ; Add missing
+               ("*dape-info modules*" . data)                                     ; Add missing
+               ("*dape-memory*" . data)                                           ; Add missing (memory viewer)
+               ("*dape-info Scope*". data)
+               ("*dape-info Stack*". data)
+               ("Checkdoc Status" . data)
                ("SQL Results" . data)
                ("Backtrace" . data)
                ("grep" . data)
@@ -83,7 +93,10 @@
                ("docker-containers" . data)
                ("docker-volumes" . data)
                ("vc-diff" . data)
+               ("spreadsheet.ses" . data)
+               ("spreadsheet.ses<simon>" . data)
                ("Emacs" . edit)
+               ("vc-support.el" . edit)
                ("config.el" . edit)
                ("early-config.el" . edit)
                (".bashrc" . edit)
@@ -93,6 +106,7 @@
                (".profile" . edit)
                (".zshrc" . edit)
                ("*vc-diff*" . edit)
+               ("*dape-connection events*" . logs)
                ("*Messages*" . logs)
                ("*Warnings*" . logs)
                ("blacken-error" . logs)
@@ -102,27 +116,34 @@
                ("projectile-files-errors" . logs)
                ("Async-native-compile-log" . logs)
                ("elisp-flymake-byte-compile" . logs)
-               ("log-edit-files" . logs)                                          ; Note: Duplicate in original with .vc; using .logs here—resolve if needed
+               ("log-edit-files" . vc)
+               ("*log-edit-files*" . vc)
                ("Org Babel Results" . logs)
                ("vc" . logs)
                ("*Load-History*" . logs)
                ("RE-Builder" . config)
                ("Anaconda" . config)
                ("conf.org" . config)
+               ("todos.org" . config)
+               ("gracie.org" . config)
+               ("evie.org" . config)
                ("eldoc" . config)
                ("EGLOT workspace configuration" . config)
                ("Help" . config)
                ("info" . config)
-               ("todos.org" . config)
                ("Ediff Config" . config)
                ("Ilist" . config)
                ("*Projects View*" . config)
+               ("*dape-repl*" . config)
                (".gitignore" . vc)
                ("*vc*" . vc)
                ("*vc-dir*" . vc)
-               ("*vc-log-edit-files*" . vc)
                ("*vc-log*" . vc)
-               ("*log-edit-files*" . vc)))                                        ; Note: If conflicting with above, choose one
+               ("*vc-log-edit*" . vc)
+               ("*dape-shell*" . terminal)
+               ("*scratch*" . terminal)
+               ("*MATLAB*" . terminal)
+               ))                                                                 ; Note: If conflicting with above, choose one
     (:regexps . (("^documentation$" . config)                                     ; Exact match for "documentation"
                  ("^README.*" . config)                                           ; Starting with "README" + any chars
                  (".*\\.conf$" . config)                                          ; Any chars + literal ".conf" at end
@@ -133,12 +154,14 @@
                  (".*\\.pdf$" . config)                                           ; Any chars + literal ".pdf" at end
                  ("^magit.*" . vc)                                                ; Starting with "magit" + any chars
                  ("^vc-.*" . vc)                                                  ; Starting with "vc-" + any chars
-                 ("^\\*vc-.*" . vc)                                                  ; Starting with "*vc-" + any chars
+                 ("^\\*vc-.*" . vc)                                               ; Starting with "*vc-" + any chars
                  (".*Annotate .*" . vc)                                           ; Any chars + "Annotate " + any chars
                  (".*ede-proj.*" . vc)                                            ; Any chars + "ede-proj" + any chars
+                 ("^\\*undo-tree.*" data)                                         ; Any chars + "*undo-tree" + any chars
                  ("^\\*Flymake diagnostics.*" . data)                             ; Starting with literal "*Flymake diagnostics" + any chars
                  ("^flymake-.*" . data)                                           ; Starting with "flymake-" + any chars
                  (".*cell sheet.*" . data)                                        ; Any chars + "cell sheet" + any chars
+                 (".*spreadsheet.*" . data)                                       ; Any chars + "spreadsheet" + any chars
                  ("*\\.bib" . data)                                               ; Any chars + literal ".bib" at end
                  ("^Ediff A\\:.*" . data)                                         ; Starting with "Ediff A:" + any chars (escaped :)
                  ("^Ediff B\\:.*" . data)                                         ; Starting with "Ediff B:" + any chars (escaped :)
@@ -149,6 +172,8 @@
                  (".*-log.*" . logs)                                              ; Any chars + "-log" + any chars
                  (".*tramp.*" . logs)                                             ; Any chars + "tramp" + any chars
                  ("^\\*vc-git :.*" . logs)                                        ; Starting with literal "*vc-git :" + any chars
+                 ("^\\*.*output\\*$" . logs)                                      ; starting with a star then any chars + "tramp" + ending with output* (latex compilation file)
+                 ("^Vterm:" . terminal)                                           ; Starting with literal "Vterm:"
                  ("^\\*ielm" . terminal)                                          ; Starting with literal "*ielm"
                  ("^\\*Q PROC.*" . terminal)                                      ; Starting with literal "*Q PROC" + any chars
                  ("^\\*vterm.*" . terminal)                                       ; Starting with literal "*vterm" + any chars
@@ -207,18 +232,52 @@
                        (and (= y1 y2) (< x1 x2)))))))
 
 
-(defun my-window-tools/tag-windows-by-list (frame tag-list)
+(defun my-window-tools/tag-windows-by-list (frame tag-list &optional set-quit-restore)
   "Tag each window in FRAME from TAG-LIST based on an ordered window list.
-The window list is ordered by position.  If there are more windows than tags,
-the tags will be reused cyclically."
+
+The window list is sorted by top-left position for consistent assignment.
+If there are more windows than tags, tags are reused cyclically.
+
+When optional SET-QUIT-RESTORE is t, also set the 'quit-restore window
+parameter to nil for each tagged window.  This prevents auto-deletion
+of the window on buffer kill or `quit-window' calls, preserving IDE-like
+layout stability by switching to a previous buffer instead.  Use this
+flag judiciously to avoid persistent 'zombie' windows in non-IDE contexts.
+
+FRAME is the target frame (defaults to selected if nil, but explicit
+passing is recommended for multi-frame setups).
+TAG-LIST is a list of symbols (e.g., '(edit data config)).
+SET-QUIT-RESTORE is an optional boolean (default nil).
+
+Returns: Nil (side-effect function for window parameters).
+
+Flow:
+- Select the frame.
+- Get sorted windows (excluding minibuffers).
+- Loop over windows, assigning tags modulo tag-count.
+- If SET-QUIT-RESTORE t, set 'quit-restore nil post-tagging.
+- Log assignments for debug.
+
+Edge cases:
+- Empty TAG-LIST: No tags applied; logs but no errors.
+- More windows than tags: Cyclic reuse (e.g., mod idx).
+- Untagged windows: Skipped for quit-restore (though none here, as all get
+  tags).
+- Historical note: Aligns with Emacs 24+ quit-restore for custom UIs,
+  avoiding fragmentation seen in pre-24 debuggers like GUD."
   (with-selected-frame frame
     (let* ((windows (my-window-tools/sorted-window-list frame))
            (tag-count (length tag-list)))
       (cl-loop for win in windows
                for idx from 0 do
-               (let ((tag-to-apply (nth (mod idx tag-count) tag-list)))
-                 (set-window-parameter win 'window-category tag-to-apply)
-                 (message "Assigned tag %s to window %s" tag-to-apply win))))))
+               (let ((tag-to-apply (when (> tag-count 0)
+                                     (nth (mod idx tag-count) tag-list))))
+                 (when tag-to-apply
+                   (set-window-parameter win 'window-category tag-to-apply)
+                   (when set-quit-restore
+                     (set-window-parameter win 'quit-restore nil))
+                   (message "Assigned tag %s to window %s"
+                            tag-to-apply win)))))))
 
 
 (defconst my-window-tools/default-tag 'edit
@@ -438,37 +497,110 @@ Utility function shows the tag associated with the current selected window."
 ;; ----------------------------------------------------------------------------
 
 
+;; (defun my-window-tools/assign-category-advice (orig-fun buffer-or-name &optional action frame)
+;;   "Advice to inject a category into the `DISPLAY-BUFFER' action alist.
+;; This function wraps the original `DISPLAY-BUFFER' function to assign a category
+;; based on the buffer\'s name or mode, but only if the frame is tagged for custom
+;; window management (i.e., IDE frames with `custom-window-management' t).
+
+;; For non-IDE frames, skips custom logic entirely, falling back to Emacs' default
+;; display behavior (e.g., 'other-window' opens in another window in the current
+;; frame without category injection or tagged reuse).
+
+;; ORIG-FUN is the original `display-buffer' function.
+;; BUFFER-OR-NAME is either a buffer object or its name.
+;; ACTION is an optional action alist or function specification.
+;; FRAME is the target frame, defaulting to the selected frame if nil.
+
+;; Returns: The result of the original or modified `display-buffer' call
+;;  (typically a window).
+
+;; Edge cases:
+;; - If FRAME is nil, uses `selected-frame' — ensuring locality to the active
+;;   frame.
+;; - Non-IDE: No category determination or injection; pure default (e.g., for
+;;   rgrep links, behaves like `find-file-other-window').
+;; - IDE: Injects category from `my-buffer-tools/category-map', enabling tagged
+;;   window reuse.
+;; - Logs skips and assignments for debug.
+
+;; Historical context: Advices like this became common post-Emacs 24 to customize
+;; displays without globals, but frame checks (added in evolutions like Emacs 27)
+;; prevent interference in multi-frame setups, avoiding issues seen in early CEDET
+;; or ECB where defaults broke across frames."
+;;   (let* ((effective-frame (or frame (selected-frame)))                            ; Ensure locality to active frame if not specified.
+;;          (use-custom
+;;           (frame-parameter effective-frame 'custom-window-management)))           ; Check for IDE tag.
+;;     (if (not use-custom)
+;;         ;; Non-IDE: Skip all custom logic, apply original display-buffer with
+;;         ;; unmodified action.
+;;         ;; This ensures default behavior, e.g., 'other-window' reuses or splits
+;;         ;; in current frame.
+;;         (progn
+;;           (log/debug :fn 'my-window-tools/assign-category-advice
+;;                      :msg "Non-IDE frame detected, skipping category assignment and using default display"
+;;                      :obj (list :buffer buffer-or-name
+;;                                 :frame effective-frame
+;;                                 :action action))
+;;           (apply orig-fun buffer-or-name action frame))
+;;       ;; IDE: Proceed with category assignment and modified action.
+;;       (let* ((buffer (get-buffer buffer-or-name))                                 ; Get buffer for category check.
+;;              (category
+;;               (when buffer
+;;                 (my-window-tools/determine-buffer-category buffer)))              ; Use map for category.
+;;              (when (and category (assq 'category action))                         ; Dape injected?
+;;                (setq action (assoc-delete-all 'category action))                  ; If so, strip, so we use the custom version. 
+;;                (log/debug :fn 'my-window-tools/assign-category-advice
+;;                           :msg "IDE frame: overrode Dape internal window category tags."
+;;                           :obj (list :category category
+;;                                      :buffer buffer-or-name :action action)))
+;;              )         
+;;         (when category
+;;           (log/debug :fn 'my-window-tools/assign-category-advice
+;;                      :msg "IDE frame: Assigned category"
+;;                      :obj (list :category category
+;;                                 :buffer buffer-or-name :action action)))
+;;         ;; Process action with category injection.
+;;         (let
+;;             ((new-action
+;;               (my-window-tools/process-display-action action category)))
+;;           (apply orig-fun buffer-or-name (or new-action action) frame))))))
+
 (defun my-window-tools/assign-category-advice (orig-fun buffer-or-name &optional action frame)
   "Advice to inject a category into the `DISPLAY-BUFFER' action alist.
-This function wraps the original `DISPLAY-BUFFER' function to assign a category
-based on the buffer\'s name or mode, but only if the frame is tagged for custom
-window management (i.e., IDE frames with `custom-window-management' t).
 
-For non-IDE frames, skips custom logic entirely, falling back to Emacs' default
-display behavior (e.g., 'other-window' opens in another window in the current
-frame without category injection or tagged reuse).
+This wraps the original `display-buffer' to assign a category based on the
+buffer's name or mode, but only if the frame is tagged for custom window
+management (i.e., IDE frames with `custom-window-management' t).
+
+For non-IDE frames, skips custom logic, falling back to Emacs defaults.
+
+When `dape-buffer-window-arrangement' is nil (defer to base actions), and
+a category is determined, strips any existing Dape-specific category (e.g.,
+'dape-info-N') from the action to prevent conflicts, then re-injects the
+custom one.  This supplements Dape without overriding its arrangements.
 
 ORIG-FUN is the original `display-buffer' function.
-BUFFER-OR-NAME is either a buffer object or its name.
-ACTION is an optional action alist or function specification.
-FRAME is the target frame, defaulting to the selected frame if nil.
+BUFFER-OR-NAME is a buffer or name.
+ACTION is optional alist or function spec.
+FRAME is target frame (defaults to selected).
 
-Returns: The result of the original or modified `display-buffer' call
- (typically a window).
+Returns: Result of original or modified `display-buffer' call (window or nil).
+
+Flow:
+- Determine effective frame.
+- If non-IDE, apply original unmodified.
+- Get buffer and compute custom category.
+- If category found and arrangement nil, strip Dape category from action.
+- Process/inject new action with custom category.
+- Apply original with new action.
 
 Edge cases:
-- If FRAME is nil, uses `selected-frame' — ensuring locality to the active
-  frame.
-- Non-IDE: No category determination or injection; pure default (e.g., for
-  rgrep links, behaves like `find-file-other-window').
-- IDE: Injects category from `my-buffer-tools/category-map', enabling tagged
-  window reuse.
-- Logs skips and assignments for debug.
-
-Historical context: Advices like this became common post-Emacs 24 to customize
-displays without globals, but frame checks (added in evolutions like Emacs 27)
-prevent interference in multi-frame setups, avoiding issues seen in early CEDET
-or ECB where defaults broke across frames."
+- Symbol action (e.g., 'other-window): Skip strip (not list).
+- Nil arrangement: Override only if Dape category present.
+- Non-nil arrangement: No strip/override—respects Dape.
+- No category: Skip injection.
+- Logs for traceability."
   (let* ((effective-frame (or frame (selected-frame)))                            ; Ensure locality to active frame if not specified.
          (use-custom
           (frame-parameter effective-frame 'custom-window-management)))           ; Check for IDE tag.
@@ -481,7 +613,8 @@ or ECB where defaults broke across frames."
           (log/debug :fn 'my-window-tools/assign-category-advice
                      :msg "Non-IDE frame detected, skipping category assignment and using default display"
                      :obj (list :buffer buffer-or-name
-                                :frame effective-frame :action action))
+                                :frame effective-frame
+                                :action action))
           (apply orig-fun buffer-or-name action frame))
       ;; IDE: Proceed with category assignment and modified action.
       (let* ((buffer (get-buffer buffer-or-name))                                 ; Get buffer for category check.
@@ -490,15 +623,87 @@ or ECB where defaults broke across frames."
                 (my-window-tools/determine-buffer-category buffer))))             ; Use map for category.
         (when category
           (log/debug :fn 'my-window-tools/assign-category-advice
-                     :msg "IDE frame: Assigned category"
-                     :obj (list :category category
-                                :buffer buffer-or-name :action action)))
-        ;; Process action with category injection.
+                     :msg "IDE frame: Category computed"
+                     :obj (list :category category :buffer buffer-or-name)))
+        ;; Conditional override only if dape-buffer-window-arrangement
+        ;; has value set to nil
         (let
             ((new-action
-              (my-window-tools/process-display-action action category)))
+              (if (and category (eq dape-buffer-window-arrangement nil)
+                       (consp action) (assq 'category action))                    ; Dape injected?
+                  ;; if Dape buffers are found with Dape category tags when
+                  ;; dape-buffer-window-arrangement is nil then do this: 
+                  (let ((stripped-action (assoc-delete-all 'category action)))    ; Strip the Dape category so we can use the custom version. 
+                    (log/debug :fn 'my-window-tools/assign-category-advice
+                               :msg "Stripped Dape category, re-injecting custom."
+                               :obj (list :original-action action
+                                          :category category
+                                          :buffer buffer-or-name))
+                    (my-window-tools/process-display-action
+                     stripped-action category))
+                ;; else it is a simple category assignment. 
+                (my-window-tools/process-display-action action category))))
+          
           (apply orig-fun buffer-or-name (or new-action action) frame))))))
 
+;; (defun display-buffer-in-category-window (buffer alist)
+;;   "Display BUFFER in a window according to its category from ALIST.
+
+;; The `window-category' of the window matches a category in ALIST.
+;; If no exact match is found, fall back to the default `edit' window.
+;; If neither is available, pop up a new window and tag it with the category.
+
+;; BUFFER is the buffer to display.
+;; ALIST is the action alist, expected to contain `(category . SYMBOL)'.
+
+;; This function enforces IDE-like behavior: Prioritize reuse of tagged windows
+;; to maintain frame structure.  It uses
+;; `my-window-tools/get-window-for-window-category` for the search and fallback
+;; logic.
+
+;; Returns: The window where BUFFER is displayed, or nil on failure.
+
+;; Edge cases:
+;; - If category is nil, logs and falls back to pop-up (though advice should
+;;   prevent this).
+;; - Dedicated windows are skipped to avoid conflicts.
+;; - New pop-up windows inherit the category for future reuse.
+;; - Debug logs trace the decision process for troubleshooting.
+
+;; Historical context: Custom display functions like this extend Emacs' base
+;; `display-buffer` API (evolved since Emacs 24) to support tagged windows,
+;; common in packages like `perspective` or `tab-bar`.  Without fallback, it
+;; risks frame clutter, as seen in early ECB implementations."
+;;   (let* ((category (cdr (assq 'category alist)))
+;;          (frame (selected-frame))                                                 ; Use current frame for IDE consistency.
+;;          (target-window
+;;           (when category
+;;             (my-window-tools/get-window-for-window-category category frame))))
+;;     (log/debug :fn 'display-buffer-in-category-window
+;;                :msg "Searching for window"
+;;                :obj (list :category category
+;;                           :buffer (buffer-name buffer) :frame frame))
+;;     (if target-window
+;;         (progn
+;;           ;; Reuse found window (exact or default fallback).
+;;           (log/debug :fn 'display-buffer-in-category-window
+;;                      :msg "Found matching or default window"
+;;                      :obj (list :window target-window
+;;                                 :category (window-parameter
+;;                                            target-window 'window-category)))
+;;           (set-window-buffer target-window buffer)
+;;           target-window)
+;;       ;; No match or default: Fallback to pop-up and tag the new window.
+;;       (log/debug :fn 'display-buffer-in-category-window
+;;                  :msg "No matching or default window found, falling back to pop-up"
+;;                  :obj (list :category category :frame frame))
+;;       (let ((new-window (display-buffer-pop-up-window buffer alist)))             ; Alternative: display-buffer-in-child-frame if preferred.
+;;         (when new-window
+;;           (set-window-parameter new-window 'window-category category)
+;;           (log/debug :fn 'display-buffer-in-category-window
+;;                      :msg "Created and tagged new window"
+;;                      :obj (list :new-window new-window :category category)))
+;;         new-window))))
 
 (defun display-buffer-in-category-window (buffer alist)
   "Display BUFFER in a window according to its category from ALIST.
@@ -515,21 +720,27 @@ to maintain frame structure.  It uses
 `my-window-tools/get-window-for-window-category` for the search and fallback
 logic.
 
+Before reusing a window, checks if it is dedicated (e.g., to a Dape buffer)
+and unsets dedication if so, allowing buffer switch.  This releases 'sticky'
+windows from debuggers like Dape without affecting non-Dape cases.
+
 Returns: The window where BUFFER is displayed, or nil on failure.
 
-Edge cases:
-- If category is nil, logs and falls back to pop-up (though advice should
-  prevent this).
-- Dedicated windows are skipped to avoid conflicts.
-- New pop-up windows inherit the category for future reuse.
-- Debug logs trace the decision process for troubleshooting.
+Flow:
+- Extract category from alist.
+- Get current frame.
+- Find target window (exact or default).
+- If found: Check dedication; unset if Dape buffer; set new buffer.
+- If not: Pop new window, tag it.
+- Log decisions.  
 
-Historical context: Custom display functions like this extend Emacs' base
-`display-buffer` API (evolved since Emacs 24) to support tagged windows,
-common in packages like `perspective` or `tab-bar`.  Without fallback, it
-risks frame clutter, as seen in early ECB implementations."
+Edge cases:
+- Dedicated non-Dape: Skip unset to preserve (error as before).
+- No category: Log/fallback to pop-up.
+- New window: Inherits category for reuse.
+- Historical: Aligns with Emacs 24+ quit-restore for stability."
   (let* ((category (cdr (assq 'category alist)))
-         (frame (selected-frame))                                                 ; Use current frame for IDE consistency.
+         (frame (selected-frame))
          (target-window
           (when category
             (my-window-tools/get-window-for-window-category category frame))))
@@ -539,7 +750,25 @@ risks frame clutter, as seen in early ECB implementations."
                           :buffer (buffer-name buffer) :frame frame))
     (if target-window
         (progn
-          ;; Reuse found window (exact or default fallback).
+          ;; Check and unset dedication if current buffer is Dape- or VC-related.
+          ;; This prevents "stuck" windows from packages like Dape or VC/log-edit.
+          (let ((current-buf (window-buffer target-window)))
+            (when
+                (and
+                 (window-dedicated-p target-window)
+                 (or (string-match-p "^\\*dape-" (buffer-name current-buf))
+                     (string-match-p "^\\*\\(vc-\\|log-edit-\\)"
+                                     (buffer-name current-buf))))                 ; Broad match for VC/log-edit variants.
+              (set-window-dedicated-p target-window nil)
+              (log/debug :fn 'display-buffer-in-category-window
+                         :msg (format "Unset dedication for %s window"
+                                      (cond
+                                       ((string-match-p
+                                         "^\\*dape-" (buffer-name current-buf))
+                                        "Dape")
+                                       (t "VC")))                                 ; Dynamic msg for traceability.
+                         :obj (list :window target-window
+                                    :buffer current-buf))))
           (log/debug :fn 'display-buffer-in-category-window
                      :msg "Found matching or default window"
                      :obj (list :window target-window
@@ -551,7 +780,7 @@ risks frame clutter, as seen in early ECB implementations."
       (log/debug :fn 'display-buffer-in-category-window
                  :msg "No matching or default window found, falling back to pop-up"
                  :obj (list :category category :frame frame))
-      (let ((new-window (display-buffer-pop-up-window buffer alist)))             ; Alternative: display-buffer-in-child-frame if preferred.
+      (let ((new-window (display-buffer-pop-up-window buffer alist)))
         (when new-window
           (set-window-parameter new-window 'window-category category)
           (log/debug :fn 'display-buffer-in-category-window
@@ -559,11 +788,10 @@ risks frame clutter, as seen in early ECB implementations."
                      :obj (list :new-window new-window :category category)))
         new-window))))
 
-
 (defun my-window-tools/determine-buffer-category (buffer)
   "Determine the category for BUFFER based on its properties.
 Returns a symbol (e.g., `edit', `logs') or nil if no category applies.
-BUFFER is the buffer to categorize.
+BUFFER is the buffer to categorise.
 
 The category is derived from:
 - Buffers with names starting with a space are automatically whitelisted.
@@ -715,6 +943,7 @@ merging in `display-buffer'."
     (let ((new-alist (if (and category (not (assq 'category action-alist)))
                          (cons `(category . ,category) action-alist)
                        action-alist))
+
           (new-functions (if category
                              '(display-buffer-in-category-window)                 ; Prioritize category reuse
                            action-functions)))                                    ; Else keep original
@@ -786,5 +1015,5 @@ and `pop-up-frames'.  The original values are restored afterwards."
 
 ;;; system-window-management.el ends here
 
-;; LocalWords:  Customize vc repl alists listp shorthands advices rgrep
-;; LocalWords:  elisp tabline defun eldoc
+;; LocalWords:  Customize vc repl alists listp shorthands advices rgrep gracie
+;; LocalWords:  elisp tabline defun eldoc evie Checkdoc dape
