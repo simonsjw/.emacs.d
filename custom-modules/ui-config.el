@@ -173,6 +173,9 @@
 ;; docs in windows over code.
 (use-package eldoc-box)
 
+;; functionality to set up bitmaps in buffer fringes.
+(use-package fringe-helper)
+
 (require 'org)
 (require 'outline)
 (require 'easymenu)
