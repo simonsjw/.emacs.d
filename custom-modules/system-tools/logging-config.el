@@ -19,7 +19,8 @@
 ;; - Enriches logs with timestamp (seconds), origin (function name),
 ;;    and optional objects.
 ;; - Saves `*Warnings*' buffer to `init.log' on Emacs exit for persistence.
-;; - Displays `load-history' in `*Load-History*' buffer with `logging-view-mode'.
+;; - Displays `load-history' in `*Load-History*' buffer with
+;;   `logging-view-mode'.
 ;; - Integrates with `logging-view-mode.el' for viewing `*Warnings*',
 ;;   `*Messages*', and `*Load-History*'.
 
@@ -58,7 +59,8 @@
 ;; With objects:
 ;; (log/info :fn 'my-custom-function :msg "Details" :obj (list :key "value"))
 ;; Output:
-;; "[2025-07-30 12:34:56; INFO; my-custom-function] Details; Obj: (:key \"value\")"
+;;    "[2025-07-30 12:34:56; INFO; my-custom-function] Details;
+;;       Obj: (:key \"value\")"
 
 ;; Example 2: Enriched Info Logging
 ;; For custom formatting, wrap `message':
@@ -89,7 +91,8 @@
 ;; Example 5:
 ;; (log/fatal :fn 'my-function :msg "Critical failure" :obj err)
 ;; Output:
-;;    "[2025-07-30 12:34:56; EMERGENCY; my-function] Critical failure; Obj: error"
+;;    "[2025-07-30 12:34:56; EMERGENCY; my-function] Critical failure;
+;;       Obj: error"
 
 ;;;;;; INTEGRATED LOGGING
 ;; Use `display-warning' for leveled logs in custom code. Supports categories
@@ -109,7 +112,8 @@
 ;;                    :obj (list :input input)))
 ;;     (error
 ;;      (log/fatal :fn 'my-error-prone-function
-;;                 :msg (format "Fatal error: %s" (error-message-string err))))))
+;;                 :msg (format "Fatal error: %s"
+;;                    (error-message-string err))))))
 ;; Output in `*Warnings*':
 ;; "[2025-07-30 12:34:56; ERR; my-error-prone-function] Invalid input: foo"
 ;; Suppression: (add-to-list 'warning-suppress-types '(my-category)) to hide
@@ -152,7 +156,7 @@
 
 ;; Custom prefix for warnings: Add timestamp (seconds) and origin.
 (defun log/warning-prefix (level level-info)
-  "Enrich warnings with timestamp and origin."
+  "Enrich warnings with timestamp and origin from LEVEL and LEVEL-INFO."
   (let* ((ts (format-time-string "%Y-%m-%d %H:%M:%S"))  ; Seconds resolution.
          (origin-frame (backtrace-frame 5))  ; Skip internal warn frames.
          (origin (or (cadr origin-frame) "unknown")))
@@ -161,13 +165,14 @@
 
 (setq warning-prefix-function #'log/warning-prefix)
 
-;; Optional: Add :info to warning-levels if you prefer warnings over message for info.
+;; Optional: Add :info to warning-levels if you prefer warnings over message
+;;    for info.
 ;; Uncomment to enable:
 ;; (add-to-list 'warning-levels '(:info "Info%s: " nil))
 
 ;; Logging functions: Direct calls to display-warning or message.
 (defun log/fatal (&rest args)
-  "Log at :emergency (fatal) using display-warning."
+  "Log ARGS at :emergency (fatal) using `display-warning'."
   (let* ((fn (or (plist-get args :fn) "unknown"))
          (msg (plist-get args :msg))
          (obj (plist-get args :obj))
@@ -177,7 +182,7 @@
     (display-warning 'emacs full-msg :emergency)))
 
 (defun log/error (&rest args)
-  "Log at :error using display-warning."
+  "Log ARGS at :error using `display-warning'."
   (let* ((fn (or (plist-get args :fn) "unknown"))
          (msg (plist-get args :msg))
          (obj (plist-get args :obj))
@@ -187,7 +192,7 @@
     (display-warning 'emacs full-msg :error)))
 
 (defun log/warn (&rest args)
-  "Log at :warning using display-warning."
+  "Log ARGS at :warning using `display-warning'."
   (let* ((fn (or (plist-get args :fn) "unknown"))
          (msg (plist-get args :msg))
          (obj (plist-get args :obj))
@@ -197,7 +202,7 @@
     (display-warning 'emacs full-msg :warning)))
 
 (defun log/debug (&rest args)
-  "Log at :debug using display-warning."
+  "Log ARGS at :debug using `display-warning'."
   (let* ((fn (or (plist-get args :fn) "unknown"))
          (msg (plist-get args :msg))
          (obj (plist-get args :obj))
@@ -207,7 +212,7 @@
     (display-warning 'emacs full-msg :debug)))
 
 (defun log/info (&rest args)
-  "Log at :info using message."
+  "Log ARGS at :info using `message'."
   (let* ((fn (or (plist-get args :fn) "unknown"))
          (msg (plist-get args :msg))
          (obj (plist-get args :obj))
@@ -227,8 +232,9 @@
 
 (advice-add 'message :around
             (lambda (orig-fun format-string &rest args)
-              "Format system messages like [timestamp; INFO; (emacs)] msg; Obj: t."
-              (if (or log/inhibit-message-format (not format-string))  ; Handle nil format-string.
+              "Format system messages like
+                  [timestamp; INFO; (emacs)] msg; Obj: t."
+              (if (or log/inhibit-message-format (not format-string))             ; Handle nil format-string.
                   (apply orig-fun format-string args)
                 (let ((msg (apply #'format format-string args)))
                   (apply orig-fun "[%s; INFO; (emacs)] %s; Obj: t"
@@ -246,25 +252,28 @@
             (lambda (&rest args)
               "Log use-package at :info."
               (when (member 'use-package log/targets)
-                (log/info :fn 'use-package :msg (format "Using package %s" (car args))))))
+                (log/info :fn 'use-package
+                          :msg (format "Using package %s" (car args))))))
 
 ;; Log defconst/defvar from load-history.
 (defun log/load-history-hook (file)
-  "Log defconst and defvar entries from load-history for FILE."
+  "Log defconst and defvar entries from `load-history' for FILE."
   (when (member 'load-history log/targets)
     (dolist (entry (assoc file load-history))
       (when (consp entry)
         (pcase entry
           (`(defconst . ,symbol)
-           (log/debug :fn 'defconst :msg (format "Defined const %s in %s" symbol file)))
+           (log/debug :fn 'defconst
+                      :msg (format "Defined const %s in %s" symbol file)))
           (`(defvar . ,symbol)
-           (log/debug :fn 'defvar :msg (format "Defined var %s in %s" symbol file))))))))
+           (log/debug :fn 'defvar
+                      :msg (format "Defined var %s in %s" symbol file))))))))
 
 (add-hook 'after-load-functions #'log/load-history-hook)
 
 ;; Display load-history in a buffer.
 (defun log/display-load-history ()
-  "Display 'load-history' in *Load-History* buffer with 'logging-view-mode'."
+  "Display `load-history' in *Load-History* buffer with `logging-view-mode'."
   (interactive)
   (let ((buffer (get-buffer-create "*Load-History*")))
     (with-current-buffer buffer
@@ -280,16 +289,22 @@
                  ((consp entry)
                   (let ((key (car entry))
                         (value (cdr entry)))
-                    (insert (format "[%s; :debug; load-history] Defined %s %s in %s; Obj: t\n"
-                                    timestamp
-                                    (if (symbolp key) (symbol-name key) (prin1-to-string key))
-                                    (if (symbolp value) (symbol-name value) (prin1-to-string value))
-                                    file))))
+                    (insert
+                     (format
+                      "[%s; :debug; load-history] Defined %s %s in %s; Obj: t\n"
+                      timestamp
+                      (if (symbolp key) (symbol-name key)
+                        (prin1-to-string key))
+                      (if (symbolp value) (symbol-name value)
+                        (prin1-to-string value))
+                      file))))
                  (t
-                  (insert (format "[%s; :debug; load-history] Used %s without defining in %s; Obj: t\n"
-                                  timestamp
-                                  (prin1-to-string entry)
-                                  file)))
+                  (insert
+                   (format
+                    "[%s; :debug; load-history] Used %s without defining in %s; Obj: t\n"
+                    timestamp
+                    (prin1-to-string entry)
+                    file)))
                  ))))
           )
         )
@@ -300,7 +315,9 @@
 
 ;; Save all log buffers to file on exit without prompting
 (defun log/save-all-to-file ()
-  "Save contents of *Warnings*, *Messages*, and *Load-History* to init.log, overwriting without prompt."
+  "Save contents of *Warnings*, *Messages*, and *Load-History* to init.log.
+
+Overwriting without prompt."
   (interactive)
   (let ((log-content ""))
     ;; Collect contents from each buffer if it exists
@@ -339,7 +356,7 @@
   ;; Extend the hook to cover *Messages* and *Warnings* dynamically
   (add-hook 'special-mode-hook
             (lambda ()
-              (when (and (not (eq major-mode 'logging-view-mode))  ; Guard against recursion
+              (when (and (not (eq major-mode 'logging-view-mode))                 ; Guard against recursion
                          (or (equal (buffer-name) "*Warnings*")
                              (equal (buffer-name) "*Messages*")))
                 (logging-view-mode))))
@@ -351,7 +368,8 @@
 
 
 
-;;       warning-suppress-types '((emacs))  ; Example: suppress 'emacs category display.
+;;  warning-suppress-types '((emacs));
+;;  Example: suppress 'emacs category display.
 
 (use-package menu-keys-support
   :ensure nil  ; Local file, not a package
