@@ -39,7 +39,7 @@
   ;; [stderr]  node:internal/modules/cjs/loader:1137
   ;; [stderr]    throw err;
   ;; [stderr]    ^
-  ;; [stderr]  
+  ;; [stderr]
   ;; [stderr]  Error: Cannot find module '/home/simon/sync/primary/bin/~/.emacs.d/debug-adapters/bash-debug/extension/out/bashDebug.js'
   ;; [stderr]      at Module._resolveFilename (node:internal/modules/cjs/loader:1134:15)
   ;; [stderr]      at Module._load (node:internal/modules/cjs/loader:975:27)
