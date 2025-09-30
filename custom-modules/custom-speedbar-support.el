@@ -69,8 +69,8 @@ Use it to stop erroneous recursion.")
 ;; memory-object-tree - custom package to visualise artefacts in memory.
 (add-to-list 'load-path my-paths/memory-object-tree-folder)
 (use-package memory-object-tree
-  :ensure nil  ; Indicates this is a local package, not from a repository
-  :demand t    ; Forces the package to load immediately at startup
+  :ensure nil                                                                     ; Indicates this is a local package, not from a repository
+  :demand t                                                                       ; Forces the package to load immediately at startup
   )
 
 ;;;; functions:
@@ -89,8 +89,6 @@ If `sr-speedbar' is not open, open it first."
       ;; Clear speedbar cache and force refresh
       ;; Display a message indicating the new directory
       (message "speedbar directory set to %s" expanded-path))))
-
-
 
 (defun my-speedbar/toggle ()
   "If the selected frame is an IDE, open `sr-speedbar' else open `speedbar'.
@@ -112,7 +110,7 @@ using `sr-speedbar-toggle'."
                         (lambda (w1 w2)
                           (let ((edges1 (window-edges w1))
                                 (edges2 (window-edges w2)))
-                            (or (< (nth 1 edges1) (nth 1 edges2))                     ; Compare top edges
+                            (or (< (nth 1 edges1) (nth 1 edges2))                 ; Compare top edges
                                 (and (= (nth 1 edges1) (nth 1 edges2))
                                      (< (nth 0 edges1) (nth 0 edges2))))))))))
             (select-window top-left-window))
@@ -135,14 +133,14 @@ binds it as the default directory, and launches vterm with a buffer
 name indicating the directory.  If no directory is selected, it signals
 an error."
   (interactive)
-  (let* ((dir (speedbar-line-directory))  ; Get the directory path from the current line.
-         (buf-name (concat "Vterm: " (file-name-nondirectory (directory-file-name dir)))))  ; Create a descriptive buffer name.
+  (let* ((dir (speedbar-line-directory))                                          ; Get the directory path from the current line.
+         (buf-name
+          (concat "Vterm: "
+                  (file-name-nondirectory (directory-file-name dir)))))           ; Create a descriptive buffer name.
     (if dir
-        (let ((default-directory dir))  ; Temporarily bind default-directory to the selected path.
-          (vterm buf-name))  ; Launch vterm in that directory.
-      (error "No directory selected in Speedbar"))))  ; Handle case where no dir is under cursor.
-
-
+        (let ((default-directory dir))                                            ; Temporarily bind default-directory to the selected path.
+          (vterm buf-name))                                                       ; Launch vterm in that directory.
+      (error "No directory selected in Speedbar"))))                              ; Handle case where no dir is under cursor.
 
 (defun my-speedbar/go-home ()
   "Switch SPEEDBAR to home directory if in file mode."
@@ -173,7 +171,6 @@ an error."
       (window-width sr-speedbar-window)                                           ; Use sr-speedbar window width
     30))                                                                          ; Fallback default width
 
-
 (defun my-speedbar/toggle-filter ()
   "Toggle the visibility of dotfiles in speedbar."
   (interactive)
@@ -184,14 +181,16 @@ an error."
   (if my-speedbar/speedbar-filter-state
       ;; If dot files are hidden, modify regexp to show them
       (progn
-        ;; Hide dot files, directories beginning with "_", and specific VCS directories
-        ;; but always show the `..' file.
-        (setq speedbar-directory-unshown-regexp "^\\(\\.[^/.].*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$")
-
-        ;; (setq speedbar-directory-unshown-regexp "^\\(\\.[^/.][^/]*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$")
-
-        ;;  (setq speedbar-directory-unshown-regexp "^\\(\\.[^/]*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$")
-        (setq speedbar-file-unshown-regexp "^\\(\\.[^/]*\\|CVS\\|RCS\\|SCCS\\)$"))
+        ;; Hide dot files, directories beginning with "_", and specific VCS
+        ;; directories but always show the `..' file.
+        ;; (old expressions:
+        ;;    "^\\(\\.[^/.][^/]*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$"
+        ;;    "^\\(\\.[^/]*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$"
+        ;; )
+        (setq speedbar-directory-unshown-regexp
+              "^\\(\\.[^/.].*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$")
+        (setq speedbar-file-unshown-regexp
+              "^\\(\\.[^/]*\\|CVS\\|RCS\\|SCCS\\)$"))
     ;; If dot files are shown, modify regexp to hide them
     (progn
       ;; the dot here is the folder denoting the current folder.
@@ -211,7 +210,6 @@ Current view is given in SPEEDBAR-VIEW."
   (speedbar-change-initial-expansion-list speedbar-view))
 
 
-
 ;;;; Customise Speedbar and Related elements
 ;;   ---------------------------------------
 
@@ -222,7 +220,7 @@ Current view is given in SPEEDBAR-VIEW."
 
 (custom-set-variables
  '(speedbar-indentation-width 3)                                                  ; Increase the indentation for better usability.
- ;; '(speedbar-use-images t)                                                         ; Use icon images. (not needed with pretty-speedbar)
+ ;; '(speedbar-use-images t)                                                      ; Use icon images. (not needed with pretty-speedbar)
  '(speedbar-directory-button-trim-method 'trim)                                   ;    Indicates how the directory button will be displayed. Hide
                                                                                   ; Possible values are:
                                                                                   ;       `span’ - span large directories over multiple lines.
@@ -276,9 +274,9 @@ Current view is given in SPEEDBAR-VIEW."
  '(pretty-speedbar-folder '("\uf07b" t))                                          ;  Closed folder icon.
  '(pretty-speedbar-folder-open '("\uf07c" t))                                     ;  Open folder icon.
  '(pretty-speedbar-blank-page '("\uf15b"))                                        ;  Used for plus and minus file icons.
- '(pretty-speedbar-page  '("\uf15c"))                                             ;  Default file icon.
- '(pretty-speedbar-box-closed  '("\uebb4"))                                       ;  Closed box icon with plus added during generation.
- '(pretty-speedbar-box-open  '("\uebb5" ))                                        ;  Open box icon with minus added during generation. 
+ '(pretty-speedbar-page '("\uf15c"))                                              ;  Default file icon.
+ '(pretty-speedbar-box-closed '("\uebb4"))                                        ;  Closed box icon with plus added during generation.
+ '(pretty-speedbar-box-open '("\uebb5" ))                                         ;  Open box icon with minus added during generation. 
  '(pretty-speedbar-book '("\uf02d"))                                              ;  Book icon used for documentation available. 
  '(pretty-speedbar-mail '("\uf0e0"))                                              ;  Envelope icon.
  '(pretty-speedbar-info '("\uf05a"))                                              ;  Info icon.
@@ -344,7 +342,8 @@ Current view is given in SPEEDBAR-VIEW."
             "Hook function to add custom key bindings to Speedbar's mode map.
 This runs whenever Speedbar keymaps are regenerated, ensuring the
 binding persists across mode changes."
-            (define-key speedbar-mode-map (kbd "v") #'my-speedbar/open-vterm-in-dir)))
+            (define-key speedbar-mode-map
+                        (kbd "v") #'my-speedbar/open-vterm-in-dir)))
 
 ;; Bind 'h' & 'w' in Speedbar mode map
 (with-eval-after-load 'speedbar
@@ -358,4 +357,4 @@ binding persists across mode changes."
 ;;; custom-speedbar-support.el ends here
 
 ;; LocalWords:  FFFFFF shellscript fnl sp Makefile Lua JVM html makefile toml
-;; LocalWords:  php cljs lua SCCS minibuffer tooltips propertized
+;; LocalWords:  php cljs lua SCCS minibuffer tooltips propertized VCS
