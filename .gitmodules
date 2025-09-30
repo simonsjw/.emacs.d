@@ -31,3 +31,9 @@
 [submodule "custom-packages/worg"]
 	path = custom-packages/worg
 	url = https://git.sr.ht/~bzg/worg
+[submodule "etc/INFODYNAMICS/lang-servers/MATLAB-language-server"]
+	path = etc/INFODYNAMICS/lang-servers/MATLAB-language-server
+	url = https://github.com/mathworks/MATLAB-language-server
+[submodule "etc/INFODYNAMICS/lang-servers/texlab"]
+	path = etc/INFODYNAMICS/lang-servers/texlab
+	url = https://github.com/latex-lsp/texlab
