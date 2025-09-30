@@ -1,0 +1,13 @@
+# -*- mode: snippet -*-
+# name: alphabetic enumerate
+# key: alenum
+# group: LaTeX environments
+# expand-env: ((yas-after-expand-callback (lambda () (message "Reminder: Add \\usepackage{enumitem} to your preamble if not already loaded!"))))
+# --
+\begin{enumerate}[label=\Alph*)]
+	\item $1
+	\item $2
+	\item $3
+\end{enumerate}
+
+$0
