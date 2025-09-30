@@ -32,7 +32,6 @@
 (declare-function dired "dired")
 (declare-function cell-sheet-create "cell-mode")
 (declare-function my-startup-screen/startup-screen "custom-summary-config")
-(declare-function my-tab-line/close-specific-buffer "tabline-support")
 
 (defvar my-paths/default-config-file)
 (defvar my-paths/default-log-file)
