@@ -293,10 +293,10 @@
 
 ;;;; language servers
 
-;; LaTex lsp bin
+;; LaTeX lsp bin
 (setq lsp-bin-texlab
       (expand-file-name
-       "lang-servers/texlab/texlab" no-littering-etc-directory))
+       "lang-servers/texlab/target/release/texlab" no-littering-etc-directory))
 ;;;; Dape
 ;;   ----
 ;; Set the location of the adapters.
