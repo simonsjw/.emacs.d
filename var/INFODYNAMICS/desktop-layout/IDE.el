@@ -27,9 +27,7 @@
                 (fringes 5 10 nil nil) (margins nil)
                 (scroll-bars nil 0 t nil 0 t nil) (vscroll . 0)
                 (dedicated) (point . 1) (start . 1))
-        (next-buffers "edit")
-        (prev-buffers
-         ("edit" 1 1) ("*Emacs*" 1 2)))
+        (prev-buffers ("*Emacs*" 1 2)))
   
   (vc
    (last . t)
@@ -41,13 +39,11 @@
     (pixel-width . 803) (pixel-height . 480)
     (total-width . 100) (total-height . 30)
     (normal-height . 0.5) (normal-width . 1.0)
-    (buffer "*cell sheet*"
+    (buffer "spreadsheet.ses"
             (selected) (hscroll . 0)
             (fringes 5 10 nil nil) (margins nil)
             (scroll-bars nil 0 t nil 0 t nil) (vscroll . 0)
-            (dedicated) (point . 1) (start . 1))
-    (prev-buffers
-     ("*cell sheet*" 1 1954) ("data" 1 1)))
+            (dedicated) (point . 1) (start . 1)))
    
    (leaf
     (last . t)
@@ -60,7 +56,10 @@
             (scroll-bars nil 0 t nil 0 t nil) (vscroll . 0)
             (dedicated) (point . 1) (start . 1))
     (prev-buffers
-     ("conf.org" 1 1) ("config" 1 1)))))
+     ("recurrent.org" 1 1)
+     ("todos.org" 1 1)
+     ("evie.org" 1 1)
+     ("gracie.org" 1 1)))))
  
  (hc
   (last . t)
@@ -73,13 +72,16 @@
    (pixel-width . 712) (pixel-height . 294)
    (total-width . 89) (total-height . 18)
    (normal-height . 1.0) (normal-width . 0.3195084485407066)
-   (buffer "init.log"
+   (buffer "*Warnings*"
            (selected) (hscroll . 0)
            (fringes 5 10 nil nil) (margins nil)
            (scroll-bars nil 0 t nil 0 t nil) (vscroll . 0)
            (dedicated) (point . 1) (start . 1))
    (prev-buffers
-    ("*Messages*" 22676 23063) ("init.log" 1 1) ("logs" 1 1)))
+    ("*Messages*" 1 1)
+    ("*Compile-Log*" 1 1)
+    ("*Native-compile-Log*" 1 1)
+    ("*Async-native-compile-log*" 1 1)))
   
   (leaf
    (pixel-width . 768) (pixel-height . 294)
@@ -91,7 +93,11 @@
            (scroll-bars nil 0 t nil 0 t nil) (vscroll . 0)
            (dedicated) (point . 1) (start . 1))
    (prev-buffers
-    ("vc" 1 1) ("*vc-dir*" 1 1)))
+    ("*vc-dir*" 1 1)
+    ("*log-edit-files*" 1 1)
+    ("*vc-log*" 1 1)
+    ("*vc*" 1 1))
+   )
   
   (leaf
    (last . t)
@@ -104,4 +110,6 @@
            (scroll-bars nil 0 t nil 0 t nil) (vscroll . 0)
            (dedicated) (point . 1) (start . 1))
    (prev-buffers
-    ("*vterm*" 1 130) ("*scratch*" 1 148) ("Dired: .emacs.d" 1 199) ("terminal" 1 1)))))
+    ("*vterm*" 1 130) ("Dired: .emacs.d" 1 199)))))
+
+;; LocalWords:  gracie ses vc
