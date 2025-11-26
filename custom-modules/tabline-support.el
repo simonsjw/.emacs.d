@@ -245,84 +245,7 @@ This function is optimised for IDE setups by minimising buffer loss."
                (ignore-errors (delete-window given-window))))))))                 ; Clean up window.
 
 
-(defun my-tab-line/tab-line-close-tab (&optional e)
-  "Close the tab under mouse event E or the current tab.
 
-Purpose: Handle mouse-clicked tab closure safely, mirroring
-`my-tab-line/tab-line-close-tab-given-buffer' but for interactive events.
-This ensures buffers shared across windows are buried (hidden) rather than
-killed, while unique buffers are killed.  If the window ends up with no tabs,
-it is deleted to clean up the workspace.
-
-Variables:
-- E: Optional mouse event (from `interactive \"e\"`); if provided, extracts
-  the clicked position, window, and buffer. If nil, falls back to current
-  window and buffer (though typically called with event).
-
-Output: No explicit return value; side-effects include modifying window
-configurations, buffer lists, and potentially killing buffers or deleting
-windows.
-
-Flow:
-1. If E is provided, extract the click position (posnp), target window, and
-   buffer from the tab's text property.
-2. Temporarily select the target window using `with-selected-window`.
-3. Collect the local tab-list (buffers in this window's tabs).
-4. Build a global buffer-list by iterating over all windows, collecting their
-   tab buffers, and flattening the result.
-5. Check if the target buffer appears in multiple windows (shared):
-   - If yes, bury it if current, or remove from prev/next buffer histories.
-   - If no more tabs remain, delete the window.
-6. If unique to this window, kill the buffer and delete the window if empty.
-
-Note on Empty buffer-list: If this is empty, it means no tabs were found
-across *any* windows—possible if `tab-line-mode` is disabled, custom
-`tab-line-tabs-function` filters everything out (e.g., your nameless buffer
-remover), or no prev/next buffers exist. In multi-window setups, verify
-`tab-line-tabs-window-buffers` returns at least the current buffer per window
-if not, check exclusions in `tab-line-exclude-modes` or custom filters."
-  (interactive "e")                                                               ; Mark as interactive; expects mouse event E for tab clicks.
-  (let* ((posnp (event-start e))                                                  ; Extract start position of event (detailed list: window, coords, etc.).
-         (window (posn-window posnp))                                             ; Get window object from position (where click occurred).
-         (buffer (get-pos-property 1 'tab (car (posn-string posnp)))))            ; Extract buffer from `tab' text property in the clicked string (nil if not on a tab).
-    (when buffer                                                                  ; Guard: Skip if no buffer extracted (e.g., click not on valid tab).
-      (with-selected-window window                                                ; Temporarily select target window; body executes in its context, restores after.
-        (let ((tab-list (tab-line-tabs-window-buffers))                           ; Local tabs: Buffers for this window's tab-line (calls custom `tab-line-tabs-function`).
-              (buffer-list                                                        ; Global list: Flatten tabs from *all* windows.
-               (flatten-list                                                      ; Combine nested lists into one.
-                (seq-reduce                                                       ; Accumulate over windows.
-                 (lambda (acc win)                                                ; Lambda: For each window, collect its tabs.
-
-                   (log/debug :fn 'my-tab-line/tab-line-close-tab
-                              :msg "Closing tab with mouse event on tab-line."
-                              :obj (list :window window
-                                         :buffer buffer
-                                         :tabs (tab-line-tabs-window-buffers)))
-
-                   (select-window win t)                                          ; Select temporarily (t: no-record in history).
-                   (cons (tab-line-tabs-window-buffers) acc))                     ; Prepend its tabs to accumulator.
-                 (window-list) nil))))                                            ; All windows; start with empty acc.
-
-          ;; No need for (select-window window) here —
-          ;; `with-selected-window` already ensures this.
-          (if (> (seq-count (lambda (b) (eq b buffer)) buffer-list) 1)            ; Count buffer occurrences; >1 means shared across windows.
-              (progn                                                              ; Shared case: Hide without killing.
-                (if (eq buffer (current-buffer))                                  ; If active in this window.
-                    (bury-buffer)                                                 ; Move to end of buffer list (hides it).
-                  (set-window-prev-buffers
-                   window                                                         ; Remove from prev history.
-                   (assq-delete-all buffer (window-prev-buffers window)))
-                  (set-window-next-buffers
-                   window                                                         ; Remove from next list.
-                   (delq buffer (window-next-buffers window))))
-                (unless (cdr tab-list)                                            ; If no other tabs left (cdr nil means single-item list).
-                  (ignore-errors (delete-window window))))                        ; Delete window, ignore errors (e.g., last window).
-            (and (kill-buffer buffer)                                             ; Unique case: Kill buffer (t if success).
-                 (unless (cdr tab-list)
-                   (ignore-errors (delete-window window))))))))))                 ; Clean up if empty.
-
-(defalias 'tab-line-close-tab 'my-tab-line/tab-line-close-tab
-  "Alias to use custom close function for safe tab closure.")
 
 (defun my-tab-line/tab-line-name-buffer (buffer &rest _buffers)
   "Generate formatted name for BUFFER tab, with padding and truncation.
@@ -457,6 +380,90 @@ This overrides the default `tab-line-tabs-function' for cleaner tabs."
                            (string-match-p "\\` \\*Marginalia\\*\\'" name))       ; Marginalia.
                  buf)))                                                           ; Keep if not excluded.
            buflist))))
+
+
+(defun my-tab-line/tab-line-close-tab (&optional e)
+  "Close the tab under mouse event E or the current tab.
+
+Purpose: Handle mouse-clicked tab closure safely, mirroring
+`my-tab-line/tab-line-close-tab-given-buffer' but for interactive events.
+This ensures buffers shared across windows are buried (hidden) rather than
+killed, while unique buffers are killed.  If the window ends up with no tabs,
+it is deleted to clean up the workspace.
+
+Variables:
+- E: Optional mouse event (from `interactive \"e\"`); if provided, extracts
+  the clicked position, window, and buffer. If nil, falls back to current
+  window and buffer (though typically called with event).
+
+Output: No explicit return value; side-effects include modifying window
+configurations, buffer lists, and potentially killing buffers or deleting
+windows.
+
+Flow:
+1. If E is provided, extract the click position (posnp), target window, and
+   buffer from the tab's text property.
+2. Temporarily select the target window using `with-selected-window`.
+3. Collect the local tab-list (buffers in this window's tabs).
+4. Build a global buffer-list by iterating over all windows, collecting their
+   tab buffers, and flattening the result.
+5. Check if the target buffer appears in multiple windows (shared):
+   - If yes, bury it if current, or remove from prev/next buffer histories.
+   - Force window update to refresh the tab-line immediately.
+   - If no more tabs remain, delete the window.
+6. If unique to this window, kill the buffer and delete the window if empty.
+
+Note on Empty buffer-list: If this is empty, it means no tabs were found
+across *any* windows—possible if `tab-line-mode` is disabled, custom
+`tab-line-tabs-function` filters everything out (e.g., your nameless buffer
+remover), or no prev/next buffers exist. In multi-window setups, verify
+`tab-line-tabs-window-buffers` returns at least the current buffer per window
+if not, check exclusions in `tab-line-exclude-modes` or custom filters."
+  (interactive "e")                                                               ; Mark as interactive; expects mouse event E for tab clicks.
+  (let* ((posnp (event-start e))                                                  ; Extract start position of event (detailed list: window, coords, etc.).
+         (window (posn-window posnp))                                             ; Get window object from position (where click occurred).
+         (buffer (get-pos-property 1 'tab (car (posn-string posnp)))))            ; Extract buffer from `tab' text property in the clicked string (nil if not on a tab).
+    (when buffer                                                                  ; Guard: Skip if no buffer extracted (e.g., click not on valid tab).
+      (with-selected-window window                                                ; Temporarily select target window; body executes in its context, restores after.
+        (let ((tab-list (tab-line-tabs-window-buffers))                           ; Local tabs: Buffers for this window's tab-line (calls custom `tab-line-tabs-function`).
+              (buffer-list                                                        ; Global list: Flatten tabs from *all* windows.
+               (flatten-list                                                      ; Combine nested lists into one.
+                (seq-reduce                                                       ; Accumulate over windows.
+                 (lambda (acc win)                                                ; Lambda: For each window, collect its tabs.
+
+                   (log/debug :fn 'my-tab-line/tab-line-close-tab
+                              :msg "Closing tab with mouse event on tab-line."
+                              :obj (list :window window
+                                         :buffer buffer
+                                         :tabs (tab-line-tabs-window-buffers)))
+
+                   (select-window win t)                                          ; Select temporarily (t: no-record in history).
+                   (cons (tab-line-tabs-window-buffers) acc))                     ; Prepend its tabs to accumulator.
+                 (window-list) nil))))                                            ; All windows; start with empty acc.
+
+          ;; No need for (select-window window) here —
+          ;; `with-selected-window` already ensures this.
+          (if (> (seq-count (lambda (b) (eq b buffer)) buffer-list) 1)            ; Count buffer occurrences; >1 means shared across windows.
+              (progn                                                              ; Shared case: Hide without killing.
+                (if (eq buffer (current-buffer))                                  ; If active in this window.
+                    (bury-buffer)                                                 ; Move to end of buffer list (hides it).
+                  (set-window-prev-buffers
+                   window                                                         ; Remove from prev history.
+                   (assq-delete-all buffer (window-prev-buffers window)))
+                  (set-window-next-buffers
+                   window                                                         ; Remove from next list.
+                   (delq buffer (window-next-buffers window))))
+                (force-window-update window)                                      ; Force redisplay to update tab-line immediately.
+                (unless (cdr tab-list)                                            ; If no other tabs left (cdr nil means single-item list).
+                  (ignore-errors (delete-window window))))                        ; Delete window, ignore errors (e.g., last window).
+            (and (kill-buffer buffer)                                             ; Unique case: Kill buffer (t if success).
+                 (unless (cdr tab-list)
+                   (ignore-errors (delete-window window))))))))))                 ; Clean up if empty.
+
+
+
+(defalias 'tab-line-close-tab 'my-tab-line/tab-line-close-tab
+  "Alias to use custom close function for safe tab closure.")
 
 (setq tab-line-tabs-function                                                      ; Override built-in with custom filter.
       'my-tab-line/tab-line-tabs-window-buffers--removed-nameless-buffers)
