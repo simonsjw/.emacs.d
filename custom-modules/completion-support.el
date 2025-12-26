@@ -1,184 +1,157 @@
-;;; completion-support.el --- Completion packages  -*- lexical-binding: t; -*-
+;;; completion-support.el --- Modern completion framework -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022
+;; Copyright (C) 2025 Simon Watson
 ;; SPDX-License-Identifier: MIT
-
-;; Author: System Crafters Community
 
 ;;; Commentary:
 
-;; Add completion packages to the list of packages to install.
+;; This file configures a modern, cohesive completion experience using:
+;; - Vertico: Vertical minibuffer completion UI
+;; - Orderless: Flexible out-of-order (fuzzy) matching
+;; - Marginalia: Rich candidate annotations in the minibuffer
+;; - Consult: Enhanced completion commands with preview
+;; - Embark: Contextual actions on candidates
+;; - Corfu: In-buffer completion UI (child-frame popup)
+;; - Cape: Additional completion-at-point backends
+;; - Built-in which-key (Emacs 30+): Keybinding discovery popup
+
+;; All configuration is consolidated within `use-package' declarations
+;; for clarity and maintainability.  Extensive inline comments explain
+;; each setting.
 
 ;;; Code:
-(declare-function which-key-mode "which-key")
-(defvar corfu-terminal-mode)
 
-(use-package cape)
-(use-package consult)
+(use-package vertico
+  :ensure t
+  :custom
+  ;; Enable cycling: pressing the edge of the candidate list wraps around
+  ;; to the opposite end for easier navigation.
+  (vertico-cycle t)
+  :init
+  (vertico-mode 1)
+  :config
+  ;; Optional: Improve performance for very large completion tables
+  ;; by using faster dispatchers (requires orderless-fast from MELPA,
+  ;; uncomment if installed).
+  ;; (vertico-multiform-mode 1)
+  )
+
+
+(use-package orderless
+  :ensure t
+  :custom
+  ;; Global styles: Orderless primary, with fallbacks.
+  (completion-styles '(orderless basic))
+  ;; Clear packaged defaults to avoid conflicts.
+  (completion-category-defaults nil)
+  ;; Specific overrides:
+  ;; - Files: partial-completion for better path expansion.
+  ;; - Eglot (LSP via Pyrefly): Orderless for local fuzzy filtering.
+  (completion-category-overrides
+   '((file (styles partial-completion))
+     (eglot (styles orderless))))
+  ;; Space separates Orderless components (default behaviour).
+  (orderless-component-separator " "))
+
+(use-package marginalia
+  :ensure t
+  :custom
+  ;; Use the heaviest (most detailed) annotators available.
+  (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))
+  :init
+  (marginalia-mode 1))
+
+(use-package consult
+  :ensure t
+  :bind
+  (;; Global search replacement: Consult's live-updating line search.
+   ("C-s" . consult-line)
+   ;; Minibuffer history navigation.
+   ([remap consult-history] . consult-history))
+  :custom
+  ;; Use Consult's enhanced completion-in-region function for consistency
+  ;; between minibuffer and in-buffer completions.
+  (completion-in-region-function #'consult-completion-in-region))
+
+(use-package embark
+  :ensure t
+  :bind
+  (;; Remap built-in describe-bindings to Embark's binding overview.
+   ([remap describe-bindings] . embark-bindings)
+   ;; Primary Embark action key.
+   ("C-." . embark-act))
+  :custom
+  ;; Use describe-prefix-bindings instead of the old which-key C-h behaviour
+  ;; (cleaner and more interactive).
+  (prefix-help-command #'describe-prefix-bindings))
+
 (use-package embark-consult
-  :hook (embark-collect-mode . consult-preview-at-point-mode))
-(use-package marginalia)
-(use-package corfu)
-(use-package corfu-terminal)
-(use-package embark)
-(use-package orderless)
-(use-package vertico)
+  :ensure t
+  :after (embark consult)
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package corfu
+  :ensure t
+  :custom
+  (corfu-cycle t)                                                                 ; Enable candidate cycling in the popup.
+  (corfu-auto t)                                                                  ; Enable automatic popup after typing (recommended for modern workflows).
+  (corfu-auto-delay 0.1)                                                          ; Small delay for responsiveness without excessive triggering.
+  (corfu-auto-prefix 2)                                                           ; Require at least 2 characters before auto-triggering.
+  (corfu-quit-no-match t)                                                         ; Quit popup if no candidates match input.
+  (corfu-quit-at-boundary 'separator)                                             ; Quit at word boundaries when auto-completing (prevents unwanted popups).
+  (corfu-preview-current t)                                                       ; Preview the selected candidate (inserts temporarily).
+  :bind
+  (:map corfu-map
+        ("M-p" . corfu-popupinfo-scroll-down)                                     ; Scroll doc popup down
+        ("M-n" . corfu-popupinfo-scroll-up)                                       ; Scroll doc popup up
+        ("M-d" . corfu-popupinfo-toggle))                                         ; Toggle documentation popup
+  :init
+  (global-corfu-mode 1)
+  ;; Enable documentation popup globally.
+  (corfu-popupinfo-mode 1)
+  ;; Make eldoc aware of Corfu insertions.
+  (eldoc-add-command #'corfu-insert))
+
+(use-package cape
+  :ensure t
+  :init
+  ;; Add useful default completion-at-point functions globally.
+  ;; File paths at point.
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  ;; Words from current buffer (dabbrev).
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  ;; Optional additions (uncomment as needed):
+  (add-to-list 'completion-at-point-functions #'cape-keyword)                     ; What it completes: Programming-language-specific keywords, reserved words, and sometimes constants defined by the major mode.
+  ;; (add-to-list 'completion-at-point-functions #'cape-symbol)                     ; Symbols from Emacs’s dynamic environment – primarily names bound with defvar, defconst, defface, etc., and also things like function names known to elisp-completion-at-point.
+  ;; (add-to-list 'completion-at-point-functions #'cape-line)                       ; What it completes: Entire lines from the current buffer that begin with the text before point.
+  :config
+  ;; Silence pcomplete (shell completion) messages – cleaner output.
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+  ;; Ensure pcomplete behaves purely as a capf (no buffer modifications).
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
+  ;; Specialised eshell configuration: disable aggressive auto-completion
+  ;; to avoid interference with shell commands.
+  (defun my-corfu-eshell-setup ()
+    "Configure Corfu conservatively for eshell."
+    (setq-local corfu-auto nil
+                corfu-quit-at-boundary t
+                corfu-quit-no-match t))
+  (add-hook 'eshell-mode-hook #'my-corfu-eshell-setup))
+
 (use-package which-key
-  :ensure nil                                                                     ; which-key is built in from macs30
-  :config (which-key-mode))
-
-
-
-;; Integrate flyspell with consult.
-;; https://gitlab.com/OlMon/consult-flyspell
-;; (use-package consult-flyspell)
-
-
-;;; Vertico
-;; Cycle back to top/bottom result when the edge is reached
-(customize-set-variable 'vertico-cycle t)
-
-;; Start Vertico
-(vertico-mode 1)
-
-;;; Marginalia
-(customize-set-variable 'marginalia-annotators
-                        '(marginalia-annotators-heavy
-                          marginalia-annotators-light
-                          nil))
-
-(marginalia-mode 1)
-
-;;; Consult
-(keymap-global-set "C-s" 'consult-line)
-(keymap-set minibuffer-local-map "C-r" 'consult-history)
-
-(setq completion-in-region-function #'consult-completion-in-region)
-
-;;; Orderless
-;; Set up Orderless for better fuzzy matching
-(customize-set-variable 'completion-styles '(orderless basic))
-(customize-set-variable 'completion-category-overrides
-                        '((file (styles . (partial-completion)))))
-
-;;; Embark
-(keymap-global-set "<remap> <describe-bindings>" #'embark-bindings)
-(keymap-global-set "C-." 'embark-act)
-
-;; Use Embark to show bindings in a key prefix with `C-h`
-;; (setq prefix-help-command #'embark-prefix-help-command)
-;; alternatively, show them in a separate help buffer.
-(setq prefix-help-command #'describe-prefix-bindings)
-
-
-(with-eval-after-load 'embark-consult
-  (add-hook 'embark-collect-mode-hook #'consult-preview-at-point-mode))
-
-;;; Corfu
-(unless (display-graphic-p)
-  (when (require 'corfu-terminal nil :noerror)
-    (corfu-terminal-mode +1)))
-
-;; Setup corfu for popup like completion
-(customize-set-variable 'corfu-cycle t "Allows cycling through candidates")
-(customize-set-variable 'corfu-auto t "Enable auto completion")
-(customize-set-variable 'corfu-auto-prefix 3 "Complete with less prefix keys")
-
-(global-corfu-mode 1)
-
-(corfu-popupinfo-mode 1)
-(eldoc-add-command #'corfu-insert)
-(keymap-set corfu-map "M-p" #'corfu-popupinfo-scroll-down)
-(keymap-set corfu-map "M-n" #'corfu-popupinfo-scroll-up)
-(keymap-set corfu-map "M-d" #'corfu-popupinfo-toggle)
-
-;;; Cape
-;; Setup Cape for better completion-at-point support and more
-;; Add useful defaults completion sources from cape
-(add-to-list 'completion-at-point-functions #'cape-file)
-(add-to-list 'completion-at-point-functions #'cape-dabbrev)
-
-;; Silence the pcomplete capf, no errors or messages!
-;; Important for corfu
-(advice-add 'pcomplete-completions-at-point
-            :around #'cape-wrap-silent)
-
-;; Ensure that pcomplete does not write to the buffer
-;; and behaves as a pure `completion-at-point-function'.
-(advice-add 'pcomplete-completions-at-point
-            :around #'cape-wrap-purify)
-
-;; No auto-completion or completion-on-quit in eshell
-(defun crafted-completion-corfu-eshell ()
-  "Special settings for when using corfu with eshell."
-  (setq-local corfu-quit-at-boundary t
-              corfu-quit-no-match t
-              corfu-auto nil)
-  (corfu-mode))
-
-(add-hook 'eshell-mode-hook #'crafted-completion-corfu-eshell)
-
-;; Which-key (now built in to emacs)
-;; https://github.com/justbur/emacs-which-key
-
-;;(which-key-setup-side-window-right)
-
-;; Show keys in a side window. This popup type has further options:
-(setq which-key-popup-type 'side-window)
-
-;; location of which-key window. valid values: top, bottom, left, right,
-;; or a list of any of the two. If it's a list, which-key will always try
-;; the first location first. It will go to the second location if there is
-;; not enough room to display any keys in the first location
-(setq which-key-side-window-location 'right)
-
-;; max width of which-key window, when displayed at left or right.
-;; valid values: number of columns (integer), or percentage out of current
-;; frame's width (float larger than 0 and smaller than 1)
-(setq which-key-side-window-max-width 0.4)
-
-;; Set the time delay (in seconds) for the which-key popup to appear. A value of
-;; zero might cause issues so a non-zero value is recommended.
-(setq which-key-idle-delay 1.0)
-
-;; Set the maximum length (in characters) for key descriptions (commands or
-;; prefixes). Descriptions that are longer are truncated and have ".." added.
-;; This can also be a float (fraction of available width) or a function.
-(setq which-key-max-description-length 27)
-
-;; Use additional padding between columns of keys. This variable specifies the
-;; number of spaces to add to the left of each column.
-(setq which-key-add-column-padding 0)
-
-;; The maximum number of columns to display in the which-key buffer. nil means
-;; don't impose a maximum.
-(setq which-key-max-display-columns nil)
-
-;; Set the separator used between keys and descriptions. Change this setting to
-;; an ASCII character if your font does not show the default arrow. The second
-;; setting here allows for extra padding for Unicode characters. which-key uses
-;; characters as a means of width measurement, so wide Unicode characters can
-;; throw off the calculation.
-(setq which-key-separator " → " )
-(setq which-key-unicode-correction 3)
-
-;; Set the prefix string that will be inserted in front of prefix commands
-;; (i.e., commands that represent a sub-map).
-(setq which-key-prefix-prefix "+" )
-
-;; Set the special keys. These are automatically truncated to one character and
-;; have which-key-special-key-face applied. Disabled by default. An example
-;; setting is
-;; (setq which-key-special-keys '("SPC" "TAB" "RET" "ESC" "DEL"))
-(setq which-key-special-keys nil)
-
-;; Show the key prefix on the left, top, or bottom (nil means hide the prefix).
-;; The prefix consists of the keys you have typed so far. which-key also shows
-;; the page information along with the prefix.
-(setq which-key-show-prefix 'left)
-
-;; Set to t to show the count of keys shown vs. total keys in the mode line.
-(setq which-key-show-remaining-keys t)                                            ; default is nil.
+  :ensure nil                                                                     ; Built-in to Emacs 30+
+  :custom
+  (which-key-popup-type 'side-window)                                             ; Display popup as a side window (right preferred, bottom fallback).
+  (which-key-side-window-location '(right bottom))                                ; Preferred location: right side, fallback to bottom.
+  (which-key-side-window-max-width 0.4)                                           ; Maximum width as fraction of frame (40% here).
+  (which-key-idle-delay 1.0)                                                      ; Delay before popup appears (seconds).
+  (which-key-max-description-length 27)                                           ; Maximum length of command descriptions before truncation.
+  (which-key-separator " → ")                                                     ; Separator between keys and descriptions.
+  (which-key-show-prefix 'left)                                                   ; Show prefix (typed keys so far) on the left.
+  (which-key-show-remaining-keys t)                                               ; Show remaining key count in mode-line.
+  :init
+  (which-key-mode 1))
 
 (provide 'completion-support)
-;;; completion-support.el ends here.
+;;; completion-support.el ends here
