@@ -1,178 +1,180 @@
-;;; lang-python.el --- python support for the crafted setup   -*- lexical-binding: t; -*-
+;;; lang-python.el --- Modern Python IDE with Eglot/Pyrefly, Apheleia/Ruff, and pytest -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-
-;; A starter config for editing Python code.
 ;;
-;; This configuration provides syntax highlighting via tree sitter
-;; (with python-ts-mode), LSP code completion via Eglot and Corfu, and
-;; some helpful keybindings for python tooling.
+;; Enhanced configuration for python-ts-mode in Emacs 30:
+;; - Tree-sitter syntax and folding.
+;; - Eglot + Pyrefly for type checking, completions, navigation, hover,
+;;   inlay hints, and code actions/refactoring.
+;; - Apheleia + Ruff for asynchronous on-save formatting and import
+;;   organisation.
+;; - pyvenv for Conda/virtualenv management.
+;; - python-pytest for granular test running.
+;; - Dape for debugpy-powered debugging.
+;; - Comprehensive keybindings and menus.
 ;;
-;; Prerequisites:
+;; Key changes in this version:
+;; - Switched to Apheleia for superior Ruff formatting (async,
+;;   point-preserving).
+;; - Rely on Pyrefly/Eglot for all Flymake diagnostics (no separate Ruff
+;;   linting backend).
+;; - Enhanced code actions/refactoring keybindings and menu.
+;; - Retained pytest, path updates, inlay hints, and folding.
 ;;
-;; - Emacs with Tree Sitter installed (this comes with Emacs 29).
-;;
-;; - A Python language server (e.g. pyls or pyright).
-
-;; Python development environment configuration.  Several python
-;; packages can be installed with `pip'.  Many of these are needed by
-;; the Emacs packages used in this configuration.
-
-;; * autopep8      -- automatically formats python code to conform to
-;;                    PEP 8 style guide
-;; * black         -- uncompromising code formatter
-;; * flake8        -- style guide enforcement
-;; * importmagic   -- automatically add, remove, manage imports
-;; * ipython       -- interactive python shell
-;; * yapf          -- formatter for python code
-
-;; Emacs packages to support python development:
-;; * anaconda      -- code navigation, documentation and completion
-;; * blacken       -- buffer formatting on save using black
-;;                    (need to pip install black)
-;; * eglot         -- language server integration
-;;                    (need to pip install pyright)
-;; * numpydoc      -- python doc templates, uses `yasnippets'
-;; * pythonic      -- utility packages for running python in different
-;;                    environments (dependency of anaconda)
-;; * pyvenv        -- virtualenv wrapper
+;; Install: apheleia and python-pytest from MELPA.
 
 ;;; Package phase
-
-(defvar dape-configs)                                                             ; list of configs by language for the debugger.
-(defvar py-comment-fill-column)
-(defvar py-docstring-fill-column)
-(defvar python-indent-offset)
-(defvar pyvenv-virtual-env-name)
-(defvar python-shell-interpreter)
-(defvar python-ts-mode-map)
-
-(declare-function reformatter-define "reformatter")
-(declare-function yas-minor-mode "yasnippet")
-(declare-function treesit-fold-mode "treesit-fold")
-(declare-function treesit-fold-indicators-mode "treesit-fold")
-(declare-function pyvenv-activate pyvenv)
-
-(declare-function my-outline-mode/outline-level "ui-config")
-
-(declare-function python-shell-switch-to-shell "python")
-(declare-function python-shell-send-buffer "python")
-(declare-function python-shell-send-region "python")
-(declare-function python-shell-send-string "python")
-(declare-function python-shell-get-process "python")
-(declare-function python-shell-restart "python")
-(declare-function python-shell-send-defun "python")
-
-(declare-function consult-flymake "consult-flymake")
-
-(declare-function anaconda-mode-find-definitions "anaconda-mode")
-(declare-function anaconda-mode-find-references "anaconda-mode")
-(declare-function anaconda-mode-find-assignments "anaconda-mode")
-(declare-function anaconda-mode-show-doc "anaconda-mode")
-
 (use-package pythonic)
 (use-package pyvenv)
-(use-package anaconda-mode)
 (use-package numpydoc)
+(use-package dape)
+(use-package treesit-fold)
+(use-package python-pytest)
+(use-package apheleia
+  :config
+  (apheleia-global-mode 1)                                                        ; Enable globally
+  ;; Configure Ruff for formatting + imports (chain: isort then format)
+  (with-eval-after-load 'apheleia
+    (setf (alist-get 'python-ts-mode apheleia-mode-alist) '(ruff-isort ruff))
+    (setf (alist-get 'python-mode apheleia-mode-alist) '(ruff-isort ruff))))
 
-
+(use-package flymake-ruff
+  :ensure t
+  :after flymake
+  :hook (python-ts-mode . flymake-ruff-load)
+  :custom
+  (setq flymake-ruff-program-args
+        '("check" "--quiet" "--format=json" "--ignore=D203,COM812"))              ; Match your toml ignores
+  )
 
 ;;; Code:
-(defun my-lang-python/remove-anaconda-paths (path-list)
-  "Remove any Anaconda-related paths from PATH-LIST."
-  (cl-remove-if (lambda (path)     ; changed from remove-if
-                  (let ((conda-home (getenv "CONDA_PREFIX")))
-                    (string-prefix-p (concat conda-home "/") path)))
-                path-list))
 
-(defun my-lang-python/update-python-path ()
-  "Dynamically update Emacs the path to python in `exec-path' and PATH.
+(defun my-lang-python/python-mode-setup ()
+  "Central setup for `python-ts-mode'."
 
-This function removes any Anaconda-related paths from `exec-path' and
-PATH, then adds the path of the currently activated Python
-environment.
-This ensures that `exec-path' and PATH only contain the path for the
-active environment."
+  ;; define useful python integration functions.
+  (defun my-lang-python/update-python-path ()
+    "Update exec-path and PATH for the active pyvenv (Conda/virtualenv compatible)."
+    (when-let ((env-dir pyvenv-virtual-env))
+      (let ((bin-dir (expand-file-name "bin" env-dir)))
+        (setq exec-path (cons bin-dir (delete bin-dir exec-path)))
+        (setenv "PATH" (concat bin-dir ":" (getenv "PATH"))))))
 
-  ;; Retrieve the name of the currently activated virtual environment.
-  (let ((env-name pyvenv-virtual-env-name))
-    (when env-name  ;; Check if an environment is actually activated.
-      ;; Get the WORKON_HOME environment variable
-      (let ((workon-home (getenv "WORKON_HOME")))
-        ;; Check if WORKON_HOME is set
-        (if workon-home
-            ;; Construct the path to the 'bin' directory of the
-            ;; activated environment.
-            (let ((env-path (concat workon-home "/" env-name "/bin")))
-              ;; Update exec-path and PATH with new environment path.
-              (setq exec-path (append (list env-path) exec-path))
-              (setenv "PATH" (concat env-path ":" (getenv "PATH"))))
-          (message "WORKON_HOME environment variable is not set")))
+  (defun my-lang-python/organize-imports ()
+    "Organise imports in the current buffer using ruff-isort via Apheleia.
+This runs only the import organisation formatter, preserving the buffer's
+point and avoiding full reformatting."
+    (interactive)
+    (unless (derived-mode-p 'python-ts-mode 'python-mode)
+      (user-error "Not in a Python mode"))
+    (apheleia-format-buffer 'ruff-isort))
 
-      ;; Reconnect Eglot if it is running
-      ;; (let ((server (eglot-current-server)))
-      ;;   (when server
-      ;;     (eglot-reconnect server)))
-      )))
+  (defun my-lang-python/generate-stub ()
+    "Generate a typing stub (.pyi) for the current Python file using mypy's stubgen.
+Runs stubgen on the current file, placing output in the default ./out directory
+(or customise with --output if preferred)."
+    (interactive)
+    (unless (buffer-file-name)
+      (user-error "No file associated with this buffer"))
+    (let* ((file-path (file-name-nondirectory (buffer-file-name)))  ; e.g., "mymodule.py"
+           (command (format "stubgen %s" file-path)))
+      (shell-command command)
+      (message "stubgen executed: %s" command)))
 
 
-(defun my-lang-python/start-or-switch-to-python-shell ()
-  "Start a python process or switch to an existing one."
-  (unless (python-shell-get-process)
-    (run-python python-shell-interpreter t))
-  (python-shell-switch-to-shell))
+  ;; Define a ruff-format formatter
+  ;; (for full Ruff formatting without isort).
+  ;; This runs 'ruff format' to reformat code style.
+  (setf (alist-get 'ruff-format apheleia-formatters)
+        '("ruff" "format" "--quiet" "--stdin-filename" filepath "-"))
 
-;;; Configuration phase
-
-;; These defaults for python home environment are set
-;; in serviceEnv.txt.
-;; "CONDA_PREFIX"
-;; "CONDA_DEFAULT_ENV"
-;; "WORKON_HOME"
-
-
-;; Now ensure that pyvenv is pointing at the 'base' environment.
-;; To access the other environments in the env folder, pyvenv will
-;; source the directories in WORKON_HOME.
-(let ((conda-home (getenv "CONDA_PREFIX")))
-  (pyvenv-activate conda-home))
-
-;;;; settings for python-mode.
-(defun my-lang/python-mode-setup ()
-  "Central function to hook into `python-mode' for python functionality."
-  (message
-   "[%s ; DEBUG; my-lang-python/python-mode-setup]starting loading the defun ; ;"
-   (current-time-string))
-
-  (require 'treesit-fold)
-  (require 'pythonic)
-  ;; (require 'anaconda-mode)
-  (require 'numpydoc)
-  (require 'pyvenv)
-  (require 'dape)
-  (require 'reformatter)
+  (defun my-lang-python/format-buffer ()
+    "Format the entire buffer using ruff-format via Apheleia.
+This applies Ruff's code style formatter, preserving point."
+    (interactive)
+    (unless (derived-mode-p 'python-ts-mode 'python-mode)
+      (user-error "Not in a Python mode"))
+    (apheleia-format-buffer 'ruff-format))
 
 
-  ;; start up Eglot in this mode.
+  (defun my-lang-python/format-region ()
+    "Format the selected region using ruff-format with range via a temporary file.
+Falls back to the whole buffer if no region is active.
+This provides Ruff with full buffer context for accurate formatting,
+while only applying changes to the specified lines.
+
+Uses `replace-buffer-contents' to update the buffer efficiently,
+preserving point and markers where possible."
+    (interactive)
+    (unless (derived-mode-p 'python-ts-mode 'python-mode)
+      (user-error "Not in a Python mode"))
+    (if (not (use-region-p))
+        (apheleia-format-buffer 'ruff-format)  ; Fallback to your async buffer format
+      (let* ((start (region-beginning))
+             (end (region-end))
+             ;; Calculate 1-based line numbers; adjust end if at beginning of line
+             (start-line (line-number-at-pos start))
+             (end-line (line-number-at-pos end t))  ; t adjusts if at bol, giving previous line
+             (range-str (format "%d-%d" start-line end-line))
+             (temp-file (make-temp-file "ruff-format-" nil ".py")))
+        (unwind-protect
+            (save-restriction
+              (widen)  ; Ensure full buffer is written, even if narrowed
+              (write-region (point-min) (point-max) temp-file nil 'silent)
+              ;; Run Ruff format on temp file with range (in-place)
+              (with-temp-buffer
+                (let ((exit-code (call-process "ruff" nil t t
+                                               "format" "--range" range-str
+                                               "--quiet" temp-file)))
+                  (unless (zerop exit-code)
+                    (error "Ruff format failed (exit %d): %s"
+                           exit-code (buffer-string)))))
+              ;; Replace current buffer contents with formatted temp
+              ;; (only the range has changed, so rest remains identical)
+              (let ((temp-buffer (find-file-noselect temp-file)))
+                (replace-buffer-contents temp-buffer)
+                (kill-buffer temp-buffer)))
+          (when (file-exists-p temp-file)
+            (delete-file temp-file))))))
+
+  
+  
+  ;; LSP with Pyrefly
   (eglot-ensure)
+  ;; no need to enable inlay hints on the server since they are default enabled.
 
-  ;; enable python anaconda env management.
-  (pyvenv-mode)
-  
+  ;; Environment
+  (pyvenv-mode 1)
   (my-lang-python/update-python-path)
-  
-  ;; switch on hover at point mode.
-  ;; (eldoc-box-hover-at-point-mode nil)
-  ;; (when (eldoc-doc-buffer)
-  ;;   (eldoc-box-help-at-point))
-  
-  (reformatter-define python-format
-    :program "ruff"
-    :args '("format")
-    :lighter " PF")  ; remove ref on modeline.
-  
-   ;;;;; Set up outline
+  (add-hook
+   'pyvenv-post-activate-hooks #'my-lang-python/update-python-path nil t)
 
+  ;; Diagnostics: Solely from Pyrefly via Eglot (covers types + semantics)
+  (flymake-mode 1)                                                                ; Eglot auto-adds its backend
+
+  ;; Ya-snippets
+  (yas-minor-mode 1)
+
+  ;; Layout and settings
+  (setq display-fill-column-indicator-column 88
+        fill-column 88
+        comment-fill-column 250
+        comment-column 90
+        py-docstring-fill-column 250
+        python-indent-offset 4)
+  (display-fill-column-indicator-mode 1)
+
+  ;; doc strings with numpydoc
+  (setq numpydoc-insert-examples-block t                                          ; Add Examples if needed.
+        numpydoc-prompt-for-input t)                                              ; Prompt for descriptions (wraps long input).
+  (add-hook 'numpydoc-mode-hook 'auto-fill-mode)                                  ; Auto-wrap at fill-column=88.
+
+;;;; Dape integration.
+  (dape-active-mode 1)
+  ;; debugging the code with dape
+  (my-dape/breakpoint-mode)
+  
+;;;; Folding
   ;; Set up customisations for outline-minor-mode.
   (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons
   (setq-local outline-blank-line t)                                               ; Blank line before headers
@@ -180,120 +182,379 @@ active environment."
   (setq-local outline-regexp "^[[:space:]]*##+")                                  ; Match `##' and more.
   (setq-local outline-start "#")                                                  ; Start marker
   (setq-local outline-level #'my-outline-mode/outline-level)                      ; Custom level function
+  (set-fringe-mode '(12 . 12))                                                    ; Set the fringe mode for python-ts-mode folding.
   (outline-minor-mode 1)                                                          ; Use outline-minor-mode
-
-   ;;;;; Folding
-
-  ;; Set the fringe mode for python-ts-mode folding.
-  (set-fringe-mode '(12 . 12))
-  
-  ;; Enable treesit-fold-mode
   (treesit-fold-mode 1)
-  ;; Enable treesit-fold-indicators-mode
   (treesit-fold-indicators-mode 1)
+  (keymap-set python-ts-mode-map "C-c f" #'treesit-fold-toggle)                   ; set toggle keys
 
-  ;; You will probably want to tweak this variable, it determines how
-  ;; quickly the completion prompt provides LSP suggestions when
-  ;; typing. Be careful if you set it to 0 in a large project!
-  (customize-set-variable 'corfu-auto-delay 0.25)
-
-  ;; Enable Anaconda mode for Python code navigation and documentation
-  ;; (anaconda-mode)
-
-  ;; Do not enable blacken mode for automatic code formatting
-  ;; (blacken-mode)
-
-  ;; Enable isort for Python import sorting
-  ;; (python-isort-on-save-mode)
-
-  ;; Enable Ya-snippets.
-  (yas-minor-mode)
-
-  ;; Add my/update-python-path function to pyvenv activation.
-  (add-hook 'pyvenv-post-activate-hooks 'my-lang-python/update-python-path)
-
-   ;;;;; IDE layout
+  (defvar my-custom-menus/python-folding-menu
+    '("Folding"
+      ["Toggle Fold" treesit-fold-toggle :keys "C-c f"
+       :help "Toggle folding at point"])
+    "Menu for folding-related functions in `python-ts-mode'.")
+;;;; Imenu with treesitter.
+  (setq-local treesit-simple-imenu-settings
+              '(
+                ("Classes" "\\`class_definition\\'" nil
+                 treesit-defun-name)
+                ("Functions" "\\`function_definition\\'"
+                 (lambda (node)
+                   ;; Include only top-level functions (not methods)
+                   (not (equal (treesit-node-type (treesit-node-parent node))
+                               "class_definition")))
+                 treesit-defun-name)
+                ("Methods" "\\`function_definition\\'"
+                 (lambda (node)
+                   ;; Include only methods (nested in classes)
+                   (equal (treesit-node-type (treesit-node-parent node))
+                          "class_definition"))
+                 treesit-defun-name)
+                ("Type Aliases" "\\`type_alias_statement\\'" nil
+                 treesit-defun-name)
+                ("Imports" "\\`import_statement\\'" nil
+                 treesit-defun-name)
+                ;; Optional: Decorated items are captured via their inner defs
+                ;; Add more, e.g., ("Imports" "\\`import_statement\\'" nil treesit-defun-name)
+                )
+              )
   
-  ;; Provide a function to set the fill column indicator.
-  ;; This has a default of 80 but can be set on a per mode basis.
-  ;; Set the preferred fill column indicator for the mode and activate it.
+;;;; debug/Testing
+  (keymap-set python-ts-mode-map "C-x C-a d" #'dape)
+  (keymap-set python-ts-mode-map "C-c t t" #'python-pytest-dispatch)
+  (keymap-set python-ts-mode-map "C-c t r" #'python-pytest-repeat)
+
+  (defvar my-custom-menus/python-pytest
+    '("Debug/Pytest"
+      ["Debug" :enable nil]
+      ["Launch debugger" dape :keys "C-x C-a d"
+       :help "Launch Dape debugger - ensure you have imported debugpy in your code."]
+      "---"
+      ["Test" :enable nil]
+      ["Pytest options" python-pytest-dispatch :keys "C-c t t"
+       :help "Display Pytest control panel in minibuffer."]
+      ["Repeat test" python-pytest-repeat :keys "C-c t r"
+       :help "Repeat the last pytest."])
+    "Menu for running-related functions in `python-ts-mode'.")
   
-  (setq display-fill-column-indicator-column 88)                                  ; comment inde
-  (setq fill-column 88)                                                           ; Column beyond which line wrapping occurs if it is activated.
-  (setq comment-fill-column 250)                                                  ; Column to use for wrapping comment lines.
-  (setq comment-column 90)                                                        ; Column to indent right-margin comments to.
-  (setq py-docstring-fill-column 250)                                             ; Set docstrings to have same fill column as code.
-  (setq python-indent-offset 4)                                                   ; Set the indent for python mode.
-
-  (display-fill-column-indicator-mode 1)                                          ; show the buffer line width.
-
-  (dape-active-mode)                                                              ; ensure dape mode is active.
-
-  ;; Note that pycodestyle is set via file in directory specified by
-  ;; export XDG_CONFIG_HOME="/home/simon/.emacs.d/etc/config/"
-  ;; called pycodestyle with the following content:
-  ;; [pycodestyle]
-  ;; max-line-length = 88
-
-   ;;;;; IDE functionality map
-  
-  ;; compiling the code (Not applicable)
-  ;; (keymap-set python-ts-mode-map "C-c C-c C-u" #)
-
-  ;; debugging the code tbc
-  ;; (keymap-set python-ts-mode-map "C-c C-c C-k" #)
-
-  ;; document thing at point:
-  ;; (keymap-set python-ts-mode-map "C-c C-c C-r" #'eldoc)
-  ;;  (keymap-set python-ts-mode-map "M-?" #'anaconda-mode-show-doc)
-  ;; testing (tbd)
-  ;; (keymap-set python-ts-mode-map "C-c C-c C-t"
-  ;; #'projectile-test-project)
-
-  ;; running the code
+;;;; running the code
   (keymap-set python-ts-mode-map "C-c r b" #'eval-buffer)
+  (keymap-set python-ts-mode-map "C-c r p" #'run-python)                          ; run an inferior python process
 
-  ;; run an inferior python process
-  (keymap-set python-ts-mode-map "C-c r p" #'run-python)
+  (defvar my-custom-menus/python-running-menu
+    '("Running"
+      ["Eval Buffer" eval-buffer :keys "C-c r b"
+       :help "Evaluate the entire buffer"]
+      ["Run Python Process" run-python :keys "C-c r p"
+       :help "Start an inferior Python process"])
+    "Menu for running-related functions in `python-ts-mode'.")
 
-  ;; formatting
-  ;; (keymap-set python-ts-mode-map "C-c C-f b" #'blacken-buffer)
-  ;;  (keymap-set python-ts-mode-map "C-c C-f r" #'blacken-buffer)
+;;;; document thing at point:
+  (keymap-set python-ts-mode-map "C-c h p" #'eldoc-box-help-at-point)             ; Key for hover docs
+  (keymap-set python-ts-mode-map "C-c h b" #'eldoc-doc-buffer)                    ; Override default Eldoc
+  (keymap-set python-ts-mode-map "C-c h h" #'eldoc)                               ; Trigger hover/signature help from eglot
+  
+  ;; menu
+  (defvar my-custom-menus/python-documentation-menu
+    '("Documentation"
+      ["Show Docs at Point" eldoc-box-help-at-point :keys "C-c h p"
+       :help "Display documentation for thing at point"]
+      ["Show Docs in Buffer" eldoc-doc-buffer :keys "C-c h b"
+       :help "Show documentation in a dedicated buffer"]
+      ["Hover/Signature help" eldoc :keys "C-c h h"
+       :help "Trigger signature help"]
+      )
+    "Menu for documentation-related functions in `python-ts-mode'.")
 
-   ;;;;; Errors/linting
-
-  ;; list errors in buffer
-  (keymap-set python-ts-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)
-  ;; list errors in minibuffer
-  (keymap-set python-ts-mode-map "C-c e m" #'consult-flymake)
-  ;; list errors in project
+;;;; Errors/linting
+  (keymap-set python-ts-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)     ; list errors in buffer
+  (keymap-set python-ts-mode-map "C-c e m" #'consult-flymake)                     ; list errors in minibuffer
   (keymap-set
-   python-ts-mode-map "C-c e p" #'flymake-show-project-diagnostics)
+   python-ts-mode-map "C-c e p" #'flymake-show-project-diagnostics)               ; list errors in project
   ;; formatting errors (not applicable)
   ;; (keymap-set python-ts-mode-map "C-c C-n" )
-  ;; go to next error
-  (keymap-set python-ts-mode-map "C-c e n" #'flymake-goto-next-error)
-  ;; go to previous error.
-  (keymap-set python-ts-mode-map "C-c e l" #'flymake-goto-prev-error)
+  (keymap-set python-ts-mode-map "C-c e n" #'flymake-goto-next-error)             ; go to next error
+  (keymap-set python-ts-mode-map "C-c e l" #'flymake-goto-prev-error)             ; go to previous error.
 
-   ;;;;; Variable/function references
+  (defvar my-custom-menus/python-errors-menu
+    '("Errors/Linting"
+      ["Display errors" :enable nil]
+      ["Error buffer" flymake-show-buffer-diagnostics :keys "C-c e b"
+       :help "Show buffer errors in a buffer"]
+      ["Project error buffer" flymake-show-project-diagnostics :keys "C-c e p"
+       :help "Show project errors in a buffer"]
+      ["Error list" consult-flymake :keys "C-c e m"
+       :help "Show errors in the mini-buffer"]
+      "---"
+      ["Navigate errors" :enable nil]
+      ["Next error" flymake-goto-next-error :keys "C-c e n"
+       :help "Move to the next error."]
+      ["Previous error" flymake-goto-prev-error :keys "C-c e l"
+       :help "Move to the previous error."])
+    "Menu for errors/linting-related functions in `python-ts-mode'.")
 
-  ;; xref-find-definitions
-  ;; (keymap-set python-ts-mode-map "M-." #'anaconda-mode-find-definitions)
-  ;; xref-find-references
-  ;;  (keymap-set python-ts-mode-map "M-r" #'anaconda-mode-find-references)
-  ;; xref-find-assignments
-  ;;  (keymap-set python-ts-mode-map "M-=" #'anaconda-mode-find-assignments)
+;;;; Navigation
 
-   ;;;;; add-missing-dependencies
+  ;; (keymap-set python-ts-mode-map "C-c g s" #'consult-eglot-symbols)               ; show symbols in minibuffer
+  ;; (keymap-set python-ts-mode-map "M-." #'eglot-find-definition)                   ; xref-find-definitions
+  ;; (keymap-set python-ts-mode-map "M-?" #'xref-find-references)                    ; xref-find-references
+  ;; (keymap-set python-ts-mode-map "C-c g t" #'eglot-find-type-definition)          ; Go to type definition
+  ;; (keymap-set python-ts-mode-map "C-c g d" #'eglot-find-declaration)              ; Go to declaration
+  ;; (keymap-set python-ts-mode-map "C-c g i" #'eglot-find-implementation)           ; Go to implementation
+  ;; (keymap-set python-ts-mode-map "C-c g w" #'my-lang-python/find-symbol)          ; Workspace symbols
+
+  ;; (defvar my-custom-menus/python-navigation-menu
+  ;;   '("Navigate"
+  ;;     "---"
+  ;;     ;; start of def/class
+  ;;     ;;end of def/class
+  ;;     ;; mark def/class
+  ;;     ;; jump to def/class
+  ;;     ["Rename Symbol" eglot-rename :keys "C-c g r"
+  ;;      :help "Rename the symbol at point"]
+  ;;     ["Consult Symbols" consult-eglot-symbols :keys "C-c g s"
+  ;;      :help "Show symbols in minibuffer"]
+  ;;     "---"
+  ;;     ["Find" :enable nil]
+  ;;     ["Find Definition" eglot-find-definition :keys "M-."
+  ;;      :help "Go to the definition of the symbol at point"]
+  ;;     ["Find References" xref-find-references :keys "M-?"
+  ;;      :help "Find all references to the symbol at point"]
+  ;;     ["Find Type Definition" eglot-find-type-definition :keys "C-c g t"
+  ;;      :help "Go to the type definition"]
+  ;;     ["Find Declaration" eglot-find-declaration :keys "C-c g d"
+  ;;      :help "Go to the declaration"]
+  ;;     ["Find Implementation" eglot-find-implementation :keys "C-c g i"
+  ;;      :help "Go to the implementation"]
+  ;;     ["Workspace Symbols"  my-lang-python/find-symbol :keys "C-c g w"
+  ;;      :help "Search for symbols in the workspace"])                              ; Workspace symbols
+  ;;   "Menu for navigation-related functions in `python-ts-mode'.")
   
-  (keymap-set python-ts-mode-map "C-c i f" #'python-fix-imports)
-  
+;;;; Variable/function references
+  (defun my-lang-python/find-symbol ()
+    (interactive)
+    (eglot--request (eglot-current-server)
+                    :workspace/symbol
+                    (eglot--read-query "Workspace symbol: ")))
+
+  (keymap-set python-ts-mode-map "C-c g s" #'consult-eglot-symbols)               ; show symbols in minibuffer
+  (keymap-set python-ts-mode-map "C-c g m" #'consult-imenu)
+  (keymap-set python-ts-mode-map "C-c g p" #'consult-imenu-multi)
+  (keymap-set python-ts-mode-map "C-c g l" #'imenu-list)
+  (keymap-set python-ts-mode-map "M-." #'eglot-find-definition)                   ; xref-find-definitions
+  (keymap-set python-ts-mode-map "M-?" #'xref-find-references)                    ; xref-find-references
+  (keymap-set python-ts-mode-map "C-c g t" #'eglot-find-type-definition)          ; Go to type definition
+  (keymap-set python-ts-mode-map "C-c g d" #'eglot-find-declaration)              ; Go to declaration
+  (keymap-set python-ts-mode-map "C-c g i" #'eglot-find-implementation)           ; Go to implementation
+  (keymap-set python-ts-mode-map "C-c g w" #'my-lang-python/find-symbol)          ; Workspace symbols
+
+  (defvar my-custom-menus/python-find-menu
+    '("Find"
+      ["Consult Symbols" consult-eglot-symbols :keys "C-c g s"
+       :help "Show symbols in minibuffer"]
+      ["Imenu minibuffer" consult-imenu :keys "C-c g m"
+       :help "Search for symbols in the workspace"]
+      ["Imenu project minibuffer" consult-imenu-multi :keys "C-c g p"
+       :help "show a project-wide flattened Imenu-list in the minibuffer."]
+      "--"
+      ["Imenu" imenu-list :keys "C-c g l"
+       :help "Show code structure in Imenu-list"]
+      "--"
+      ["locate" :enable nil]
+      ["Find Definition" eglot-find-definition :keys "M-."
+       :help "Go to the definition of the symbol at point"]
+      ["Find References" xref-find-references :keys "M-?"
+       :help "Find all references to the symbol at point"]
+      ["Find Type Definition" eglot-find-type-definition :keys "C-c g t"
+       :help "Go to the type definition"]
+      ["Find Declaration" eglot-find-declaration :keys "C-c g d"
+       :help "Go to the declaration"]
+      ["Find Implementation" eglot-find-implementation :keys "C-c g i"
+       :help "Go to the implementation"]
+      ["Workspace Symbols"  my-lang-python/find-symbol :keys "C-c g w"
+       :help "Search for symbols in the workspace"])                              ; Workspace symbols
+    "Menu for navigation-related functions in `python-ts-mode'.")
+
+;;;; add-missing-dependencies from Ruff.
+  ;; add format, import, remove import, sort import and fix import
+  (keymap-set python-ts-mode-map "M-TAB" #'corfu-complete)
+  (keymap-set python-ts-mode-map "C-c i b" #'my-lang-python/format-buffer)        ; Format whole buffer
+  (keymap-set python-ts-mode-map "C-c i r" #'my-lang-python/format-region)        ; Format region or buffer
+  (keymap-set python-ts-mode-map "C-c i n" #'eglot-rename)                        ; Rename symbol project wide
+  (keymap-set python-ts-mode-map "C-c i o" #'my-lang-python/organize-imports)
+  (keymap-set python-ts-mode-map "C-c i f" #'eglot-code-action-quickfix)
+
+  (defvar my-custom-menus/python-fixes-menu
+    '("Formats/Imports/Fixes"
+      ["Format Buffer" my-lang-python/format-buffer :keys "C-c i b"
+       :help "Apply full Ruff formatting to the buffer"]
+      ["Format Region" my-lang-python/format-region :keys "C-c i r"
+       :help "Apply Ruff formatting to the selected region"]
+      "---"
+      ["Rename Symbol" eglot-rename :keys "C-c i n"
+       :help "Rename the symbol at point"]
+      ["Complete symbol" corfu-complete :keys "M-TAB"
+       :help "complete the symbol using the default choice"]
+      "---"
+      ["Organize Imports" my-lang-python/organize-imports :keys "C-c i o"
+       :help "Organise imports in the buffer (via Ruff)"]
+      ["Quick Fix" my-lang-python/quick-fix :keys "C-c i f"
+       :help "Apply quick fixes (e.g., via Ruff)"])
+    "Menu for imports and fixes-related functions in `python-ts-mode'.")
+
+;;;; LSP management and additional features
+  (defun my-lang-python/view-current-eglot-server ()
+    (interactive)
+    (switch-to-buffer
+     (eglot-events-buffer (eglot-current-server))))
+
+  (defun my-lang-python/view-current-eglot-stderr ()
+    (interactive)
+    (switch-to-buffer
+     (eglot-stderr-buffer (eglot-current-server))))
+
+  (keymap-set python-ts-mode-map "C-c l i" #'eglot-inlay-hints-mode)              ; Toggle inlay hints
+  (keymap-set python-ts-mode-map "C-c l s" #'eglot)                               ; Start eglot
+  (keymap-set python-ts-mode-map "C-c l r" #'eglot-reconnect)                     ; Reconnect to server
+  (keymap-set python-ts-mode-map "C-c l q" #'eglot-shutdown)                      ; Shutdown server
+  (keymap-set python-ts-mode-map "C-c l l"
+              #'my-lang-python/view-current-eglot-server)                         ; Show events log buffer
+  (keymap-set python-ts-mode-map "C-c l e"
+              #'my-lang-python/view-current-eglot-stderr)                         ; Show stderr buffer
+
+  (defvar my-custom-menus/python-lsp-menu
+    '("Language server"
+      ["Toggle inlay hints" eglot-inlay-hints-mode :keys "C-c l i"
+       :help "Toggle inlay hints"]
+      "---"
+      ["Start" eglot :keys "C-c l s" :help "Start Eglot"]
+      ["Reconnect" eglot-reconnect :keys "C-c l r" :help "Reconnect Eglot"]
+      ["Shutdown" eglot-shutdown :keys "C-c l q" :help "Shutdown Eglot"]
+      "---"
+      ["Events log" my-lang-python/view-current-eglot-server :keys "C-c l l"
+       :help "Show the eglot events log"]
+      ["stderr log" my-lang-python/view-current-eglot-stderr :keys "C-c l e"
+       :help "Show eglot errors log"])
+    "Menu for Eglot management in `python-ts-mode'.")
+
+
+  (keymap-set python-ts-mode-map "C-c d n" #'numpydoc-generate)
+  (keymap-set python-ts-mode-map "C-c d s" #'my-lang-python/generate-stub)
+  (defvar my-custom-menus/python-object-menu
+    '("Python code helpers"
+      ["NumpyDoc template" numpydoc-generate :keys "C-c d n"
+       :help "Template for function/class doc strings."]
+      "---"
+      ["Generate stub" my-lang-python/generate-stub :keys "C-c d s"
+       :help "Generate a stub file for the active buffer."])
+    "Code writing helpers in `python-ts-mode'.")
+
+;;; Construct menu map.
+  ;; Integrate menus into the mode's menu-bar
+  (easy-menu-add-item nil '("Tools") my-custom-menus/python-documentation-menu)
+  (easy-menu-add-item nil '("Tools") "--")                                        ; Separator
+  ;; (easy-menu-add-item nil '("Tools") my-custom-menus/python-testing-menu)
+  (easy-menu-add-item nil '("Tools") my-custom-menus/python-running-menu)
+  (easy-menu-add-item nil '("Tools") my-custom-menus/python-errors-menu)
+  (easy-menu-add-item nil '("Tools") my-custom-menus/python-find-menu)
+  (easy-menu-add-item nil '("Tools") my-custom-menus/python-fixes-menu)
+  (easy-menu-add-item nil '("Tools") my-custom-menus/python-object-menu)
+  (easy-menu-add-item nil '("Tools") my-custom-menus/python-lsp-menu)
+  (easy-menu-add-item nil '("Tools") my-custom-menus/python-folding-menu)
+
+  (defun my-lang-python/context-menu (menu click)
+    "Build a custom context menu for Python mode from scratch.
+MENU is the initial keymap (ignored here to override defaults).
+CLICK is the mouse event (unused).
+This creates a new keymap and populates it with specific items,
+groups of submenus, and separators as per requirements."
+    (let ((menu (make-sparse-keymap "Python Context")))
+      ;; Add individual menu items for core actions.
+      (easy-menu-add-item
+       menu nil
+       ["Format Region" my-lang-python/format-region
+        :help "Apply Ruff formatting to the selected region"
+        :keys "C-c i r"])
+      (easy-menu-add-item
+       menu nil
+       ["Debug" dape
+        :help "Start debugging with Dape"
+        :keys "C-x C-a d"])
+      (easy-menu-add-item
+       menu nil
+       ["Doc at Point" eldoc-box-help-at-point
+        :help "Display documentation for thing at point"
+        :keys "C-c h p"])
+      (easy-menu-add-item
+       menu nil
+       ["Rename Symbol" eglot-rename
+        :help "Rename the symbol at point project-wide"
+        :keys "C-c g r"])
+      (easy-menu-add-item
+       menu nil
+       ["Error Buffer" flymake-show-buffer-diagnostics
+        :help "Show buffer diagnostics in a separate buffer"
+        :keys "C-c e b"])
+      (easy-menu-add-item
+       menu nil
+       ["Consult Symbols" consult-eglot-symbols
+        :help "Show Eglot symbols in minibuffer"
+        :keys "C-c g s"])
+      (easy-menu-add-item
+       menu nil
+       ["Run Python" run-python
+        :help "Start an inferior Python process"
+        :keys "C-c r p"])
+      (easy-menu-add-item
+       menu nil
+       ["NumpyDoc template" numpydoc-generate
+        :help "Template for function/class doc strings."
+        :keys "C-c d n"])
+      (easy-menu-add-item
+       menu nil
+       ["Generate stub" my-lang-python/generate-stub
+        :help "Generate a stub file for the active buffer."
+        :keys "C-c d s"])
+      (easy-menu-add-item
+       menu nil
+       ["Sort Imports" my-lang-python/organize-imports
+        :help "Organise imports via Ruff-isort"
+        :keys "C-c i o"])
+      (easy-menu-add-item
+       menu nil
+       ["Fix" eglot-code-action-quickfix
+        :help "Apply quick fixes via Eglot"
+        :keys "C-c i f"])
+      (easy-menu-add-item
+       menu nil
+       ["Toggle Fold" treesit-fold-toggle
+        :help "Toggle folding at point"
+        :keys "C-c f"])
+      ;; Add separator after first group.
+      (easy-menu-add-item menu nil "---")
+
+      ;; Add the full custom submenus, separated by implied lines (using separators for visual space).
+      (easy-menu-add-item menu nil my-custom-menus/python-fixes-menu)
+      (easy-menu-add-item menu nil my-custom-menus/python-find-menu)
+      (easy-menu-add-item menu nil my-custom-menus/python-errors-menu)
+      (easy-menu-add-item menu nil my-custom-menus/python-documentation-menu)
+      (easy-menu-add-item menu nil my-custom-menus/python-running-menu)
+      (easy-menu-add-item menu nil my-custom-menus/python-pytest)
+      (easy-menu-add-item menu nil my-custom-menus/python-folding-menu)
+      (easy-menu-add-item menu nil my-custom-menus/python-lsp-menu)
+      (easy-menu-add-item menu nil pyvenv-menu)
+      (easy-menu-add-item menu nil yas--minor-mode-menu)
+
+      menu))
+
+  (setq-local context-menu-functions '(my-lang-python/context-menu))
+
   (message
    "[%s ; DEBUG; my-lang/python-mode-setup]finished loading the defun ; ;"
-   (current-time-string)))
+   (current-time-string))
+  )
 
-(add-hook 'python-ts-mode-hook #'my-lang/python-mode-setup)
+(add-hook 'python-ts-mode-hook #'my-lang-python/python-mode-setup)
 
 ;; Make sure that files with the suffix .p are recognised as python files.
 (add-to-list 'auto-mode-alist '("\\.p\\'" . python-ts-mode))
@@ -317,6 +578,4 @@ active environment."
 
 ;; LocalWords:  pyvenv isort numpydoc el CONDA WORKON ENV serviceEnv lang keymap
 ;; LocalWords:  eldoc defun minibuffer pycodestyle pycomplete gitlab melpa
-;; LocalWords:  pythonic dape yasnippet debugpy adapter
-;; LocalWords:  customisations
-;; LocalWords:  ui
+;; LocalWords:  pythonic dape yasnippet debugpy adapter pytest customisations ui
