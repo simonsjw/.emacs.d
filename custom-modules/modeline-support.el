@@ -92,13 +92,14 @@ The matching bracket info is shown if the cursor is near a bracket.")
 (use-package emacs
   :delight
   (page-break-lines-mode)
+  (apheleia-mode)
   (eldoc-mode)
   (auto-fill-function " AF")
   (visual-line-mode))
 
 (delight '((compile-angel-on-save-local-mode nil compile-angel)
            (yas-minor-mode nil yasnippet)
-        ;;   (which-key-mode nil which-key)
+           ;;   (which-key-mode nil which-key)
            (flyspell-mode nil flyspell)
            (compile-angel-on-load-mode nil compile-angel)))
 
@@ -137,7 +138,6 @@ The matching bracket info is shown if the cursor is near a bracket.")
 ;; (global-set-key (kbd "C-c l o") #'org-open-at-point-global)
 
 ;;;; Agenda
-;;(global-set-key (kbd "C-c a") #'org-agenda-list)
 (global-set-key (kbd "C-c a") #'my-org/open-agenda)
 
 ;;;; Org Capture
