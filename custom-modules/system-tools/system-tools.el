@@ -183,6 +183,22 @@ present."
 
 ;;;; Frame management
 
+(defvar my-frame-tools-inhibit-kill nil
+  "Non-nil means inhibit killing buffers in `my-frame-tools/kill-buffers-on-frame-close'.")
+
+(defun my-frame-tools/kill-buffers-on-frame-close (frame)
+  "Kill buffers unique to FRAME when it's closed."
+  (unless my-frame-tools-inhibit-kill
+    (let ((my-frame-tools-inhibit-kill t)  ; Prevent recursion
+          (buffers (delete-dups (mapcar #'window-buffer (window-list frame)))))
+      (dolist (buf buffers)
+        (when (and (buffer-live-p buf)
+                   (not (minibufferp buf))
+                   (= (length (get-buffer-window-list buf nil t))
+                      (length (get-buffer-window-list buf nil frame))))
+          (kill-buffer buf))))))
+
+
 (defun my-frame-tools/delete-frame-by-name (frame-name)
   "Delete a frame by its name FRAME-NAME."
   (interactive "sEnter frame name to delete: ")  ; Prompt for frame name
@@ -555,38 +571,6 @@ LEFT is the left margin width, and RIGHT is the right margin width (optional)."
 
 ;; ---end of TOOLS FOR THEME SUPPORT---
 
-;;;; TOOLS USING ORG-MODE
-;;   --------------------
-
-;; Create abbreviations
-;; (defun my-org/org-link-abbreviations-create ()
-;;   "Replace all long form links in current file.
-;; Use their corresponding abbreviations in `org-link-abbrev-alist'."
-
-;;   (interactive)
-;;   (dolist (pair org-link-abbrev-alist)
-;;     (save-excursion
-;;       (goto-char (point-min))
-;;       (while (search-forward (concat "[[" (cdr pair)) nil t)
-;;         (replace-match (concat "[[" (car pair) ":"))))))
-
-;; (add-hook 'org-mode-hook
-;;          (lambda ()
-;;            (add-to-list 'write-file-functions 'my/org-link-abbreviations-create)))
-
-;; Remove abbreviations
-;; (defun my-org/org-link-abbreviations-remove ()
-;;   "Replace all link abbreviations in current file.
-;; Use their long form counterparts in `org-link-abbrev-alist'."
-;;   (interactive)
-;;   (dolist (pair org-link-abbrev-alist)
-;;     (save-excursion
-;;       (goto-char (point-min))
-;;       (while (search-forward (concat "[[" (car pair) ":") nil t)
-;;         (replace-match (concat "[[" (cdr pair)))))))
-
-;; ---end of TOOLS USING ORG-MODE---
-
 ;;; TOOLS USING THE OS
 ;;  ------------------
 (defun my-os-tools/ports-found-by-ss (output)
@@ -625,7 +609,7 @@ USED-PORTS:  the ports that are not available."
         (unless (member port used-ports)
           (push port available-ports))))))
 
-;; ---end of TOOLS USING THE OS---
+;; ---end of TOOLS USING THE OS---k
 
 ;;;; TOOLS FOR LANGUAGE & DICTIONARIES
 
