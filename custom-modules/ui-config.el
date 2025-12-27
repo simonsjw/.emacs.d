@@ -21,6 +21,23 @@
 ;;; Code:
 
 
+;; Add frame borders and window dividers
+(modify-all-frames-parameters
+ '(
+   (right-divider-width . 10)                                                    ;; the horizontal width between windows in the frame
+   (bottom-divider-width . 10)                                                   ;; the vertical width between windows in the frame
+   (internal-border-width . 40)                                                  ;; width between the frame and the windows within.
+   )
+ )
+
+(dolist (face '(window-divider ;; remove the window dividers
+                window-divider-first-pixel
+                window-divider-last-pixel))
+  (face-spec-reset-face face)
+  (set-face-foreground face (face-attribute 'default :background)))
+(set-face-background 'fringe (face-attribute 'default :background))
+
+
 ;;;; linkd:
 ;;
 ;;  Make hypertext with active links in any buffer
@@ -170,9 +187,6 @@
 (use-package elisp-demos)
 (use-package page-break-lines)
 
-;; docs in windows over code.
-(use-package eldoc-box)
-
 ;; functionality to set up bitmaps in buffer fringes.
 (use-package fringe-helper)
 
@@ -222,8 +236,8 @@
   expression for an Elisp script might be:
   ;; Local Variables:
   ;; outline-regexp:  \"^[[:space:]]*;;;+\"  ; note that ^[[:space:]]* allows
-                                                                                  ; white-space in front of the
-                                                                                  ; outline mark.
+                                                 ; white-space in front of the
+                                                 ; outline mark.
   ;; outline-start:  \";;\"
   ;; outline-level: my-outline-mode/outline-level
   ;; End:"
@@ -303,149 +317,6 @@
 (global-goto-address-mode 1)
 ;; (org-open-at-point-global)
 
-;; Enable Org-style link handling everywhere
-;; (global-org-link-mode 1)
-
-
-;; Define custom faces for links
-;; (defface  my-font-faces/url-face
-;;   '((t (:foreground "DodgerBlue" :underline t)))
-;;   "Face for plain URLs."
-;;   :group 'my-faces/programming)
-
-;; (defface  my-font-faces/org-link-face
-;;   '((t (:foreground "MediumPurple1" :underline t)))
-;;   "Face for Org-style links."
-;;   :group 'my-faces/programming)
-
-;; ;; Add highlighting rules
-;; (defun my-links/highlight-links ()
-;;   "Highlight plain URLs and Org-style links in comments."
-;;   (font-lock-add-keywords
-;;    nil
-;;    '(("\\(https?://[^ \t\n]+\\)" ;; Plain URLs
-;;       (1 'my-font-faces/url-face t))
-;;      ("\\(\\[\\[https?://[^ \t\n]+\\]\\[[^]]+\\]\\]\\)"                           ; Org-style links
-;;       (1 'my-font-faces/org-link-face t)))))
-
-;; (add-hook 'prog-mode-hook #'my-links/highlight-links)                             ; For code modes
-;; (add-hook 'text-mode-hook #'my-links/highlight-links)                             ; For text modes
-
-;; ;; Show tool-tips for links
-;; ;; (defun my-links/tooltip (window object position)
-;; ;;   "Show a tooltip with the URL or Org link description.
-;; ;; ARGS:
-;; ;;     WINDOW is the window the link is in.
-;; ;;     OBJECT is the link.
-;; ;;     POSITION is the position of the link in the window."
-;; ;;   (when (and (stringp object)
-;; ;;              (string-match "\\(https?://[^ \t\n]+\\)" object))
-;; ;;     (let ((url (match-string 1 object)))
-;; ;;       (concat "Open: " url))))
-
-;; ;; (add-to-list 'tooltip-functions #'my-links/tooltip)
-
-;; (defun my-links/add-tooltips ()
-;;   "Add tool-tips to URLs in the current buffer."
-;;   (save-excursion
-;;     (goto-char (point-min))
-;;     (while (re-search-forward "\\(https?://[^ \t\n]+\\)" nil t)
-;;       (let ((url (match-string 0)))
-;;         (put-text-property (match-beginning 0) (match-end 0)
-;;                            'help-echo (concat "Open: " url))))))
-;; (add-hook 'prog-mode-hook #'my-links/add-tooltips)
-;; (add-hook 'text-mode-hook #'my-links/add-tooltips)
-
-;; (defun my-links/add-org-tooltips ()
-;;   "Add tooltips to Org-style links in the current buffer."
-;;   (save-excursion
-;;     (goto-char (point-min))
-;;     (while (re-search-forward "\\[\\[\\(https?://[^]]+\\)\\]\\[\\([^]]+\\)\\]\\]" nil t)
-;;       (let ((url (match-string 1))
-;;             (desc (match-string 2)))
-;;         (put-text-property (match-beginning 0) (match-end 0)
-;;                            'help-echo (format "URL: %s\nDescription: %s" url desc))))))
-;; (add-hook 'prog-mode-hook #'my-links/add-org-tooltips)
-;; (add-hook 'text-mode-hook #'my-links/add-org-tooltips)
-
-;; (defun my-links/format-plain-links ()
-;;   "Format plain URLs in comments as Org-style links."
-;;   (save-excursion
-;;     (goto-char (point-min))
-;;     (while (re-search-forward "\\(https?://[^ \t\n]+\\)" nil t)
-;;       (unless (save-match-data (org-in-regexp org-link-any-re))
-;;         (replace-match "[[\\1][Link]]" nil nil)))))
-
-;; ;; Add to save hooks
-;; (add-hook 'before-save-hook #'my-links/format-plain-links)
-
-;; (defun my-links/open-link-at-point ()
-;;   "Open the link at point in a browser."
-;;   (interactive)
-;;   (let ((url (thing-at-point 'url t)))
-;;     (if url
-;;         (browse-url url)
-;;       (message "No link at point!"))))
-
-;; (global-set-key (kbd "C-c o") #'my-links/open-link-at-point)
-
-
-;; (defun my-links/save-link-to-roam (url description)
-;;   "Save a link to the Org Roam database.
-;; ARGS:
-;;     URL is the link.
-;;     DESCRIPTION is a description of what the URL links to."
-;;   (with-temp-buffer
-;;     (insert (format "* %s\n  %s\n" description url))
-;;     (write-file (concat org-roam-directory "/links.org"))))
-
-;; ;; Save a link interactively
-;; (defun my-links/save-link-at-point ()
-;;   "Save the link at point to Org Roam."
-;;   (interactive)
-;;   (let ((url (thing-at-point 'url))
-;;         (description (read-string "Description: ")))
-;;     (my-links/save-link-to-roam url description)))
-
-
-;; (defun my-links/list-links ()
-;;   "List all Org-style links in the buffer."
-;;   (interactive)
-;;   (let ((links '()))
-;;     (save-excursion
-;;       (goto-char (point-min))
-;;       (while
-;;           (re-search-forward "\\[\\[https?://[^]]+\\]\\[\\([^]]+\\)\\]\\]"
-;;                              nil t)
-;;         (push (match-string 1) links)))
-;;     (message "Links: %s" (string-join links ", "))))
-
-
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; Fix 'use mini-buffer whilst in minibuffer' error
-;; -----------------------------------------------
-;; automatically cancel the minibuffer when you switch to it, to avoid
-;; "attempted to use minibuffer" error.
-;; see stack-overflow:
-;; [[https://stackoverflow.com/questions/812135/emacs-modes-command-attempted-to-use-minibuffer-while-in-minibuffer][attempted-to-use-minibuffer-while-in-minibuffer]]
-
-;; (defun my-ui/cancel-minibuffer-before-using-again (sub-read &rest args)
-;;   "If you call the mini-buffer whilst in the mini-buffer, you get an error.
-
-;; This can be managed by allowing recursive mini-buffer calls but this is seldom
-;; what the user intends.  This function provides an alternative, cancelling the
-;; existing mini-buffer session before starting the new one.
-;; SUB-READ is the prompt used to call the mini-buffer.  ARGS is the list of
-;; commands used with the buffer call."
-;;   (let ((active (active-minibuffer-window)))
-;;     (if active
-;;         (progn
-;;           ;; we have to trampoline, since we're IN the minibuffer right now.
-;;           (apply 'run-at-time 0 nil sub-read args)
-;;           (abort-recursive-edit))
-;;       (apply sub-read args))))
-
-;; (advice-add 'read-from-minibuffer :around #'my-ui/cancel-minibuffer-before-using-again)
 
 
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -522,29 +393,6 @@ parameters for the minibuffer function."
 ;; system-tools
 (global-set-key [mode-line C-mouse-1]
                 'my-buffer-tools/copy-buffer-in-new-frame)
-
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; Highlight-changes-mode
-;; ----------------------
-;; removed: not worth it since highlighted changes is a bit *intense* to work
-;; with.
-
-;; ;; Manage your change indicators.
-;; (defun my-ui/add-change-indicators-right-click-menu()
-;;   "Add 'Remove Change Indicators' to right-click menu in prog-mode."
-;;   (easy-menu-define my-prog-mode-menu prog-mode-map
-;;     "Custom right-click menu for prog-mode."
-;;     '("Change Indicators"
-;;       ["Remove Indicators" highlight-changes-remove-highlight t]
-;;       ["Rotate Indicators" highlight-changes-rotate-faces t]))
-
-;;   ;; Bind the custom menu to right-click
-;;   (define-key prog-mode-map [mouse-3] 'my-prog-mode-menu))
-
-;; ;; Add the function to prog-mode-hook to ensure it's active in prog-mode buffers
-;; (add-hook 'prog-mode-hook 'my-ui/add-change-indicators-right-click-menu)
-;; ----------------------------------------------------------------------------
-
 
 (provide 'ui-config)
 ;;; ui-config.el ends here
