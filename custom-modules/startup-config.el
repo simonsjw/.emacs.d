@@ -62,11 +62,9 @@ The frame has a current working directory PROJECT-PATH."
       (let* ((frame-class 'IDE)
              (frame (make-frame `((UI-TYPE . ,frame-class)
                                   (width . 300) (height . 75)
-                                  (bottom-divider-width . 5)
-                                  (right-divider-width . 5)
-                                  (visibility . nil)                              ; Make the new frame invisible.
+                                  ;; (visibility . nil)                              ; Make the new frame invisible.
                                   (no-focus-on-map . t)
-                                  (inhibit-switch-frame . t)
+                                  ;; (inhibit-switch-frame . t)
                                   (custom-window-management . t)))))
         (log/debug :fn 'my-ui/create-project-frame
                    :msg "Created new frame"
@@ -98,9 +96,8 @@ The frame has a current working directory PROJECT-PATH."
                    (message "Starting buffer creation in new frame...")
                    (dashboard-open)
                    (message "Opened dashboard")
-                   (my-ses/create-new-ses
-                    (expand-file-name
-                     "spreadsheet.ses" my-paths/spreadsheet-dir))
+                   (find-file (expand-file-name
+                               "spreadsheet.ses" my-paths/spreadsheet-dir))
                    (my-ses/force-refresh-via-window-switch)
                    (message "Opened spreadsheet")
                    (with-current-buffer (get-buffer-create "*Ibuffer*")
@@ -174,6 +171,10 @@ closed as a result of this action."
 
 ;; Use the function on startup
 ;;(add-hook 'emacs-startup-hook 'my-ui/startup-layout)
+
+;; ensure that all frames unique to a frame are killed when
+;; the frame is closed.
+(add-hook 'delete-frame-functions #'my-frame-tools/kill-buffers-on-frame-close)
 
 (provide 'startup-config)
 ;;; startup-config.el ends here
