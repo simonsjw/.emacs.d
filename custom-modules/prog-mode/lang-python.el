@@ -31,6 +31,7 @@
 (use-package treesit-fold)
 (use-package python-pytest)
 (use-package apheleia
+  :delight (apheleia-mode)
   :config
   (apheleia-global-mode 1)                                                        ; Enable globally
   ;; Configure Ruff for formatting + imports (chain: isort then format)
