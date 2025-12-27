@@ -21,10 +21,5 @@
 
 (use-package jump)
 
-
-;;;; package to process and display alerts.
-;; https://github.com/spegoraro/org-alert
-(use-package alert)
-
 (provide 'elisp-packages)
 ;;; elisp-packages.el ends here.
