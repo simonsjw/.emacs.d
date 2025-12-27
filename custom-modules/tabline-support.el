@@ -431,11 +431,11 @@ if not, check exclusions in `tab-line-exclude-modes` or custom filters."
                 (seq-reduce                                                       ; Accumulate over windows.
                  (lambda (acc win)                                                ; Lambda: For each window, collect its tabs.
 
-                   (log/debug :fn 'my-tab-line/tab-line-close-tab
-                              :msg "Closing tab with mouse event on tab-line."
-                              :obj (list :window window
-                                         :buffer buffer
-                                         :tabs (tab-line-tabs-window-buffers)))
+                   ;; (log/debug :fn 'my-tab-line/tab-line-close-tab
+                   ;;            :msg "Closing tab with mouse event on tab-line."
+                   ;;            :obj (list :window window
+                   ;;                       :buffer buffer
+                   ;;                       :tabs (tab-line-tabs-window-buffers)))
 
                    (select-window win t)                                          ; Select temporarily (t: no-record in history).
                    (cons (tab-line-tabs-window-buffers) acc))                     ; Prepend its tabs to accumulator.
@@ -458,7 +458,8 @@ if not, check exclusions in `tab-line-exclude-modes` or custom filters."
                   (ignore-errors (delete-window window))))                        ; Delete window, ignore errors (e.g., last window).
             (and (kill-buffer buffer)                                             ; Unique case: Kill buffer (t if success).
                  (unless (cdr tab-list)
-                   (ignore-errors (delete-window window))))))))))                 ; Clean up if empty.
+                   (ignore-errors (delete-window window))))                       ; Clean up if empty.
+            ))))))
 
 
 
