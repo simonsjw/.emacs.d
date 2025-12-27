@@ -32,7 +32,14 @@
 ;;   (add-hook 'context-menu-functions #'my-menus/add-vc-mode-to-context-menu))
 
 
-;;;; PROG_MODE: Comment Key Map and Menu
+;;;; PROG_MODE Menus:
+
+;;;;;; Comment Key Map and Menu
+
+;; The below comments menu is bound in lang-prog-mode.el in the
+;;  my-prog-mode/programming-mode-config-hook defun using this form:
+;; (local-set-key
+;;  (kbd my-custom-prefix-keys/comment) 'my-key-maps/prog-mode-comment-map)
 
 ;; Define the keymap for 'comments' related commands
 (defvar my-key-maps/prog-mode-comment-map (make-sparse-keymap "Comment")
@@ -100,6 +107,25 @@ These are available in `prog-mode'."
     ["Kill Comment" comment-kill :keys "C-c c k" :help "Kill full comment"]
     ["Break Line at Point and Indent" comment-indent-new-line :keys "C-c c RET" :help "Break line at point and indent"])
   "Menu for comment-related functions in `prog-mode'.")
+
+
+(defvar my-custom-menus/flymake-menu
+  '("linting"
+    "---"
+    ["Display errors" :enable nil]
+    ["Error buffer" flymake-show-buffer-diagnostics :keys "C-c e b" :help "Show buffer errors in a buffer"]
+    ["Project error buffer" flymake-show-project-diagnostics :keys "C-c e p" :help "Show project errors in a buffer"]
+    ["Error list" consult-flymake :keys "C-c e m" :help "Show errors in the mini-buffer"]
+    "---"
+    ["Navigate errors" :enable nil]
+    ["Next error" flymake-goto-next-error :keys "C-c e n" :help "Move to the next error."]
+    ["Previous error" flymake-goto-prev-error :keys "C-c e p" :help "Move to the previous error."])
+  ;; turn on flymake
+  ;; check now
+  ;; view flymake log
+  ;; turn off flymake
+  "Menu for linting/flymake-related functions in `prog-mode'.")
+
 
 
 ;;;; Window management: Key Map
