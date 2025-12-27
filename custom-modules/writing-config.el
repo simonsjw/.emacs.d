@@ -8,6 +8,8 @@
 ;;; Commentary:
 
 ;; Configures Markdown, LaTeX, and general text editing in Emacs.
+;; Prioritises efficiency by lazy-loading where possible, clarity via docstrings,
+;; and readability by decomposing long functions.
 
 ;;; Code:
 
@@ -50,22 +52,21 @@
 (declare-function auto-fill-mode "simple")
 (declare-function yas-minor-mode-on "yasnippet")
 
-
 (use-package markdown-mode)                                                       ; Markdown support
-(use-package flymake-markdownlint)                                                ; lint markdown in flymake if markdownlint-cli is installed.
+(use-package flymake-markdownlint)                                                ; Lint markdown in flymake if markdownlint-cli is installed.
 (use-package pandoc-mode)
 (use-package olivetti)
 
 ;; PDF support
 (use-package pdf-tools
   :config
-  (pdf-tools-install))
+  (pdf-tools-install))                                                            ; Install once here; no duplicates.
 
 (use-package cdlatex)
 
 ;; LaTeX support - uses Auctex
-;; only install and load auctex when the latex executable is found,
-;; otherwise it crashes when loading
+;; Only install and load auctex when the latex executable is found,
+;; otherwise it crashes when loading.
 (when (executable-find "latex")
   (use-package auctex)
   ;; Install the auctex-latexmk package when the latex and latexmk
@@ -88,17 +89,31 @@
 
 (use-package citar
   :custom
-  (citar-bibliography (list (getenv "BIB_HOME")))                                 ; Wrap in `list` to ensure it's a list
-  :delight                                                                        ; hide from modeline.
+  (citar-bibliography (list (getenv "BIB_HOME")))                                 ; Wrap in `list` to ensure it's a list.
+  :delight                                                                        ; Hide from modeline.
   :hook
   (LaTeX-mode . citar-capf-setup)
   (org-mode . citar-capf-setup))
 
 (use-package citar-embark
   :after citar embark
-  :delight                                                                        ; hide from modeline.
+  :delight                                                                        ; Hide from modeline.
   :no-require
   :config (citar-embark-mode))
+
+(use-package visual-fill-column
+  :ensure t
+  :hook ((org-mode org-roam-mode) . visual-fill-column-mode)
+  :custom
+  (visual-fill-column-width 88)          ; or 88 if you’re strict
+  (visual-fill-column-center-text t))    ; optional but very popular
+
+
+;; Soft-wrap lines at the window edge instead of hard line breaks
+(add-hook 'org-mode-hook #'visual-line-mode)
+
+;; Optional: make visual-line-mode the default for Org-roam dailies too
+(add-hook 'org-roam-mode-hook #'visual-line-mode)
 
 
 ;;; Set fancy icons in citar.
@@ -137,13 +152,7 @@
             citar-indicator-notes-icons
             citar-indicator-links-icons))
 
-;; ;; Ensure that flymake ignores unused references in the master ref.bib file.
-;; (defun my-ignore-ref-bib-diagnostics (report fn)
-;;   "Ignore 'unused-entry' diagnostics for 'ref.bib' in REPORT."
-;;   (unless (string= (buffer-file-name) "ref.bib")
-;;     (funcall fn report)))
-;; (add-hook 'flymake-diagnostic-functions
-;;           #'my-ignore-ref-bib-diagnostics)
+
 
 ;;; Whitespace
 (defun crafted-writing-configure-whitespace
@@ -168,14 +177,14 @@ turns on `global-whitespace-mode' to use spaces instead of tabs:
 ;; overwrites the above to turn to use tabs instead of spaces,
 ;; does not turn off global-whitespace-mode, adds a hook to
 ;; makefile-mode-hook
-(crafted-writing-configure-whitespace t nil 'makefile-mode)
+ (crafted-writing-configure-whitespace t nil 'makefile-mode)
 
 Instead, use a configuration like this:
 ;; turns on global-whitespace-mode to use spaces instead of tabs
-(crafted-writing-configure-whitespace nil t)
+ (crafted-writing-configure-whitespace nil t)
 
 ;; turn on the buffer-local mode for using tabs instead of spaces.
-(add-hook 'makefile-mode-hook #'indent-tabs-mode)
+ (add-hook 'makefile-mode-hook #'indent-tabs-mode)
 
 For more information on `indent-tabs-mode', See the info
 node `(emacs)Just Spaces'
@@ -186,14 +195,14 @@ Example usage:
 ;; since we don't know which modes to turn it on for.
 ;; You will need to do that in your configuration by adding
 ;; whitespace mode to the appropriate mode hooks.
-(crafted-writing-configure-whitespace nil)
+ (crafted-writing-configure-whitespace nil)
 
 ;; Configure whitespace mode, but turn it on globally.
-(crafted-writing-configure-whitespace nil t)
+ (crafted-writing-configure-whitespace nil t)
 
 ;; Configure whitespace mode and turn it on only for prog-mode
 ;; and derived modes.
-(crafted-writing-configure-whitespace nil nil 'prog-mode)"
+ (crafted-writing-configure-whitespace nil nil 'prog-mode)"
   (if use-tabs
       (customize-set-variable 'whitespace-style
                               '(face empty trailing indentation::tab
@@ -213,14 +222,12 @@ Example usage:
   (customize-set-variable
    'whitespace-action '(cleanup auto-cleanup)))
 
-
 ;;; configure citar
 (setq citar-templates
       '((main . "${author editor:30%sn}     ${date year issued:4}     ${title:48}")
         (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
         (preview . "${author editor:%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
         (note . "Notes on ${author editor:%etal}, ${title}")))
-
 
 ;;; Markdown support
 (when (fboundp 'markdown-mode)
@@ -240,6 +247,7 @@ Example usage:
 (with-eval-after-load "pdf-view"
   (defun pdf-view-scroll-up-or-next-page (&optional arg)
     "Scroll page up ARG lines if possible, else go to the next page.
+
 When `pdf-view-continuous' is non-nil, scrolling upward at the
 bottom edge of the page moves to the next page.  Otherwise, go to
 next page only on typing SPC (ARG is nil)."
@@ -260,6 +268,7 @@ next page only on typing SPC (ARG is nil)."
 
   (defun pdf-view-scroll-down-or-previous-page (&optional arg)
     "Scroll page down ARG lines if possible, else go to the previous page.
+
 When `pdf-view-continuous' is non-nil, scrolling downward at the
 top edge of the page moves to the previous page.  Otherwise, go
 to previous page only on typing DEL (ARG is nil)."
@@ -276,152 +285,178 @@ to previous page only on typing DEL (ARG is nil)."
               (image-eob)
               (image-bol 1))
             (set-window-hscroll (selected-window) hscroll)))
-      (image-scroll-down arg)))
-  )
+      (image-scroll-down arg))))
 
 ;;; LaTeX support
-(defun my-lang-tex/latex-warning-if-no-executable ()
-  "Notify if `latex` executable not found."
+
+(defun my-lang-tex/check-executables ()
+  "Check for required LaTeX executables and warn if missing.
+
+Returns t if all are present, nil otherwise.
+- Checks 'latex' and optionally 'latexmk'.
+- Outputs messages for missing tools."
   (unless (executable-find "latex")
-    (message "latex executable not found")))
+    (message "latex executable not found; LaTeX features disabled.")
+    (cl-return nil))
+  (when (not (executable-find "latexmk"))
+    (message "latexmk not found; falling back to default TeX command."))
+  t)
 
-(defun my-lang-tex/latex-setup ()
-  "Configure LaTeX environment for writing and editing."
-  (my-lang-tex/latex-warning-if-no-executable)
+(defun my-lang-tex/setup-outline ()
+  "Configure outline-minor-mode for LaTeX buffers.
 
-  ;;;;; Set up outline
+- Uses LaTeX section commands for headings.
+- Enables buttons, highlighting, and blank lines."
+  (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons in margins.
+  (setq-local outline-blank-line t)                                               ; Insert blank line before headers.
+  (setq-local outline-minor-mode-highlight t)                                     ; Highlight outlines with font-lock.
+  (setq-local outline-regexp (concat "\\\\"                                       ; Match LaTeX sections.
+                                     "\\(part\\|chapter\\|"
+                                     "\\(\\(sub\\)?\\(sub\\)?section\\|paragraph\\)"
+                                     "\\)\\*?\\b"))
+  (setq-local outline-level 'outline-level)                                       ; Use built-in level function for sections.
+  (outline-minor-mode 1))                                                         ; Activate minor mode.
 
-  ;; Set up customisations for outline-minor-mode.
-  (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons
-  (setq-local outline-blank-line t)                                               ; Blank line before headers
-  (setq-local outline-minor-mode-highlight t)                                     ; Font-lock outlines
-  (setq-local outline-regexp "^[[:space:]]*##+")                                  ; Match `##' and more.
-  (setq-local outline-start "#")                                                  ; Start marker
-  (setq-local outline-level #'my-outline-mode/outline-level)                      ; Custom level function
-  (outline-minor-mode 1)                                                          ; Use outline-minor-mode
+(defun my-lang-tex/setup-modes ()
+  "Enable minor modes and tools for LaTeX editing.
 
-  ;;;;; Folding
-  ;; Set the fringe mode for folding.
-  (set-fringe-mode '(12 . 12))
+- Activates flyspell, cdlatex, reftex, etc.
+- Sets up electric pairs and math modes."
+  ;; Basic modes.
+  (set-fringe-mode '(12 . 12))                                                    ; Set fringe for folding indicators.
+  (display-line-numbers-mode 1)                                                   ; Show line numbers.
+  (eglot-ensure)                                                                  ; Start Eglot for LSP support.
+  (flyspell-mode-on)                                                              ; Enable spell checking.
+  (turn-on-cdlatex)                                                               ; Faster LaTeX input.
+  (auto-fill-mode 1)                                                              ; Auto-wrap lines.
+  (LaTeX-math-mode 1)                                                             ; Math symbol input.
+  (yas-minor-mode-on)                                                             ; Yasnippet for templates.
 
-  ;; display line numbers.
-  (display-line-numbers-mode 1)
+  ;; Citar and RefTeX.
+  (when (fboundp 'citar-refresh) (citar-refresh))
+  (turn-on-reftex)                                                                ; Reference management.
 
-  ;; turn on Eglot.
-  (eglot-ensure)
+  ;; Parentheses and electric features.
+  (electric-pair-mode 1)                                                          ; Auto-insert matching brackets.
+  (show-paren-mode 1)                                                             ; Highlight matching parens.
+  (setq TeX-electric-sub-and-superscript t                                        ; Electric sub/superscripts.
+        LaTeX-electric-left-right-brace t                                         ; Electric braces.
+        TeX-electric-math (cons "$" "$"))                                         ; Electric math delimiters.
 
-  ;; turn on flyspell.
-  (flyspell-mode-on)
+  ;; Tree-sitter for parsing.
+  (treesit-major-mode-setup)
+  
+  ;; display flymake project level window.
   (my-flymake/show-project-diagnostics)
+  )
 
-  ;; turn on cdlatex (makes writing latex faster)
-  (turn-on-cdlatex)
+(defun my-lang-tex/setup-indent-and-verbatim ()
+  "Configure indentation and verbatim environments for LaTeX.
 
+- Customises no-indent for specific environments.
+- Sets verbatim to prevent formatting in code blocks."
+  ;; Indentation.
+  (dolist (env '("lstlisting" "tikzcd" "tikzpicture"))
+    (add-to-list 'LaTeX-indent-environment-list
+                 (list env 'current-indentation)))                                ; No extra indent in these envs.
 
-  ;; Delay Corfu drop-downs.
-  (customize-set-variable 'corfu-auto-delay 0.25)
+  ;; Verbatim.
+  (dolist (env '("lstlisting" "Verbatim"))
+    (add-to-list 'LaTeX-verbatim-environments env))                               ; Prevent formatting in these envs.
+  (dolist (macro '("lstinline"))
+    (add-to-list 'LaTeX-verbatim-macros-with-braces macro)
+    (add-to-list 'LaTeX-verbatim-macros-with-delims macro)))                      ; Inline verbatim macros.
 
-  ;; AUCTeX Settings
-  (setq TeX-auto-save t
-        TeX-parse-self t
-        TeX-master (if (or (buffer-file-name)
+(defun my-lang-tex/setup-compiler-and-viewer ()
+  "Set up LaTeX compiler, viewer, and correlation.
+
+- Integrates pdf-tools with SyncTeX.
+- Configures LatexMk if available."
+  ;; Core AUCTeX settings.
+  (setq TeX-auto-save t                                                           ; Auto-save TeX info.
+        TeX-parse-self t                                                          ; Parse on load.
+        TeX-master (if (or (buffer-file-name)                                     ; Set master file.
                            (string-match "main\\.tex" (buffer-file-name)))
                        "main"
                      nil)
-        TeX-engine 'luatex                                                        ; Use LuaLaTeX as the default LaTeX engine.
-        TeX-PDF-mode t                                                            ; Ensure AUCTeX generates PDFs by default
-        reftex-plug-into-AUCTeX t
-        ;; Set output directory for latexmk or other compilers
-        TeX-output-dir (file-name-directory (buffer-file-name))
-        )
+        TeX-engine 'luatex                                                        ; Default to LuaLaTeX.
+        TeX-PDF-mode t                                                            ; Generate PDFs.
+        reftex-plug-into-AUCTeX t                                                 ; Integrate RefTeX.
+        TeX-source-correlate-start-server t                                       ; Start server for SyncTeX.
+        TeX-command-extra-options "-synctex=1")                                   ; Enable SyncTeX in compiler.
 
-  ;; Automatically refresh the PDF buffer after compilation to keep it up-to-date.
-  (add-hook
-   'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
+  ;; Auto-revert PDF after compile.
+  (add-hook 'TeX-after-compilation-finished-functions
+            #'TeX-revert-document-buffer)
 
-  ;; Enable useful modes
-  (TeX-source-correlate-mode 1)                                                   ; Enable source correlation to map between source code and PDF viewer.
-  (auto-fill-mode 1)                                                              ; Automatically enable `auto-fill-mode` for line wrapping in LaTeX files.
-  (LaTeX-math-mode 1)                                                             ; Enables `LaTeX-math-mode` for easier input of math symbols.
-  (yas-minor-mode-on)
+  ;; PDF Tools viewer (integrated from previous suggestion).
+  (when (require 'pdf-tools nil 'noerror)
+    (add-to-list 'TeX-view-program-selection '(output-pdf "PDF Tools"))           ; Associate PDF with viewer.
+    (add-to-list 'TeX-view-program-list                                           ; Define viewer as function (not string).
+                 '("PDF Tools" TeX-pdf-tools-sync-view)))
 
-  ;; Turn on RefTeX, a powerful tool for managing references, citations, and
-  ;; cross-references in LaTeX.
-  ;; Citar and RefTeX
-  (when (fboundp 'citar-refresh) (citar-refresh))
-  (turn-on-reftex)
+  ;; LatexMk setup.
+  (when (and (executable-find "latexmk")
+             (require 'auctex-latexmk nil 'noerror))
+    (auctex-latexmk-setup)                                                        ; Integrate LatexMk.
+    (setq TeX-command-default "LatexMk"                                           ; Default command.
+          auctex-latexmk-inherit-TeX-PDF-mode t                                   ; Inherit PDF mode.
+          bibtex-dialect 'biblatex))                                              ; Use BibLaTeX.
 
-  ;; Custom indentation for specific LaTeX environments.
-  ;; `lstlisting`: Used for code listings.
-  ;; `tikzcd`: Used for commutative diagrams (indentation aligns with tables).
-  ;; `tikzpicture`: Used for TikZ graphics.
-  ;; (add-to-list 'LaTeX-indent-environment-list '("lstlisting" current-indentation))
-  ;; (add-to-list 'LaTeX-indent-environment-list '("tikzcd" LaTeX-indent-tabular))
-  ;; (add-to-list 'LaTeX-indent-environment-list '("tikzpicture" current-indentation))
-  (dolist (env '("lstlisting" "tikzcd" "tikzpicture"))
-    (add-to-list
-     'LaTeX-indent-environment-list (list env 'current-indentation)))
-
-  ;; Verbatim environments
-  ;; Define `verbatim` environments to prevent LaTeX from auto-formatting text.
-  ;; This applies especially to code, ensuring it appears as-is.
-  ;; (add-to-list 'LaTeX-verbatim-environments "lstlisting")
-  ;; (add-to-list 'LaTeX-verbatim-environments "Verbatim")
-  ;; (add-to-list 'LaTeX-verbatim-macros-with-braces "lstinline")
-  ;; (add-to-list 'LaTeX-verbatim-macros-with-delims "lstinline")
-  (dolist (env '("lstlisting" "Verbatim"))
-    (add-to-list 'LaTeX-verbatim-environments env))
-  (dolist (macro '("lstinline"))
-    (add-to-list 'LaTeX-verbatim-macros-with-braces macro)
-    (add-to-list 'LaTeX-verbatim-macros-with-delims macro))
-
-  ;; parentheses
-  (electric-pair-mode 1)                                                          ; auto-insert matching bracket
-  (show-paren-mode 1)                                                             ; turn on paren match highlighting
-
-  ;; Enable electric pairs for sub- and superscripts, braces, and `$` symbols.
-  ;; This makes it easier to enter LaTeX math environments and brackets.
-  (setq TeX-electric-sub-and-superscript t
-        LaTeX-electric-left-right-brace t
-        TeX-electric-math (cons "$" "$"))
-
-  ;; PDF Tools integration if available
-  (when (and (require 'pdf-tools nil 'noerror)
-             (executable-find "pdf-tools"))
-    (setq TeX-view-program-selection '((output-pdf "PDF Tools"))
-          TeX-view-program-list '(("PDF Tools" "TeX-pdf-tools-sync-view"))
-          TeX-source-correlate-start-server t)
-    (pdf-tools-install))
-
-  ;; Check if `latexmk` is executables are available and configure
-  ;; AUCTeX to use `latexmk` for building documents.
-  ;; message the user if the latex executable is not found
-  (when (and (executable-find "latexmk") (require 'auctex-latexmk nil 'noerror))
-    (auctex-latexmk-setup)
-    (setq TeX-command-default "LatexMk"
-          auctex-latexmk-inherit-TeX-PDF-mode t
-          bibtex-dialect 'biblatex))
-
-  ;; Ensure the compilation is shown in-buffer.
-  (setq TeX-show-compilation t)
-
+  ;; Biber as BibTeX command.
   (add-to-list 'TeX-command-list
                '("Biber" "biber %s" TeX-run-BibTeX nil t :help "Run Biber"))
   (setq TeX-command-BibTeX "Biber")
 
-  ;; when pdf-tools is loaded, apply settings.
+  ;;; Suppress texlab unused entry warnings for ref.bib
+  (defun my-flymake-filter-texlab-unused (diagnostics)
+    "Filter out 'Unused entry' diagnostics from texlab for ref.bib.
+
+Args:
+  DIAGNOSTICS: List of Flymake diagnostic objects.
+
+Returns:
+  Filtered list of diagnostics, excluding 'Unused entry' for ref.bib."
+    (if (string-match-p "ref\\.bib$" (or (buffer-file-name) ""))
+        (seq-filter
+         (lambda (diag)
+           (not (string-match-p "Unused entry"
+                                (flymake-diagnostic-text diag))))
+         diagnostics)
+      diagnostics))
+
+  (add-hook 'bibtex-mode-hook
+            (lambda ()
+              (add-hook 'flymake-diagnostic-functions
+                        #'my-flymake-filter-texlab-unused nil t)))
+
+  ;; Show compilation in-buffer.
+  (setq TeX-show-compilation t)
+
+  ;; PDF view defaults.
   (with-eval-after-load 'pdf-tools
-    (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
-    (setq-default pdf-view-display-size 'fit-width))
-
-
-  ;; switch on tree-sitter parsing.
-  (treesit-major-mode-setup)
+    (setq-default pdf-view-display-size 'fit-width))                             ; Fit width by default.
+  ;; Source correlation.
+  (TeX-source-correlate-mode 1)                                                  ; Enable SyncTeX mapping.
   )
 
-;; Hook the function to LaTeX mode
-(add-hook 'LaTeX-mode-hook 'my-lang-tex/latex-setup)
+(defun my-lang-tex/latex-setup ()
+  "Main setup function for LaTeX environment.
 
+Calls decomposed helpers for modularity.
+- Checks executables first.
+- Sets up outline, modes, indent/verbatim, compiler/viewer."
+  (when (my-lang-tex/check-executables)                                           ; Early exit if tools missing.
+    ;; Delay Corfu.
+    (customize-set-variable 'corfu-auto-delay 0.25)                               ; Reduce popup delay for efficiency.
+
+    (my-lang-tex/setup-outline)                                                   ; Outline config.
+    (my-lang-tex/setup-modes)                                                     ; Minor modes and tools.
+    (my-lang-tex/setup-indent-and-verbatim)                                       ; Indent and verbatim.
+    (my-lang-tex/setup-compiler-and-viewer)))                                     ; Compiler and viewer.
+
+;; Hook the function to LaTeX mode.
+(add-hook 'LaTeX-mode-hook 'my-lang-tex/latex-setup)
 
 (provide 'writing-config)
 ;;; writing-config.el ends here
