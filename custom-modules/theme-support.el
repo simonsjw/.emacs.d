@@ -257,42 +257,6 @@ Converts keys to strings and ensures values are strings."
     flat-colors))
 
 
-
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; Rainbow mode functionality
-;; -------------------
-;; ensure we can see what colours are being used in the teeming.
-
-;; (setq rainbow-x-colors nil                                                        ; Disable color names like "red"
-;;       ;;  rainbow-latex-rgb-colors                                                   ; Enable LaTeX rgb colors
-;;       ;;  rainbow-rgb-colors-font-lock-keywords                                     ; Enable rgb(...) colors
-;;       rainbow-info-theme-colors t                                                 ; Enable the system theme colour keywords.
-;;       rainbow-hexadecimal-colors-font-lock-keywords
-;;       '(("#[0-9a-fA-F]\\{6\\}\\|#[0-9a-fA-F]\\{3\\}"
-;;          (0 (rainbow-colorize-itself)))))                                         ; Keep hex colors
-
-
-;;; Extend Rainbow-mode to cover my system theme.
-;; (defcustom rainbow-info-theme-colors-alist
-;;   (my-colors/extract-theme-colors my-colors/info-theme-colors)
-;;   "Alist of info-theme colors.
-;; Each entry should have the form (COLOR-NAME . HEXADECIMAL-COLOR)."
-;;   :type 'alist
-;;   :group 'rainbow)
-
-;;; Extend Rainbow-mode to cover my system theme.
-
-
-;;(add-to-list 'load-path my-paths/rainbow-mode) ; Add directory to the load path
-;; (require 'rainbow-mode)
-;; (setq rainbow-info-theme-colors-alist
-;;       (my-colors/extract-theme-colors my-colors/info-theme-colors)
-;;       rainbow-x-colors nil
-;;       rainbow-info-theme-colors t)
-
-;;(rainbow-mode 1)
-
-
 (defgroup my-faces/programming nil
   "Custom font faces for programming modes."
   :group 'faces)
