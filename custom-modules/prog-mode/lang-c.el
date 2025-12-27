@@ -49,7 +49,6 @@
 (defvar dape-configs)                                                             ; list of configs by language for the debugger.
 
 
-(declare-function reformatter-define "reformatter")
 (declare-function yas-minor-mode "yasnippet")
 (declare-function treesit-fold-mode "treesit-fold")
 (declare-function treesit-fold-indicators-mode "treesit-fold")

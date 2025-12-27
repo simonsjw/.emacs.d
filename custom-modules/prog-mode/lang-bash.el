@@ -35,7 +35,6 @@
 
   (require 'dape)
 
-
   ;; [stderr]  node:internal/modules/cjs/loader:1137
   ;; [stderr]    throw err;
   ;; [stderr]    ^
