@@ -111,7 +111,7 @@ Interactively, POINT is point and KILL is the prefix argument."
   "Custom configurations for toml-ts-mode."
   (require 'treesit-fold)
   
-  (setq display-fill-column-indicator-column 50)                                 ; Edge 
+  (setq display-fill-column-indicator-column 50)                                 ; Edge
   (setq fill-column 50)                                                          ; Column beyond which line wrapping occurs if it is activated.
   (setq comment-fill-column 270)                                                 ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
   (setq comment-column 52)                                                       ; Column to indent right-margin comments to.
