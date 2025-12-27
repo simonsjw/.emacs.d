@@ -80,38 +80,17 @@
 
 ;;; Code:
 
-(defvar dape-configs)
-(declare-function dape "dape")
+;;(defvar dape-configs)
+;;(declare-function dape "dape")
 
 
-;; The below keymap and minor mode are used in place of
-;; dape-breakpoint-global-mode-map. This mode is made local only so does not
-;; override mouse settings as `dape-breakpoint-global-mode' would.
 
-(defvar my-dape/breakpoint-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map [left-fringe mouse-1] 'dape-mouse-breakpoint-toggle)
-    (define-key map [left-margin mouse-1] 'dape-mouse-breakpoint-toggle)
-    (define-key map [left-fringe mouse-2] 'dape-mouse-breakpoint-expression)
-    (define-key map [left-margin mouse-2] 'dape-mouse-breakpoint-expression)
-    (define-key map [left-fringe mouse-3] 'dape-mouse-breakpoint-log)
-    (define-key map [left-margin mouse-3] 'dape-mouse-breakpoint-log)
-    map)
-  "Keymap for `dape-breakpoint-mode'.")
-
-(define-minor-mode my-dape/breakpoint-mode
-  "Adds fringe and margin breakpoint controls in the current buffer."
-  ;; :lighter " DapeBP"
-  ;; The keymap is automatically associated with the mode
-  )
 
 
 ;; The latest version of jsonrpc is needed. You need to swap it in the
 ;; existing Emacs files then rebuild. This issue will be resolved in Emacs 30.
 
 
-;;(straight-pull-all)
-;;(straight-rebuild-all)
 ;; https://github.com/emacs-straight/dape
 (use-package dape
   ;;:preface
@@ -128,6 +107,9 @@
   :config
   ;; Turn on global bindings for setting breakpoints with mouse
   ;;(dape-breakpoint-global-mode)
+
+  ;; Use shorthand
+  (setq dape-repl-use-shorthand t)
 
   ;; Timeout is 30 seconds.
   (setq dape-request-timeout 60)
@@ -178,24 +160,72 @@
   ;; Ensure dape opens in the project root.
   (setq dape-cwd-fn (lambda () (expand-file-name (nth 2 (project-current))))))
 
-;; add dape config for python (debugging)
-;; note debugpy must be installed in the environment in use.
-;; Add custom configurations to `dape-configs` after loading `dape`
 
-;; (with-eval-after-load 'dape
-;;   ;; Ensure only one `debugpy` entry in `dape-configs`
-;;   (assq-delete-all 'debugpy dape-configs)
+;; The below keymap and minor mode are used in place of
+;; dape-breakpoint-global-mode-map. This mode is made local only so does not
+;; override mouse settings as `dape-breakpoint-global-mode' would.
 
-;;   ;; Add a properly formatted `debugpy` entry
-;;   (add-to-list 'dape-configs
-;;                `(debugpy
-;;                  modes (python-ts-mode python-mode)
-;;                  command ,(or "python" (error "Command not set"))
-;;                  command-args ["-m" "debugpy.adapter"]
-;;                  :type "python"                                                ; other choice is "executable"
-;;                  :request "launch"
-;;                  :cwd dape-cwd-fn
-;;                  :program (lambda () (buffer-file-name)) )))
+(defvar my-dape/breakpoint-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [left-fringe mouse-1] 'dape-mouse-breakpoint-toggle)
+    (define-key map [left-margin mouse-1] 'dape-mouse-breakpoint-toggle)
+    (define-key map [left-fringe mouse-2] 'dape-mouse-breakpoint-expression)
+    (define-key map [left-margin mouse-2] 'dape-mouse-breakpoint-expression)
+    (define-key map [left-fringe mouse-3] 'dape-mouse-breakpoint-log)
+    (define-key map [left-margin mouse-3] 'dape-mouse-breakpoint-log)
+    map)
+  "Keymap for `dape-breakpoint-mode'.")
+
+
+(define-minor-mode my-dape/breakpoint-mode
+  "Adds fringe and margin breakpoint controls in the current buffer."
+  ;; :lighter " DapeBP"
+  ;; The keymap is automatically associated with the mode
+  )
+
+(define-key my-dape/breakpoint-mode-map (kbd "C-c d b") #'dape-breakpoint-toggle)
+(define-key my-dape/breakpoint-mode-map (kbd "C-c d e") #'dape-breakpoint-expression)
+(define-key my-dape/breakpoint-mode-map (kbd "C-c d l") #'dape-breakpoint-log)
+
+
+(with-eval-after-load 'dape
+  (defun my-dape--config-eval-value-advice (orig-fn &rest args)
+    "Advice around `dape--config-eval-value' to handle symbols by dereferencing.
+This ensures symbols like `dape-cwd-fn' are resolved to their value (or nil if unbound),
+preventing type errors during config evaluation. Uses &rest to compatibly handle
+optional args (skip-functions, skip-interactive). Flow: If first arg (val) is a bound
+symbol, return its value; if unbound, nil; else apply original function."
+    (let ((val (car args)))
+      (if (symbolp val)
+          (if (boundp val)
+              (symbol-value val)
+            nil)
+        (apply orig-fn args))))
+
+  (advice-add 'dape--config-eval-value :around #'my-dape--config-eval-value-advice)
+
+  (defun my-dape--kill-buffers-no-delete (orig-fn &optional skip-process-buffers)
+    "Advice around `dape--kill-buffers' to prevent window deletions.
+Skips `delete-window' calls during cleanup, allowing windows to remain open
+and switch to other buffers/tabs from history if available. This addresses
+the explicit window deletion in the current version (0.25.0)."
+    (cl-letf (((symbol-function 'delete-window) (lambda (&optional _win) nil)))
+      (funcall orig-fn skip-process-buffers)))
+
+  (advice-add 'dape--kill-buffers :around #'my-dape--kill-buffers-no-delete)
+
+  (defun my-dape--unset-window-dedication ()
+    "Unset dedication for windows displaying Dape buffers.
+Runs on UI updates to make Dape windows reusable for other buffers without
+dedication locking them. Iterates over windows, checking for live Dape buffers
+and setting `dedicated-p' to nil."
+    (dolist (win (window-list nil 'no-minibuffer))
+      (let ((buf (window-buffer win)))
+        (when (and (buffer-live-p buf)
+                   (string-match-p "^\\*dape-" (buffer-name buf)))
+          (set-window-dedicated-p win nil)))))
+
+  (add-hook 'dape-update-ui-hook #'my-dape--unset-window-dedication))
 
 ;; (add-to-list 'dape-configs
 ;;              `(bash-debug-custom
@@ -212,6 +242,44 @@
 ;;                                     (plist-put :pathBashdbLib bashdb-dir)
 ;;                                     (plist-put :pathBashdb (file-name-concat bashdb-dir "bashdb"))
 ;;                                     (plist-put :env `(:BASHDB_HOME ,bashdb-dir)))))))
+
+;; add dape config for python (debugging)
+;; note debugpy must be installed in the environment in use.
+;; Add custom configurations to `dape-configs` after loading `dape`
+
+;; (with-eval-after-load 'dape
+;;   ;; Ensure only one `debugpy` entry in `dape-configs`
+;;   (assq-delete-all 'debugpy dape-configs)
+
+(add-to-list 'dape-configs
+             '(bashdb
+               modes (bash-ts-mode bash-mode sh-mode)  ; Associate with Bash modes
+               command "node"  ; Run via Node.js
+               command-args ((expand-file-name "~/.emacs.d/etc/INFODYNAMICS/dape/adapters/bash-debug/extension/out/bashDebug.js"))  ; Path to adapter JS
+               ensure dape-ensure-command  ; Check command exists
+               fn dape-config-autoport  ; Auto-assign port if needed
+               :request "launch"  ; Launch mode (vs attach)
+               :cwd dape-cwd-fn  ; Use Dape's cwd prompt/fallback
+               :program dape-find-file-buffer-default  ; Debug current buffer's file
+               :pathBash "bash"  ; Path to bash binary (assume in PATH)
+               :pathCat "cat"  ; Path to cat (assume in PATH)
+               :pathMkfifo "mkfifo"  ; Path to mkfifo (assume in PATH)
+               :pathPkill "pkill"  ; Path to pkill (assume in PATH)
+               :pathBashdb (expand-file-name "~/.emacs.d/etc/INFODYNAMICS/dape/adapters/bash-debug/extension/bashdb_dir/bashdb")  ; Bundled bashdb script
+               :pathBashdbLib (expand-file-name "~/.emacs.d/etc/INFODYNAMICS/dape/adapters/bash-debug/extension/bashdb_dir")  ; bashdb lib dir
+               :env (list)  ; Empty env table
+               :args dape-args  ; Prompt for script args, or set to list
+               :trace t))  ; Enable tracing for debug logs
+
+(add-to-list 'dape-configs
+             `(debugpy
+               modes (python-ts-mode python-mode)
+               command "python"
+               command-args ("-m" "debugpy.adapter")
+               :type "executable"
+               :request "launch"
+               :cwd dape-cwd-fn  ; Or hardcode a string like default-directory if issues persist
+               :program dape-find-file-buffer-default))
 
 (add-hook 'dape-start-hook
           (lambda ()
@@ -257,19 +325,7 @@ variable my-dape/adapter-names as well as returned by the function."
       (message "No settings found for %s" key)
       nil)))
 
-(defun my-dape/unset-window-dedication ()
-  "Unset dedication for windows showing Dape buffers.
-Ensures tagged windows remain reusable (e.g., for Ibuffer) without
-clutter.  Runs on UI updates for efficiency."
-  (dolist (win (window-list nil 'no-minibuffer))
-    (let ((buf (window-buffer win)))
-      (when (and (buffer-live-p buf)
-                 (string-match-p "^\\*dape-" (buffer-name buf)))
-        (set-window-dedicated-p win nil)))))
 
-(add-hook 'dape-update-ui-hook #'my-dape/unset-window-dedication)
-
-;; (straight-rebuild-package "dape")
 (provide 'debugger-support)
 ;;; debugger-support.el ends here
 
