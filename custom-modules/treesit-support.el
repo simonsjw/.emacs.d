@@ -83,7 +83,7 @@
 ;; |treesit-fold-toggle 	       | toggle the syntax node at `point'.
 
 
-;; Note the version numbers set below. These were selected where 
+;; Note the version numbers set below. These were selected where
 ;; this code was sourced since that version was known to work 
 ;; with that app and emacs:
 ;; https://github.com/mickeynp/combobulate
@@ -150,6 +150,7 @@
 
 (require 'treesit)
 (require 'auctex)
+
 ;;(defvar latex-ts-mode-map (make-sparse-keymap) "Keymap for latex-ts-mode.")
 ;; (define-derived-mode latex-ts-mode text-mode "LaTeX[TS]"
 ;;   "Major mode for LaTeX with tree-sitter."
@@ -198,35 +199,22 @@ Useful for implementing toggles for the mode in hydras."
 
 ;;; customization
 
-
 ;; Ensure tree-sitter-major-mode-language-alist exists and add the matlab-mode entry
 (unless (boundp 'tree-sitter-major-mode-language-alist)
   (setq tree-sitter-major-mode-language-alist '()))
 (add-to-list 'tree-sitter-major-mode-language-alist '(matlab-mode . matlab))
 
-(defun my-treesitter/add-treesit-fold-to-context-menu ()
-  "Add treesit-fold-toggle to the right-click context menu.
 
-This function can be added to a hook when treesitter fold is active or
-alternatively as a function called inside a collection of other functions
-where that collection is then linked to the mode. Here I've gone for using
-it whenever treesitter-fold is active. "
-  (easy-menu-define treesit-fold-menu global-map "Treesit Fold Menu"
-    '("Context Menu"
-      ["Toggle Folding" treesit-fold-toggle
-       :visible (bound-and-true-p treesit-fold-mode)])))
+
+
 
 ;;; hooks
 
 ;; perhaps too gross of an application, but the *-ts-modes
 ;; eventually derive from this mode.
 (when (locate-library "combobulate")
-
   (add-hook 'prog-mode-hook #'combobulate-mode))
 
-;; Ensure the context menu for treesit-fold menu appears on right-click
-(add-hook 'treesit-fold-mode-hook
-          #'my-treesitter/add-treesit-fold-to-context-menu)
 
 ;; Ensure native fontlocking is disabled in matlab-mode in favour of tree-sit.
 ;; (add-hook 'matlab-mode-hook
