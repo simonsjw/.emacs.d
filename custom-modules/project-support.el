@@ -31,6 +31,10 @@
 
 
 
+(setq xref-search-program 'ripgrep)
+(customize-set-variable
+ 'xref-search-program 'ripgrep
+ "use ripgrep over grep to search for things since is very fast.")
 
 (defun my-project/load-workspace-directories ()
   "Load `my-project/workspace-list' from the stored file."
@@ -67,7 +71,7 @@ recursively for projects."
 
 The file uses Emacs' project list format."
   (with-temp-file my-project/workspace-list-file
-    (insert ";;; -*- lisp-data -*-\n")                                            ;
+    (insert ";;; -*- lisp-data -*-\n")
     (insert (format "%S" my-project/workspace-list))))
 
 
@@ -255,7 +259,9 @@ interface for templates and standard directory/string prompts."
   "Plist of column widths for text-based project display.")
 
 (defun my-project/format-path (path)
-  "Format PATH for display, truncating if longer than
+  "Format the PATH for display,
+
+This function truncates any path if longer than
  `my-project/format-max-path-length'."
   (let ((l (length path)))
     (if (<= l my-project/format-max-path-length)
