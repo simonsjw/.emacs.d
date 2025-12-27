@@ -1,0 +1,167 @@
+* Updated Box Drawing Characters
+
+This file lists Unicode box drawing characters for text-based diagrams.
+
+** Straight lines
+
+| Character | Name                                            | Unicode |
+|   <c10>   | <l60>                                           |  <c10>  |
+|-----------+-------------------------------------------------+---------|
+|     ─     | Box Drawings Light Horizontal (Horizontal Line) | U+2500  |
+|           |                                                 |         |
+|     ━     | Box Drawings Heavy Horizontal                   | U+2501  |
+|           |                                                 |         |
+|     │     | Box Drawings Light Vertical (Vertical Line)     | U+2502  |
+|           |                                                 |         |
+|     ┃     | Box Drawings Heavy Vertical                     | U+2503  |
+|           |                                                 |         |
+|     ┄     | Box Drawings Light Triple Dash Horizontal       | U+2504  |
+|           |                                                 |         |
+|     ┅     | Box Drawings Heavy Triple Dash Horizontal       | U+2505  |
+|           |                                                 |         |
+|     ┆     | Box Drawings Light Triple Dash Vertical         | U+2506  |
+|           |                                                 |         |
+|     ┇     | Box Drawings Heavy Triple Dash Vertical         | U+2507  |
+|           |                                                 |         |
+
+** Corners (Elbows)
+
+| Character | Name                                                           | Unicode |
+|   <c10>   | <l60>                                                          |  <c10>  |
+|-----------+----------------------------------------------------------------+---------|
+|     ┌     | Box Drawings Light Down and Right                              | U+250C  |
+|           |                                                                |         |
+|     ┐     | Box Drawings Light Down and Left                               | U+2510  |
+|           |                                                                |         |
+|     └     | Box Drawings Light Up and Right                                | U+2514  |
+|           |                                                                |         |
+|     ┘     | Box Drawings Light Up and Left                                 | U+2518  |
+|           |                                                                |         |
+|     ╭     | Box Drawings Light Arc Down and Right (Rounded Down and Right) | U+256D  |
+|           |                                                                |         |
+|     ╮     | Box Drawings Light Arc Down and Left (Rounded Down and Left)   | U+256E  |
+|           |                                                                |         |
+|     ╯     | Box Drawings Light Arc Up and Left (Rounded Up and Left)       | U+256F  |
+|           |                                                                |         |
+|     ╰     | Box Drawings Light Arc Up and Right (Rounded Up and Right)     | U+2570  |
+|           |                                                                |         |
+
+
+** T junctions
+
+| Character | Name                                                     | Unicode |
+|   <c10>   | <l60>                                                    |  <c10>  |
+|-----------+----------------------------------------------------------+---------|
+|     ├     | Box Drawings Light Vertical and Right (T-Junction Left)  | U+251C  |
+|           |                                                          |         |
+|     ┤     | Box Drawings Light Vertical and Left (T-Junction Right)  | U+2524  |
+|           |                                                          |         |
+|     ┬     | Box Drawings Light Down and Horizontal (T-Junction Down) | U+252C  |
+|           |                                                          |         |
+|     ┴     | Box Drawings Light Up and Horizontal (T-Junction Up)     | U+2534  |
+|           |                                                          |         |
+|     ┝     | Box Drawings Heavy Vertical and Right                    | U+251D  |
+|           |                                                          |         |
+|     ┥     | Box Drawings Heavy Vertical and Left                     | U+2525  |
+|           |                                                          |         |
+|     ┩     | Box Drawings Heavy Down and Left                         | U+2529  |
+|           |                                                          |         |
+|     ┪     | Box Drawings Heavy Up and Left                           | U+252A  |
+|           |                                                          |         |
+
+** Mixed Single/Double T-Junctions (Splitters)
+
+| Character | Name                                           | Unicode |
+|   <c10>   | <l60>                                          |  <c10>  |
+|-----------+------------------------------------------------+---------|
+|     ╤     | Box Drawings Down Single and Horizontal Double | U+2564  |
+|           |                                                |         |
+|     ╧     | Box Drawings Up Single and Horizontal Double   | U+2567  |
+|           |                                                |         |
+
+** Crosses and intersections
+
+| Character | Name                          | Unicode |
+|    <c>    | <l60>                         |  <c10>  |
+|-----------+-------------------------------+---------|
+|     ┼     | Light Vertical and Horizontal | U+253C  |
+|           |                               |         |
+|     ╋     | Heavy Vertical and Horizontal | U+254B  |
+|           |                               |         |
+|     ┿     | Heavy Up and Horizontal       | U+253F  |
+|           |                               |         |
+|     ┾     | Heavy Down and Right          | U+253E  |
+|           |                               |         |
+
+** Double Lines (for stronger borders)
+
+| Character | Name                                        | Unicode |
+|   <c10>   | <l60>                                       |  <c10>  |
+|-----------+---------------------------------------------+---------|
+|     ═     | Box Drawings Double Horizontal              | U+2550  |
+|           |                                             |         |
+|     ║     | Box Drawings Double Vertical                | U+2551  |
+|           |                                             |         |
+|     ╔     | Box Drawings Double Down and Right          | U+2554  |
+|           |                                             |         |
+|     ╗     | Box Drawings Double Down and Left           | U+2557  |
+|           |                                             |         |
+|     ╚     | Box Drawings Double Up and Right            | U+255A  |
+|           |                                             |         |
+|     ╝     | Box Drawings Double Up and Left             | U+255D  |
+|           |                                             |         |
+|     ╠     | Box Drawings Double Vertical and Right      | U+2560  |
+|           |                                             |         |
+|     ╣     | Box Drawings Double Vertical and Left       | U+2563  |
+|           |                                             |         |
+|     ╦     | Box Drawings Double Down and Horizontal     | U+2566  |
+|           |                                             |         |
+|     ╩     | Box Drawings Double Up and Horizontal       | U+2569  |
+|           |                                             |         |
+|     ╬     | Box Drawings Double Vertical and Horizontal | U+256C  |
+|           |                                             |         |
+
+** Arrows
+
+| Character | Name                                | Unicode |
+|   <c10>   | <l60>                               |  <c10>  |
+|-----------+-------------------------------------+---------|
+|     ←     | Leftwards Arrow (Left Arrow)        | U+2190  |
+|           |                                     |         |
+|     ↑     | Upwards Arrow (Up Arrow)            | U+2191  |
+|           |                                     |         |
+|     →     | Rightwards Arrow (Right Arrow)      | U+2192  |
+|           |                                     |         |
+|     c     | Downwards Arrow (Down Arrow)        | U+2193  |
+|           |                                     |         |
+|     ↔     | Left Right Arrow (Left-Right Arrow) | U+2194  |
+|           |                                     |         |
+|     c     | Up Down Arrow (Up-Down Arrow)       | U+2195  |
+|           |                                     |         |
+
+** Pointers
+
+| Character | Name                                                             | Unicode |
+|   <c10>   | <l60>                                                            |  <c10>  |
+|-----------+------------------------------------------------------------------+---------|
+|     ◄     | Black Left-Pointing Pointer (Left Pointer)                       | U+25C4  |
+|           |                                                                  |         |
+|     ▲     | Black Up-Pointing Triangle (Up Pointer)                          | U+25B2  |
+|           |                                                                  |         |
+|     ►     | Black Right-Pointing Pointer (Right Pointer)                     | U+25BA  |
+|           |                                                                  |         |
+|     ▼     | Black Down-Pointing Triangle (Down Pointer)                      | U+25BC  |
+|           |                                                                  |         |
+|     ‹     | Single Left-Pointing Angle Quotation Mark (Small Left Pointer)   | U+2039  |
+|           |                                                                  |         |
+|     ▴     | Black Up-Pointing Small Triangle (Small Up Pointer)              | U+25B4  |
+|           |                                                                  |         |
+|     ›     | Single Right-Pointing Angle Quotation Mark (Small Right Pointer) | U+203A  |
+|           |                                                                  |         |
+|     ▾     | Black Down-Pointing Small Triangle (Small Down Pointer)          | U+25BE  |
+|           |                                                                  |         |
+
+** Notes
+- These characters work in UTF-8 environments.
+- In Org-mode, press TAB to align tables dynamically.
+- Export to HTML/PDF via C-c C-e for styled output.
