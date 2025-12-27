@@ -89,7 +89,7 @@
                 (bury-buffer "*Compile-Log*")))))
 
 ;; Step 6: Load custom-path-support.el
-(load-file (expand-file-name "custom-modules/custom-path-support.el" user-emacs-directory))
+(load-file (expand-file-name "custom-modules/path-support.el" user-emacs-directory))
 
 (defvar comp-speed 1 "Set native compilation.")
 (setq comp-speed 1)
@@ -196,10 +196,10 @@
 
 ;;; Initial phase.
 (log/info :fn 'init
-          :msg "----Begin loading base functionality from custom-defaults-config.----"
+          :msg "----Begin loading base functionality from defaults-config.----"
           :obj t)
 
-(require 'custom-defaults-config)
+(require 'defaults-config)
 ;; setup save histories.
 (savehist-mode 1)
 (setq history-length t)
@@ -236,8 +236,9 @@
 (require 'ui-config)
 (require 'ibuffer-support)
 (require 'tabline-support)
-(require 'custom-speedbar-support)
+(require 'speedbar-support)
 (require 'modeline-support)
+(require 'vterm-support)
 (require 'spreadsheet-support)
 
 ;; activate the logging view. 
@@ -246,10 +247,10 @@
   :load-path my-paths/logging-view-mode)
 
 ;; Flymake configuration
-(require 'custom-flymake-config)
+(require 'flymake-config)
 
 ;; Base IDE configuration.
-(require 'custom-ide-config)
+(require 'ide-config)
 
 ;; Debugger support
 (require 'debugger-support)
@@ -306,6 +307,11 @@
 
 (add-hook
  'emacs-startup-hook #'my-startup/display-startup-time)
+
+(setq inhibit-startup-screen nil                                                 ; stop the default splash screen
+       inhibit-startup-message nil
+       inhibit-startup-echo-area-message nil)
+(setq initial-scratch-message nil)                                             ; remove the message in the scratch buffer.
 
 ;; start the server if its not already running.
 ;; To shutdown the server use the below: 

@@ -35,7 +35,7 @@
 
 ;; In early-init.el
 
-(load-file (expand-file-name "custom-modules/custom-path-support.el" user-emacs-directory))
+(load-file (expand-file-name "custom-modules/path-support.el" user-emacs-directory))
 
 (startup-redirect-eln-cache my-paths/eln-cache)                                     ; Set the eln-cache directory for compiled files to the defined path.
 
