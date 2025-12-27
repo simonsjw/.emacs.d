@@ -53,7 +53,7 @@ Returns:
     (switch-to-buffer (get-buffer-create "*scratch*"))
     (switch-to-buffer orig-buf)
     (redisplay t))
-  (ses-renarrow-buffer))                                                               ; Return the buffer
+  (ses-renarrow-buffer))                                                          ; Return the buffer
 
 (defun my-ses/adjust-headers-for-line-numbers ()
   "Adjust SES column headers to align when line numbers are enabled.
