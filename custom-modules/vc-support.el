@@ -27,7 +27,11 @@
 (use-package git-gutter
   :hook (prog-mode . git-gutter-mode)
   :config
-  (setq git-gutter:update-interval 0.1))
+  (setq git-gutter:update-interval 0.1)
+  (global-set-key (kbd "C-x v n") #'git-gutter:next-hunk)
+  (global-set-key (kbd "C-x v p") #'git-gutter:previous-hunk)
+  (global-set-key (kbd "C-x v s") #'git-gutter:stage-hunk)  ; Stages with VC
+  (global-set-key (kbd "C-x v r") #'git-gutter:revert-hunk))
 
 (use-package git-gutter-fringe
   :config
@@ -41,22 +45,7 @@
 
 ;;; code:
 ;;; config phase
-
-;; Customize display-buffer-alist for *vc-log*
-;; Control how *vc-log* is displayed using display-buffer-alist.
-;; (with-eval-after-load 'system-window-management
-;;   (add-to-list 'display-buffer-alist
-;;                '("^\\*vc-log\\*"
-;;                  (display-buffer-reuse-window
-;;                   display-buffer-same-window)))
-
-;;   (add-to-list 'display-buffer-alist
-;;                '("^\\*log-edit-files\\*"
-;;                  (display-buffer-reuse-window
-;;                   display-buffer-same-window))))
-
-
-;;;; Git Submodule  Support
+;;;; Git Submodule Support
 
 ;;;;; 1) Basic Setup: Ensuring vc-mode Handles Submodules
 ;; Specify which version control backends Emacs should use.
@@ -402,12 +391,6 @@ Flow:
              '("^\\*\\(vc-diff\\|vc-log\\|log-edit\\|vc-change-log\\)\\*"
                (display-buffer-same-window)))
 
-;; Optional: Ensure window persistence in log-edit-done
-;; (add-hook 'log-edit-hook
-;;           (lambda ()
-;;             (when (equal (window-parameter nil 'window-category) 'vc)
-;;               (set-window-parameter nil 'quit-restore nil))))
-;;
 
 (provide 'vc-support)
 ;;; vc-support.el ends here
