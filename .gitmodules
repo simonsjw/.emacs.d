@@ -4,9 +4,6 @@
 [submodule "custom-packages/logging-view-mode"]
 	path = custom-packages/logging-view-mode
 	url = git@github.com:simonsjw/logging-view-mode.git
-[submodule "custom-packages/memory-object-tree"]
-	path = custom-packages/memory-object-tree
-	url = git@github.com:simonsjw/memory-object-tree.git
 [submodule "custom-packages/project-overview"]
 	path = custom-packages/project-overview
 	url = git@github.com:simonsjw/project-overview.git
