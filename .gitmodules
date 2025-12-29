@@ -1,6 +1,3 @@
-[submodule "custom-packages/log-ts-mode"]
-	path = custom-packages/log-ts-mode
-	url = git@github.com:simonsjw/log-ts-mode.git
 [submodule "custom-packages/systemd-mode"]
 	path = custom-packages/systemd-mode
 	url = git@github.com:holomorph/systemd-mode.git
