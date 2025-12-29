@@ -4,3 +4,27 @@
 [submodule "etc/INFODYNAMICS/lang-servers/texlab"]
 	path = etc/INFODYNAMICS/lang-servers/texlab
 	url = https://github.com/latex-lsp/texlab
+[submodule "custom-packages/combobulate"]
+	path = custom-packages/combobulate
+	url = git@github.com:mickeynp/combobulate.git
+[submodule "custom-packages/org-modern-indent"]
+	path = custom-packages/org-modern-indent
+	url = git@github.com:jdtsmith/org-modern-indent.git
+[submodule "custom-packages/systemd-mode"]
+	path = custom-packages/systemd-mode
+	url = git@github.com:holomorph/systemd-mode.git
+[submodule "custom-packages/emacs-vega-view"]
+	path = custom-packages/emacs-vega-view
+	url = git@github.com:applied-science/emacs-vega-view.git
+[submodule "custom-packages/worg"]
+	path = custom-packages/worg
+	url = https://git.sr.ht/~bzg/worg
+[submodule "custom-packages/logging-view-mode"]
+	path = custom-packages/logging-view-mode
+	url = git@github.com:simonsjw/logging-view-mode.git
+[submodule "custom-packages/memory-object-tree"]
+	path = custom-packages/memory-object-tree
+	url = git@github.com:simonsjw/memory-object-tree.git
+[submodule "custom-packages/q-loadbalancer"]
+	path = custom-packages/q-loadbalancer
+	url = git@github.com:simonsjw/q-loadbalancer.git
