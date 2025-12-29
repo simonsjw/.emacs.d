@@ -22,15 +22,9 @@
 [submodule "custom-packages/combobulate"]
 	path = custom-packages/combobulate
 	url = git@github.com:mickeynp/combobulate.git
-[submodule "custom-packages/org-pretty-table"]
-	path = custom-packages/org-pretty-table
-	url = git@github.com:Fuco1/org-pretty-table.git
 [submodule "custom-packages/systemd-mode"]
 	path = custom-packages/systemd-mode
 	url = git@github.com:holomorph/systemd-mode.git
-[submodule "custom-packages/worg"]
-	path = custom-packages/worg
-	url = https://git.sr.ht/~bzg/worg
 [submodule "etc/INFODYNAMICS/lang-servers/MATLAB-language-server"]
 	path = etc/INFODYNAMICS/lang-servers/MATLAB-language-server
 	url = https://github.com/mathworks/MATLAB-language-server

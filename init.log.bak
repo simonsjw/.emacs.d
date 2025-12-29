@@ -1,0 +1,241 @@
+Compiling /home/simon/.emacs.d/init.el...
+[2025-09-28 23:24:12; INFO; provide] Provided pcase; Obj: t
+[2025-09-28 23:24:12; INFO; use-package] Using package menu-keys-support; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided logging-config; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided system-tools; Obj: t
+[2025-09-28 23:24:12; INFO; use-package] Using package bind-key; Obj: t
+[2025-09-28 23:24:12; INFO; use-package] Using package helpful; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided dash; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided s; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided derived; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided elisp-refs; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided radix-tree; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided help-fns; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided f; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided find-func; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided info; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided info-look; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided backtrace; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided debug; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided edebug; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided cl-print; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided trace; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided imenu; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided cc-defs; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided cc-vars; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided cc-langs; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided helpful; Obj: t
+[2025-09-28 23:24:12; INFO; use-package] Using package dash; Obj: t
+[2025-09-28 23:24:12; INFO; use-package] Using package s; Obj: t
+[2025-09-28 23:24:12; INFO; use-package] Using package jump; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided which-func; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided cl; Obj: t
+[2025-09-28 23:24:12; INFO; (emacs)] 
+In toplevel form:
+init.el:154:11: Warning: Package cl is deprecated; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided findr; Obj: t
+[2025-09-28 23:24:12; INFO; (emacs)] elpa/findr-20130127.2032/findr.el: Warning: ‘loop’ is an obsolete alias (as of 27.1); use ‘cl-loop’ instead.; Obj: t
+[2025-09-28 23:24:12; INFO; (emacs)] elpa/findr-20130127.2032/findr.el: Warning: ‘return-from’ is an obsolete alias (as of 27.1); use ‘cl-return-from’ instead.; Obj: t
+[2025-09-28 23:24:12; INFO; (emacs)] elpa/findr-20130127.2032/findr.el: Warning: ‘labels’ is an obsolete macro (as of 24.3); use ‘cl-labels’ instead.; Obj: t [2 times]
+[2025-09-28 23:24:12; INFO; provide] Provided inflections; Obj: t
+[2025-09-28 23:24:12; INFO; (emacs)] elpa/jump-20210110.2237/jump.el: Warning: ‘case’ is an obsolete alias (as of 27.1); use ‘cl-case’ instead.; Obj: t
+[2025-09-28 23:24:12; INFO; (emacs)] elpa/jump-20210110.2237/jump.el: Warning: ‘loop’ is an obsolete alias (as of 27.1); use ‘cl-loop’ instead.; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided jump; Obj: t
+[2025-09-28 23:24:12; INFO; use-package] Using package alert; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided gntp; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided xml; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided dbus; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided notifications; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided log4e; Obj: t
+[2025-09-28 23:24:12; INFO; (emacs)] elpa/alert-20221213.1619/alert.el: Warning: Case 'windows-nt will match ‘quote’.  If that’s intended, write (windows-nt quote) instead.  Otherwise, don’t quote ‘windows-nt’.; Obj: t [3 times]
+[2025-09-28 23:24:12; INFO; provide] Provided alert; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided elisp-packages; Obj: t
+[2025-09-28 23:24:12; INFO; use-package] Using package org; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided format-spec; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-macs; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-compat; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-version; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided cal-loaddefs; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided calendar; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided cal-menu; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided calendar; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided thingatpt; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-loaddefs; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided oc; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-keys; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-fold-core; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-fold; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ol; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-table; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-cycle; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ob-eval; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ob-core; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ob-emacs-lisp; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided outline; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided noutline; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided time-date; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-entities; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-faces; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-footnote; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-list; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ansi-color; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ansi-osc; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided comint; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided pcomplete; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-pcomplete; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ob-comint; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided treesit; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided smie; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided sh-script; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-src; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-macro; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ob-exp; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ob-table; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ob-lob; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ob-ref; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ob-tangle; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ob; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org; Obj: t
+[2025-09-28 23:24:12; INFO; use-package] Using package org-contrib; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided org-contrib; Obj: t
+[2025-09-28 23:24:12; INFO; use-package] Using package org-contacts; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided text-property-search; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided gnus-util; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided wid-edit; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided mail-prsvr; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided mm-util; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided range; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided mail-utils; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided nnheader; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided gnus; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided gnus-win; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided mailheader; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided gmm-utils; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided mailabbrev; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided ietf-drums; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided rfc2045; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided rfc2047; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided rfc2231; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided mail-parse; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided mm-encode; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided mm-bodies; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided mm-decode; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided epg-config; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided rfc6068; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided epg; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided epa; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided mml-sec; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided mml; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided rfc822; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided dired-loaddefs; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided dired; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided puny; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided yank-media; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided sendmail; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided message; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided gnus-range; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided gnus-int; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided gnus-spec; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided iso8601; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided parse-time; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided nnoo; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided utf7; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided mail-source; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided nnmail; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided nnimap; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided gnus-cloud; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided gnus-dbus; Obj: t
+[2025-09-28 23:24:12; INFO; provide] Provided gnus-start; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided gnus-undo; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided gnus-group; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided dom; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided svg; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided url-file; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided kinsoku; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided pixel-fill; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided shr; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided gnus-sum; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided dig; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided gnutls; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided smime; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided mml-smime; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided mm-view; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided mml2015; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided mm-uu; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided gnus-art; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-refile; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided generator; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided avl-tree; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided inline; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-element-ast; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-id; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided xdg; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-persist; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-element; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-agenda; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-capture; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-contacts; Obj: t
+[2025-09-28 23:24:13; INFO; use-package] Using package google-contacts; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided plstore; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nsm; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided url-gw; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided url-auth; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided url-http; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided oauth2; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided google-oauth; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided url-cache; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided google-contacts; Obj: t
+[2025-09-28 23:24:13; INFO; use-package] Using package org-link-beautify; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-data-ipsicon; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-data-pomicon; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-data-octicon; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-data-powerline; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-data-faicon; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-data-wicon; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-data-sucicon; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-data-devicon; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-data-codicon; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-data-flicon; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-data-mdicon; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-data; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons-faces; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided nerd-icons; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided color; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided time-stamp; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided qrencode; Obj: t
+[2025-09-28 23:24:13; INFO; (emacs)] Cannot load org-link-beautify: (wrong-number-of-arguments #<subr color-rgb-to-hsl> 0); Obj: t
+[2025-09-28 23:24:13; INFO; use-package] Using package org-alert; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-alert; Obj: t
+[2025-09-28 23:24:13; INFO; use-package] Using package org-appear; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-appear; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-pretty-table; Obj: t
+[2025-09-28 23:24:13; INFO; use-package] Using package org-pretty-tags; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-pretty-tags; Obj: t
+[2025-09-28 23:24:13; INFO; use-package] Using package org-roam; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided llama; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided cursor-sensor; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided benchmark; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided magit-section; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided emacsql-compiler; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided emacsql; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided emacsql-sqlite; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-attach; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-roam; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-roam-compat; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-roam-utils; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-roam-db; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided crm; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-roam-node; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-roam-id; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-roam-capture; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-roam-mode; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-roam-log; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-roam-migrate; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided org-roam-dailies; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided sqlite; Obj: t
+[2025-09-28 23:24:13; INFO; provide] Provided emacsql-sqlite-builtin; Obj: t
+[2025-09-28 23:24:13; INFO; (emacs)] /home/simon/.emacs.d/init.el: Error Opening directory: No such file or directory, /home/simon/org-roam; Obj: t
+
+
+;; ---------- End of *Messages* ----------
+
