@@ -65,7 +65,7 @@
 
 (load-file
  (expand-file-name
-  "custom-packages/vega-view/vega-view.el" user-emacs-directory))
+  "custom-packages/emacs-vega-view/vega-view.el" user-emacs-directory))
 
 ;;; File associations:
 
@@ -83,7 +83,7 @@
 ;;;; Code:
 
 (defcustom my-fn-vega/default-vega-spec 'vega
-  "The Vega format to use with `vega-view'. Can be `vega' or `vega-light'."
+  "The Vega format to use with `vega-view'.  Can be `vega' or `vega-light'."
   :type 'symbol
   :group 'vega-view)
 
