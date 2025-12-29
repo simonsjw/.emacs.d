@@ -1,9 +1,6 @@
 [submodule "custom-packages/log-ts-mode"]
 	path = custom-packages/log-ts-mode
 	url = git@github.com:simonsjw/log-ts-mode.git
-[submodule "custom-packages/logging-view-mode"]
-	path = custom-packages/logging-view-mode
-	url = git@github.com:simonsjw/logging-view-mode.git
 [submodule "custom-packages/q-loadbalancer"]
 	path = custom-packages/q-loadbalancer
 	url = git@github.com:simonsjw/q-loadbalancer.git
