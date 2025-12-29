@@ -7,9 +7,6 @@
 [submodule "custom-packages/q-loadbalancer"]
 	path = custom-packages/q-loadbalancer
 	url = git@github.com:simonsjw/q-loadbalancer.git
-[submodule "custom-packages/combobulate"]
-	path = custom-packages/combobulate
-	url = git@github.com:mickeynp/combobulate.git
 [submodule "custom-packages/systemd-mode"]
 	path = custom-packages/systemd-mode
 	url = git@github.com:holomorph/systemd-mode.git
