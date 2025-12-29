@@ -69,11 +69,12 @@
                            "^\\*Embark.*"                                         ; Embark action menus
                            ))
     (:names . (("spreadsheet-support.el" . edit)
+               ("flymake-config.el" . edit)
                ("*dape-info breakpoints*" . data)                                 ; Lowercase, exact match
                ("*dape-info Breakpoints*". data)
                ("*dape-info stack frames*" . data)                                ; Full phrasing, lowercase
                ("*dape-info scope*" . data)                                       ; Lowercase
-               ("*dape-info Scope*". data) 
+               ("*dape-info Scope*". data)
                ("*dape-info threads*" . data)                                     ; Add missing
                ("*dape-info watch*" . data)                                       ; Add missing
                ("*dape-info sources*" . data)                                     ; Add missing
@@ -92,7 +93,6 @@
                ("docker-networks" . data)
                ("docker-containers" . data)
                ("docker-volumes" . data)
-               ("vc-diff" . data)
                ("spreadsheet.ses" . data)
                ("spreadsheet.ses<simon>" . data)
                ("Emacs" . edit)
@@ -105,7 +105,6 @@
                (".LESS_TERMCAP" . edit)
                (".profile" . edit)
                (".zshrc" . edit)
-               ("*vc-diff*" . edit)
                ("*dape-connection events*" . logs)
                ("*Messages*" . logs)
                ("*Warnings*" . logs)
@@ -127,7 +126,7 @@
                ("todos.org" . config)
                ("gracie.org" . config)
                ("evie.org" . config)
-               ("eldoc" . config)
+               ("*eldoc*" . config)
                ("EGLOT workspace configuration" . config)
                ("Help" . config)
                ("info" . config)
@@ -140,6 +139,11 @@
                ("*vc-dir*" . vc)
                ("*vc-log*" . vc)
                ("*vc-log-edit*" . vc)
+               ("*vc-diff*" . vc)
+               ("*log-edit-files*" . vc)
+               ("*vc-change-log*" . vc)
+               ("*VC-log*" . vc)
+               ("*VC-change-log*" . vc)
                ("*dape-shell*" . terminal)
                ("*scratch*" . terminal)
                ("*MATLAB*" . terminal)
@@ -155,6 +159,8 @@
                  ("^magit.*" . vc)                                                ; Starting with "magit" + any chars
                  ("^vc-.*" . vc)                                                  ; Starting with "vc-" + any chars
                  ("^\\*vc-.*" . vc)                                               ; Starting with "*vc-" + any chars
+                 ("^\\*log-edit.*" . vc)                                          ; Containing log-edit (for vc mode)
+                 ("^\\*VC-.*" . vc)                                               ; Containing *VC- (for vc mode)
                  (".*Annotate .*" . vc)                                           ; Any chars + "Annotate " + any chars
                  (".*ede-proj.*" . vc)                                            ; Any chars + "ede-proj" + any chars
                  ("^\\*undo-tree.*" data)                                         ; Any chars + "*undo-tree" + any chars
@@ -217,6 +223,58 @@
 (setq my-window-tools/frame-map
       `((:IDE . ,my-buffer-tools/category-map)))
 
+;; Allow splitting small windows (default 80 too high for a 15-line 'vc)
+(setq split-height-threshold 14)
+
+;; window-persistent-parameters
+;; t means the parameter is saved by current-window-configuration and,
+;; provided its WRITABLE argument is nil, by window-state-get.
+;; The symbol writable means the parameter is saved unconditionally by
+;; both current-window-configuration and window-state-get.  Do not use
+;; this value for parameters without read syntax (like windows or frames).
+
+;; Parameters not saved by current-window-configuration or
+;; window-state-get are left alone by set-window-configuration
+;; respectively are not installed by window-state-put.
+(add-to-list 'window-persistent-parameters '(window-category . writable))
+
+
+(defun my-window-tools/is-untaggable-window (window)
+  "Determine if WINDOW should remain untagged based on buffer properties.
+Purpose: Skip whitelisted buffers (e.g., speedbar, popups) in tagging.
+Variables:
+- WINDOW: Target window object.
+Output: t if buffer matches whitelists or space-prefix, else nil.
+Flow:
+- Get buffer name.
+- Fetch whitelists from category-map.
+- Check space-prefix, exact names, or regex matches."
+  (let* ((buf (window-buffer window))
+         (buf-name (buffer-name buf))
+         (whitelist-names
+          (cdr (assq :whitelist-names my-buffer-tools/category-map)))
+         (whitelist-regexps
+          (cdr (assq :whitelist-regexps my-buffer-tools/category-map))))
+    (or (string-prefix-p " " buf-name)                                             ; Auto-whitelist space-prefix
+        (member buf-name whitelist-names)                                          ; Exact name match
+        (seq-some (lambda (re) (string-match-p re buf-name)) whitelist-regexps)))) ; Regex match
+
+(defun my-window-tools/retag-on-config-change ()
+  "Retag IDE frame windows on config change.
+Purpose: Restore categories post-splits/quits without per-split advice.
+Variables: None (frame-local).
+Output: Nil (side-effect).
+Flow: Check IDE frame, get sorted windows, tag by list."
+  (when (eq (frame-parameter nil 'UI-TYPE) 'IDE)                                  ; Limit to IDE
+    (let ((frame (selected-frame))
+          (tag-list '(edit data config logs vc terminal)))
+      (my-window-tools/tag-windows-by-list frame tag-list t)
+      (log/debug :fn 'my-window-tools/retag-on-config-change
+                 :msg "Retagged on config change"
+                 :obj frame))))
+
+(add-hook 'window-configuration-change-hook #'my-window-tools/retag-on-config-change)
+
 
 (defun my-window-tools/sorted-window-list (frame)
   "Return a list of windows in FRAME sorted by their top-left position."
@@ -231,12 +289,12 @@
                    (or (< y1 y2)
                        (and (= y1 y2) (< x1 x2)))))))
 
-
 (defun my-window-tools/tag-windows-by-list (frame tag-list &optional set-quit-restore)
   "Tag each window in FRAME from TAG-LIST based on an ordered window list.
 
 The window list is sorted by top-left position for consistent assignment.
 If there are more windows than tags, tags are reused cyclically.
+Skip untaggable windows (e.g., whitelisted buffers) to leave them untagged.
 
 When optional SET-QUIT-RESTORE is t, also set the 'quit-restore window
 parameter to nil for each tagged window.  This prevents auto-deletion
@@ -246,7 +304,7 @@ flag judiciously to avoid persistent 'zombie' windows in non-IDE contexts.
 
 FRAME is the target frame (defaults to selected if nil, but explicit
 passing is recommended for multi-frame setups).
-TAG-LIST is a list of symbols (e.g., '(edit data config)).
+TAG-LIST is a list of symbols (e.g., '(edit data config logs vc terminal)).
 SET-QUIT-RESTORE is an optional boolean (default nil).
 
 Returns: Nil (side-effect function for window parameters).
@@ -254,31 +312,30 @@ Returns: Nil (side-effect function for window parameters).
 Flow:
 - Select the frame.
 - Get sorted windows (excluding minibuffers).
-- Loop over windows, assigning tags modulo tag-count.
+- Loop over windows, skip untaggables, assign tags modulo tag-count.
 - If SET-QUIT-RESTORE t, set 'quit-restore nil post-tagging.
 - Log assignments for debug.
 
 Edge cases:
 - Empty TAG-LIST: No tags applied; logs but no errors.
-- More windows than tags: Cyclic reuse (e.g., mod idx).
-- Untagged windows: Skipped for quit-restore (though none here, as all get
-  tags).
-- Historical note: Aligns with Emacs 24+ quit-restore for custom UIs,
-  avoiding fragmentation seen in pre-24 debuggers like GUD."
-  (with-selected-frame frame
-    (let* ((windows (my-window-tools/sorted-window-list frame))
-           (tag-count (length tag-list)))
-      (cl-loop for win in windows
-               for idx from 0 do
-               (let ((tag-to-apply (when (> tag-count 0)
-                                     (nth (mod idx tag-count) tag-list))))
-                 (when tag-to-apply
-                   (set-window-parameter win 'window-category tag-to-apply)
-                   (when set-quit-restore
-                     (set-window-parameter win 'quit-restore nil))
-                   (message "Assigned tag %s to window %s"
-                            tag-to-apply win)))))))
-
+- More windows than tags: Cycles (e.g., 7th gets first tag).
+- Untaggable: Skipped, preserving nil category."
+  (let ((windows (my-window-tools/sorted-window-list frame))  ; Sorted list
+        (tag-count (length tag-list))
+        (tag-index 0))
+    (dolist (window windows)
+      (if (my-window-tools/is-untaggable-window window)
+          (log/debug :fn 'my-window-tools/tag-windows-by-list
+                     :msg "Skipped untaggable window"
+                     :obj (list :window window :buffer (buffer-name (window-buffer window))))
+        (let ((tag (nth (mod tag-index tag-count) tag-list)))
+          (set-window-parameter window 'window-category tag)
+          (when set-quit-restore
+            (set-window-parameter window 'quit-restore nil))
+          (log/debug :fn 'my-window-tools/tag-windows-by-list
+                     :msg "Tagged window"
+                     :obj (list :window window :tag tag))
+          (setq tag-index (1+ tag-index)))))))
 
 (defconst my-window-tools/default-tag 'edit
   "The default tag assigned to non-system buffers when no tag is found.
@@ -300,7 +357,6 @@ led to fragmented frames without explicit fall-backs.")
   (with-current-buffer buffer
     (when (project-current)
       (expand-file-name (nth 2 (project-current))))))
-
 
 (defun my-window-tools/buffer-project-root (buffer)
   "Get the project root for BUFFER, if it exists or return default directory."
@@ -325,7 +381,6 @@ speedbar when the window that contains it no longer exists."
 ;; refresh speedbar when the window that contains it no longer exists.
 (add-hook
  'delete-frame-functions #'my-window-tools/close-sr-speedbar-on-frame-delete)
-
 
 (defun my-window-tools/get-window-for-window-category (target-window-category frame)
   "Retrieve the first window in FRAME associated with TARGET-WINDOW-CATEGORY.
@@ -368,7 +423,6 @@ Returns: Window object or nil."
 ;; ----------------------------------------------------------------------------
 ;; END OF Buffer assignment to windows
 ;; ############################################################################
-
 
 
 (defun my-window-tools/find-frame-by-project-root (project-root-of-frame)
@@ -437,6 +491,37 @@ Utility function shows the tag associated with the current selected window."
                 #'my-window-tools/mouse-delete-window-confirmation)
 
 
+(defun my-window-tools/review-frame-tags (&optional frame)
+  "Review window tags (parameters) in FRAME, defaulting to selected.
+Display in a buffer for inspection, focusing on 'window-category'.
+
+Purpose: Diagnose tag persistence in IDE setups.
+Variables:
+- FRAME: Target frame (symbol or object); defaults to selected.                   ;
+Output: Displays buffer with table of windows and tags.
+Flow:
+1. Select frame.
+2. Collect sorted windows.
+3. Build tag data.
+4. Display in table."
+  (interactive)
+  (let* ((frame (or frame (selected-frame)))                                      ; Default to current
+         (windows (my-window-tools/sorted-window-list frame))                     ; Reuse your sorter
+         (buf-name "*Window Tags Review*")
+         (buf (get-buffer-create buf-name)))
+    (with-current-buffer buf
+      (erase-buffer)
+      (insert "| Window | Category | Other Params |\n|--------|----------|--------------|\n")
+      (dolist (win windows)
+        (let ((cat (window-parameter win 'window-category))
+              (others (remove (assq 'window-category (window-parameters win))
+                              (window-parameters win))))
+          (insert (format "| %s | %s | %s |\n" win cat others))))
+      (markdown-mode)                                                             ; For table rendering
+      (goto-char (point-min)))
+    (display-buffer buf '(display-buffer-in-side-window . ((side . right))))))
+
+
 (defun my-window-tools/list-window-names ()
   "List all windows and their names."
   (interactive)
@@ -495,76 +580,6 @@ Utility function shows the tag associated with the current selected window."
 ;;                (inhibit-same-window . t)
 ;;                (window-height . 0.3)))
 ;; ----------------------------------------------------------------------------
-
-
-;; (defun my-window-tools/assign-category-advice (orig-fun buffer-or-name &optional action frame)
-;;   "Advice to inject a category into the `DISPLAY-BUFFER' action alist.
-;; This function wraps the original `DISPLAY-BUFFER' function to assign a category
-;; based on the buffer\'s name or mode, but only if the frame is tagged for custom
-;; window management (i.e., IDE frames with `custom-window-management' t).
-
-;; For non-IDE frames, skips custom logic entirely, falling back to Emacs' default
-;; display behavior (e.g., 'other-window' opens in another window in the current
-;; frame without category injection or tagged reuse).
-
-;; ORIG-FUN is the original `display-buffer' function.
-;; BUFFER-OR-NAME is either a buffer object or its name.
-;; ACTION is an optional action alist or function specification.
-;; FRAME is the target frame, defaulting to the selected frame if nil.
-
-;; Returns: The result of the original or modified `display-buffer' call
-;;  (typically a window).
-
-;; Edge cases:
-;; - If FRAME is nil, uses `selected-frame' — ensuring locality to the active
-;;   frame.
-;; - Non-IDE: No category determination or injection; pure default (e.g., for
-;;   rgrep links, behaves like `find-file-other-window').
-;; - IDE: Injects category from `my-buffer-tools/category-map', enabling tagged
-;;   window reuse.
-;; - Logs skips and assignments for debug.
-
-;; Historical context: Advices like this became common post-Emacs 24 to customize
-;; displays without globals, but frame checks (added in evolutions like Emacs 27)
-;; prevent interference in multi-frame setups, avoiding issues seen in early CEDET
-;; or ECB where defaults broke across frames."
-;;   (let* ((effective-frame (or frame (selected-frame)))                            ; Ensure locality to active frame if not specified.
-;;          (use-custom
-;;           (frame-parameter effective-frame 'custom-window-management)))           ; Check for IDE tag.
-;;     (if (not use-custom)
-;;         ;; Non-IDE: Skip all custom logic, apply original display-buffer with
-;;         ;; unmodified action.
-;;         ;; This ensures default behavior, e.g., 'other-window' reuses or splits
-;;         ;; in current frame.
-;;         (progn
-;;           (log/debug :fn 'my-window-tools/assign-category-advice
-;;                      :msg "Non-IDE frame detected, skipping category assignment and using default display"
-;;                      :obj (list :buffer buffer-or-name
-;;                                 :frame effective-frame
-;;                                 :action action))
-;;           (apply orig-fun buffer-or-name action frame))
-;;       ;; IDE: Proceed with category assignment and modified action.
-;;       (let* ((buffer (get-buffer buffer-or-name))                                 ; Get buffer for category check.
-;;              (category
-;;               (when buffer
-;;                 (my-window-tools/determine-buffer-category buffer)))              ; Use map for category.
-;;              (when (and category (assq 'category action))                         ; Dape injected?
-;;                (setq action (assoc-delete-all 'category action))                  ; If so, strip, so we use the custom version. 
-;;                (log/debug :fn 'my-window-tools/assign-category-advice
-;;                           :msg "IDE frame: overrode Dape internal window category tags."
-;;                           :obj (list :category category
-;;                                      :buffer buffer-or-name :action action)))
-;;              )         
-;;         (when category
-;;           (log/debug :fn 'my-window-tools/assign-category-advice
-;;                      :msg "IDE frame: Assigned category"
-;;                      :obj (list :category category
-;;                                 :buffer buffer-or-name :action action)))
-;;         ;; Process action with category injection.
-;;         (let
-;;             ((new-action
-;;               (my-window-tools/process-display-action action category)))
-;;           (apply orig-fun buffer-or-name (or new-action action) frame))))))
 
 (defun my-window-tools/assign-category-advice (orig-fun buffer-or-name &optional action frame)
   "Advice to inject a category into the `DISPLAY-BUFFER' action alist.
@@ -646,65 +661,6 @@ Edge cases:
           
           (apply orig-fun buffer-or-name (or new-action action) frame))))))
 
-;; (defun display-buffer-in-category-window (buffer alist)
-;;   "Display BUFFER in a window according to its category from ALIST.
-
-;; The `window-category' of the window matches a category in ALIST.
-;; If no exact match is found, fall back to the default `edit' window.
-;; If neither is available, pop up a new window and tag it with the category.
-
-;; BUFFER is the buffer to display.
-;; ALIST is the action alist, expected to contain `(category . SYMBOL)'.
-
-;; This function enforces IDE-like behavior: Prioritize reuse of tagged windows
-;; to maintain frame structure.  It uses
-;; `my-window-tools/get-window-for-window-category` for the search and fallback
-;; logic.
-
-;; Returns: The window where BUFFER is displayed, or nil on failure.
-
-;; Edge cases:
-;; - If category is nil, logs and falls back to pop-up (though advice should
-;;   prevent this).
-;; - Dedicated windows are skipped to avoid conflicts.
-;; - New pop-up windows inherit the category for future reuse.
-;; - Debug logs trace the decision process for troubleshooting.
-
-;; Historical context: Custom display functions like this extend Emacs' base
-;; `display-buffer` API (evolved since Emacs 24) to support tagged windows,
-;; common in packages like `perspective` or `tab-bar`.  Without fallback, it
-;; risks frame clutter, as seen in early ECB implementations."
-;;   (let* ((category (cdr (assq 'category alist)))
-;;          (frame (selected-frame))                                                 ; Use current frame for IDE consistency.
-;;          (target-window
-;;           (when category
-;;             (my-window-tools/get-window-for-window-category category frame))))
-;;     (log/debug :fn 'display-buffer-in-category-window
-;;                :msg "Searching for window"
-;;                :obj (list :category category
-;;                           :buffer (buffer-name buffer) :frame frame))
-;;     (if target-window
-;;         (progn
-;;           ;; Reuse found window (exact or default fallback).
-;;           (log/debug :fn 'display-buffer-in-category-window
-;;                      :msg "Found matching or default window"
-;;                      :obj (list :window target-window
-;;                                 :category (window-parameter
-;;                                            target-window 'window-category)))
-;;           (set-window-buffer target-window buffer)
-;;           target-window)
-;;       ;; No match or default: Fallback to pop-up and tag the new window.
-;;       (log/debug :fn 'display-buffer-in-category-window
-;;                  :msg "No matching or default window found, falling back to pop-up"
-;;                  :obj (list :category category :frame frame))
-;;       (let ((new-window (display-buffer-pop-up-window buffer alist)))             ; Alternative: display-buffer-in-child-frame if preferred.
-;;         (when new-window
-;;           (set-window-parameter new-window 'window-category category)
-;;           (log/debug :fn 'display-buffer-in-category-window
-;;                      :msg "Created and tagged new window"
-;;                      :obj (list :new-window new-window :category category)))
-;;         new-window))))
-
 (defun display-buffer-in-category-window (buffer alist)
   "Display BUFFER in a window according to its category from ALIST.
 
@@ -730,7 +686,7 @@ Flow:
 - Extract category from alist.
 - Get current frame.
 - Find target window (exact or default).
-- If found: Check dedication; unset if Dape buffer; set new buffer.
+- If found: Check dedication; unset if Dape buffer; set new buffer.               ; ;
 - If not: Pop new window, tag it.
 - Log decisions.  
 
@@ -754,11 +710,12 @@ Edge cases:
           ;; This prevents "stuck" windows from packages like Dape or VC/log-edit.
           (let ((current-buf (window-buffer target-window)))
             (when
-                (and
-                 (window-dedicated-p target-window)
-                 (or (string-match-p "^\\*dape-" (buffer-name current-buf))
-                     (string-match-p "^\\*\\(vc-\\|log-edit-\\)"
-                                     (buffer-name current-buf))))                 ; Broad match for VC/log-edit variants.
+                (window-dedicated-p target-window)
+              ;; (and
+              ;;  (window-dedicated-p target-window)
+              ;;  (or (string-match-p "^\\*dape-" (buffer-name current-buf))
+              ;;      (string-match-p "^\\*\\(vc-\\|log-edit-\\)"
+              ;;                      (buffer-name current-buf))))                 ; Broad match for VC/log-edit variants.
               (set-window-dedicated-p target-window nil)
               (log/debug :fn 'display-buffer-in-category-window
                          :msg (format "Unset dedication for %s window"
@@ -766,7 +723,7 @@ Edge cases:
                                        ((string-match-p
                                          "^\\*dape-" (buffer-name current-buf))
                                         "Dape")
-                                       (t "VC")))                                 ; Dynamic msg for traceability.
+                                       (t "vc")))                                 ; Dynamic msg for traceability.
                          :obj (list :window target-window
                                     :buffer current-buf))))
           (log/debug :fn 'display-buffer-in-category-window
@@ -966,7 +923,6 @@ merging in `display-buffer'."
 ;;   ------------------------------
 ;; the below object controls how new buffers are assigned to windows in Emacs.
 ;; This is central to managing the relationship between buffers and windows.
-
 (setq display-buffer-alist
       '(;; Keep only valid, like Dictionary/Ilist
         ("^\\*\\(Dictionary\\|Ilist\\)\\*"
@@ -974,6 +930,18 @@ merging in `display-buffer'."
          (side . right)
          (window-width . 50)                                                      ; change to 0.5 to make it half the size of the buffer it is next to.
          (window-parameters . ((no-delete-other-windows . t))))))
+
+(setq display-buffer-alist
+      (append display-buffer-alist
+              '(("\\*vc\\(-dir\\|-log\\|-diff\\|-change-log\\)?\\*\\|\\*log-edit.*\\*"
+                 (display-buffer-in-category-window)                              ; Functions first: Your custom handler injects 'vc category
+                 (inhibit-same-window . nil)                                      ; Allow same if matches
+                 (pop-up-windows . nil)                                           ; Stop popup behaviour
+                 (dedicated . nil)                                                ; Ensure the buffer doesn't capture the window
+                 (reusable-frames . visible)))))                                  ; Limit scope
+
+
+(add-hook 'vc-checkin-hook 'vc-dir-refresh)                                       ; ensure the window layout is refreshed after check-in. 
 
 (defun my-window-tools/with-temporary-display-buffer-settings (settings &rest body)
   "Execute BODY with temporary DISPLAY-BUFFER-ALIST settings.
@@ -1009,7 +977,6 @@ and `pop-up-frames'.  The original values are restored afterwards."
             original-switch-to-buffer-obey-display-actions
             pop-up-windows original-pop-up-windows
             pop-up-frames original-pop-up-frames))))
-
 
 (provide 'system-window-management)
 
