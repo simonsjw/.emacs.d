@@ -342,9 +342,9 @@ preserving point and markers where possible."
   (keymap-set python-ts-mode-map "C-c g m" #'consult-imenu)
   (keymap-set python-ts-mode-map "C-c g p" #'consult-imenu-multi)
   (keymap-set python-ts-mode-map "C-c g l" #'imenu-list)
-  (keymap-set python-ts-mode-map "M-." #'eglot-find-definition)                   ; xref-find-definitions
+  (keymap-set python-ts-mode-map "M-." #'xref-find-definitions)                   ; xref-find-definitions
   (keymap-set python-ts-mode-map "M-?" #'xref-find-references)                    ; xref-find-references
-  (keymap-set python-ts-mode-map "C-c g t" #'eglot-find-type-definition)          ; Go to type definition
+  (keymap-set python-ts-mode-map "C-c g t" #'eglot-find-typeDefinition)          ; Go to type definition
   (keymap-set python-ts-mode-map "C-c g d" #'eglot-find-declaration)              ; Go to declaration
   (keymap-set python-ts-mode-map "C-c g i" #'eglot-find-implementation)           ; Go to implementation
   (keymap-set python-ts-mode-map "C-c g w" #'my-lang-python/find-symbol)          ; Workspace symbols
@@ -362,11 +362,11 @@ preserving point and markers where possible."
        :help "Show code structure in Imenu-list"]
       "--"
       ["locate" :enable nil]
-      ["Find Definition" eglot-find-definition :keys "M-."
+      ["Find Definition" xref-find-definitions :keys "M-."
        :help "Go to the definition of the symbol at point"]
       ["Find References" xref-find-references :keys "M-?"
        :help "Find all references to the symbol at point"]
-      ["Find Type Definition" eglot-find-type-definition :keys "C-c g t"
+      ["Find Type Definition" eglot-find-typeDefinition :keys "C-c g t"
        :help "Go to the type definition"]
       ["Find Declaration" eglot-find-declaration :keys "C-c g d"
        :help "Go to the declaration"]
