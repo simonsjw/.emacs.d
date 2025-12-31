@@ -142,6 +142,17 @@ an error."
           (vterm buf-name))                                                       ; Launch vterm in that directory.
       (error "No directory selected in Speedbar"))))                              ; Handle case where no dir is under cursor.
 
+
+(defun my-speedbar/open-in-file-explorer ()
+  "Open the current directory or file in GNOME Files (Nautilus).
+If on a directory line, open that directory externally.
+If on a file line, open the file with the system default application."
+  (interactive)
+  (let ((path (speedbar-line-directory)))
+    (when path
+      (start-process "xdg-open" nil "xdg-open" path))))
+
+
 (defun my-speedbar/go-home ()
   "Switch SPEEDBAR to home directory if in file mode."
   (interactive)
@@ -345,10 +356,14 @@ binding persists across mode changes."
             (define-key speedbar-mode-map
                         (kbd "v") #'my-speedbar/open-vterm-in-dir)))
 
-;; Bind 'h' & 'w' in Speedbar mode map
+;; Bind 'h' & 'w' & 'o' in Speedbar file mode map.
+;; Note that speedbar-mode-map is a generic speedbar keymap and
+;; speedbar-file-key-map is a keymap specific to the file view mode. 
 (with-eval-after-load 'speedbar
-  (define-key speedbar-mode-map (kbd "w") #'my-speedbar/go-workspace)
-  (define-key speedbar-mode-map (kbd "h") #'my-speedbar/go-home))
+  (define-key speedbar-file-key-map (kbd "w") #'my-speedbar/go-workspace)
+  (define-key speedbar-file-key-map (kbd "h") #'my-speedbar/go-home)
+  (define-key speedbar-file-key-map (kbd "o") #'my-speedbar/open-in-file-explorer)
+  )
 
 
 (global-set-key (kbd "C-c s") 'my-speedbar/toggle)                                ; Bind `my-speedbar/toggle' to "C-c s" for convenience
