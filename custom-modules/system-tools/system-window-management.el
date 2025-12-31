@@ -223,6 +223,9 @@
 (setq my-window-tools/frame-map
       `((:IDE . ,my-buffer-tools/category-map)))
 
+(setq my-window-tools/category-map
+      `((:IDE . ,(list 'edit 'data 'config 'logs 'vc 'terminal))))
+
 ;; Allow splitting small windows (default 80 too high for a 15-line 'vc)
 (setq split-height-threshold 14)
 
@@ -977,6 +980,23 @@ and `pop-up-frames'.  The original values are restored afterwards."
             original-switch-to-buffer-obey-display-actions
             pop-up-windows original-pop-up-windows
             pop-up-frames original-pop-up-frames))))
+
+
+(defun my-window-tools/set-ide-category (tag)
+  "Set the 'window-category parameter of the current window to TAG.
+TAG must be one of the symbols defined in the :IDE entry of
+`my-window-tools/category-map'."
+  (interactive
+   (let* ((ide-entry (assoc :IDE my-window-tools/category-map))
+          (ide-symbols (cdr ide-entry))
+          (chosen (completing-read "Choose IDE category tag: "
+                                   ide-symbols nil t)))
+     (list (intern chosen))))
+  (set-window-parameter (selected-window) 'window-category tag)
+  (message "Window category set to %s" tag)
+  (log/debug :fn 'my-window-tools/set-ide-category
+             :msg "Set active window tag. "
+             :obj (list :tag tag)))
 
 (provide 'system-window-management)
 

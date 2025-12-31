@@ -129,7 +129,8 @@ The frame has a current working directory PROJECT-PATH."
                       (window-state-put my-window-state/ide
                                         (frame-root-window frame))
                       (let ((tag-list
-                             (list 'edit 'data 'config 'logs 'vc 'terminal)))
+                             (cdr (assoc :IDE my-window-tools/category-map))     ; (list 'edit 'data 'config 'logs 'vc 'terminal)
+                             ))
                         (my-window-tools/tag-windows-by-list frame tag-list t))
                       (message "Window layout applied to new frame.
 SET-QUIT-RESTORE set to t to prevent windows being deleted. "))
