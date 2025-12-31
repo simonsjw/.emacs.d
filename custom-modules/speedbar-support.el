@@ -278,7 +278,7 @@ Current view is given in SPEEDBAR-VIEW."
  '(sr-speedbar-width 40)
  '(sr-speedbar-right-side nil)
 
-;;;;; Customize icons (need to run `pretty-speedbar-generate' on change)
+;;;;; Customise icons (need to run `pretty-speedbar-generate' on change)
  '(pretty-speedbar-icon-size 20)                                                  ; Icon height in pixels.
 
  '(pretty-speedbar-font "Symbols Nerd Font Mono")
