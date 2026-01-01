@@ -344,7 +344,7 @@ preserving point and markers where possible."
   (keymap-set python-ts-mode-map "C-c g l" #'imenu-list)
   (keymap-set python-ts-mode-map "M-." #'xref-find-definitions)                   ; xref-find-definitions
   (keymap-set python-ts-mode-map "M-?" #'xref-find-references)                    ; xref-find-references
-  (keymap-set python-ts-mode-map "C-c g t" #'eglot-find-typeDefinition)          ; Go to type definition
+  (keymap-set python-ts-mode-map "C-c g t" #'eglot-find-typeDefinition)           ; Go to type definition
   (keymap-set python-ts-mode-map "C-c g d" #'eglot-find-declaration)              ; Go to declaration
   (keymap-set python-ts-mode-map "C-c g i" #'eglot-find-implementation)           ; Go to implementation
   (keymap-set python-ts-mode-map "C-c g w" #'my-lang-python/find-symbol)          ; Workspace symbols
