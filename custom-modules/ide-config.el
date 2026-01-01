@@ -17,6 +17,7 @@
   :delight
   :ensure nil
   :config
+  (setq which-key-lighter "")
   (which-key-mode))
 
 ;; editorconfig is a cross-editor/ide configuration tool to control
