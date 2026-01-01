@@ -19,6 +19,7 @@
 ;; (use-package tree-sitter-ispell)
 
 (use-package treesit-fold
+  :delight
   :vc (:url "https://github.com/emacs-tree-sitter/treesit-fold.git")
   :ensure t)
 

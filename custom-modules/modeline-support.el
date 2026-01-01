@@ -99,7 +99,8 @@ The matching bracket info is shown if the cursor is near a bracket.")
 
 (delight '((compile-angel-on-save-local-mode nil compile-angel)
            (yas-minor-mode nil yasnippet)
-           ;;   (which-key-mode nil which-key)
+           (which-key-mode "" which-key)
+           (git-gutter-mode "" git-gutter)
            (flyspell-mode nil flyspell)
            (compile-angel-on-load-mode nil compile-angel)))
 
@@ -146,4 +147,4 @@ The matching bracket info is shown if the cursor is near a bracket.")
 (provide 'modeline-support)
 ;;; modeline-support.el ends here
 
-                                                                                  ; LocalWords:  FIXME
+;; LocalWords:  FIXME
