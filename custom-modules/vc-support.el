@@ -19,28 +19,100 @@
 ;; support for git configuration files.
 (use-package git-modes)
 
-;; show line by line status for git in the fringe.
-;; https://github.com/emacsorphanage/git-gutter-fringe?tab=readme-ov-file
-
-;; this package requires git-gutter and fringe-helper
-;; (installed at ui-config.el)
-(use-package git-gutter
-  :hook (prog-mode . git-gutter-mode)
+(use-package diff-hl
+  :hook ((prog-mode . diff-hl-mode)                                               ; Enable in code buffers like git-gutter.
+         (dired-mode . diff-hl-dired-mode)                                        ; Bonus: Shows diffs in Dired.
+         (vc-dir-mode . diff-hl-dir-mode))                                        ; Integrates with your vc-dir.
   :config
-  (setq git-gutter:update-interval 0.1)
-  (global-set-key (kbd "C-x v n") #'git-gutter:next-hunk)
-  (global-set-key (kbd "C-x v p") #'git-gutter:previous-hunk)
-  (global-set-key (kbd "C-x v s") #'git-gutter:stage-hunk)  ; Stages with VC
-  (global-set-key (kbd "C-x v r") #'git-gutter:revert-hunk))
+  ;; Use margin to avoid fringe conflicts with Dape.
+  (diff-hl-margin-mode 1)                                                         ; Indicators in margin (text-based, no bitmap overwrites).
 
-(use-package git-gutter-fringe
-  :config
-  (define-fringe-bitmap
-    'git-gutter-fr:added [224] nil nil '(center repeated))
-  (define-fringe-bitmap
-    'git-gutter-fr:modified [224] nil nil '(center repeated))
-  (define-fringe-bitmap
-    'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
+  ;; Real-time updates (efficient timer; adjust delay if laggy).
+  (diff-hl-flydiff-mode 1)
+  (setq diff-hl-flydiff-delay 0.1)                                                ; Matches your old git-gutter interval.
+
+  ;; Customise symbols/faces if needed (efficient: Reuse your theme vars).
+  (setq diff-hl-margin-symbols-alist
+        '((insert . "+")
+          (delete . "-")
+          (change . "~")
+          (unknown . "?")
+          (ignored . "i")))
+
+  ;; Keybindings: Mirror your git-gutter ones for hunk nav/stage/revert.
+  (global-set-key (kbd "C-x v n") #'diff-hl-next-hunk)
+  (global-set-key (kbd "C-x v p") #'diff-hl-previous-hunk)
+  (global-set-key (kbd "C-x v s") #'diff-hl-stage-current-hunk)                   ; Stages via VC.
+  (global-set-key (kbd "C-x v r") #'diff-hl-revert-hunk)
+  (global-set-key (kbd "C-x v =") #'diff-hl-show-hunk)                            ; Popup diff like git-gutter.
+
+  ;; Optional: If remote files are slow, disable there.
+  ;; (setq diff-hl-disable-on-remote t)
+  )
+
+
+;; Extend diff-hl with global prefix key for transient-like access.
+;; Bind to C-c h; this pops a menu with sub-commands (e.g., n for next-hunk).
+(global-set-key (kbd "C-c h") 'diff-hl-command-map)
+
+;; Define a fuller menu for diff-hl, extendable to menu-bar.
+;; Use easy-menu-define for integration:
+;;     (easy-menu-define
+;;         diff-hl-menu global-map "Diff HL" my-custom-menus/diff-hl)
+(defvar my-custom-menus/diff-hl
+  '("Diff HL"
+    ["Navigation" :enable nil]                                                    ; Section header; disabled for display.
+    ["Next hunk" diff-hl-next-hunk :keys "C-x v n"
+     :help "Jump to the next hunk in the buffer."]
+    ["Previous hunk" diff-hl-previous-hunk :keys "C-x v p"
+     :help "Jump to the previous hunk in the buffer."]
+    ["Goto hunk diff" diff-hl-diff-goto-hunk
+     :help "Open the diff buffer for the hunk at point."]
+    "---"
+    ["Hunk Operations" :enable nil]
+    ["Stage hunk" diff-hl-stage-current-hunk :keys "C-x v s"
+     :help "Stage the current hunk via VC for commit."]
+    ["Revert hunk" diff-hl-revert-hunk :keys "C-x v r"
+     :help "Revert the hunk at point to its previous state."]
+    ["Show hunk" diff-hl-show-hunk :keys "C-x v ="
+     :help "Display the diff for the hunk in a popup."]
+    ["Mark hunk" diff-hl-mark-hunk
+     :help "Select the current hunk as a region."]
+    "---"
+    ["Display Modes" :enable nil]
+    ["Toggle flydiff" diff-hl-flydiff-mode
+     :help "Enable/disable real-time diff updates."]
+    ["Toggle margin" diff-hl-margin-mode
+     :help "Switch between fringe and margin display."]
+    ["Toggle amends" diff-hl-show-staged-changes-p
+     :help "Show/hide staged changes in the display."]
+    "---"
+    ["Global Controls" :enable nil]
+    ["Global mode" diff-hl-global-mode
+     :help "Toggle diff-hl globally across buffers."]
+    ["Dired mode" diff-hl-dired-mode
+     :help "Enable diff-hl in Dired buffers."]
+    ["Dir mode" diff-hl-dir-mode
+     :help "Enable diff-hl in vc-dir buffers."]
+    ["Set reference rev" diff-hl-set-reference-rev
+     :help "Change the Git revision used for diffs."]
+    ["Overlay modified" diff-hl-overlay-modified
+     :help "Toggle overlay for modified lines."])
+  "Menu for diff-hl functions for navigation, operations, modes, and globals.")
+
+;; Function to add menu to menu-bar (call once in config).
+;; Prioritise efficiency: Only define if not already present.
+(defun my-diff-hl-setup-menu ()
+  "Set up diff-hl menu in the menu-bar.
+Flow:
+- Check if menu exists to avoid duplicates.
+- Define via easy-menu for global-map integration."
+  (unless (lookup-key global-map [menu-bar Diff-HL])
+    (easy-menu-define diff-hl-menu global-map "Diff HL" my-custom-menus/diff-hl)))
+
+;; Call setup on load (efficient: Runs once).
+(my-diff-hl-setup-menu)
+
 
 
 ;;; code:
@@ -344,7 +416,7 @@ Flow:
 (defun my-vc-dir-enforce-single-window ()
   "Make `vc-dir' buffer use a single window, deleting extras.
   
-  Checks for multiple windows in the frame; deletes those showing
+  Checks for multiple windows in the frame; deletes those showing                 ; ;
   VC-related sub-buffers (e.g., diffs/logs).  Balances if needed.
   
   Flow:
@@ -354,7 +426,7 @@ Flow:
   - Log deletions.
   - Balance windows.
   
-  Edge: Preserves non-VC windows; runs efficiently (O(n) on windows)."
+  Edge: Preserves non-VC windows; runs efficiently (O(n) on windows)."            ;
   (when (and (derived-mode-p 'vc-dir-mode)
              (> (length (window-list)) 1))
     (let ((main-win (selected-window))
@@ -379,7 +451,7 @@ Flow:
   - Set 'no-split parameter.
   - Use `run-with-idle-timer' for deferred clean (0.1s delay).
   
-  Edge: Timer avoids races with dispatcher async; cancel if needed."
+  Edge: Timer avoids races with dispatcher async; cancel if needed."              ;
   (when (equal (window-parameter nil 'window-category) 'vc)
     (set-window-parameter nil 'no-split t)
     (run-with-idle-timer 0.1 nil #'my-vc-dir-enforce-single-window)))
@@ -395,4 +467,4 @@ Flow:
 (provide 'vc-support)
 ;;; vc-support.el ends here
 
-;; LocalWords: gitRefactor vc submodule unhide customizable
+;; LocalWords: gitRefactor vc submodule unhide customizable hl globals
