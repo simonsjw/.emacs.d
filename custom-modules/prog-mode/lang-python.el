@@ -29,6 +29,9 @@
 (use-package numpydoc)
 (use-package dape)
 (use-package treesit-fold)
+
+(use-package python-view-data)
+
 (use-package python-pytest)
 (use-package apheleia
   :delight (apheleia-mode)
@@ -77,7 +80,7 @@ Runs stubgen on the current file, placing output in the default ./out directory
     (interactive)
     (unless (buffer-file-name)
       (user-error "No file associated with this buffer"))
-    (let* ((file-path (file-name-nondirectory (buffer-file-name)))  ; e.g., "mymodule.py"
+    (let* ((file-path (file-name-nondirectory (buffer-file-name)))                ; e.g., "mymodule.py"
            (command (format "stubgen %s" file-path)))
       (shell-command command)
       (message "stubgen executed: %s" command)))
@@ -110,17 +113,17 @@ preserving point and markers where possible."
     (unless (derived-mode-p 'python-ts-mode 'python-mode)
       (user-error "Not in a Python mode"))
     (if (not (use-region-p))
-        (apheleia-format-buffer 'ruff-format)  ; Fallback to your async buffer format
+        (apheleia-format-buffer 'ruff-format)                                     ; Fallback to your async buffer format
       (let* ((start (region-beginning))
              (end (region-end))
              ;; Calculate 1-based line numbers; adjust end if at beginning of line
              (start-line (line-number-at-pos start))
-             (end-line (line-number-at-pos end t))  ; t adjusts if at bol, giving previous line
+             (end-line (line-number-at-pos end t))                                ; t adjusts if at bol, giving previous line
              (range-str (format "%d-%d" start-line end-line))
              (temp-file (make-temp-file "ruff-format-" nil ".py")))
         (unwind-protect
             (save-restriction
-              (widen)  ; Ensure full buffer is written, even if narrowed
+              (widen)                                                             ; Ensure full buffer is written, even if narrowed
               (write-region (point-min) (point-max) temp-file nil 'silent)
               ;; Run Ruff format on temp file with range (in-place)
               (with-temp-buffer
@@ -155,6 +158,9 @@ preserving point and markers where possible."
 
   ;; Ya-snippets
   (yas-minor-mode 1)
+
+  ;; Python dataview
+  (require 'python-view-data)
 
   ;; Layout and settings
   (setq display-fill-column-indicator-column 88
@@ -540,6 +546,7 @@ groups of submenus, and separators as per requirements."
       (easy-menu-add-item menu nil my-custom-menus/python-errors-menu)
       (easy-menu-add-item menu nil my-custom-menus/python-documentation-menu)
       (easy-menu-add-item menu nil my-custom-menus/python-running-menu)
+      (easy-menu-add-item menu nil my-custom-menus/diff-hl)
       (easy-menu-add-item menu nil my-custom-menus/python-pytest)
       (easy-menu-add-item menu nil my-custom-menus/python-folding-menu)
       (easy-menu-add-item menu nil my-custom-menus/python-lsp-menu)
@@ -551,7 +558,7 @@ groups of submenus, and separators as per requirements."
   (setq-local context-menu-functions '(my-lang-python/context-menu))
 
   (message
-   "[%s ; DEBUG; my-lang/python-mode-setup]finished loading the defun ; ;"
+   "[%s ; DEBUG; my-lang/python-mode-setup]finished loading the defun ; ;"        ;
    (current-time-string))
   )
 
