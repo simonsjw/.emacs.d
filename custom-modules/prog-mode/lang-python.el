@@ -25,7 +25,9 @@
 
 ;;; Package phase
 (use-package pythonic)
-(use-package pyvenv)
+(use-package pyvenv
+  :config
+  (pyvenv-tracking-mode 1))                                                       ; ensure automatic switching of python environments depending on project settings.
 (use-package numpydoc)
 (use-package dape)
 (use-package treesit-fold)
@@ -53,16 +55,41 @@
 
 ;;; Code:
 
+;; functions for python to run before entering the mode.
+(defun my-lang-python/update-python-path ()
+  "Update exec-path and PATH for the active pyvenv (Conda/virtualenv compatible)."
+  (when-let ((env-dir pyvenv-virtual-env))
+    (let ((bin-dir (expand-file-name "bin" env-dir)))
+      (setq exec-path (cons bin-dir (delete bin-dir exec-path)))
+      (setenv "PATH" (concat bin-dir ":" (getenv "PATH"))))))
+
+
+(defun my-lang-python/restart-eglot-on-env-change ()
+  "Reconnect eglot if running after pyvenv activation."
+  (when (and (eglot-current-server)
+             (eglot-managed-p))
+    (eglot-reconnect (eglot-current-server))))
+
+;;;; Main function to set up python mode. 
 (defun my-lang-python/python-mode-setup ()
   "Central setup for `python-ts-mode'."
 
-  ;; define useful python integration functions.
-  (defun my-lang-python/update-python-path ()
-    "Update exec-path and PATH for the active pyvenv (Conda/virtualenv compatible)."
-    (when-let ((env-dir pyvenv-virtual-env))
-      (let ((bin-dir (expand-file-name "bin" env-dir)))
-        (setq exec-path (cons bin-dir (delete bin-dir exec-path)))
-        (setenv "PATH" (concat bin-dir ":" (getenv "PATH"))))))
+  (defun my-lang-python/save-env-to-project ()
+    "Save the current pyvenv env to the project's .dir-locals.el.
+Uses pyvenv-activate with the full path for reliability."
+    (interactive)
+    (unless pyvenv-virtual-env
+      (user-error "No active virtualenv/Conda env"))
+    (let* ((project-root (or (project-root (project-current))
+                             (user-error "No project detected")))
+           (dir-locals-file (expand-file-name ".dir-locals.el" project-root))
+           (env-path pyvenv-virtual-env)
+           (entry `((nil . ((pyvenv-activate . ,env-path))))))
+      (if (file-exists-p dir-locals-file)
+          (dir-locals-set-directory-class project-root entry)  ; Update existing.
+        (with-temp-file dir-locals-file
+          (insert (format "%S" entry))))  ; Create new.
+      (message "Saved env %s to %s" env-path dir-locals-file)))
 
   (defun my-lang-python/organize-imports ()
     "Organise imports in the current buffer using ruff-isort via Apheleia.
@@ -150,8 +177,7 @@ preserving point and markers where possible."
   ;; Environment
   (pyvenv-mode 1)
   (my-lang-python/update-python-path)
-  (add-hook
-   'pyvenv-post-activate-hooks #'my-lang-python/update-python-path nil t)
+  
 
   ;; Diagnostics: Solely from Pyrefly via Eglot (covers types + semantics)
   (flymake-mode 1)                                                                ; Eglot auto-adds its backend
@@ -200,6 +226,7 @@ preserving point and markers where possible."
       ["Toggle Fold" treesit-fold-toggle :keys "C-c f"
        :help "Toggle folding at point"])
     "Menu for folding-related functions in `python-ts-mode'.")
+  
 ;;;; Imenu with treesitter.
   (setq-local treesit-simple-imenu-settings
               '(
@@ -245,15 +272,47 @@ preserving point and markers where possible."
     "Menu for running-related functions in `python-ts-mode'.")
   
 ;;;; running the code
-  (keymap-set python-ts-mode-map "C-c r b" #'eval-buffer)
-  (keymap-set python-ts-mode-map "C-c r p" #'run-python)                          ; run an inferior python process
+  ;; these keys are already set in python mode. 
+  ;; (keymap-set python-ts-mode-map "C-c C-c" #'eval-buffer)
+  ;; (keymap-set python-ts-mode-map "C-c C-r" #'python-shell-send-region)
+  ;; (keymap-set python-ts-mode-map "C-c C-l" #'python-shell-send-file)
+  ;; (keymap-set python-ts-mode-map "C-c r p" #'run-python)                          ; run an inferior python process
+
+
+  ;; keymaps for Pyvenv 
+  (keymap-set python-ts-mode-map "C-c v w" #'pyvenv-workon)
+  (keymap-set python-ts-mode-map "C-c v r" #'pyvenv-restart-python)
+  (keymap-set python-ts-mode-map "C-c v s" #'my-lang-python/associate-env-with-project)
+  (keymap-set python-ts-mode-map "C-c v a" #'pyvenv-activate)
+  (keymap-set python-ts-mode-map "C-c v d" #'pyvenv-deactivate)
+  (keymap-set python-ts-mode-map "C-c v c" #'pyvenv-create)
 
   (defvar my-custom-menus/python-running-menu
-    '("Running"
-      ["Eval Buffer" eval-buffer :keys "C-c r b"
-       :help "Evaluate the entire buffer"]
-      ["Run Python Process" run-python :keys "C-c r p"
-       :help "Start an inferior Python process"])
+    '("Inferior process"
+      "---"
+      ["Inferior process" :enable nil]
+      ["Eval Region" python-shell-send-region :help "Evaluate the marked region"]
+      ["Eval Buffer" python-shell-send-buffer :help "Evaluate the entire buffer"]
+      ["Eval file" python-shell-send-file :help "Evaluate a selected file"]
+      "---"
+      ["Evaluate" :enable nil]
+      ["Run Python Process" run-python
+       :help "Start an inferior Python process"]
+      ["Restart Python Process" pyvenv-restart-python
+       :help "Restart an inferior Python process"]
+      "---"
+      ["Environment" :enable nil]
+      ["Select Environment" pyvenv-workon
+       :help "Select a new active Python environment"]
+      ["Associate project env"
+       my-lang-python/associate-env-with-project
+       :help "Creates .dir-locals.el in root of current project to start the current env automatically henceforth"]
+      ["Activate an environment" pyvenv-activate
+       :help "Activate a named Python environment"]
+      ["Deactivate environment" pyvenv-deactivate
+       :help "Deactivate the current Python environment"]
+      ["Create an environment" pyvenv-create
+       :help "Create a new Python environment"])
     "Menu for running-related functions in `python-ts-mode'.")
 
 ;;;; document thing at point:
@@ -382,7 +441,7 @@ preserving point and markers where possible."
        :help "Search for symbols in the workspace"])                              ; Workspace symbols
     "Menu for navigation-related functions in `python-ts-mode'.")
 
-;;;; add-missing-dependencies from Ruff.
+;;;; add-missing-dependencies from Ruff + Eglot code related functions.
   ;; add format, import, remove import, sort import and fix import
   (keymap-set python-ts-mode-map "M-TAB" #'corfu-complete)
   (keymap-set python-ts-mode-map "C-c i b" #'my-lang-python/format-buffer)        ; Format whole buffer
@@ -404,12 +463,12 @@ preserving point and markers where possible."
        :help "complete the symbol using the default choice"]
       "---"
       ["Organize Imports" my-lang-python/organize-imports :keys "C-c i o"
-       :help "Organise imports in the buffer (via Ruff)"]
-      ["Quick Fix" my-lang-python/quick-fix :keys "C-c i f"
-       :help "Apply quick fixes (e.g., via Ruff)"])
+       :help "Organise imports in the buffer."]
+      ["Quick Fix" eglot-code-action-quickfix :keys "C-c i f"
+       :help "Apply quick fixes."])
     "Menu for imports and fixes-related functions in `python-ts-mode'.")
 
-;;;; LSP management and additional features
+;;;; Eglot LSP management and additional features
   (defun my-lang-python/view-current-eglot-server ()
     (interactive)
     (switch-to-buffer
@@ -455,6 +514,7 @@ preserving point and markers where possible."
       ["Generate stub" my-lang-python/generate-stub :keys "C-c d s"
        :help "Generate a stub file for the active buffer."])
     "Code writing helpers in `python-ts-mode'.")
+
 
 ;;; Construct menu map.
   ;; Integrate menus into the mode's menu-bar
@@ -550,7 +610,6 @@ groups of submenus, and separators as per requirements."
       (easy-menu-add-item menu nil my-custom-menus/python-pytest)
       (easy-menu-add-item menu nil my-custom-menus/python-folding-menu)
       (easy-menu-add-item menu nil my-custom-menus/python-lsp-menu)
-      (easy-menu-add-item menu nil pyvenv-menu)
       (easy-menu-add-item menu nil yas--minor-mode-menu)
 
       menu))
@@ -558,10 +617,16 @@ groups of submenus, and separators as per requirements."
   (setq-local context-menu-functions '(my-lang-python/context-menu))
 
   (message
-   "[%s ; DEBUG; my-lang/python-mode-setup]finished loading the defun ; ;"        ;
+   "[%s ; DEBUG; my-lang/python-mode-setup]finished loading the defun ; ;"
    (current-time-string))
   )
 
+;; update python interpreter paths after pyvenv activates a new environment. 
+(add-hook
+ 'pyvenv-post-activate-hooks #'my-lang-python/update-python-path nil t)
+;; restart eglot after pyvenv has changed environments. 
+(add-hook 'pyvenv-post-activate-hooks #'my-lang-python/restart-eglot-on-env-change nil t)
+;; Set up python mode when python-ts-mode is started. 
 (add-hook 'python-ts-mode-hook #'my-lang-python/python-mode-setup)
 
 ;; Make sure that files with the suffix .p are recognised as python files.
@@ -587,3 +652,4 @@ groups of submenus, and separators as per requirements."
 ;; LocalWords:  pyvenv isort numpydoc el CONDA WORKON ENV serviceEnv lang keymap
 ;; LocalWords:  eldoc defun minibuffer pycodestyle pycomplete gitlab melpa
 ;; LocalWords:  pythonic dape yasnippet debugpy adapter pytest customisations ui
+                                                                                  ; LocalWords:  treesitter
