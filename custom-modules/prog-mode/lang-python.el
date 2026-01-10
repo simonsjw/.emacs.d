@@ -28,6 +28,19 @@
 (use-package pyvenv
   :config
   (pyvenv-tracking-mode 1))                                                       ; ensure automatic switching of python environments depending on project settings.
+
+(use-package pydoc
+  :ensure t
+  :defer t                                                                        ; Load on demand for efficiency
+  :config
+  ;; Ensure pydoc uses the active pyvenv Python interpreter.
+  (add-hook 'pyvenv-post-activate-hooks
+            (lambda ()
+              (when (fboundp 'pydoc--get-python-executable)
+                (setq pydoc-python-command (pydoc--get-python-executable)))))
+  ;; Optional: Customise buffer display (e.g., pop to side window).
+  (setq pydoc-display-function #'display-buffer-in-side-window))
+
 (use-package numpydoc)
 (use-package dape)
 (use-package treesit-fold)
@@ -70,7 +83,12 @@
              (eglot-managed-p))
     (eglot-reconnect (eglot-current-server))))
 
-;;;; Main function to set up python mode. 
+;; Use Ipython
+(setq python-shell-interpreter "ipython"                                          ; Use IPython executable.
+      python-shell-interpreter-args                                               ; Command-line args for IPython.
+      "--no-banner --matplotlib=qt")    ; removed --simple-prompt .
+
+;;;; Main function to set up python mode.
 (defun my-lang-python/python-mode-setup ()
   "Central setup for `python-ts-mode'."
 
@@ -86,9 +104,9 @@ Uses pyvenv-activate with the full path for reliability."
            (env-path pyvenv-virtual-env)
            (entry `((nil . ((pyvenv-activate . ,env-path))))))
       (if (file-exists-p dir-locals-file)
-          (dir-locals-set-directory-class project-root entry)  ; Update existing.
+          (dir-locals-set-directory-class project-root entry)                     ; Update existing.
         (with-temp-file dir-locals-file
-          (insert (format "%S" entry))))  ; Create new.
+          (insert (format "%S" entry))))                                          ; Create new.
       (message "Saved env %s to %s" env-path dir-locals-file)))
 
   (defun my-lang-python/organize-imports ()
@@ -319,6 +337,9 @@ preserving point and markers where possible."
   (keymap-set python-ts-mode-map "C-c h p" #'eldoc-box-help-at-point)             ; Key for hover docs
   (keymap-set python-ts-mode-map "C-c h b" #'eldoc-doc-buffer)                    ; Override default Eldoc
   (keymap-set python-ts-mode-map "C-c h h" #'eldoc)                               ; Trigger hover/signature help from eglot
+  (keymap-set python-ts-mode-map "C-c h d" #'pydoc-at-point)                      ; At-point docs
+  (keymap-set python-ts-mode-map "C-c h s" #'pydoc)                               ; Search/interactive
+  (keymap-set python-ts-mode-map "C-c h w" #'pydoc-browse)                        ; Web browser view
   
   ;; menu
   (defvar my-custom-menus/python-documentation-menu
@@ -329,8 +350,15 @@ preserving point and markers where possible."
        :help "Show documentation in a dedicated buffer"]
       ["Hover/Signature help" eldoc :keys "C-c h h"
        :help "Trigger signature help"]
-      )
+      "---"
+      ["Pydoc at Point" pydoc-at-point :keys "C-c h d"
+       :help "Full pydoc for symbol at point"]
+      ["Pydoc Search" pydoc :keys "C-c h s"
+       :help "Interactive pydoc search for any object"]
+      ["Pydoc in Browser" pydoc-browse :keys "C-c h w"
+       :help "Browse pydoc in web server"])
     "Menu for documentation-related functions in `python-ts-mode'.")
+  
 
 ;;;; Errors/linting
   (keymap-set python-ts-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)     ; list errors in buffer
@@ -617,7 +645,7 @@ groups of submenus, and separators as per requirements."
   (setq-local context-menu-functions '(my-lang-python/context-menu))
 
   (message
-   "[%s ; DEBUG; my-lang/python-mode-setup]finished loading the defun ; ;"
+   "[%s ; DEBUG; my-lang/python-mode-setup]finished loading the defun ; ;"        ;
    (current-time-string))
   )
 
