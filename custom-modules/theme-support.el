@@ -158,7 +158,7 @@
 ;; red          |  #FF3535 |  #CC0000 |
 ;; green        |  #8AE234 |  #4E9A06 |
 ;; yellow       |  #FCE94F |  #C4A000 |
-;; blue         |  #729FCF |  #3465A4 |
+;; blue         |  #729FCF |  #3465A4 |   "#00BFFF"
 ;; purple       |  #AD7FA8 |  #75507B |
 ;; cyan         |  #34E2E2 |  #06989A |
 ;; white        |  #EEEEEC |  #A8ACA4 |
@@ -340,12 +340,6 @@ Converts keys to strings and ensures values are strings."
             ))
 
 
-;;; window divider setup
-(setq window-divider-default-right-width 1)                                       ; Thickness of vertical dividers
-(setq window-divider-default-bottom-width 1)                                      ; Thickness of horizontal dividers
-(setq window-divider-default-places t)                                            ; Where dividers are drawn t: bottom and right. Also accepts 'bottom-only and 'right-only.
-(window-divider-mode 1)
-
 
 ;; ** Customise the Minibuffer
 ;; Here we make sure that the modeline has the right 'fixed pitch' font.
@@ -362,227 +356,227 @@ Converts keys to strings and ensures values are strings."
 ;; modus-themes-mode-line '(accented)            ; set modeline style
 
 (setq
-  modus-themes-common-palette-overrides
-;; 5.10. Option for variable-pitch font in UI elements
-;; modus-themes-variable-pitch-ui t
-;; 5.11. Option for palette overrides                                            ; original values
-;; bg: background
-;; fg: foreground
-`((bg-main ,info-theme-dark-blue)                                                ; primary background "#0d0e1c"
-  (bg-dim ,info-theme-dark-grey)                                                 ; dimmed background  "#1d2235"
-  (fg-main ,info-theme-white-grey)                                               ; primary font color "#ffffff"
-  (fg-dim ,info-theme-flat-grey)                                                 ; dimmed font colour  "#989898"
-  (fg-alt ,info-theme-bold-code-green)                                           ; alt. font colour    "#c6daff"
-  (bg-active ,info-theme-flat-grey)                                              ; "#042027"
-  (bg-inactive ,info-theme-dark-grey)                                            ; "#2b3045"
-  (border ,info-theme-white-grey)                                                ; "#61647a")
+ modus-themes-common-palette-overrides
+ ;; 5.10. Option for variable-pitch font in UI elements
+ ;; modus-themes-variable-pitch-ui t
+ ;; 5.11. Option for palette overrides                                            ; original values
+ ;; bg: background
+ ;; fg: foreground
+ `((bg-main ,info-theme-dark-blue)                                                ; primary background "#0d0e1c"
+   (bg-dim ,info-theme-dark-grey)                                                 ; dimmed background  "#1d2235"
+   (fg-main ,info-theme-white-grey)                                               ; primary font color "#ffffff"
+   (fg-dim ,info-theme-flat-grey)                                                 ; dimmed font colour  "#989898"
+   (fg-alt ,info-theme-bold-code-green)                                           ; alt. font colour    "#c6daff"
+   (bg-active ,info-theme-flat-grey)                                              ; "#042027"
+   (bg-inactive ,info-theme-dark-grey)                                            ; "#2b3045"
+   (border ,info-theme-white-grey)                                                ; "#61647a")
 
-  (bg-completion bg-green-nuanced)                                               ; "#483d8a" selected completion line
-  (bg-hover bg-green-nuanced)                                                    ; "#859900" example hover over hyper links
-  (bg-hover-secondary bg-yellow-nuanced)                                         ; "#654a39"
-  (bg-hl-line "#303a6f")                                                         ; "#303a6f"
+   (bg-completion bg-green-nuanced)                                               ; "#483d8a" selected completion line
+   (bg-hover bg-green-nuanced)                                                    ; "#859900" example hover over hyper links
+   (bg-hover-secondary bg-yellow-nuanced)                                         ; "#654a39"
+   (bg-hl-line "#303a6f")                                                         ; "#303a6f"
 
-  ;;  highlight current line
-  (global-hl-line-mode 1)
-  (bg-region "#484d67")                                                          ; "#555a66"
-  (fg-region ,info-theme-white-grey)                                             ; "#ffffff"
-  (bg-char-0 "#0050af")
-  (bg-char-1 "#7f1f7f")
-  (bg-char-2 "#625a00")
+   ;;  highlight current line
+   (global-hl-line-mode 1)
+   (bg-region "#484d67")                                                          ; "#555a66"
+   (fg-region ,info-theme-white-grey)                                             ; "#ffffff"
+   (bg-char-0 "#0050af")
+   (bg-char-1 "#7f1f7f")
+   (bg-char-2 "#625a00")
 
-  (bg-mode-line-active ,info-theme-blue-steel)
-  (fg-mode-line-active ,info-theme-white-grey)                                   ;"#ffffff")
-  (border-mode-line-active ,info-theme-white-grey)                               ; "#979797"
-  (bg-mode-line-inactive ,info-theme-dark-grey)
-  (fg-mode-line-inactive ,info-theme-light-grey)
-  (border-mode-line-inactive ,info-theme-blue-steel)
-  (modeline-err "#ffa9bf")
-  (modeline-warning "#dfcf43")
-  (modeline-info "#9fefff")
+   (bg-mode-line-active ,info-theme-blue-steel)
+   (fg-mode-line-active ,info-theme-white-grey)                                   ;"#ffffff")
+   (border-mode-line-active ,info-theme-white-grey)                               ; "#979797"
+   (bg-mode-line-inactive ,info-theme-dark-grey)
+   (fg-mode-line-inactive ,info-theme-light-grey)
+   (border-mode-line-inactive ,info-theme-blue-steel)
+   (modeline-err "#ffa9bf")
+   (modeline-warning "#dfcf43")
+   (modeline-info "#9fefff")
 
-  (bg-tab-bar "#2c3045")
-  (bg-tab-current "#0d0e1c")
-  (bg-tab-other "#4a4f6a")
+   (bg-tab-bar "#2c3045")
+   (bg-tab-current "#0d0e1c")
+   (bg-tab-other "#4a4f6a")
 
-  (bg-added "#003a2f")
-  (bg-added-faint "#002922")
-  (bg-added-refine "#035542")
-  (bg-added-fringe "#23884f")
-  (fg-added "#a0e0a0")
-  (fg-added-intense "#80e080")
+   (bg-added "#003a2f")
+   (bg-added-faint "#002922")
+   (bg-added-refine "#035542")
+   (bg-added-fringe "#23884f")
+   (fg-added "#a0e0a0")
+   (fg-added-intense "#80e080")
 
-  (bg-changed "#363300")
-  (bg-changed-faint "#2a1f00")
-  (bg-changed-refine "#4a4a00")
-  (bg-changed-fringe "#8f7a30")
-  (fg-changed "#efef80")
-  (fg-changed-intense "#c0b05f")
+   (bg-changed "#363300")
+   (bg-changed-faint "#2a1f00")
+   (bg-changed-refine "#4a4a00")
+   (bg-changed-fringe "#8f7a30")
+   (fg-changed "#efef80")
+   (fg-changed-intense "#c0b05f")
 
-  (bg-removed "#4f1127")
-  (bg-removed-faint "#380a19")
-  (bg-removed-refine "#781a3a")
-  (bg-removed-fringe "#b81a26")
-  (fg-removed "#ffbfbf")
-  (fg-removed-intense "#ff9095")
+   (bg-removed "#4f1127")
+   (bg-removed-faint "#380a19")
+   (bg-removed-refine "#781a3a")
+   (bg-removed-fringe "#b81a26")
+   (fg-removed "#ffbfbf")
+   (fg-removed-intense "#ff9095")
 
-  (bg-diff-context "#1a1f30")
+   (bg-diff-context "#1a1f30")
 
-  (bg-paren-match ,info-theme-light-blue)
-  (bg-paren-expression "#453040")
-  (underline-paren-match unspecified)
+   (bg-paren-match ,info-theme-light-blue)
+   (bg-paren-expression "#453040")
+   (underline-paren-match unspecified)
 
-  (fringe bg-dim)
-  (cursor ,info-theme-sharp-lime)                                                ; magenta-warmer
-  (keybind ,info-theme-flat-cyan)                                                ; blue-cooler
-  (name ,info-theme-bold-code-green)                                             ; magenta
-  (identifier ,info-theme-flat-yellow)
-  (err red)
-  (warning yellow-warmer)
-  (info cyan-cooler)
-  (underline-err red-intense)
-  (underline-warning yellow)
-  (underline-note cyan)
-  (bg-prominent-err bg-red-intense)
-  (fg-prominent-err fg-main)
-  (bg-prominent-warning bg-yellow-intense)
-  (fg-prominent-warning fg-main)
-  (bg-prominent-note bg-cyan-intense)
-  (fg-prominent-note fg-main)
+   (fringe bg-dim)
+   (cursor ,info-theme-sharp-lime)                                                ; magenta-warmer
+   (keybind ,info-theme-flat-cyan)                                                ; blue-cooler
+   (name ,info-theme-bold-code-green)                                             ; magenta
+   (identifier ,info-theme-flat-yellow)
+   (err red)
+   (warning yellow-warmer)
+   (info cyan-cooler)
+   (underline-err red-intense)
+   (underline-warning yellow)
+   (underline-note cyan)
+   (bg-prominent-err bg-red-intense)
+   (fg-prominent-err fg-main)
+   (bg-prominent-warning bg-yellow-intense)
+   (fg-prominent-warning fg-main)
+   (bg-prominent-note bg-cyan-intense)
+   (fg-prominent-note fg-main)
 
-  ;; Coding colour formats
-  (builtin ,info-theme-flat-yellow)                                              ; magenta-warmer
-  (comment ,info-theme-flat-green)                                               ; red-faint
-  (constant ,info-theme-violet)                                                  ; blue-cooler
-  (docstring ,info-theme-bold-code-green)                                        ; cyan-faint
-  (docmarkup ,info-theme-faded-lime)                                             ; magenta-faint
-  (fnname ,info-theme-dark-orange)                                               ; magenta
-  (keyword ,info-theme-light-yellow)                                             ; magenta-cooler
-  (preprocessor ,info-theme-flat-cyan)                                           ; red-cooler
-  (string ,info-theme-light-blue)                                                ; blue-warmer
-  (type ,info-theme-magenta)                                                     ; cyan-cooler
-  (variable ,info-theme-magenta)                                                 ; cyan
-  (rx-construct ,info-theme-flat-white)                                          ; green-cooler
-  (rx-backslash ,info-theme-flat-grey)                                           ; magenta
+   ;; Coding colour formats
+   (builtin ,info-theme-flat-yellow)                                              ; magenta-warmer
+   (comment ,info-theme-flat-green)                                               ; red-faint
+   (constant ,info-theme-violet)                                                  ; blue-cooler
+   (docstring ,info-theme-bold-code-green)                                        ; cyan-faint
+   (docmarkup ,info-theme-faded-lime)                                             ; magenta-faint
+   (fnname ,info-theme-dark-orange)                                               ; magenta
+   (keyword ,info-theme-light-yellow)                                             ; magenta-cooler
+   (preprocessor ,info-theme-flat-cyan)                                           ; red-cooler
+   (string ,info-theme-light-blue)                                                ; blue-warmer
+   (type ,info-theme-magenta)                                                     ; cyan-cooler
+   (variable ,info-theme-magenta)                                                 ; cyan
+   (rx-construct ,info-theme-flat-white)                                          ; green-cooler
+   (rx-backslash ,info-theme-flat-grey)                                           ; magenta
 
-  (accent-0 blue-cooler)
-  (accent-1 magenta-warmer)
-  (accent-2 cyan-cooler)
-  (accent-3 yellow)
+   (accent-0 blue-cooler)
+   (accent-1 magenta-warmer)
+   (accent-2 cyan-cooler)
+   (accent-3 yellow)
 
-  (fg-button-active fg-main)
-  (fg-button-inactive fg-dim)
-  (bg-button-active bg-active)
-  (bg-button-inactive bg-dim)
+   (fg-button-active fg-main)
+   (fg-button-inactive fg-dim)
+   (bg-button-active bg-active)
+   (bg-button-inactive bg-dim)
 
-  (fg-completion-match-0 blue-cooler)
-  (fg-completion-match-1 magenta-warmer)
-  (fg-completion-match-2 cyan-cooler)
-  (fg-completion-match-3 yellow)
-  (bg-completion-match-0 unspecified)
-  (bg-completion-match-1 unspecified)
-  (bg-completion-match-2 unspecified)
-  (bg-completion-match-3 unspecified)
+   (fg-completion-match-0 blue-cooler)
+   (fg-completion-match-1 magenta-warmer)
+   (fg-completion-match-2 cyan-cooler)
+   (fg-completion-match-3 yellow)
+   (bg-completion-match-0 unspecified)
+   (bg-completion-match-1 unspecified)
+   (bg-completion-match-2 unspecified)
+   (bg-completion-match-3 unspecified)
 
-  (date-common cyan)
-  (date-deadline red)
-  (date-event fg-alt)
-  (date-holiday red-cooler)
-  (date-now fg-main)
-  (date-range fg-alt)
-  (date-scheduled yellow-warmer)
-  (date-weekday cyan)
-  (date-weekend red-faint)
+   (date-common cyan)
+   (date-deadline red)
+   (date-event fg-alt)
+   (date-holiday red-cooler)
+   (date-now fg-main)
+   (date-range fg-alt)
+   (date-scheduled yellow-warmer)
+   (date-weekday cyan)
+   (date-weekend red-faint)
 
-  (fg-line-number-inactive fg-dim)
-  (fg-line-number-active fg-main)
-  (bg-line-number-inactive bg-dim)
-  (bg-line-number-active bg-active)
+   (fg-line-number-inactive fg-dim)
+   (fg-line-number-active fg-main)
+   (bg-line-number-inactive bg-dim)
+   (bg-line-number-active bg-active)
 
-  (fg-link blue-warmer)
-  (bg-link unspecified)
-  (underline-link unspecified)
+   (fg-link blue-warmer)
+   (bg-link unspecified)
+   (underline-link unspecified)
 
-  (fg-link-symbolic cyan)
-  (bg-link-symbolic unspecified)
-  (underline-link-symbolic unspecified)
+   (fg-link-symbolic cyan)
+   (bg-link-symbolic unspecified)
+   (underline-link-symbolic unspecified)
 
-  (fg-link-visited magenta)
-  (bg-link-visited unspecified)
-  (underline-link-visited unspecified)
+   (fg-link-visited magenta)
+   (bg-link-visited unspecified)
+   (underline-link-visited unspecified)
 
-  (mail-cite-0 blue-warmer)
-  (mail-cite-1 yellow-cooler)
-  (mail-cite-2 cyan-cooler)
-  (mail-cite-3 red-cooler)
-  (mail-part blue)
-  (mail-recipient magenta-cooler)
-  (mail-subject magenta-warmer)
-  (mail-other magenta-faint)
+   (mail-cite-0 blue-warmer)
+   (mail-cite-1 yellow-cooler)
+   (mail-cite-2 cyan-cooler)
+   (mail-cite-3 red-cooler)
+   (mail-part blue)
+   (mail-recipient magenta-cooler)
+   (mail-subject magenta-warmer)
+   (mail-other magenta-faint)
 
-  (bg-mark-delete bg-red-subtle)
-  (fg-mark-delete red-cooler)
-  (bg-mark-select bg-cyan-subtle)
-  (fg-mark-select cyan)
-  (bg-mark-other bg-yellow-subtle)
-  (fg-mark-other yellow)
+   (bg-mark-delete bg-red-subtle)
+   (fg-mark-delete red-cooler)
+   (bg-mark-select bg-cyan-subtle)
+   (fg-mark-select cyan)
+   (bg-mark-other bg-yellow-subtle)
+   (fg-mark-other yellow)
 
-  (fg-prompt cyan-cooler)
-  (bg-prompt unspecified)
+   (fg-prompt cyan-cooler)
+   (bg-prompt unspecified)
 
-  (bg-space-err bg-red-intense)
+   (bg-space-err bg-red-intense)
 
-  (prose-block fg-dim)
-  (prose-code cyan-cooler)
-  (prose-done green)
-  (prose-macro magenta-cooler)
-  (prose-metadata fg-dim)
-  (prose-metadata-value fg-alt)
-  (prose-table fg-alt)
-  (prose-tag magenta-faint)
-  (prose-todo red)
-  (prose-verbatim magenta-warmer)
+   (prose-block fg-dim)
+   (prose-code cyan-cooler)
+   (prose-done green)
+   (prose-macro magenta-cooler)
+   (prose-metadata fg-dim)
+   (prose-metadata-value fg-alt)
+   (prose-table fg-alt)
+   (prose-tag magenta-faint)
+   (prose-todo red)
+   (prose-verbatim magenta-warmer)
 
-  (rainbow-0 fg-main)
-  (rainbow-1 magenta-intense)
-  (rainbow-2 cyan-intense)
-  (rainbow-3 red-warmer)
-  (rainbow-4 yellow-intense)
-  (rainbow-5 magenta-cooler)
-  (rainbow-6 green-intense)
-  (rainbow-7 blue-warmer)
-  (rainbow-8 magenta-warmer)
+   (rainbow-0 fg-main)
+   (rainbow-1 magenta-intense)
+   (rainbow-2 cyan-intense)
+   (rainbow-3 red-warmer)
+   (rainbow-4 yellow-intense)
+   (rainbow-5 magenta-cooler)
+   (rainbow-6 green-intense)
+   (rainbow-7 blue-warmer)
+   (rainbow-8 magenta-warmer)
 
-  (bg-space unspecified)
-  (fg-space border)
+   (bg-space unspecified)
+   (fg-space border)
 
-  (fg-heading-0 fg-main)                                                         ; cyan-cooler
-  (fg-heading-1 fg-main)
-  (fg-heading-2 fg-main)                                                         ; yellow-faint
-  (fg-heading-3 fg-main)                                                         ; blue-faint
-  (fg-heading-4 fg-main)                                                         ; magenta
-  (fg-heading-5 ,info-theme-bold-code-green)                                     ; green-faint
-  (fg-heading-6 ,info-theme-flat-green)                                          ; red-faint
-  (fg-heading-7 ,info-theme-dark-blue-green)                                     ; cyan-faint
-  (fg-heading-8 fg-dim)
-  (bg-heading-0 unspecified)
-  (bg-heading-1 unspecified)
-  (bg-heading-2 unspecified)
-  (bg-heading-3 unspecified)
-  (bg-heading-4 unspecified)
-  (bg-heading-5 unspecified)
-  (bg-heading-6 unspecified)
-  (bg-heading-7 unspecified)
-  (bg-heading-8 unspecified)
+   (fg-heading-0 fg-main)                                                         ; cyan-cooler
+   (fg-heading-1 fg-main)
+   (fg-heading-2 fg-main)                                                         ; yellow-faint
+   (fg-heading-3 fg-main)                                                         ; blue-faint
+   (fg-heading-4 fg-main)                                                         ; magenta
+   (fg-heading-5 ,info-theme-bold-code-green)                                     ; green-faint
+   (fg-heading-6 ,info-theme-flat-green)                                          ; red-faint
+   (fg-heading-7 ,info-theme-dark-blue-green)                                     ; cyan-faint
+   (fg-heading-8 fg-dim)
+   (bg-heading-0 unspecified)
+   (bg-heading-1 unspecified)
+   (bg-heading-2 unspecified)
+   (bg-heading-3 unspecified)
+   (bg-heading-4 unspecified)
+   (bg-heading-5 unspecified)
+   (bg-heading-6 unspecified)
+   (bg-heading-7 unspecified)
+   (bg-heading-8 unspecified)
 
-  (overline-heading-0 unspecified)
-  (overline-heading-1 unspecified)
-  (overline-heading-2 unspecified)
-  (overline-heading-3 unspecified)
-  (overline-heading-4 unspecified)
-  (overline-heading-5 unspecified)
-  (overline-heading-6 unspecified)
-  (overline-heading-7 unspecified)
-  (overline-heading-8 unspecified)))
+   (overline-heading-0 unspecified)
+   (overline-heading-1 unspecified)
+   (overline-heading-2 unspecified)
+   (overline-heading-3 unspecified)
+   (overline-heading-4 unspecified)
+   (overline-heading-5 unspecified)
+   (overline-heading-6 unspecified)
+   (overline-heading-7 unspecified)
+   (overline-heading-8 unspecified)))
 
 (setq
  ;; 5.2. Option for disabling other themes while loading Modus
