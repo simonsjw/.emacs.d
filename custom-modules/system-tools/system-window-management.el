@@ -70,18 +70,7 @@
                            ))
     (:names . (("spreadsheet-support.el" . edit)
                ("flymake-config.el" . edit)
-               ("*dape-info breakpoints*" . data)                                 ; Lowercase, exact match
-               ("*dape-info Breakpoints*". data)
-               ("*dape-info stack frames*" . data)                                ; Full phrasing, lowercase
-               ("*dape-info scope*" . data)                                       ; Lowercase
-               ("*dape-info Scope*". data)
-               ("*dape-info threads*" . data)                                     ; Add missing
-               ("*dape-info watch*" . data)                                       ; Add missing
-               ("*dape-info sources*" . data)                                     ; Add missing
-               ("*dape-info modules*" . data)                                     ; Add missing
                ("*dape-memory*" . data)                                           ; Add missing (memory viewer)
-               ("*dape-info Scope*". data)
-               ("*dape-info Stack*". data)
                ("Checkdoc Status" . data)
                ("SQL Results" . data)
                ("Backtrace" . data)
@@ -127,6 +116,7 @@
                ("gracie.org" . config)
                ("evie.org" . config)
                ("*eldoc*" . config)
+               ("*pydoc*" . config)
                ("EGLOT workspace configuration" . config)
                ("Help" . config)
                ("info" . config)
@@ -163,7 +153,8 @@
                  ("^\\*VC-.*" . vc)                                               ; Containing *VC- (for vc mode)
                  (".*Annotate .*" . vc)                                           ; Any chars + "Annotate " + any chars
                  (".*ede-proj.*" . vc)                                            ; Any chars + "ede-proj" + any chars
-                 ("^\\*undo-tree.*" data)                                         ; Any chars + "*undo-tree" + any chars
+                 ("^\\*dape-info.*" . data)  ; Starting with *dape-info" + any chars
+                 ("^\\*undo-tree.*" data)                                         ; Starting with *undo-tree" + any chars
                  ("^\\*Flymake diagnostics.*" . data)                             ; Starting with literal "*Flymake diagnostics" + any chars
                  ("^flymake-.*" . data)                                           ; Starting with "flymake-" + any chars
                  (".*cell sheet.*" . data)                                        ; Any chars + "cell sheet" + any chars
@@ -273,7 +264,7 @@ Flow: Check IDE frame, get sorted windows, tag by list."
           (tag-list '(edit data config logs vc terminal)))
       (my-window-tools/tag-windows-by-list frame tag-list t)
       (log/debug :fn 'my-window-tools/retag-on-config-change
-                 :msg "Retagged on config change"
+                 :msg "Re-tagged on config change"
                  :obj frame))))
 
 (add-hook 'window-configuration-change-hook #'my-window-tools/retag-on-config-change)
@@ -1003,4 +994,4 @@ TAG must be one of the symbols defined in the :IDE entry of
 ;;; system-window-management.el ends here
 
 ;; LocalWords:  Customize vc repl alists listp shorthands advices rgrep gracie
-;; LocalWords:  elisp tabline defun eldoc evie Checkdoc dape
+;; LocalWords:  elisp tabline defun eldoc evie Checkdoc dape pydoc
