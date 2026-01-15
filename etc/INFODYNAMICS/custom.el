@@ -4,33 +4,39 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(bmkp-last-as-first-bookmark-file "~/.emacs.d/var/INFODYNAMICS/bmkp/bookmark-default.bmk")
- '(bookmark-save-flag 1)
+ '(bmkp-last-as-first-bookmark-file
+   "/home/simon/.emacs.d/var/INFODYNAMICS/bmkp/bookmark-default.bmk")
  '(icon-preference '(symbol image text emoji))
  '(outline-minor-mode-cycle t)
  '(outline-minor-mode-highlight 'override)
  '(outline-minor-mode-prefix [3 64])
  '(outline-minor-mode-use-buttons 'in-margins)
  '(package-selected-packages
-   '(aggressive-indent anaconda-mode apache-mode auctex-latexmk cape cargo
-                       cargo-mode cargo-transient cdlatex citar-embark
-                       clj-refactor compile-angel consult-eglot-embark
-                       consult-project-extra corfu-terminal csv-mode dape
-                       dashboard delight dired+ docker docker-compose-mode
-                       dotenv-mode dumb-jump eldoc-box elisp-demos
-                       flycheck-clojure flymake-markdownlint flymake-shellcheck
-                       geiser-guile geiser-racket git-gutter git-gutter-fringe
-                       git-modes google-contacts helpful ibuffer-vc imenu-list
-                       info+ insert-shebang jump marginalia matlab-mode
-                       nerd-icons-completion nerd-icons-corfu
-                       nerd-icons-dired no-littering numpydoc olivetti orderless
-                       org-alert org-appear org-contacts org-contrib
-                       org-link-beautify org-pretty-tags org-roam
-                       page-break-lines pandoc-mode pdf-tools pq pretty-speedbar
-                       pyvenv rainbow-mode robots-txt-mode ruff-format rustic
-                       sly-asdf sly-quicklisp sly-repl-ansi-color sqlformat
-                       sr-speedbar treesit-fold undo-tree vertico vlf vlf-mode
-                       vterm web-mode yasnippet-snippets))
+   '(aggressive-indent anaconda-mode apache-mode apheleia auctex-latexmk
+                       cape cargo cargo-mode cargo-transient cdlatex
+                       citar-embark clj-refactor compile-angel
+                       consult-eglot-embark consult-project-extra
+                       corfu dape dashboard delight diff-hl dired+
+                       docker docker-compose-mode dotenv-mode
+                       dumb-jump eldoc-box elisp-demos
+                       etc-sudoers-mode flycheck-clojure
+                       flymake-markdownlint flymake-ruff
+                       flymake-shellcheck fringe-helper geiser-guile
+                       geiser-racket git-modes google-contacts helpful
+                       ibuffer-vc imenu-list info+ jump marginalia
+                       matlab-mode nerd-icons-completion
+                       nerd-icons-corfu nerd-icons-dired no-littering
+                       numpydoc olivetti orderless org-alert
+                       org-appear org-contacts org-contrib
+                       org-fancy-priorities org-modern org-roam
+                       page-break-lines pandoc-mode pdf-tools popon pq
+                       pretty-speedbar pydoc python-pytest
+                       python-view-data pyvenv qrencode rainbow-mode
+                       robots-txt-mode rustic sly-asdf sly-quicklisp
+                       sly-repl-ansi-color sqlformat sr-speedbar
+                       treesit-fold undo-tree vertico
+                       visual-fill-column vlf vterm web-mode
+                       yasnippet-snippets))
  '(pretty-speedbar-blank-page '(""))
  '(pretty-speedbar-book '(""))
  '(pretty-speedbar-box-closed '(""))
@@ -44,15 +50,21 @@
  '(pretty-speedbar-page '(""))
  '(pretty-speedbar-tag '(""))
  '(pretty-speedbar-tags '(""))
- '(project-vc-name "")
- '(safe-local-variable-values '((eval olivetti-set-width 160)))
+ '(safe-local-variable-values
+   '((ispell-personal-dictionary
+      . "/mnt/HDD04_WDD_08TB/workspace/python/infopypg/.aspell.en.pws")
+     (package-lint--sane-prefixes . "^omi/")
+     (ispell-personal-dictionary
+      . "/mnt/HDD04_WDD_08TB/workspace/python/ai_api/.aspell.en.pws")
+     (ispell-personal-dictionary
+      . "/mnt/HDD04_WDD_08TB/workspace/python/character_gen/.aspell.en.pws")))
  '(semantic-sb-info-format-tag-function 'semantic-format-tag-short-doc)
- '(ses-initial-size '(10 . 10))
  '(speedbar-add-supported-extension
-   '(".cl" ".li?sp" ".lua" ".fnl" ".fennel" ".kt" ".mvn" ".gradle" ".properties"
-     ".cljs?" ".sh" ".bash" ".php" ".ts" ".html?" ".css" ".less" ".scss" ".sass"
-     ".py" ".p" ".q" ".k" ".rs" ".lock" "makefile" "MAKEFILE" "Makefile" ".json"
-     ".yaml" ".toml" ".md" ".markdown" ".org" ".txt" "README"))
+   '(".cl" ".li?sp" ".lua" ".fnl" ".fennel" ".kt" ".mvn" ".gradle"
+     ".properties" ".cljs?" ".sh" ".bash" ".php" ".ts" ".html?" ".css"
+     ".less" ".scss" ".sass" ".py" ".p" ".q" ".k" ".rs" ".lock"
+     "makefile" "MAKEFILE" "Makefile" ".json" ".yaml" ".toml" ".md"
+     ".markdown" ".org" ".txt" "README"))
  '(speedbar-directory-button-trim-method 'trim)
  '(speedbar-directory-unshown-regexp "^\\(CVS\\|RCS\\|SCCS\\|\\.\\.*$\\)\\'")
  '(speedbar-frame-parameters
@@ -68,16 +80,24 @@
  '(sr-speedbar-right-side nil)
  '(sr-speedbar-width 40 t)
  '(vlf-application 'dont-ask)
- '(vlf-tune-load-time 2.0))
+ '(warning-suppress-types '((emacs))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:inherit nil :weight regular :height 100 :family "fira code"))))
+ '(default ((t (:inherit nil :weight regular :height 100 :family "noto mono"))))
  '(fixed-pitch ((t (:inherit nil :weight regular :height 100 :family "source code pro"))))
  '(fixed-pitch-serif ((t (:inherit nil :weight regular :height 100 :family "courier new"))))
  '(ibuffer-header-face ((t (:foreground "cyan" :weight bold :underline t))))
+ '(modus-themes-heading-0 ((t (:foreground "#D2D6CE" :weight Bold :height 150 :family "Impact"))) t)
+ '(modus-themes-heading-1 ((t (:foreground "#D2D6CE" :weight Bold :height 140 :family "arial"))) t)
+ '(modus-themes-heading-2 ((t (:foreground "#D2D6CE" :weight Bold :height 130 :family "arial"))) t)
+ '(modus-themes-heading-3 ((t (:foreground "#D2D6CE" :weight Bold :height 120 :family "arial"))) t)
+ '(modus-themes-heading-4 ((t (:foreground "#D2D6CE" :weight regular :height 120 :family "arial"))) t)
+ '(modus-themes-heading-5 ((t (:foreground "#D2D6CE" :weight regular :height 80 :family "arial"))) t)
+ '(modus-themes-prose-code ((t (:inherit modus-themes-fixed-pitch :foreground "#729FCF"))) t)
+ '(org-table ((t :background "#2E2E2E" :inverse-video nil)))
  '(speedbar-button-face ((t (:foreground "#D2D6CE"))))
  '(speedbar-directory-face ((t (:foreground "#D2D6CE"))))
  '(speedbar-file-face ((t (:foreground "#D2D6CE"))))
