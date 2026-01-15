@@ -9,8 +9,6 @@
 
 (require 'menu-keys-support)
 
-(declare-function eldoc-box-hover-mode "eldoc-box")
-
 (defvar display-line-numbers-type)                                                ; variable from display-line-numbers - show relative or absolute line numbers.
 
 ;; Provide an autosave hook.
@@ -34,8 +32,6 @@
 ;; When you type \\[executable-set-magic], it always offers to add or
 ;; update the magic number."
 ;;   :type 'boolean)
-(setq executable-insert t)
-
 ;; (defcustom executable-prefix-env nil
 ;;   "If non-nil, use \"/usr/bin/env\" in interpreter magic number.
 ;; If this variable is non-nil, the interpreter magic number inserted
@@ -43,9 +39,6 @@
 ;; otherwise it will be \"#!/path/to/INTERPRETER\"."
 ;;   :version "26.1"
 ;;   :type 'boolean)
-(setq executable-prefix-env t)
-
-
 ;; (defcustom executable-chmod 73
 ;;   "After saving, if the file is not executable, set this mode.
 ;; This mode passed to `set-file-modes' is taken absolutely when negative, or
@@ -53,8 +46,6 @@
 ;; Typical values are 73 (+x) or -493 (rwxr-xr-x)."
 ;;   :type '(choice integer
 ;;                  (const nil)))
-(setq executable-chmod 73)  ; octal for 0755
-
 ;; Query behaviour:
 ;; (defcustom executable-query 'function
 ;;   "If non-nil, ask user before changing an existing magic number.
@@ -62,7 +53,12 @@
 ;;   :type '(choice (const :tag "Don't Ask" nil)
 ;; 		 (const :tag "Ask when non-interactive" function)
 ;;                  (other :tag "Ask" t)))
-(setq executable-query t)
+
+(setq executable-insert t                                                         ; always offer to insert
+      executable-prefix-env t                                                     ; use \"/usr/bin/env\" in interpreter magic number.
+      executable-prefix "#! "                                                     ; default is "#!" so this just shows you the variable exists. 
+      executable-chmod 73                                                         ; octal for 0755. Alternatively, executable-chmod t would do chmod +x after insert
+      executable-query t)                                                         ; ask user before changing an existing magic number.
 
 ;; Exclude files that shouldn't get shebangs (adapt your ignore list to a regexp;
 ;; this matches .txt, .org, .el, .tex, .csv, .pdf, .json, etc.)
@@ -80,14 +76,14 @@
 ;; Next, fixed shell dotfile literals: exact names like .profile, .zprofile, etc.
 ;; We expand patterns like z?profile into explicit strings for regexp-opt.
 (defvar my-magicless-fixed-dotfiles
-  '("profile" "zprofile"        ; From z?profile
+  '("profile" "zprofile"                                                          ; From z?profile
     "bash_profile"
-    "login" "zlogin"            ; From z?login
+    "login" "zlogin"                                                              ; From z?login
     "bash_login"
-    "logout" "zlogout"          ; From z?logout
+    "logout" "zlogout"                                                            ; From z?logout
     "bash_logout"
     "esrc" "rcrc"
-    "kshenv" "zshenv")          ; From [kz]shenv
+    "kshenv" "zshenv")                                                            ; From [kz]shenv
   "List of exact shell dotfile basenames to exclude.")
 
 (defvar my-magicless-fixed-dotfiles-regexp
@@ -118,10 +114,55 @@
 (setq executable-magicless-file-regexp
       (concat my-magicless-original-regexp "\\|" my-added-ignore-regexp))
 
+;;; Custom Programming dictionaries
+;; The below should be used with a mode specific constant containing words
+;; which might not be in standard English but should be ignored for the given
+;; coding language. This can be done hierarchically so for example defining
+;; `my-prog-mode/prog-mode-accepted-words' for generic prog-mode words then
+;; `my-prog-mode/python-mode-accepted-words' for python specific words will
+;; work provided `my-prog-mode/add-words-to-flyspell' is run for the `prog-mode'
+;; and `python-mode' contexts.
+;;
+;; Example:  python-mode
+;; ---------------------
+;; ;; Defining the below `defconst' and then running
+;; ;;`my-prog-mode/add-mode-specific-words-to-flyspell' causes these words to be
+;; ;; ignored in a spell check of that language with flyspell. This is done by
+;; ;; adding words to the variable `ispell-buffer-session-localwords' in the
+;; ;; local buffer.
+;; (defconst my-prog-mode/python-mode-accepted-words
+;;   '("def" "class" "import" "from" "as" "return" "yield"
+;;     "async" "await" "self" "cls" "None" "True" "False")
+;;   "Python-specific keywords often appearing in comments/docstrings.")
+;;
+;; (my-prog-mode/add-words-to-flyspell
+;;    my-prog-mode/python-mode-accepted-words 'prog-mode)
+
+(defun my-prog-mode/add-words-to-flyspell (words mode-sym)
+  "Add WORDS to `ispell-buffer-session-localwords' uniquely.
+Purpose: Efficiently extend session-local dictionary for Flyspell.
+Variables: WORDS (list of strings), MODE-SYM (symbol for logging).
+Flow:
+1. Iterate WORDS.
+2. Use `cl-pushnew' for uniqueness.
+3. Log addition.
+4. Recheck Flyspell if active."
+  (let ((added-count 0))
+    (dolist (word words)
+      (when (cl-pushnew word ispell-buffer-session-localwords :test #'string-equal)
+        (setq added-count (1+ added-count))))
+    (log/info :fn 'my-prog-mode/add-words-to-flyspell
+              :msg (format "Added %d words for %s to Flyspell dictionary."
+                           added-count mode-sym)
+              :obj mode-sym))
+  ;; Recheck buffer to apply changes immediately if Flyspell is on.
+  (when flyspell-mode
+    (flyspell-buffer)))
+
 
 ;;;; Configuration for all programming modes.
 (defun my-prog-mode/programming-mode-config-hook ()
-  "Set useful layout tweeks for programming modes."
+  "Set useful layout tweaks for programming modes."
   (interactive)
   
   (require 'eldoc)
@@ -158,7 +199,7 @@
 
   ;; (setq yas-use-menu 'abbreviate)                                              ; show only the snippets for the mode of the buffer.
 
-  (setq-local truncate-lines t)   ; deactivate line-wrapping.
+  (setq-local truncate-lines t)                                                   ; deactivate line-wrapping.
 
   ;; Keymaps and Menus
   ;; Assign buffer local prefixes to comment keymap.
@@ -174,8 +215,23 @@
   ;; set up flyspell. (flyspell-prog-mode ignores function and variable names.)
   (flyspell-prog-mode)
 
+  ;; add  generic programming words to `ispell-buffer-session-localwords'.
+  (defconst my-prog-mode/prog-mode-accepted-words
+    '("foo" "bar" "foobar" "idx" "dotfile" "tstamp" "tex" "csv" "pdf"
+      "ARGS" "Args" "Backtrace" "DDirectory" "LaTeX" "LocalWords" "OPTARG"
+      "README" "SPEEDBAR" "TODO" "alist" "aspell" "basedpyright" "cd" "conda"
+      "config" "csv" "defconst" "defcustom" "defvar" "dir" "docstring" 
+      "docstrings" "el" "elpa" "env" "flymake" "flyspell" "github" "gitignore"
+      "hdb" "http" "https" "ipynb" "ipython" "jdk" "joinpath" "json" "jsonl"
+      "lvl" "md" "mnt" "modeline" "noqa" "odbc" "prog" "py" "rlwrap" "scipy"
+      "setq" "speedbar" "sql" "str" "sym" "tmp" "txt" "urls" "usr" "vterm" "ws"
+      "yasnippet")                                                                ; General programming words
+    "Words commonly accepted in all programming modes.")
+  (my-prog-mode/add-words-to-flyspell
+   my-prog-mode/prog-mode-accepted-words 'prog-mode)
+
   )
-  
+
 
 ;;; Hooks
 
@@ -185,4 +241,4 @@
 (provide 'lang-prog-mode)
 ;;; lang-prog-mode.el ends here
 
-;; LocalWords:  magicless dotfiles akefile shrc esrc rcrc
+;; LocalWords:  shrc esrc rcrc

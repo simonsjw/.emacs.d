@@ -51,7 +51,6 @@
 (use-package apheleia
   :delight (apheleia-mode)
   :config
-  (apheleia-global-mode 1)                                                        ; Enable globally
   ;; Configure Ruff for formatting + imports (chain: isort then format)
   (with-eval-after-load 'apheleia
     (setf (alist-get 'python-ts-mode apheleia-mode-alist) '(ruff-isort ruff))
@@ -86,7 +85,7 @@
 ;; Use Ipython
 (setq python-shell-interpreter "ipython"                                          ; Use IPython executable.
       python-shell-interpreter-args                                               ; Command-line args for IPython.
-      "--no-banner --matplotlib=qt")    ; removed --simple-prompt .
+      "--simple-prompt --matplotlib=inline")
 
 ;;;; Main function to set up python mode.
 (defun my-lang-python/python-mode-setup ()
@@ -109,6 +108,7 @@ Uses pyvenv-activate with the full path for reliability."
           (insert (format "%S" entry))))                                          ; Create new.
       (message "Saved env %s to %s" env-path dir-locals-file)))
 
+
   (defun my-lang-python/organize-imports ()
     "Organise imports in the current buffer using ruff-isort via Apheleia.
 This runs only the import organisation formatter, preserving the buffer's
@@ -130,6 +130,8 @@ Runs stubgen on the current file, placing output in the default ./out directory
       (shell-command command)
       (message "stubgen executed: %s" command)))
 
+  ;; apheleia so Ruff formatting can be used.
+  (apheleia-mode 1)
 
   ;; Define a ruff-format formatter
   ;; (for full Ruff formatting without isort).
@@ -137,56 +139,93 @@ Runs stubgen on the current file, placing output in the default ./out directory
   (setf (alist-get 'ruff-format apheleia-formatters)
         '("ruff" "format" "--quiet" "--stdin-filename" filepath "-"))
 
+  ;; Define ruff-isort as custom formatter (matches Apheleia built-in).
+  (setf (alist-get 'ruff-isort apheleia-formatters)
+        '("ruff" "check" "--select=I" "--fix" "--quiet" "--stdin-filename" filepath "-"))
+
+  ;;   (defun my-lang-python/format-buffer ()
+  ;;     "Format the entire Python buffer using full Apheleia chain, then align comments.
+  ;; Runs mode's alist formatters (e.g., isort + format) for consistency with on-save."
+  ;;     (interactive)
+  ;;     (unless (derived-mode-p 'python-ts-mode 'python-mode)
+  ;;       (user-error "Not in a Python mode"))
+  ;;     ;; Run full alist chain (isort + format).
+  ;;     (apheleia-format-buffer (alist-get major-mode apheleia-mode-alist))
+  ;;     ;; Align comments on whole buffer.
+  ;;     (my-in-buffer-tools/comment-align-buffer (point-min) (point-max)))
+
   (defun my-lang-python/format-buffer ()
     "Format the entire buffer using ruff-format via Apheleia.
 This applies Ruff's code style formatter, preserving point."
     (interactive)
     (unless (derived-mode-p 'python-ts-mode 'python-mode)
       (user-error "Not in a Python mode"))
-    (apheleia-format-buffer 'ruff-format))
+    (apheleia-format-buffer 'ruff-format)
+
+    (my-in-buffer-tools/comment-align-buffer (point-min) (point-max)))
 
 
   (defun my-lang-python/format-region ()
-    "Format the selected region using ruff-format with range via a temporary file.
-Falls back to the whole buffer if no region is active.
-This provides Ruff with full buffer context for accurate formatting,
-while only applying changes to the specified lines.
-
-Uses `replace-buffer-contents' to update the buffer efficiently,
-preserving point and markers where possible."
+    "Format active Python region with full Apheleia chain + align, via temp-buffer.
+Copies region to temp-buffer, runs buffer format (isort + format + align),
+then replaces original region. Skips on hard syntax/runtime error; proceeds on lint."
     (interactive)
-    (unless (derived-mode-p 'python-ts-mode 'python-mode)
-      (user-error "Not in a Python mode"))
     (if (not (use-region-p))
-        (apheleia-format-buffer 'ruff-format)                                     ; Fallback to your async buffer format
+        (error "No region active; use `my-lang-python/format-buffer' for whole buffer")
       (let* ((start (region-beginning))
              (end (region-end))
-             ;; Calculate 1-based line numbers; adjust end if at beginning of line
-             (start-line (line-number-at-pos start))
-             (end-line (line-number-at-pos end t))                                ; t adjusts if at bol, giving previous line
-             (range-str (format "%d-%d" start-line end-line))
-             (temp-file (make-temp-file "ruff-format-" nil ".py")))
+             (orig-content (buffer-substring-no-properties start end))  ; Save original.
+             (temp-buffer (generate-new-buffer " *python-region-format*" t))
+             (check-ok t))
         (unwind-protect
-            (save-restriction
-              (widen)                                                             ; Ensure full buffer is written, even if narrowed
-              (write-region (point-min) (point-max) temp-file nil 'silent)
-              ;; Run Ruff format on temp file with range (in-place)
-              (with-temp-buffer
-                (let ((exit-code (call-process "ruff" nil t t
-                                               "format" "--range" range-str
-                                               "--quiet" temp-file)))
-                  (unless (zerop exit-code)
-                    (error "Ruff format failed (exit %d): %s"
-                           exit-code (buffer-string)))))
-              ;; Replace current buffer contents with formatted temp
-              ;; (only the range has changed, so rest remains identical)
-              (let ((temp-buffer (find-file-noselect temp-file)))
-                (replace-buffer-contents temp-buffer)
-                (kill-buffer temp-buffer)))
-          (when (file-exists-p temp-file)
-            (delete-file temp-file))))))
+            (with-current-buffer temp-buffer
+              (python-ts-mode)  ; Set mode for Apheleia/align.
+              (insert orig-content)  ; Region as "whole" buffer.
+              ;; Pre-check syntax/lint (plain check).
+              (let* ((temp-file (make-temp-file "python-region-" nil ".py"))
+                     (check-buffer (generate-new-buffer " *ruff-check*" t)))
+                (unwind-protect
+                    (progn
+                      (write-region (point-min) (point-max) temp-file nil 'silent)
+                      (with-current-buffer check-buffer
+                        (let ((check-code (call-process "ruff" nil t t "check" temp-file)))
+                          (cond
+                           ((= check-code 0) (message "No issues; proceeding."))
+                           ((= check-code 1) (message "Lint violations; still formatting: %s" (buffer-string)))  ; Proceed on lint.
+                           (t (setq check-ok nil)
+                              (message "Hard error (code %d); skipping format: %s" check-code (buffer-string)))))))
+                  (when (file-exists-p temp-file) (delete-file temp-file))
+                  (kill-buffer check-buffer)))
+              ;; Format + align if check ok (or lint-only).
+              (when check-ok
+                (my-lang-python/format-buffer))  ; Full chain on temp.
+              ;; Fallback align if skipped.
+              (unless check-ok
+                (my-in-buffer-tools/comment-align-buffer (point-min) (point-max))))
+          ;; Now back in original buffer: Replace region with formatted content.
+          (delete-region start end)
+          (insert (with-current-buffer temp-buffer (buffer-string)))
+          (kill-buffer temp-buffer)))))
 
-  
+  ;; Also make sure comments are aligned as part of the format-on-save.
+  (defun my-lang-python/align-comments-before-save ()
+    "Align existing inline comments before save, if in Python mode.
+Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
+    (when (and (derived-mode-p 'python-ts-mode 'python-mode)
+               (fboundp 'my-in-buffer-tools/comment-align-buffer))
+      (save-excursion
+        (my-in-buffer-tools/comment-align-buffer (point-min) (point-max)))))
+  (add-hook 'before-save-hook #'my-lang-python/align-comments-before-save nil t)
+
+  ;; add python programming 'words' to `ispell-buffer-session-localwords'
+  (defconst my-prog-mode/python-base-mode-accepted-words
+    '("def" "class" "import" "from" "as" "return" "yield"
+      "async" "await" "self" "cls" "None" "True" "False")
+    "Python-specific keywords often appearing in comments/docstrings.")
+  ;; add  generic programming words to `ispell-buffer-session-localwords'.
+  (my-prog-mode/add-words-to-flyspell
+   my-prog-mode/python-base-mode-accepted-words 'python-base-mode)
+
   
   ;; LSP with Pyrefly
   (eglot-ensure)
@@ -290,17 +329,16 @@ preserving point and markers where possible."
     "Menu for running-related functions in `python-ts-mode'.")
   
 ;;;; running the code
-  ;; these keys are already set in python mode. 
+  ;; these keys are already set in python mode.
   ;; (keymap-set python-ts-mode-map "C-c C-c" #'eval-buffer)
   ;; (keymap-set python-ts-mode-map "C-c C-r" #'python-shell-send-region)
   ;; (keymap-set python-ts-mode-map "C-c C-l" #'python-shell-send-file)
   ;; (keymap-set python-ts-mode-map "C-c r p" #'run-python)                          ; run an inferior python process
 
 
-  ;; keymaps for Pyvenv 
+  ;; keymaps for Pyvenv
   (keymap-set python-ts-mode-map "C-c v w" #'pyvenv-workon)
   (keymap-set python-ts-mode-map "C-c v r" #'pyvenv-restart-python)
-  (keymap-set python-ts-mode-map "C-c v s" #'my-lang-python/associate-env-with-project)
   (keymap-set python-ts-mode-map "C-c v a" #'pyvenv-activate)
   (keymap-set python-ts-mode-map "C-c v d" #'pyvenv-deactivate)
   (keymap-set python-ts-mode-map "C-c v c" #'pyvenv-create)
@@ -322,9 +360,6 @@ preserving point and markers where possible."
       ["Environment" :enable nil]
       ["Select Environment" pyvenv-workon
        :help "Select a new active Python environment"]
-      ["Associate project env"
-       my-lang-python/associate-env-with-project
-       :help "Creates .dir-locals.el in root of current project to start the current env automatically henceforth"]
       ["Activate an environment" pyvenv-activate
        :help "Activate a named Python environment"]
       ["Deactivate environment" pyvenv-deactivate
@@ -332,6 +367,30 @@ preserving point and markers where possible."
       ["Create an environment" pyvenv-create
        :help "Create a new Python environment"])
     "Menu for running-related functions in `python-ts-mode'.")
+
+  ;;;; Project settings.
+
+  ;; keymaps for Pyvenv
+  ;; also have "C-c p f" and "C-c p o"
+  (keymap-set python-ts-mode-map "C-c p b" #'consult-project-buffer)
+  (keymap-set python-ts-mode-map "C-c p s" #'my-lang-python/save-env-to-project)
+  (keymap-set python-ts-mode-map "C-c p p" #'my-prog-mode/set-project-dictionary)
+  (keymap-set python-ts-mode-map "C-c p d" #'flymake-show-project-diagnostics)
+  
+  (defvar my-custom-menus/python-project-menu
+    '("Project"
+      "---"
+      ["Project Buffers" consult-project-buffer :help "Switch project buffers using consult"]
+      ["Show diagnostics" flymake-show-project-diagnostics :help "Show diagnostics for all visited files in the project"]
+      "---"
+      ["Associate project env" my-lang-python/save-env-to-project
+       :help "Creates .dir-locals.el in root of current project to start the current env automatically"]
+      ["Create project dictionary" my-prog-mode/set-project-dictionary
+       :help "Creates project dictionary and sets variable to point at it in .dir-locals.el"]
+      "---"
+      ["Find other project sources" consult-project-extra-find
+       :help "Find other project sources"])
+    "Menu for project related functions in `python-ts-mode'.")
 
 ;;;; document thing at point:
   (keymap-set python-ts-mode-map "C-c h p" #'eldoc-box-help-at-point)             ; Key for hover docs
@@ -344,19 +403,15 @@ preserving point and markers where possible."
   ;; menu
   (defvar my-custom-menus/python-documentation-menu
     '("Documentation"
-      ["Show Docs at Point" eldoc-box-help-at-point :keys "C-c h p"
+      ["Show Docs at Point" eldoc-box-help-at-point
        :help "Display documentation for thing at point"]
-      ["Show Docs in Buffer" eldoc-doc-buffer :keys "C-c h b"
+      ["Show Docs in Buffer" eldoc-doc-buffer
        :help "Show documentation in a dedicated buffer"]
-      ["Hover/Signature help" eldoc :keys "C-c h h"
-       :help "Trigger signature help"]
+      ["Hover/Signature help" eldoc :help "Trigger signature help"]
       "---"
-      ["Pydoc at Point" pydoc-at-point :keys "C-c h d"
-       :help "Full pydoc for symbol at point"]
-      ["Pydoc Search" pydoc :keys "C-c h s"
-       :help "Interactive pydoc search for any object"]
-      ["Pydoc in Browser" pydoc-browse :keys "C-c h w"
-       :help "Browse pydoc in web server"])
+      ["Pydoc at Point" pydoc-at-point :help "Full pydoc for symbol at point"]
+      ["Pydoc Search" pydoc :help "Interactive pydoc search for any object"]
+      ["Pydoc in Browser" pydoc-browse :help "Browse pydoc in web server"])
     "Menu for documentation-related functions in `python-ts-mode'.")
   
 
@@ -480,19 +535,19 @@ preserving point and markers where possible."
 
   (defvar my-custom-menus/python-fixes-menu
     '("Formats/Imports/Fixes"
-      ["Format Buffer" my-lang-python/format-buffer :keys "C-c i b"
+      ["Format Buffer" my-lang-python/format-buffer
        :help "Apply full Ruff formatting to the buffer"]
-      ["Format Region" my-lang-python/format-region :keys "C-c i r"
+      ["Format Region" my-lang-python/format-region
        :help "Apply Ruff formatting to the selected region"]
       "---"
-      ["Rename Symbol" eglot-rename :keys "C-c i n"
+      ["Rename Symbol" eglot-rename
        :help "Rename the symbol at point"]
       ["Complete symbol" corfu-complete :keys "M-TAB"
        :help "complete the symbol using the default choice"]
       "---"
-      ["Organize Imports" my-lang-python/organize-imports :keys "C-c i o"
+      ["Organize Imports" my-lang-python/organize-imports
        :help "Organise imports in the buffer."]
-      ["Quick Fix" eglot-code-action-quickfix :keys "C-c i f"
+      ["Quick Fix" eglot-code-action-quickfix
        :help "Apply quick fixes."])
     "Menu for imports and fixes-related functions in `python-ts-mode'.")
 
@@ -635,21 +690,24 @@ groups of submenus, and separators as per requirements."
       (easy-menu-add-item menu nil my-custom-menus/python-documentation-menu)
       (easy-menu-add-item menu nil my-custom-menus/python-running-menu)
       (easy-menu-add-item menu nil my-custom-menus/diff-hl)
+      (easy-menu-add-item menu nil my-custom-menus/python-project-menu)
       (easy-menu-add-item menu nil my-custom-menus/python-pytest)
       (easy-menu-add-item menu nil my-custom-menus/python-folding-menu)
       (easy-menu-add-item menu nil my-custom-menus/python-lsp-menu)
       (easy-menu-add-item menu nil yas--minor-mode-menu)
 
       menu))
-
+  
+  ;; load the context menu.
   (setq-local context-menu-functions '(my-lang-python/context-menu))
-
-  (message
-   "[%s ; DEBUG; my-lang/python-mode-setup]finished loading the defun ; ;"        ;
-   (current-time-string))
+  
+  (let ((mode (derived-mode-all-parents major-mode)))
+    (log/debug :fn 'my-lang-python/python-mode-setup
+               :msg "Finished loading the python-mode-setup."
+               :obj mode))
   )
 
-;; update python interpreter paths after pyvenv activates a new environment. 
+;; update python interpreter paths after pyvenv activates a new environment.
 (add-hook
  'pyvenv-post-activate-hooks #'my-lang-python/update-python-path nil t)
 ;; restart eglot after pyvenv has changed environments. 
@@ -681,3 +739,4 @@ groups of submenus, and separators as per requirements."
 ;; LocalWords:  eldoc defun minibuffer pycodestyle pycomplete gitlab melpa
 ;; LocalWords:  pythonic dape yasnippet debugpy adapter pytest customisations ui
                                                                                   ; LocalWords:  treesitter
+                                                                                  ; LocalWords:  Pydoc
