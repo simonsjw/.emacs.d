@@ -76,7 +76,7 @@ If not supplied, the default names `idx' and `item' are used."
 
 (defun my-image-tools/create-image-icon (file &optional width height)
   "Create an image icon from FILE with optional WIDTH and HEIGHT."
-  (let* ((type (image-supported-file-p file))  ; Automatically detect image type
+  (let* ((type (image-supported-file-p file))                                     ; Automatically detect image type
          (image (create-image file type nil
                               :width width
                               :height height)))
@@ -101,16 +101,16 @@ If not supplied, the default names `idx' and `item' are used."
   (let*
       ((now (current-time))
        (seconds
-        (float-time now))  ; Get the time as a floating-point number
+        (float-time now))                                                         ; Get the time as a floating-point number
        (milliseconds
         (truncate
-         (mod (* seconds 1) 1000)  ))  ; Extract milliseconds
+         (mod (* seconds 1) 1000)  ))                                             ; Extract milliseconds
        (time-in-seconds
         (format-time-string
-         "%Y-%m-%d %H:%M:%S" now)))  ; Get the standard time
+         "%Y-%m-%d %H:%M:%S" now)))                                               ; Get the standard time
     (format "%s.%03d"
-            time-in-seconds   ; Get the formatted time
-            milliseconds)))  ; Add milliseconds
+            time-in-seconds                                                       ; Get the formatted time
+            milliseconds)))                                                       ; Add milliseconds
 
 
 (defun my-strings/human-readable-file-sizes-to-bytes (string)
@@ -153,7 +153,7 @@ numbers or else a space so the units column is aligned."
           ((> number 1000000) (format "%10.1fM" (/ number 1000000.0)))
           ((> number 100000) (format "%10.0fk" (/ number 1000.0)))
           ((> number 1000) (format "%10.1fk" (/ number 1000.0)))
-          (t (format "%10f" number)))))  ;; Raw number case
+          (t (format "%10f" number))))) ;; Raw number case
     (if (= (length result) 10)
         (concat result " ")                                                       ; Append space to make length 11
       result)))                                                                   ; Otherwise, return as is
@@ -171,7 +171,7 @@ present."
           ((> bytes 1000000) (format "%5.1fM" (/ bytes 1000000.0)))
           ((> bytes 100000) (format "%5.0fk" (/ bytes 1000.0)))
           ((> bytes 1000) (format "%5.1fk" (/ bytes 1000.0)))
-          (t (format "%4d" bytes)))))  ;; Raw bytes case
+          (t (format "%4d" bytes))))) ;; Raw bytes case
     (if (= (length result) 4)
         (concat " "  result)                                                      ; Append space to make length 11
       result)))                                                                   ; Otherwise, return as is
@@ -189,7 +189,7 @@ present."
 (defun my-frame-tools/kill-buffers-on-frame-close (frame)
   "Kill buffers unique to FRAME when it's closed."
   (unless my-frame-tools-inhibit-kill
-    (let ((my-frame-tools-inhibit-kill t)  ; Prevent recursion
+    (let ((my-frame-tools-inhibit-kill t)                                         ; Prevent recursion
           (buffers (delete-dups (mapcar #'window-buffer (window-list frame)))))
       (dolist (buf buffers)
         (when (and (buffer-live-p buf)
@@ -201,8 +201,8 @@ present."
 
 (defun my-frame-tools/delete-frame-by-name (frame-name)
   "Delete a frame by its name FRAME-NAME."
-  (interactive "sEnter frame name to delete: ")  ; Prompt for frame name
-  (let ((found nil))  ; Track if we found the frame
+  (interactive "sEnter frame name to delete: ")                                   ; Prompt for frame name
+  (let ((found nil))                                                              ; Track if we found the frame
     (dolist (frame (frame-list))
       (when (string= (frame-parameter frame 'name) frame-name)
         (delete-frame frame)
@@ -214,7 +214,7 @@ present."
 (defun my-frame-tools/get-frame-by-name (frame-name)
   "Get a frame object when given its name FRAME-NAME."
   (defvar frame-object nil)
-  (let ((found nil))  ; Track if we found the frame
+  (let ((found nil))                                                              ; Track if we found the frame
     (dolist (frame (frame-list))
       (when (string= (frame-parameter frame 'name) frame-name)
 
@@ -237,9 +237,9 @@ present."
 If FRAME is nil, use the current frame."
   (let* ((target-frame (or frame (selected-frame)))
          (first-window (frame-first-window target-frame)))
-    (select-window first-window) ; Select the first window
+    (select-window first-window)                                                  ; Select the first window
     (with-selected-frame target-frame
-      (delete-other-windows)))) ; Close all other windows
+      (delete-other-windows))))                                                   ; Close all other windows
 
 
 ;; end of Frame management
@@ -359,17 +359,17 @@ This condition and body have been removed:
 
 
 (defun my-buffer-tools/copy-buffer-in-new-frame (click)
-"Copy the active buffer in a selected window to a new frame.
+  "Copy the active buffer in a selected window to a new frame.
 CLICK: the mouse event."
-(interactive (list last-nonmenu-event))                                         ; Enable the function to handle a mouse event.
-(message "triggered")                                                           ; Give feedback when function is triggered.
-(mouse-minibuffer-check click)                                                  ; Prevent triggering if click is in the minibuffer.
-(let* ((window (posn-window (event-start click)))                               ; Get the window where click occurred.
-       (buf (window-buffer window))                                             ; Get the buffer from that window.
-       (display-buffer-alist '(("." (display-buffer-pop-up-frame)))))           ; Temporarily add the new frame rule to `display-buffer-alist`.
+  (interactive (list last-nonmenu-event))                                         ; Enable the function to handle a mouse event.
+  (message "triggered")                                                           ; Give feedback when function is triggered.
+  (mouse-minibuffer-check click)                                                  ; Prevent triggering if click is in the minibuffer.
+  (let* ((window (posn-window (event-start click)))                               ; Get the window where click occurred.
+         (buf (window-buffer window))                                             ; Get the buffer from that window.
+         (display-buffer-alist '(("." (display-buffer-pop-up-frame)))))           ; Temporarily add the new frame rule to `display-buffer-alist`.
 
-  (message "Selected window: %s" window)                                        ; Display selected window as feedback.
-  (display-buffer buf)))                                                        ; Display the buffer in a new frame.
+    (message "Selected window: %s" window)                                        ; Display selected window as feedback.
+    (display-buffer buf)))                                                        ; Display the buffer in a new frame.
 
 
 ;; Define the customizable variable at the top level
@@ -406,10 +406,10 @@ my-buffer-tools/display-buffer-by-name-and-tag"
 
 (defun my-buffer-tools/insert-blank-line-at-start ()
   "Insert a blank line at the start of the current buffer, even if it's read-only."
-  (let ((inhibit-read-only t))       ; Temporarily disable read-only mode
-    (save-excursion                 ; Preserve point position
-      (goto-char (point-min))       ; Move to the start of the buffer
-      (open-line 1))))              ; Insert a blank line
+  (let ((inhibit-read-only t))                                                    ; Temporarily disable read-only mode
+    (save-excursion                                                               ; Preserve point position
+      (goto-char (point-min))                                                     ; Move to the start of the buffer
+      (open-line 1))))                                                            ; Insert a blank line
 
 
 (defun my-in-buffer-tools/get-matching-bracket-position (cursor-position)
@@ -483,24 +483,41 @@ buffer."
     max-length))
 
 (defun my-in-buffer-tools/comment-align-buffer (beg end)
-  "Apply `comment-indent' to lines with an inline comment in region or buffer.
+  "Apply `comment-indent' to lines with an existing inline comment.
 
-If no region is active, operates on the entire buffer.
+Operates on  region or buffer to align existing comments (syntax-aware),
+avoiding new insertions.  If no region active interactively, uses whole buffer.
 ARGS:
-  BEG - the beginning of the region (if selected)
-  END - the end of the region (if selected)"
+  BEG - region start
+  END - region end"
   (interactive (if (use-region-p)
                    (list (region-beginning) (region-end))
                  (list (point-min) (point-max))))
-  (save-excursion
-    (goto-char beg)
-    (while (< (point) end)
-      (let ((limit (line-end-position)))
-        (if (and comment-start
-                 (re-search-forward (regexp-quote comment-start) limit t))
-            (comment-indent)))
-      (forward-line 1))))
+  (when comment-start  ; Skip modes without comments.
+    (let ((beg-marker (copy-marker beg))  ; Markers auto-adjust on inserts.
+          (end-marker (copy-marker end t)))  ; t: insert before marker.
+      (save-excursion
+        (goto-char beg-marker)
+        (while (and (comment-search-forward end-marker t)
+                    (< (point) end-marker))
+          (comment-indent)
+          (comment-forward 1)))  ; Skip to after current comment.
+      (set-marker beg-marker nil)  ; Clean up.
+      (set-marker end-marker nil))))
 
+(defun my-in-buffer-tools/my-comment-align-region-or-line ()
+  "Align inline comments in the active region or the current line.
+This function checks if a region is active.  If so, it applies
+`my-in-buffer-tools/comment-align-buffer' to the region.  Otherwise,
+it applies the function to the current line only."
+  (interactive)
+  (let ((beg (if (use-region-p)
+                 (region-beginning)
+               (line-beginning-position)))
+        (end (if (use-region-p)
+                 (region-end)
+               (line-end-position))))
+    (my-in-buffer-tools/comment-align-buffer beg end)))
 
 ;; ---end of TOOLS FOR USE IN BUFFER---
 
@@ -576,7 +593,7 @@ LEFT is the left margin width, and RIGHT is the right margin width (optional)."
 (defun my-os-tools/ports-found-by-ss (output)
   "Extract a list of port numbers from `ss -tuln` output.
 OUTPUT:  the text string produced from ss -tuln."
-  (let ((lines (split-string output "\n" t))  ; Split by newline
+  (let ((lines (split-string output "\n" t))                                      ; Split by newline
         (ports '()))
     (dolist (line lines ports)
       ;; Find lines that contain 'LISTEN'
@@ -596,7 +613,7 @@ message."
     (progn
       (message
        "Error: The 'ss' command is not available on this system.")
-      "")))  ;; Return an empty string when `ss` is not found
+      ""))) ;; Return an empty string when `ss` is not found
 
 (defun my-os-tools/find-available-ports (start end used-ports)
   "Find available ports in a given range.
@@ -604,7 +621,7 @@ START:       the start of the port range.
 END:         the end of the port range to be checked.
 USED-PORTS:  the ports that are not available."
   (let ((available-ports '()))
-    (dotimes (i (- end start) available-ports)  ; Iterate over range
+    (dotimes (i (- end start) available-ports)                                    ; Iterate over range
       (let ((port (+ start i)))
         (unless (member port used-ports)
           (push port available-ports))))))
@@ -640,7 +657,7 @@ USED-PORTS:  the ports that are not available."
 (provide 'system-tools)
 ;;; system-tools.el ends here
 
-                                                                                  ; LocalWords:  LISTB sr ol dired
-                                                                                  ; LocalWords:  netstat isn
-                                                                                  ; LocalWords:  minibuffer
-; LocalWords:  PREC SIGFIGS STRLENGTH
+;; LocalWords:  LISTB sr ol dired
+;; LocalWords:  netstat isn
+;; LocalWords:  minibuffer
+;; LocalWords:  PREC SIGFIGS STRLENGTH
