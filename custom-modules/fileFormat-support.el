@@ -14,6 +14,89 @@
 (use-package csv-mode)
 (use-package dotenv-mode)
 
+
+;;;; Visudo editing the sudo file
+;;   ----------------------------
+
+;; flymake back-end
+;; ----------------
+(defun etc-sudoers-flymake-backend (report-fn &rest _args)
+  "Flymake backend for etc-sudoers-mode using visudo -c.
+This function saves the buffer to a temporary file and runs 'visudo -c -f'
+to check for syntax errors.  It reports diagnostics via REPORT-FN."
+  (let* ((temp-file (make-temp-file "sudoers-flymake" nil ".tmp"))
+         (buffer-content (buffer-substring-no-properties (point-min) (point-max)))
+         (output-buffer (generate-new-buffer "*sudoers-flymake-output*"))
+         (proc nil))
+    (with-temp-file temp-file
+      (insert buffer-content))
+    (setq proc (make-process
+                :name "sudoers-visudo-check"
+                :buffer output-buffer
+                :command (list "sudo" "visudo" "-c" "-f" temp-file)
+                :sentinel
+                (lambda (proc _event)
+                  (when (eq (process-status proc) 'exit)
+                    (unwind-protect
+                        (if (zerop (process-exit-status proc))
+                            (funcall report-fn nil)  ; No errors
+                          (let (diags)
+                            (with-current-buffer output-buffer
+                              (goto-char (point-min))
+                              (while (re-search-forward "^[^:]+:\$$   [0-9]+\   $$: \$$ .*\ \$\$\$" nil t)
+                                (let ((line (string-to-number (match-string 1)))
+                                      (msg (match-string 2)))
+                                  (push (flymake-make-diagnostic (current-buffer)
+                                                                 (cons line 1)
+                                                                 (cons line (line-end-position line))
+                                                                 :error msg)
+                                        diags))))
+                            (funcall report-fn (nreverse diags))))
+                      (delete-file temp-file)
+                      (kill-buffer output-buffer))))))))
+
+;; Add the backend to Flymake for etc-sudoers-mode
+(add-hook 'etc-sudoers-mode-hook
+          (lambda ()
+            (add-hook 'flymake-diagnostic-functions #'etc-sudoers-flymake-backend nil t)
+            (flymake-mode 1)))
+
+(use-package etc-sudoers-mode
+  :ensure t
+  :mode
+  (("/etc/sudoers\\'" . etc-sudoers-mode)
+   ("/etc/sudoers\\.d/.*\\'" . etc-sudoers-mode)
+   ("\\.sudoers\\'" . etc-sudoers-mode))
+  ;; No :hook for flycheck-mode now
+  :config
+  (global-set-key (kbd "C-c v") #'etc-sudoers-mode-visudo))
+
+
+
+;;;; Markdown formatted files
+;;   ------------------------
+
+(use-package markdown-mode
+  :ensure t                                                                       ; Install automatically if missing
+  :defer t                                                                        ; Load lazily for efficiency
+  :mode ("\\.md\\'" . markdown-mode)                                              ; Auto-associate .md files
+  :hook (markdown-mode . visual-line-mode)
+  ;; :custom-face
+  ;; ;; Inline code: Distinct blue, monospaced for readability
+  ;; (markdown-inline-code-face ((t (:family "Courier" :weight normal))))            ; :foreground "#00BFFF"                                                                                  ; :background "#F0F8FF"
+  ;; ;; Headers: Progressive scaling with bold and colour gradients
+  ;; (markdown-header-face-1 ((t (:height 1.5 :weight bold))))                       ; :foreground "#00008B"
+  ;; (markdown-header-face-2 ((t (:height 1.3 :weight bold))))                       ; :foreground "#0000CD"
+  ;; (markdown-header-face-3 ((t (:height 1.2 :weight bold))))                       ; :foreground "#4169E1"
+  ;; ;; Add more header levels as needed, e.g., 4-6
+  ;; ;; Other elements: Bold, italic, links for emphasis
+  ;; (markdown-bold-face ((t (:weight bold))))                                       ; :foreground "#FF0000"
+  ;; (markdown-italic-face ((t (:slant italic))))                                    ; :foreground "#808080"
+  ;; (markdown-link-fxace ((t (:underline t))))                                      ; :foreground "#1E90FF"
+  :config
+  ;; Any post-load config can go here; currently none needed for basics
+  )
+
 ;;;; Very Large Files (vlf)
 ;;   ----------------------
 ;; ensure vlf is used automatically.
@@ -111,11 +194,11 @@ Interactively, POINT is point and KILL is the prefix argument."
   "Custom configurations for toml-ts-mode."
   (require 'treesit-fold)
   
-  (setq display-fill-column-indicator-column 50)                                 ; Edge
-  (setq fill-column 50)                                                          ; Column beyond which line wrapping occurs if it is activated.
-  (setq comment-fill-column 270)                                                 ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
-  (setq comment-column 52)                                                       ; Column to indent right-margin comments to.
-  (display-fill-column-indicator-mode 1)                                         ; show fill column indicator 
+  (setq display-fill-column-indicator-column 50)                                  ; Edge
+  (setq fill-column 50)                                                           ; Column beyond which line wrapping occurs if it is activated.
+  (setq comment-fill-column 270)                                                  ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
+  (setq comment-column 52)                                                        ; Column to indent right-margin comments to.
+  (display-fill-column-indicator-mode 1)                                          ; show fill column indicator 
   
   ;; Set the fringe mode specifically for json-ts-mode
   (set-fringe-mode '(12 . 5))
