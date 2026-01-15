@@ -45,8 +45,8 @@
   (global-set-key (kbd "C-x v s") #'diff-hl-stage-current-hunk)                   ; Stages via VC.
   (global-set-key (kbd "C-x v r") #'diff-hl-revert-hunk)
   (global-set-key (kbd "C-x v =") #'diff-hl-show-hunk)                            ; Popup diff like git-gutter.
-
-  ;; Optional: If remote files are slow, disable there.
+  (global-set-key (kbd "C-x v v") #'my-vc/show-staged-diff)                       ; show the staged hunk in a separate buffer.
+  ;; Optiona#'l: If remote files are slow, disable there.
   ;; (setq diff-hl-disable-on-remote t)
   )
 
@@ -55,12 +55,18 @@
 ;; Bind to C-c h; this pops a menu with sub-commands (e.g., n for next-hunk).
 (global-set-key (kbd "C-c h") 'diff-hl-command-map)
 
+(defun my-vc/show-staged-diff ()
+  "Show staged changes diff using Git."
+  (interactive)
+  (vc-git-command
+   (get-buffer-create "*vc-git-staged*") 0 nil "diff" "--cached"))
+
 ;; Define a fuller menu for diff-hl, extendable to menu-bar.
 ;; Use easy-menu-define for integration:
 ;;     (easy-menu-define
-;;         diff-hl-menu global-map "Diff HL" my-custom-menus/diff-hl)
+;;         diff-hl-menu global-map "Diff Highlights" my-custom-menus/diff-hl)
 (defvar my-custom-menus/diff-hl
-  '("Diff HL"
+  '("Diff Highlights"
     ["Navigation" :enable nil]                                                    ; Section header; disabled for display.
     ["Next hunk" diff-hl-next-hunk :keys "C-x v n"
      :help "Jump to the next hunk in the buffer."]
@@ -97,12 +103,14 @@
     ["Set reference rev" diff-hl-set-reference-rev
      :help "Change the Git revision used for diffs."]
     ["Overlay modified" diff-hl-overlay-modified
-     :help "Toggle overlay for modified lines."])
+     :help "Toggle overlay for modified lines."]
+    ["Show staged hunk(s)" my-vc/show-staged-dif
+     :help "Show the hunk or hunks staged for the next git commit."])
   "Menu for diff-hl functions for navigation, operations, modes, and globals.")
 
 ;; Function to add menu to menu-bar (call once in config).
 ;; Prioritise efficiency: Only define if not already present.
-(defun my-diff-hl-setup-menu ()
+(defun my-vc/diff-hl-setup-menu ()
   "Set up diff-hl menu in the menu-bar.
 Flow:
 - Check if menu exists to avoid duplicates.
@@ -111,9 +119,19 @@ Flow:
     (easy-menu-define diff-hl-menu global-map "Diff HL" my-custom-menus/diff-hl)))
 
 ;; Call setup on load (efficient: Runs once).
-(my-diff-hl-setup-menu)
+(my-vc/diff-hl-setup-menu)
 
-
+;; The preferred mode is always to use git-ignore. However, here we show how we
+;; can modify the regular expression that tells Emacs which directories to
+;; ignore in vc-mode.
+;; `vc-ignore-dir-regexp` is a built-in variable that holds a regex pattern.
+;; The `format` function is used to append a new directory (`cell-mode`) to the
+;; existing ignore list.
+;; (setq vc-ignore-dir-regexp
+;;       (format "%s\\|%s"
+;;               vc-ignore-dir-regexp                                                ; Preserve the existing ignore patterns.
+;;               (expand-file-name                                                   ; Get absolute path from the Git root.
+;;                "custom-packages/cell-mode" (vc-root-dir))))                       ; Add cell-mode as an ignored directory.
 
 ;;; code:
 ;;; config phase
@@ -126,16 +144,6 @@ Flow:
 ;; Setting this to '(Git) ensures Emacs only uses Git for version control.
 (setq vc-handled-backends '(Git))
 
-;; Modify the regular expression that tells Emacs which directories to ignore
-;; in vc-mode.
-;; `vc-ignore-dir-regexp` is a built-in variable that holds a regex pattern.
-;; The `format` function is used to append a new directory (`cell-mode`) to the
-;; existing ignore list.
-(setq vc-ignore-dir-regexp
-      (format "%s\\|%s"
-              vc-ignore-dir-regexp                                                ; Preserve the existing ignore patterns.
-              (expand-file-name                                                   ; Get absolute path from the Git root.
-               "custom-packages/cell-mode" (vc-root-dir))))                       ; Add cell-mode as an ignored directory.
 
 ;;;;; 2) Adding a Submodule
 
@@ -170,6 +178,7 @@ Flow:
 ;; Press g to refresh
 ;; If the submodule is not listed, try:
 ;;     (vc-rescan)
+
 
 ;;;;; 4) Updating Submodules in vc-mode
 
