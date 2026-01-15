@@ -49,7 +49,7 @@
   "List of buffer names where `tab-line-mode` should always be enabled.")
 
 (defvar my-tab-line/enabled-prefixes
-  '("*EGLOT")
+  '("*EGLOT" "*vc-git-staged")
   "List of buffer name prefixes where `tab-line-mode` should be enabled.")
 
 ;; Customisable variables: These defcustoms allow user configuration via
@@ -192,7 +192,9 @@ Controls border thickness for visual separation."
 ;; ---------------------
 ;; The following functions improve tab-line interactions, such as safe closing
 ;; of tabs without unnecessarily killing buffers. Inspired by a blog post on
-;; emulating Atom tabs in Emacs[](https://andreyor.st/posts/2020-05-10-making-emacs-tabs-look-like-in-atom/).
+;; emulating Atom tabs in
+;; Emacs[]
+;; (https://andreyor.st/posts/2020-05-10-making-emacs-tabs-look-like-in-atom/).
 ;; Integrates with bookmark-view for layout control.
 ;; General flow: Functions handle tab closing by checking buffer presence
 ;; across windows, burying or killing as needed, and potentially deleting
