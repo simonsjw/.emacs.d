@@ -218,6 +218,134 @@ interface for templates and standard directory/string prompts."
 
 
 
+;;; Project level dictionary
+;; The project dictionary functionality provides a seamless way to configure
+;; and persist a project-specific Aspell personal dictionary for spell-checking
+;; in Emacs, particularly in programming modes, ensuring that technical terms
+;; and jargon are recognised without polluting the global user dictionary. At
+;; its core, the `my-prog-mode/set-project-dictionary' function orchestrates the
+;; process by identifying the project root, locating or creating a
+;; `.aspell.en.pws' file there, and setting the ispell-personal-dictionary
+;; variable accordingly; it either copies the user's global dictionary from
+;; their Emacs directory if the project file is absent, or merges any missing
+;; words from the global dictionary into the existing project one using
+;; `my-project/merge-aspell-dicts', which relies on `my-project/read-aspell-info' to parse both
+;; files into structured data (including language, encoding, and word lists)
+;; and `my-project/write-aspell' to rewrite the updated project file with sorted, unique
+;; words. Simultaneously, it updates or creates the project's `.dir-locals.el'
+;; file via `my-project/modify-dir-locals' to embed the dictionary setting for all
+;; modes, preserving existing content and applying the changes immediately to
+;; the current session. This integration delivers per-project spell-checking
+;; customisation that inherits global words, enhances reproducibility across
+;; Emacs sessions, and supports collaborative workflows by keeping
+;; project-specific vocabulary localised and easily shareable.
+
+(defun my-project/read-aspell-info (file)
+  "Read Aspell personal dictionary FILE and return plist.
+
+The plist will include :lang, :encoding, :words.
+Assumes standard .pws format."
+  (with-temp-buffer
+    (insert-file-contents file)
+    (goto-char (point-min))
+    (let* ((header (string-trim (buffer-substring-no-properties
+                                 (line-beginning-position)
+                                 (line-end-position))))
+           (parts (split-string header))
+           (lang (nth 2 parts))
+           (encoding (if (> (length parts) 4) (nth 4 parts) nil))
+           (words nil))
+      (forward-line 1)
+      (while (not (eobp))
+        (let ((word (string-trim (buffer-substring-no-properties
+                                  (line-beginning-position)
+                                  (line-end-position)))))
+          (unless (string-empty-p word)
+            (push word words)))
+        (forward-line 1))
+      (list :lang lang :encoding encoding :words (nreverse words)))))
+
+(defun my-project/write-aspell (file lang encoding words)
+  "Write WORDS to Aspell personal dictionary FILE with LANG and optional ENCODING.
+Sorts words alphabetically and updates header count."
+  (with-temp-file file
+    (insert (format "personal_ws-1.1 %s %d%s\n"
+                    lang
+                    (length words)
+                    (if encoding (concat " " encoding) "")))
+    (dolist (word (sort words #'string<))
+      (insert word "\n"))))
+
+(defun my-project/merge-aspell-dicts (user-dict project-dict)
+  "Merge words from USER-DICT into PROJECT-DICT, adding missing ones uniquely."
+  (let* ((user-info (my-project/read-aspell-info user-dict))
+         (project-info (my-project/read-aspell-info project-dict))
+         (all-words (cl-union (plist-get user-info :words)
+                              (plist-get project-info :words)
+                              :test #'string=)))
+    (my-project/write-aspell project-dict
+                             (plist-get project-info :lang)
+                             (plist-get project-info :encoding)
+                             all-words)))
+
+(defun my-project/modify-dir-locals (dir-locals-file project-dict)
+  "Modify DIR-LOCALS-FILE to include `ispell-personal-dictionary'.
+
+DIR-LOCALS-FILE will be set to PROJECT-DICT if missing.
+The function reads, updates, and writes back the file while preserving structure."
+  (let ((content (with-temp-buffer
+                   (insert-file-contents dir-locals-file)
+                   (read (current-buffer)))))
+    (let ((nil-class (assoc nil content)))
+      (unless (assoc 'ispell-personal-dictionary (cdr nil-class))
+        (if nil-class
+            (setcdr nil-class (append (cdr nil-class)
+                                      `((ispell-personal-dictionary . ,project-dict))))
+          (setq content (append content
+                                `((nil . ((ispell-personal-dictionary . ,project-dict)))))))
+        (with-temp-file dir-locals-file
+          (pp content (current-buffer)))))))
+
+(defun my-prog-mode/set-project-dictionary ()
+  "Set `ispell-personal-dictionary' to a `.aspell.en.pws' in the project root.
+
+This setting is also saved to `.dir-locals.el'.
+- If .dir-locals.el exists and lacks the setting, add it and copy user dict if
+  needed.
+- If it exists and has the setting, merge missing words from user dict to
+  project dict.
+- If .dir-locals.el is new, create it with the setting and copy user dict.
+Does not alter other .dir-locals.el content."
+  (interactive)
+  (let* ((project-root (or (project-root (project-current))
+                           (user-error "No project detected")))
+         (dir-locals-file (expand-file-name ".dir-locals.el" project-root))
+         (project-dict (expand-file-name ".aspell.en.pws" project-root))
+         (user-dict (expand-file-name ".aspell.en.pws" user-emacs-directory))
+         (file-exists (file-exists-p dir-locals-file))
+         (has-setting (and file-exists
+                           (with-temp-buffer
+                             (insert-file-contents dir-locals-file)
+                             (goto-char (point-min))
+                             (search-forward "ispell-personal-dictionary" nil t)))))
+    (unless (file-exists-p user-dict)
+      (user-error "User dictionary %s does not exist" user-dict))
+    (if (file-exists-p project-dict)
+        (my-project/merge-aspell-dicts user-dict project-dict)
+      (copy-file user-dict project-dict))
+    (if file-exists
+        (unless has-setting
+          (my-project/modify-dir-locals dir-locals-file project-dict))
+      (with-temp-file dir-locals-file
+        (insert (format "%S" `((nil . ((ispell-personal-dictionary . ,project-dict))))))))
+    (dir-locals-read-from-dir project-root)
+    (when (derived-mode-p 'prog-mode)
+      (hack-dir-local-variables))
+    (message "Project dictionary set to %s; updated %s. Run M-x normal-mode if needed."
+             project-dict dir-locals-file)))
+
+
+
 ;;; my-project.el --- Modular functions for managing and displaying Emacs projects with Git info
 
 ;; Common logic (e.g., path formatting, grouping projects by workspaces,
