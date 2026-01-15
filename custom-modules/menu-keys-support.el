@@ -91,7 +91,7 @@ These are available in `prog-mode'."
   '("Comments"
     "---"
     ["Format Comment" :enable nil]
-    ["Align Comment" comment-indent :keys "C-c c TAB" :help "Align comment"]
+    ["Align Comment" my-in-buffer-tools/my-comment-align-region-or-line :keys "C-c c TAB" :help "Align comment"]
     ["Fill Comment Paragraph" fill-comment-paragraph :keys "C-c c f" :help "Fill comment paragraph"]
     ["Add Box Around Comment" comment-box :keys "C-c c b" :help "Add box around comment"]
     ["Align All Comments" my-in-buffer-tools/comment-align-buffer :keys "C-c c a" :help "Align all inline comments in buffer to comment column"]
