@@ -13,11 +13,15 @@
 ;; locations for use with no littering.
 
 (defvar user-emacs-directory nil "The Emacs base directory.")
-(setq user-emacs-directory (getenv "USER_EMACS_DIRECTORY"))
+(setq user-emacs-directory
+      (or (getenv "USER_EMACS_DIRECTORY")
+          (expand-file-name "~/.emacs.d/")))
 
-(defvar envvar/SYSTEM_NAME (getenv "MY_NAME")
+(defvar envvar/SYSTEM_NAME nil
   "The name of the system on which we are currently running Emacs.")
-
+(setq envvar/SYSTEM_NAME
+      (or (getenv "MY_NAME")
+          (expand-file-name "INFODYNAMICS")))
 ;; Use the `envvar/SYSTEM_NAME` environment variable to set machine specific
 ;; locations for use with no littering.
 
@@ -25,37 +29,36 @@
   "Create the path `no-littering-var-directory`.")
 (setq no-littering-var-directory
       (expand-file-name (concat "var/" envvar/SYSTEM_NAME )
-                      	user-emacs-directory))
+                        user-emacs-directory))
 
 (defvar no-littering-etc-directory nil
   "Create the path `no-littering-etc-directory'.")
 (setq no-littering-etc-directory
       (expand-file-name (concat "etc/" envvar/SYSTEM_NAME)
-                   	user-emacs-directory))
+                     	user-emacs-directory))
 
 ;; In early-init.el
-
 (load-file (expand-file-name "custom-modules/path-support.el" user-emacs-directory))
 
 (startup-redirect-eln-cache my-paths/eln-cache)                                     ; Set the eln-cache directory for compiled files to the defined path.
 
 (setq epg-gpg-program "/usr/bin/gpg")                                             ; set up the path to the encryption application on the system.
 
-   ;;;; Garbage collection, font & eln caching:
+;;;; Garbage collection, font & eln caching:
 ;; Increase the GC threshold for faster startup
 ;; The default is 800 kilobytes.  Measured in bytes.
 ;; Garbage collection
 (defvar gc-cons-threshold nil
   "Increase the GC threshold for faster startup.
 
-  Default is 800 kilobytes.  Measured in bytes.")
+    Default is 800 kilobytes.  Measured in bytes.")
 
 ;; configure garbage collection.
 (setq gc-cons-threshold (* 50 1000 1000))
 
 (setq inhibit-compacting-font-caches t)                                           ; Don't compact font caches during GC.
 
-;;; Emacs lisp source/compiled preference
+  ;;; Emacs lisp source/compiled preference
 ;; Prefer loading newest compiled .el file.
 (defvar comp-speed nil "Set native compilation.")
 (setq comp-speed 1)
@@ -70,7 +73,7 @@
 (defvar native-comp-async-report-warnings-errors nil "Don't show warnings for native compilation.")
 (setq native-comp-async-report-warnings-errors nil)
 
-;;;; UI configuration
+  ;;;; UI configuration
 ;; Remove some unneeded UI elements (the user can turn back on anything they wish)
 (add-to-list 'default-frame-alist '(background-color . "#1B152D"))
 (add-to-list 'default-frame-alist '(foreground-color . "#EEEEEC"))
@@ -97,6 +100,6 @@
 ;;     (add-to-list 'default-frame-alist '(width  . 300))
 
 (provide 'early-init)
-;;; early-init.el ends here
+  ;;; early-init.el ends here
                                                                                   ; LocalWords:  gnupg
                                                                                   ; LocalWords:  ACA

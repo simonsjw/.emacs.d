@@ -38,13 +38,12 @@ export JUPYTER_ANACONDA_ENVIRONMENT="gpt4"
 #+end_src
 
 
-
 ** External dependencies
 Make sure you have the following external dependencies:
 
 
 |                      |                                |                      |                         |
-| *Dependency*           | *Install expression*             | *Associated mode*      | *Additional info*         |
+| Dependency           | Install expression             | Associated mode      | Additional info-look    |
 |                      |                                |                      |                         |
 |----------------------+--------------------------------+----------------------+-------------------------|
 |----------------------+--------------------------------+----------------------+-------------------------|
@@ -165,11 +164,15 @@ Define settings for =early-init.el=.
   ;; locations for use with no littering.
 
   (defvar user-emacs-directory nil "The Emacs base directory.")
-  (setq user-emacs-directory (getenv "USER_EMACS_DIRECTORY"))
-
-  (defvar envvar/SYSTEM_NAME (getenv "MY_NAME")
+  (setq user-emacs-directory
+        (or (getenv "USER_EMACS_DIRECTORY")
+            (expand-file-name "~/.emacs.d/")))
+  
+  (defvar envvar/SYSTEM_NAME nil
     "The name of the system on which we are currently running Emacs.")
-
+  (setq envvar/SYSTEM_NAME
+        (or (getenv "MY_NAME")
+            (expand-file-name "INFODYNAMICS")))
   ;; Use the `envvar/SYSTEM_NAME` environment variable to set machine specific
   ;; locations for use with no littering.
 
@@ -177,37 +180,36 @@ Define settings for =early-init.el=.
     "Create the path `no-littering-var-directory`.")
   (setq no-littering-var-directory
         (expand-file-name (concat "var/" envvar/SYSTEM_NAME )
-                        	user-emacs-directory))
+                          user-emacs-directory))
 
   (defvar no-littering-etc-directory nil
     "Create the path `no-littering-etc-directory'.")
   (setq no-littering-etc-directory
         (expand-file-name (concat "etc/" envvar/SYSTEM_NAME)
-                     	user-emacs-directory))
-  
-  ;; In early-init.el
+                       	user-emacs-directory))
 
+  ;; In early-init.el
   (load-file (expand-file-name "custom-modules/path-support.el" user-emacs-directory))
 
   (startup-redirect-eln-cache my-paths/eln-cache)                                     ; Set the eln-cache directory for compiled files to the defined path.
 
   (setq epg-gpg-program "/usr/bin/gpg")                                             ; set up the path to the encryption application on the system.
 
-     ;;;; Garbage collection, font & eln caching:
+  ;;;; Garbage collection, font & eln caching:
   ;; Increase the GC threshold for faster startup
   ;; The default is 800 kilobytes.  Measured in bytes.
   ;; Garbage collection
   (defvar gc-cons-threshold nil
     "Increase the GC threshold for faster startup.
 
-    Default is 800 kilobytes.  Measured in bytes.")
+      Default is 800 kilobytes.  Measured in bytes.")
 
   ;; configure garbage collection.
   (setq gc-cons-threshold (* 50 1000 1000))
 
   (setq inhibit-compacting-font-caches t)                                           ; Don't compact font caches during GC.
 
-  ;;; Emacs lisp source/compiled preference
+    ;;; Emacs lisp source/compiled preference
   ;; Prefer loading newest compiled .el file.
   (defvar comp-speed nil "Set native compilation.")
   (setq comp-speed 1)
@@ -222,7 +224,7 @@ Define settings for =early-init.el=.
   (defvar native-comp-async-report-warnings-errors nil "Don't show warnings for native compilation.")
   (setq native-comp-async-report-warnings-errors nil)
 
-  ;;;; UI configuration
+    ;;;; UI configuration
   ;; Remove some unneeded UI elements (the user can turn back on anything they wish)
   (add-to-list 'default-frame-alist '(background-color . "#1B152D"))
   (add-to-list 'default-frame-alist '(foreground-color . "#EEEEEC"))
@@ -249,7 +251,7 @@ Define settings for =early-init.el=.
   ;;     (add-to-list 'default-frame-alist '(width  . 300))
 
   (provide 'early-init)
-  ;;; early-init.el ends here
+    ;;; early-init.el ends here
                                                                                     ; LocalWords:  gnupg
                                                                                     ; LocalWords:  ACA
 
@@ -278,14 +280,15 @@ This means all variables with external origins in emacs are specified here.
   ;; line 3.
 
 
-  (defvar no-littering-var-directory (expand-file-name (concat "var/"  (getenv "MY_NAME"))
-                          	                     user-emacs-directory)
-    "Define the path `no-littering-var-directory`.")
-  (defvar no-littering-etc-directory (expand-file-name (concat "etc/"  (getenv "MY_NAME"))
-                          	                     user-emacs-directory)
-    "Define the path `no-littering-etc-directory`.")
+  ;; (defvar no-littering-var-directory (expand-file-name (concat "var/"  (getenv "MY_NAME"))
+  ;;                         	                     user-emacs-directory)
+  ;;   "Define the path `no-littering-var-directory`.")
+  ;; (defvar no-littering-etc-directory (expand-file-name (concat "etc/"  (getenv "MY_NAME"))
+  ;;                         	                     user-emacs-directory)
+  ;;   "Define the path `no-littering-etc-directory`.")
 
-    ;;; Code:
+  ;;; Code
+  
   (use-package menu-keys-support
     :ensure nil  ; Local file, not a package
     :load-path "custom-modules/")
@@ -730,7 +733,8 @@ Load the summary page code then set up the startup configuration.  Finalize the 
   (require 'system-window-management)
   (require 'startup-config)
   (require 'menu-keys-support)
-
+  (require 'server-support)
+  
   ;; All the autoloaded packages are now loaded.
   ;; set elisp-flymake-byte-compile-load-path
   (setq elisp-flymake-byte-compile-load-path load-path)
@@ -752,33 +756,31 @@ Show the loading time via a the emacs-startup-hook.
   ;; Profile emacs startup
   (defun my-startup/display-startup-time ()
     "Display the startup time after Emacs is fully initialized."
-        (log/info :fn 'init
-                  :msg (format "Emacs loaded in %s." (emacs-init-time))
-                  :obj t))
+    (log/info :fn 'init
+              :msg (format "Emacs loaded in %s." (emacs-init-time))
+              :obj t))
 
   (add-hook
    'emacs-startup-hook #'my-startup/display-startup-time)
 
   (setq inhibit-startup-screen nil                                                 ; stop the default splash screen
-         inhibit-startup-message nil
-         inhibit-startup-echo-area-message nil)
+        inhibit-startup-message nil
+        inhibit-startup-echo-area-message nil)
+
   (setq initial-scratch-message nil)                                             ; remove the message in the scratch buffer.
 
-  ;; start the server if its not already running.
-  ;; To shutdown the server use the below: 
-  ;;   M-x server-edit
-  ;;   C-x C-c
-  ;; (unless
-  ;;     (server-running-p)
-  ;;   (server-start))
 
   (recentf-mode 1)
   (recentf-cleanup)
   (savehist-mode 1)
 
   (provide 'init)
-  ;;; init.el ends here
+         ;;; init.el ends here
 
 #+end_src
 
 
+* Local Variables :noexport:
+# Local Variables:
+# visual-fill-column-width: 120
+# End:

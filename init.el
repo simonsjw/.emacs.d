@@ -7,14 +7,15 @@
 ;; line 3.
 
 
-(defvar no-littering-var-directory (expand-file-name (concat "var/"  (getenv "MY_NAME"))
-                        	                     user-emacs-directory)
-  "Define the path `no-littering-var-directory`.")
-(defvar no-littering-etc-directory (expand-file-name (concat "etc/"  (getenv "MY_NAME"))
-                        	                     user-emacs-directory)
-  "Define the path `no-littering-etc-directory`.")
+;; (defvar no-littering-var-directory (expand-file-name (concat "var/"  (getenv "MY_NAME"))
+;;                         	                     user-emacs-directory)
+;;   "Define the path `no-littering-var-directory`.")
+;; (defvar no-littering-etc-directory (expand-file-name (concat "etc/"  (getenv "MY_NAME"))
+;;                         	                     user-emacs-directory)
+;;   "Define the path `no-littering-etc-directory`.")
 
-  ;;; Code:
+;;; Code
+
 (use-package menu-keys-support
   :ensure nil  ; Local file, not a package
   :load-path "custom-modules/")
@@ -285,6 +286,7 @@
 (require 'system-window-management)
 (require 'startup-config)
 (require 'menu-keys-support)
+(require 'server-support)
 
 ;; All the autoloaded packages are now loaded.
 ;; set elisp-flymake-byte-compile-load-path
@@ -301,29 +303,23 @@
 ;; Profile emacs startup
 (defun my-startup/display-startup-time ()
   "Display the startup time after Emacs is fully initialized."
-      (log/info :fn 'init
-                :msg (format "Emacs loaded in %s." (emacs-init-time))
-                :obj t))
+  (log/info :fn 'init
+            :msg (format "Emacs loaded in %s." (emacs-init-time))
+            :obj t))
 
 (add-hook
  'emacs-startup-hook #'my-startup/display-startup-time)
 
 (setq inhibit-startup-screen nil                                                 ; stop the default splash screen
-       inhibit-startup-message nil
-       inhibit-startup-echo-area-message nil)
+      inhibit-startup-message nil
+      inhibit-startup-echo-area-message nil)
+
 (setq initial-scratch-message nil)                                             ; remove the message in the scratch buffer.
 
-;; start the server if its not already running.
-;; To shutdown the server use the below: 
-;;   M-x server-edit
-;;   C-x C-c
-;; (unless
-;;     (server-running-p)
-;;   (server-start))
 
 (recentf-mode 1)
 (recentf-cleanup)
 (savehist-mode 1)
 
 (provide 'init)
-;;; init.el ends here
+       ;;; init.el ends here
