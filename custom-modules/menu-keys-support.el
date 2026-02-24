@@ -105,9 +105,9 @@ These are available in `prog-mode'."
     ["Comment Region" comment-region :keys "C-c c r" :help "Comment selected region"]
     ["Uncomment Region" uncomment-region :keys "C-c c u" :help "Uncomment selected region"]
     ["Kill Comment" comment-kill :keys "C-c c k" :help "Kill full comment"]
-    ["Break Line at Point and Indent" comment-indent-new-line :keys "C-c c RET" :help "Break line at point and indent"])
+    ["Break Line at Point and Indent" comment-indent-new-line :keys "C-c c RET" :help "Break line at point and indent"]
+    )
   "Menu for comment-related functions in `prog-mode'.")
-
 
 (defvar my-custom-menus/flymake-menu
   '("linting"

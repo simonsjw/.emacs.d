@@ -84,15 +84,15 @@
     "bash_logout"
     "esrc" "rcrc"
     "kshenv" "zshenv")                                                            ; From [kz]shenv
-  "List of exact shell dotfile basenames to exclude.")
+  "List of exact shell dotfile base-names to exclude.")
 
 (defvar my-magicless-fixed-dotfiles-regexp
   (concat "/\\." (regexp-opt my-magicless-fixed-dotfiles) "$")
-  "Optimised regexp for fixed shell dotfiles.")
+  "Optimised regexp for fixed shell dot files.")
 
-;; Finally, variable shell dotfiles: regex for .+shrc (e.g., .bashrc, .zshrc).
+;; Finally, variable shell dot files: regex for .+shrc (e.g., .bashrc, .zshrc).
 (defvar my-magicless-variable-dotfiles-regexp "/\\..+shrc$"
-  "Regexp for variable-length shrc dotfiles.")
+  "Regexp for variable-length shrc dot files.")
 
 ;; Combine original parts with alternation for efficiency.
 (defvar my-magicless-original-regexp
@@ -120,14 +120,14 @@
 ;; coding language. This can be done hierarchically so for example defining
 ;; `my-prog-mode/prog-mode-accepted-words' for generic prog-mode words then
 ;; `my-prog-mode/python-mode-accepted-words' for python specific words will
-;; work provided `my-prog-mode/add-words-to-flyspell' is run for the `prog-mode'
+;; work provided `my-prog-mode/add-words-to-jinx' is run for the `prog-mode'
 ;; and `python-mode' contexts.
 ;;
 ;; Example:  python-mode
 ;; ---------------------
 ;; ;; Defining the below `defconst' and then running
-;; ;;`my-prog-mode/add-mode-specific-words-to-flyspell' causes these words to be
-;; ;; ignored in a spell check of that language with flyspell. This is done by
+;; ;;`my-prog-mode/add-mode-specific-words-to-jinx' causes these words to be
+;; ;; ignored in a spell check of that language with jinx. This is done by
 ;; ;; adding words to the variable `ispell-buffer-session-localwords' in the
 ;; ;; local buffer.
 ;; (defconst my-prog-mode/python-mode-accepted-words
@@ -135,29 +135,8 @@
 ;;     "async" "await" "self" "cls" "None" "True" "False")
 ;;   "Python-specific keywords often appearing in comments/docstrings.")
 ;;
-;; (my-prog-mode/add-words-to-flyspell
+;; (my-prog-mode/add-words-to-jinx
 ;;    my-prog-mode/python-mode-accepted-words 'prog-mode)
-
-(defun my-prog-mode/add-words-to-flyspell (words mode-sym)
-  "Add WORDS to `ispell-buffer-session-localwords' uniquely.
-Purpose: Efficiently extend session-local dictionary for Flyspell.
-Variables: WORDS (list of strings), MODE-SYM (symbol for logging).
-Flow:
-1. Iterate WORDS.
-2. Use `cl-pushnew' for uniqueness.
-3. Log addition.
-4. Recheck Flyspell if active."
-  (let ((added-count 0))
-    (dolist (word words)
-      (when (cl-pushnew word ispell-buffer-session-localwords :test #'string-equal)
-        (setq added-count (1+ added-count))))
-    (log/info :fn 'my-prog-mode/add-words-to-flyspell
-              :msg (format "Added %d words for %s to Flyspell dictionary."
-                           added-count mode-sym)
-              :obj mode-sym))
-  ;; Recheck buffer to apply changes immediately if Flyspell is on.
-  (when flyspell-mode
-    (flyspell-buffer)))
 
 
 ;;;; Configuration for all programming modes.
@@ -177,7 +156,6 @@ Flow:
   (display-line-numbers-mode)                                                     ; activate line numbers.
   (set-face-attribute 'line-number nil :height 0.8)
   
-
   ;; Auto-save files.
   (my-prog-mode/auto-save-hook)
 
@@ -194,11 +172,30 @@ Flow:
   (setq-local display-fill-column-indicator-column t)
   (display-fill-column-indicator-mode)
   
-  ;; ensure changess are visible in the buffer.
+  ;; ensure changes are visible in the buffer.
   ;; (highlight-changes-mode)
 
   ;; (setq yas-use-menu 'abbreviate)                                              ; show only the snippets for the mode of the buffer.
 
+  ;; Set up the Jinx spell checker. 
+  (jinx-mode 1)
+  ;; Common programming words (you can run this manually per project)
+  (defconst my-prog-mode/prog-mode-accepted-words
+    '("bashrc" "zshrc" "foo" "bar" "foobar" "idx" "dotfile" "tstamp" "tex" "csv" "pdf"
+      "ARGS" "Args" "Backtrace" "DDirectory" "LaTeX" "LocalWords" "OPTARG"
+      "README" "SPEEDBAR" "TODO" "alist" "autosave" "aspell" "basedpyright" "cd" "chmod" "chown" "const" "conda"
+      "config" "csv" "defconst" "defcustom" "defvar" "dir" "docstring" 
+      "docstrings" "Eglot" "eglot" "el" "elpa" "env" "flymake" "flyspell" 
+      "github" "gitignore" "hdb" "http" "https" "ipynb" "ipython" "jdk" 
+      "joinpath" "json" "jsonl" "keymap" "keymaps" "lang" "lvl" "makefile" "md" "mnt" "modeline" "noqa" "odbc" 
+      "prog" "py" "rlwrap" "scipy" "sudo" "setq" "speedbar" "sql" "str" "sym" "tmp" 
+      "txt" "urls" "usr" "vterm" "ws" "yas" "yasnippet")
+    "Words commonly accepted in all programming modes.
+Run `M-x my-spell-check/add-prog-words` once per project to add them.")
+
+  (my-spell-check/add-words-to-jinx
+   my-prog-mode/prog-mode-accepted-words 'session 'prog-mode)
+  
   (setq-local truncate-lines t)                                                   ; deactivate line-wrapping.
 
   ;; Keymaps and Menus
@@ -206,29 +203,12 @@ Flow:
   (local-set-key
    (kbd my-custom-prefix-keys/comment) 'my-key-maps/prog-mode-comment-map)
 
-  ;; Create comment menu including thoose new buffer local keymaps.
+
+  ;; Create comment menu including those new buffer local keymaps.
   (easy-menu-define my-prog-mode-menu                                             ; symbol-name
     (current-local-map)                                                           ; maps
     "Menu for comment-related functions."                                         ; docs
     my-custom-menus/comment-menu)                                                 ; menu
-
-  ;; set up flyspell. (flyspell-prog-mode ignores function and variable names.)
-  (flyspell-prog-mode)
-
-  ;; add  generic programming words to `ispell-buffer-session-localwords'.
-  (defconst my-prog-mode/prog-mode-accepted-words
-    '("foo" "bar" "foobar" "idx" "dotfile" "tstamp" "tex" "csv" "pdf"
-      "ARGS" "Args" "Backtrace" "DDirectory" "LaTeX" "LocalWords" "OPTARG"
-      "README" "SPEEDBAR" "TODO" "alist" "aspell" "basedpyright" "cd" "conda"
-      "config" "csv" "defconst" "defcustom" "defvar" "dir" "docstring" 
-      "docstrings" "el" "elpa" "env" "flymake" "flyspell" "github" "gitignore"
-      "hdb" "http" "https" "ipynb" "ipython" "jdk" "joinpath" "json" "jsonl"
-      "lvl" "md" "mnt" "modeline" "noqa" "odbc" "prog" "py" "rlwrap" "scipy"
-      "setq" "speedbar" "sql" "str" "sym" "tmp" "txt" "urls" "usr" "vterm" "ws"
-      "yasnippet")                                                                ; General programming words
-    "Words commonly accepted in all programming modes.")
-  (my-prog-mode/add-words-to-flyspell
-   my-prog-mode/prog-mode-accepted-words 'prog-mode)
 
   )
 
@@ -241,4 +221,6 @@ Flow:
 (provide 'lang-prog-mode)
 ;;; lang-prog-mode.el ends here
 
-;; LocalWords:  shrc esrc rcrc
+;; Local Variables:
+;; jinx-local-words: "akefile magicless"
+;; End:

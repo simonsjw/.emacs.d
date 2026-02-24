@@ -220,11 +220,12 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
   ;; add python programming 'words' to `ispell-buffer-session-localwords'
   (defconst my-prog-mode/python-base-mode-accepted-words
     '("def" "class" "import" "from" "as" "return" "yield"
-      "async" "await" "self" "cls" "None" "True" "False")
+      "async" "await" "self" "cls" "None" "True" "False"
+      "ValueError" "ImportError")
     "Python-specific keywords often appearing in comments/docstrings.")
-  ;; add  generic programming words to `ispell-buffer-session-localwords'.
-  (my-prog-mode/add-words-to-flyspell
-   my-prog-mode/python-base-mode-accepted-words 'python-base-mode)
+
+  (my-spell-check/add-words-to-jinx
+   my-prog-mode/python-base-mode-accepted-words 'session 'python-mode)
 
   
   ;; LSP with Pyrefly
@@ -387,6 +388,9 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
        :help "Creates .dir-locals.el in root of current project to start the current env automatically"]
       ["Create project dictionary" my-prog-mode/set-project-dictionary
        :help "Creates project dictionary and sets variable to point at it in .dir-locals.el"]
+      "---"
+      ["Vterm: visit current" my-vterm/cd-to-current-dir
+       :help "Visits the directory associated with the active buffer in vterm."]
       "---"
       ["Find other project sources" consult-project-extra-find
        :help "Find other project sources"])

@@ -20,7 +20,6 @@
 ;; each setting.
 
 ;;; Code:
-
 (use-package vertico
   :ensure t
   :custom
@@ -30,11 +29,12 @@
   :init
   (vertico-mode 1)
   :config
-  ;; Optional: Improve performance for very large completion tables
-  ;; by using faster dispatchers (requires orderless-fast from MELPA,
-  ;; uncomment if installed).
-  ;; (vertico-multiform-mode 1)
-  )
+  (vertico-multiform-mode 1)
+
+  ;; Jinx correction menu – compact grid for technical jargon (en_AU)
+  ;; Official recommendation from Jinx README (v2.6, February 2026)
+  (add-to-list 'vertico-multiform-categories
+               '(jinx grid (vertico-grid-annotate . 25) (vertico-count . 6))))
 
 
 (use-package orderless
@@ -44,14 +44,32 @@
   (completion-styles '(orderless basic))
   ;; Clear packaged defaults to avoid conflicts.
   (completion-category-defaults nil)
-  ;; Specific overrides:
-  ;; - Files: partial-completion for better path expansion.
-  ;; - Eglot (LSP via Pyrefly): Orderless for local fuzzy filtering.
-  (completion-category-overrides
-   '((file (styles partial-completion))
-     (eglot (styles orderless))))
-  ;; Space separates Orderless components (default behaviour).
-  (orderless-component-separator " "))
+  ;; Space separates Orderless components.
+  (orderless-component-separator #'orderless-escapable-split-on-space)
+  :config
+  ;; Performance boost for short inputs (Jinx menu, Cape-dict, daily use)
+  (defun orderless-fast-dispatch (word index total)
+    "Fast literal-prefix for short single-word input (Corfu/Vertico).
+Purpose: Avoid expensive regex on 1-3 char prefixes.
+Variables: WORD, INDEX, TOTAL as per orderless-style-dispatchers.
+Flow: Return literal-prefix style only for first word <4 chars."
+    (and (= index 0)
+         (= total 1)
+         (length< word 4)
+         (cons 'orderless-literal-prefix word)))
+
+  (orderless-define-completion-style orderless-fast
+    (orderless-style-dispatchers '(orderless-fast-dispatch))
+    (orderless-matching-styles '(orderless-literal
+                                 orderless-regexp
+                                 orderless-initialism
+                                 orderless-flex)))
+
+  ;; Authoritative place for ALL category overrides (prevents any future overwrites)
+  (setq completion-category-overrides
+        '((jinx   (styles orderless-fast))          ; makes Jinx menu fast + grid work perfectly
+          (file   (styles orderless-fast partial-completion))
+          (eglot  (styles orderless)))))
 
 (use-package marginalia
   :ensure t
@@ -91,6 +109,16 @@
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
+(use-package corfu-popupinfo
+  :ensure nil                                                                     ; Included with Corfu, no separate install needed
+  :after corfu
+  :config
+  (corfu-popupinfo-mode 1))
+
+;; Then, in your existing corfu block, remove the :config section entirely,
+;; as the mode enablement is now handled above. If you have other :config,
+;; keep it and just remove the (corfu-popupinfo-mode 1) line.
+;; Full updated corfu block (without :config if nothing else):
 (use-package corfu
   :ensure t
   :custom
@@ -105,16 +133,18 @@
   (:map corfu-map
         ("M-p" . corfu-popupinfo-scroll-down)                                     ; Scroll doc popup down
         ("M-n" . corfu-popupinfo-scroll-up)                                       ; Scroll doc popup up
-        ("M-d" . corfu-popupinfo-toggle))                                         ; Toggle documentation popup
+        ("M-d" . corfu-popupinfo-toggle)                                          ; Toggle documentation popup
+        ("C-j" . jinx-correct)                                                    ; C-j feels natural next to C-h / C-n
+        ("M-j" . jinx-correct))                                                   ; fallback if C-j is taken
   :init
   (global-corfu-mode 1)
-  ;; Enable documentation popup globally.
   (corfu-popupinfo-mode 1)
   ;; Make eldoc aware of Corfu insertions.
   (eldoc-add-command #'corfu-insert))
 
 (use-package cape
   :ensure t
+  :after corfu
   :init
   ;; Add useful default completion-at-point functions globally.
   ;; File paths at point.
@@ -126,6 +156,8 @@
   ;; (add-to-list 'completion-at-point-functions #'cape-symbol)                     ; Symbols from Emacs’s dynamic environment – primarily names bound with defvar, defconst, defface, etc., and also things like function names known to elisp-completion-at-point.
   ;; (add-to-list 'completion-at-point-functions #'cape-line)                       ; What it completes: Entire lines from the current buffer that begin with the text before point.
   :config
+  ;; Add dictionary completion (reuses your en_AU / en_GB from Jinx - loaded later in writing-config))
+  (add-to-list 'completion-at-point-functions #'cape-dict)
   ;; Silence pcomplete (shell completion) messages – cleaner output.
   (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
   ;; Ensure pcomplete behaves purely as a capf (no buffer modifications).
@@ -155,3 +187,6 @@
 
 (provide 'completion-support)
 ;;; completion-support.el ends here
+
+;; Local Variables:
+;; End:

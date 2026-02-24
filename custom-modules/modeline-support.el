@@ -100,7 +100,6 @@ The matching bracket info is shown if the cursor is near a bracket.")
 (delight '((compile-angel-on-save-local-mode nil compile-angel)
            (yas-minor-mode nil yasnippet)
            (which-key-mode "" which-key)
-           (flyspell-mode nil flyspell)
            (compile-angel-on-load-mode nil compile-angel)))
 
 

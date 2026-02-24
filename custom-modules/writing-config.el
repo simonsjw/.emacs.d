@@ -48,7 +48,6 @@
 (declare-function auctex-latexmk-setup "auctex")
 (declare-function citar-embark-mode "citar-embark")
 
-(declare-function flyspell-mode-on "flyspell")
 (declare-function auto-fill-mode "simple")
 (declare-function yas-minor-mode-on "yasnippet")
 
@@ -57,35 +56,83 @@
 (use-package pandoc-mode)
 (use-package olivetti)
 
-;; PDF support
-(use-package pdf-tools
-  :config
-  (pdf-tools-install))                                                            ; Install once here; no duplicates.
 
-(use-package cdlatex)
+;; PDF support
+;; -----------
+;; First ensure you have the right tools installed:
+;; # Install pdf-tools dependencies for Ubuntu/Debian.
+;; sudo apt update
+;; sudo apt install -y libpoppler-dev libpoppler-glib-dev libcairo2-dev libpng-dev zlib1g-dev libglib2.0-dev make
+;; # Optional: For following image links in PDFs.
+;; sudo apt install -y libmagickwand-dev
+;; # Optional: Ubuntu-packaged epdfinfo binary to skip manual compile (if available in 24.04 repos).
+;; sudo apt install -y elpa-pdf-tools-server
+(package-initialize)
+(use-package pdf-tools
+  :ensure t
+  :defer t                                                                        ; Defer full load until needed.
+  :hook
+  (pdf-view-mode . pdf-history-minor-mode)                                        ; Enable history in PDF buffers.
+  (pdf-view-mode . pdf-misc-size-indication-minor-mode)                           ; Enable size indicators in PDF buffers.
+  :config
+  (pdf-occur-global-minor-mode 1))                                                ; Global search mode (safe here, as it's not buffer-dependent).
+
+
+(use-package pdf-loader
+  :ensure pdf-tools                                                               ; Pulls from pdf-tools package.
+  :demand t                                                                       ; Load immediately to define autoloads.
+  :config
+  (pdf-loader-install :no-query))                                                 ; Sets up on-demand; no build prompt.
+
+;; Defer global modes explicitly—add this new block.
+;;(with-eval-after-load 'pdf-tools
+;;  (pdf-occur-global-minor-mode 1)       ; Enable only after full load.
+;;  (pdf-history-minor-mode 1) ; Optional: Defer history if it errors too.
+;;  (pdf-misc-size-indication-minor-mode 1)) ; Optional: For size indicators.                                           ; Sets up autoloads; no build prompt.
+
+
 
 ;; LaTeX support - uses Auctex
 ;; Only install and load auctex when the latex executable is found,
 ;; otherwise it crashes when loading.
+;; Install the auctex-latexmk package when the latex and latexmk
+;; executable are found.
+;;
+;; This package contains a bug which might make it crash during loading
+;; (with a bug related to tex-buf) on newer systems.
+;;
+;; If you encounter the bug, you should uninstall this package, then
+;; you can install a fix (not on melpa) with the following recipe,
+;; and the configuration in this file will still work
+;;
+;; (N.B. the recipe is for straight.el, but can be modified for use with Emacs
+;;       29 package-vc, quelpa.el, or other \"from source\" package
+;;       managers.)
+;;
+;; '(auctex-latexmk :fetcher git :host github :repo \"wang1zhen/auctex-latexmk\")
+
 (when (executable-find "latex")
-  (use-package auctex)
-  ;; Install the auctex-latexmk package when the latex and latexmk
-  ;; executable are found.
-  ;;
-  ;; This package contains a bug which might make it crash during loading
-  ;; (with a bug related to tex-buf) on newer systems.
-  ;;
-  ;; If you encounter the bug, you should uninstall this package, then
-  ;; you can install a fix (not on melpa) with the following recipe,
-  ;; and the configuration in this file will still work
-  ;;
-  ;; (N.B. the recipe is for straight.el, but can be modified for use with Emacs
-  ;;       29 package-vc, quelpa.el, or other \"from source\" package
-  ;;       managers.)
-  ;;
-  ;; '(auctex-latexmk :fetcher git :host github :repo \"wang1zhen/auctex-latexmk\")
-  (when (executable-find "latexmk")
-    (use-package auctex-latexmk)))
+  (use-package auctex
+    :ensure t
+    :defer t                                                                      ; Defer until LaTeX-mode.
+    :hook (LaTeX-mode . my-lang-tex/latex-setup)                                  ; Existing hook.
+    :config
+    ;; Wait for tex.el to load before setting viewer vars.
+    (eval-after-load 'tex
+      '(when (require 'pdf-tools nil 'noerror)
+         (add-to-list 'TeX-view-program-selection
+                      '(output-pdf "PDF Tools"))
+         (add-to-list 'TeX-view-program-list
+                      '("PDF Tools" TeX-pdf-tools-sync-view)))))
+  (use-package cdlatex))
+
+(when (executable-find "latexmk")
+  (use-package auctex-latexmk
+    :ensure t
+    :after auctex                                                                 ; Ensure after AUCTeX.
+    :config
+    (auctex-latexmk-setup)))
+
 
 (use-package citar
   :custom
@@ -105,9 +152,8 @@
   :ensure t
   :hook ((org-mode org-roam-mode) . visual-fill-column-mode)
   :custom
-  (visual-fill-column-width 88)          ; or 88 if you’re strict
-  (visual-fill-column-center-text t))    ; optional but very popular
-
+  (visual-fill-column-width 88)                                                   ; or 88 if you’re strict
+  (visual-fill-column-center-text t))                                             ; optional but very popular
 
 ;; Soft-wrap lines at the window edge instead of hard line breaks
 (add-hook 'org-mode-hook #'visual-line-mode)
@@ -164,7 +210,7 @@ USE-GLOBALLY is non-nil, turn on `global-whitespace-mode'.  If
 ENABLED-MODES is non-nil, it will be a list of modes to activate
 whitespace mode using hooks.  The hooks will be the name of the
 mode in the list with `-hook' appended.  If USE-GLOBALLY is
-non-nil, ENABLED-MODES is ignored.
+non-nil, ENABLED-MODES is ignojred.
 
 Configuring whitespace mode is not buffer local.  So calling this
 function twice with different settings will not do what you
@@ -320,13 +366,12 @@ Returns t if all are present, nil otherwise.
 (defun my-lang-tex/setup-modes ()
   "Enable minor modes and tools for LaTeX editing.
 
-- Activates flyspell, cdlatex, reftex, etc.
+- Activates cdlatex, reftex, etc.
 - Sets up electric pairs and math modes."
   ;; Basic modes.
   (set-fringe-mode '(12 . 12))                                                    ; Set fringe for folding indicators.
   (display-line-numbers-mode 1)                                                   ; Show line numbers.
   (eglot-ensure)                                                                  ; Start Eglot for LSP support.
-  (flyspell-mode-on)                                                              ; Enable spell checking.
   (turn-on-cdlatex)                                                               ; Faster LaTeX input.
   (auto-fill-mode 1)                                                              ; Auto-wrap lines.
   (LaTeX-math-mode 1)                                                             ; Math symbol input.
@@ -408,7 +453,7 @@ Returns t if all are present, nil otherwise.
                '("Biber" "biber %s" TeX-run-BibTeX nil t :help "Run Biber"))
   (setq TeX-command-BibTeX "Biber")
 
-  ;;; Suppress texlab unused entry warnings for ref.bib
+;;; Suppress texlab unused entry warnings for ref.bib
   (defun my-flymake-filter-texlab-unused (diagnostics)
     "Filter out 'Unused entry' diagnostics from texlab for ref.bib.
 
@@ -435,9 +480,9 @@ Returns:
 
   ;; PDF view defaults.
   (with-eval-after-load 'pdf-tools
-    (setq-default pdf-view-display-size 'fit-width))                             ; Fit width by default.
+    (setq-default pdf-view-display-size 'fit-width))                              ; Fit width by default.
   ;; Source correlation.
-  (TeX-source-correlate-mode 1)                                                  ; Enable SyncTeX mapping.
+  (TeX-source-correlate-mode 1)                                                   ; Enable SyncTeX mapping.
   )
 
 (defun my-lang-tex/latex-setup ()
@@ -461,7 +506,3 @@ Calls decomposed helpers for modularity.
 (provide 'writing-config)
 ;;; writing-config.el ends here
 
-
-;; LocalWords: pandoc citar whitespace tex lstinline TikZ lstlisting LatexMk
-;; LocalWords: etal executables tikzpicture makefile Biber delims auctex LaTeX
-;; LocalWords: yasnippet
