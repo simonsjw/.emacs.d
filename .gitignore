@@ -1,19 +1,61 @@
-*.eld
-*.log
-*.eln
+# === VERSION CONTROL ===
+.git/
+
+# Keep our own Git config files visible in tree output
+!.gitignore
+!.gitmodules
+!.gitattributes   # (harmless even if the file doesn't exist)
+
+# Compiled / native-compiled Emacs Lisp
 *.elc
+*.eln
+*.eld
+
+# Logs and backups
+*.log
+init.log.bak
+
+# LaTeX / auxiliary caches
 *.cache_latex
+
+# Tree-sitter grammars & backups
 tree-sitter/
-**/eln-cache/
+tree-sitter-backup/
+
+# Pretty-Speedbar icons
+pretty-speedbar-icons/
+
+# undo-tree backup files.       
+var/INFODYNAMICS/backup/
+
+# Specific generated files
 etc/images/ucd.all.flat.xml
-etc/**/dist
-etc/**/eln-cache
-etc/**/elpa
-etc/**/gnupg
-etc/**/gnus
-etc/**/package
-etc/**/straight
+
+# === GIT SUBMODULES ===
+# Show directory names but ignore all contents
+custom-packages/*/**
+etc/INFODYNAMICS/lang-servers/*/**
+
+# Explicitly keep the submodule directories visible
+!custom-packages/*/
+!etc/INFODYNAMICS/lang-servers/*/
+
+# Package managers & their state
+elpa/
+emacs-wiki/
+**/eln-cache/
+**/elpa/
+**/straight/
+**/gnupg/
+**/gnus/
+**/package/
+**/dist/
+
+# Dape debug-adapter binaries
 etc/**/dape/adapters/
+var/**/dape/
+
+# Runtime state (no-littering style)
 var/**/.cache_latex
 var/**/anaconda-mode
 var/**/auto-save
@@ -35,13 +77,13 @@ var/**/eshell/
 var/**/tramp/
 var/**/dape/dape-breakpoints
 var/**/bmkp/bookmark-default.el
-elpa/
-emacs-wiki/
-tree-sitter-backup/
+var/INFODYNAMICS/bmkp/emacs-bmk-bmenu-state.el
+
+# Dape bash-debug extension junk
 etc/INFODYNAMICS/dape/adapters/bash-debug/extension/.github/
 etc/INFODYNAMICS/dape/adapters/bash-debug/extension/bashdb_dir/
 etc/INFODYNAMICS/dape/adapters/bash-debug/extension/images/
 etc/INFODYNAMICS/dape/adapters/bash-debug/extension/
 etc/INFODYNAMICS/dape/adapters/bash-debug/
-var/INFODYNAMICS/bmkp/emacs-bmk-bmenu-state.el
-init.log.bak
+var/INFODYNAMICS/undo-tree-hist/
+
