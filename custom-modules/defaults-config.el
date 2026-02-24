@@ -192,7 +192,7 @@ file paths.")
 
 ;; Kill the fringe continuation indicators completely – fixes the
 ;; visual-fill-column “missing bands” bug when pasting long single lines.
-(setq visual-line-fringe-indicators '(nil nil))                                   ; left-fringe nil, right-fringe nil
+(setq visual-line-fringe-indicators '(nil nil))   ; left-fringe nil, right-fringe nil
 
 ;; Dictionary/Thesaurus
 ;; Set the default dictionary server.
@@ -230,42 +230,81 @@ file paths.")
 (global-set-key (kbd "C-c d u") #'my-dictionary/use-american)
 
 
-;;;; set consult-flyspell defaults.
-;; consult-flyspell-set-point-after-word
-;; If set to t (default) the point will be at the end of the word
-;; after jumping to it, nil will set the point before the word.
-(customize-set-variable 'consult-flyspell-set-point-after-word t)
-;; consult-flyspell-always-check-buffer
-;; If set to nil (default) prefix argument is needed to check the
-;; buffer with flyspell-buffer first.
-;; If set to t flyspell-buffer will always be called first, unless
-;; the prefix argument is set.
-(customize-set-variable 'consult-flyspell-always-check-buffer nil)
+(use-package jinx
+  :ensure t
+  :bind ("C-c C-j" . jinx-correct)
+  :config
+  (setq jinx-languages "en_AU en_GB"
+        jinx-delay 0.1))
 
-;;;; correction at point functions
-;; There are two useful functions for correcting words at a point:
-;; *  flyspell-auto-correct-word
-;;    This function automatically corrects the word that's
-;;    currently under or immediately before the cursor (point).
-;;    When you invoke this function, it doesn't show you a list of
-;;    suggestions. Instead, it immediately replaces the word with
-;;    the first suggestion from its internal dictionary. If the
-;;    replacement is not the word you wanted, you can keep
-;;    invoking flyspell-auto-correct-word to cycle through other
-;;    suggested words.
-;;
-;; *  flyspell-correct-at-point
-;;    This function is a bit different. When you use it, it provides a
-;;    list of suggested corrections for the misspelled word at the
-;;    cursor (point). This is more interactive because you get to see
-;;    a list of possible corrections and choose the one that fits.
-;;    It's a bit like right-clicking a misspelled word in a word
-;;    processor and seeing a list of suggestions.
+;;; Set up the Jinx spellchecker.
+;;; Jinx project/personal dictionary control (Simon’s preferred behaviour)
 
-;; (customize-set-variable
-;;  'consult-flyspell-select-function #'flyspell-correct-at-point)
+;; Make the project flag safe so Emacs never prompts you
+(put 'jinx-project-spellings 'safe-local-variable #'booleanp)
 
+(with-eval-after-load 'jinx
 
+  ;; Common programming words (loaded to session only – no disk clutter)
+  (defconst my-prog-mode/prog-mode-accepted-words
+    '("foo" "bar" "foobar" "idx" "dotfile" "tstamp" "tex" "csv" "pdf"
+      "ARGS" "Args" "Backtrace" "DDirectory" "LaTeX" "LocalWords" "OPTARG"
+      "README" "SPEEDBAR" "TODO" "alist" "aspell" "basedpyright" "cd" "conda"
+      "config" "csv" "defconst" "defcustom" "defvar" "dir" "docstring" 
+      "docstrings" "el" "elpa" "env" "flymake" "flyspell" "github" "gitignore"
+      "hdb" "http" "https" "ipynb" "ipython" "jdk" "joinpath" "json" "jsonl"
+      "lvl" "md" "mnt" "modeline" "noqa" "odbc" "prog" "py" "rlwrap" "scipy"
+      "setq" "speedbar" "sql" "str" "sym" "tmp" "txt" "urls" "usr" "vterm" "ws"
+      "yasnippet")
+    "Words commonly accepted in all programming modes.
+Loaded to session only (no .dir-locals.el write).")
+
+  (defun my-spell-check/add-words-to-jinx (words location &optional mode-sym)
+    "Add WORDS to Jinx dictionary at explicit LOCATION.
+LOCATION is one of:
+  'session    -- in-memory session only (no disk write – ideal for base setup)
+  'file       -- buffer file-local (adds to Local Variables section)
+  'directory  -- project .dir-locals.el (creates file in project root if missing)
+Purpose: Bulk/scripted adds while leaving interactive `jinx-correct` menu untouched.
+Variables:
+  WORDS    -- list of strings (duplicates ignored).
+  LOCATION -- symbol as above.
+  MODE-SYM -- for logging (e.g. 'prog-mode).
+Flow:
+  1. Require Jinx.
+  2. Dispatch by LOCATION using official internals.
+  3. For 'directory: auto-detect/create .dir-locals.el in project root.
+  4. Log + safe recheck (no jit-lock crash risk)."
+    (require 'jinx nil t)
+    (when (and words (fboundp 'jinx--add-local-word))
+      (let ((added 0))
+        (dolist (word (delete-dups words))
+          (pcase location
+            ('session
+             (cl-pushnew word jinx--session-words :test #'string-equal))
+            ('file
+             (jinx--add-local-word 'jinx-local-words word)
+             (add-file-local-variable 'jinx-local-words jinx-local-words))
+            ('directory
+             (jinx--add-local-word 'jinx-dir-local-words word)
+             (let ((default-directory
+                    (or (locate-dominating-file default-directory ".dir-locals.el")
+                        (when-let* ((proj (project-current)))
+                          (project-root proj))
+                        default-directory)))
+               (save-window-excursion
+                 (add-dir-local-variable nil 'jinx-dir-local-words jinx-dir-local-words))))
+            (_ (message "Unknown Jinx location: %S" location)))
+          (setq added (1+ added)))
+        ;; Log only when useful
+        (when (and (> added 0) mode-sym)
+          (log/info :fn 'my-spell-check/add-words-to-jinx
+                    :msg (format "Added %d words for %s to %s dictionary."
+                                 added mode-sym location)
+                    :obj mode-sym))
+        ;; Safe recheck (always works)
+        (jinx--recheck-overlays))))
+  )
 
 ;;;; Miscellaneous
 
@@ -310,9 +349,3 @@ file paths.")
 
 (provide 'defaults-config)
 ;;; defaults-config.el ends here
-
-;; LocalWords:  newcomment
-;; LocalWords:  RET
-;; LocalWords:  keymap
-;; LocalWords:  YASnippet darkgrey
-;; LocalWords:  vertico

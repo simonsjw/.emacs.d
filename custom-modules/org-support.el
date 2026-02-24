@@ -137,7 +137,7 @@ Flow: Hook checks buffer, finds tables, adjusts faces."
 (use-package org-roam
   :custom
   (org-roam-directory
-   (expand-file-name "org/org-roam/nodes" (getenv "HOME")))
+   (expand-file-name "Documents/org/org-roam/nodes" (getenv "HOME")))
   (org-roam-completion-everywhere t)
   (org-roam-node-display-template
    (concat "${title:*} " (propertize "${tags:30}" 'face 'org-tag)))

@@ -49,7 +49,7 @@
   "List of buffer names where `tab-line-mode` should always be enabled.")
 
 (defvar my-tab-line/enabled-prefixes
-  '("*EGLOT" "*vc-git-staged")
+  '("*EGLOT" "*vc-git-staged" "*vTable")
   "List of buffer name prefixes where `tab-line-mode` should be enabled.")
 
 ;; Customisable variables: These defcustoms allow user configuration via

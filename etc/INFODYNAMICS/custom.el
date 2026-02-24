@@ -4,9 +4,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(bmkp-last-as-first-bookmark-file
-   "/home/simon/.emacs.d/var/INFODYNAMICS/bmkp/bookmark-default.bmk")
+ '(bmkp-last-as-first-bookmark-file "~/.emacs.d/var/INFODYNAMICS/bmkp/bookmark-default.bmk")
  '(icon-preference '(symbol image text emoji))
+ '(org-fold-catch-invisible-edits 'show-and-error nil nil "Customized with use-package org")
  '(outline-minor-mode-cycle t)
  '(outline-minor-mode-highlight 'override)
  '(outline-minor-mode-prefix [3 64])
@@ -23,8 +23,8 @@
                        flymake-markdownlint flymake-ruff
                        flymake-shellcheck fringe-helper geiser-guile
                        geiser-racket git-modes google-contacts helpful
-                       ibuffer-vc imenu-list info+ jump marginalia
-                       matlab-mode nerd-icons-completion
+                       ibuffer-vc imenu-list info+ jinx jump
+                       marginalia matlab-mode nerd-icons-completion
                        nerd-icons-corfu nerd-icons-dired no-littering
                        numpydoc olivetti orderless org-alert
                        org-appear org-contacts org-contrib
@@ -37,6 +37,7 @@
                        treesit-fold undo-tree vertico
                        visual-fill-column vlf vterm web-mode
                        yasnippet-snippets))
+ '(pdf-occur-global-minor-mode t)
  '(pretty-speedbar-blank-page '(""))
  '(pretty-speedbar-book '(""))
  '(pretty-speedbar-box-closed '(""))
@@ -51,7 +52,10 @@
  '(pretty-speedbar-tag '(""))
  '(pretty-speedbar-tags '(""))
  '(safe-local-variable-values
-   '((ispell-personal-dictionary
+   '((jinx-project-spellings . t)
+     (ispell-personal-dictionary
+      . "/mnt/HDD04_WDD_08TB/workspace/python/logger/.aspell.en.pws")
+     (ispell-personal-dictionary
       . "/mnt/HDD04_WDD_08TB/workspace/python/infopypg/.aspell.en.pws")
      (package-lint--sane-prefixes . "^omi/")
      (ispell-personal-dictionary

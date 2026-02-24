@@ -56,7 +56,11 @@ The frame has a current working directory PROJECT-PATH."
                        :msg "Tagged existing IDE frame"
                        :obj (list :frame existing-ide-frame)))
           (select-frame-set-input-focus existing-ide-frame)
-          (message "IDE frame already exists; focusing it.")
+
+          (log/debug :fn 'my-ui/create-project-frame
+                     :msg "IDE frame already exists; focusing it."
+                     :obj nil)
+
           existing-ide-frame)
       
       (let* ((frame-class 'IDE)
@@ -78,9 +82,13 @@ The frame has a current working directory PROJECT-PATH."
                     (with-temp-buffer
                       (insert-file-contents ide-file)
                       (read (current-buffer))))
-            (error "IDE.el not found or unreadable: %s" ide-file)))
-        (message "IDE layout loaded from IDE.el")
-
+            (log/debug :fn 'my-ui/create-project-frame
+                       :msg  "IDE.el not found or unreadable."
+                       :obj  ide-file)
+            ))
+        (log/debug :fn 'my-ui/create-project-frame
+                   :msg  "IDE layout loaded from IDE.el"
+                   :obj nil)
         (let ((old-frame (selected-frame))
               (old-buffer (current-buffer)))
           (unwind-protect
@@ -93,36 +101,63 @@ The frame has a current working directory PROJECT-PATH."
                    (pop-up-windows . nil)
                    (pop-up-frames . nil))
                  (lambda ()
-                   (message "Starting buffer creation in new frame...")
+                   (log/debug :fn 'my-ui/create-project-frame
+                              :msg "Starting buffer creation in new frame..."
+                              :obj nil)
+
                    (dashboard-open)
-                   (message "Opened dashboard")
+                   
+                   (log/debug :fn 'my-ui/create-project-frame
+                              :msg "Opened dashboard"
+                              :obj nil)
+                   
                    (find-file (expand-file-name
                                "spreadsheet.ses" my-paths/spreadsheet-dir))
                    (my-ses/force-refresh-via-window-switch)
-                   (message "Opened spreadsheet")
+                   (log/debug :fn 'my-ui/create-project-frame
+                              :msg "Opened spreadsheet"
+                              :obj nil)
+                   
                    (with-current-buffer (get-buffer-create "*Ibuffer*")
                      (unless (eq major-mode 'ibuffer-mode)
                        (ibuffer-mode))
                      (ibuffer-update nil t)
                      (goto-char (point-min)))
-                   (message "Opened Ibuffer")
+                   (log/debug :fn 'my-ui/create-project-frame
+                              :msg "Opened Ibuffer"
+                              :obj nil)
+                   
                    (view-echo-area-messages)
-                   (message "Opened load history & log file.")
+                   (log/debug :fn 'my-ui/create-project-frame
+                              :msg "Opened load history & log file."
+                              :obj nil)
                    (vc-dir project-path)
                    (vc-dir-hide-up-to-date)
-                   (message "Opened vc-dir")
+
+                   (log/debug :fn 'my-ui/create-project-frame
+                              :msg "Opened vc-dir."
+                              :obj nil)
                    (scratch-buffer)
-                   (message "Opened scratch-buffer")
+                   (log/debug :fn 'my-ui/create-project-frame
+                              :msg "Opened scratch-buffer"
+                              :obj nil)
                    (vterm nil)
-                   (message "Opened vterm")
+                   (log/debug :fn 'my-ui/create-project-frame
+                              :msg "Opened vterm."
+                              :obj nil)
                    (dired project-path)
-                   (message "Opened dired")
+                   (log/debug :fn 'my-ui/create-project-frame
+                              :msg "Opened dired."
+                              :obj nil)
                    (dolist (req-buf '("*Emacs*" "*cell sheet*" "*Ibuffer*"
                                       "init.log" "*vc-dir*" "*scratch*"))
                      (unless (get-buffer req-buf)
-                       (message "Warning: Required buffer %s not created!"
-                                req-buf)))
-                   (message "Buffer creation complete")))
+                       (log/warn :fn 'my-ui/create-project-frame
+                                 :msg "Required buffer not created!"
+                                 :obj (list :buffer req-buf))))
+                   (log/info :fn 'my-ui/create-project-frame
+                             :msg "Buffer creation complete"
+                             :obj nil)))
 
                 (condition-case err
                     (progn
@@ -132,11 +167,18 @@ The frame has a current working directory PROJECT-PATH."
                              (cdr (assoc :IDE my-window-tools/category-map))     ; (list 'edit 'data 'config 'logs 'vc 'terminal)
                              ))
                         (my-window-tools/tag-windows-by-list frame tag-list t))
-                      (message "Window layout applied to new frame.
-SET-QUIT-RESTORE set to t to prevent windows being deleted. "))
+                      (log/info :fn 'my-ui/create-project-frame
+                                :msg  "Window layout applied to new frame. SET-QUIT-RESTORE set to t to prevent windows being deleted. "
+                                :obj nil)
+                      ;; Apply all visual customisations NOW that we have a real graphical frame.
+                      ;; This restores thick blue dividers + pretty speedbar icons for emacsclient -c.
+                      (my-visual/apply-all-customisations))
+                  
                   (error
-                   (message "Layout apply error: %s | Check missing buffers?"
-                            err)))
+                   (log/error :fn 'my-ui/create-project-frame
+                              :msg "Layout apply error | Check missing buffers?"
+                              :obj err)))
+
                 ;; ensure that only the IDE frames have their name
                 ;; prefixed 'IDE: '.
                 (setq frame-title-format
@@ -152,7 +194,10 @@ SET-QUIT-RESTORE set to t to prevent windows being deleted. "))
               (set-buffer old-buffer))))
 
         (make-frame-visible frame)
-        (message "Created %s frame with layout applied!" frame-class)
+        
+        (log/info :fn 'my-ui/create-project-frame
+                  :msg "Created frame with layout applied!"
+                  :obj frame-class)
         frame))))
 
 

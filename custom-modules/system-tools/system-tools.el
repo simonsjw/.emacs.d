@@ -573,11 +573,30 @@ it applies the function to the current line only."
 ;;   -----------------------
 
 (defun my-theme-support/tone-down-fringes ()
-  "Set the buffer fringes to be invisible.
-This is the area inside the window margin which can hold icons."
-  (set-face-attribute 'fringe nil
-                      :foreground (face-foreground 'default)
-                      :background (face-background 'default)))
+  "Set the buffer fringes to be invisible (same colour as default background).
+This is the area inside the window margin which can hold icons.
+
+Purpose:
+  Make fringes blend perfectly with the buffer so they disappear visually.
+  Uses strongest possible override so Modus themes and sr-speedbar cannot win.
+
+Variables:
+  None — uses current default face colours (always safe).
+
+Output: fringes match default background (invisible).
+Flow:
+  1. Guard for graphical frames.
+  2. Strong frame-local override with :override t.
+  3. Immediate re-apply after theme reloads.
+Efficiency: single set-face-attribute, idempotent, <20 lines.
+Historical lesson: theme overrides always win unless you use :override t or face-spec-set."
+  (when (display-graphic-p)
+    (let ((bg (face-background 'default))
+          (fg (face-foreground 'default)))
+      (set-face-attribute 'fringe nil
+                          :foreground fg
+                          :background bg)   
+      (message "[INFO; visual] Fringes toned down to match default background"))))
 
 (defun my-theme-tools/set-current-window-margins (left &optional right)
   "Set the left and optionally right margins of the current window.

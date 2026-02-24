@@ -360,7 +360,7 @@
 
 ;;;; Dictionary settings
 ;;   -------------------
-;; Set up dictionary paths
+;; Set up dictionary paths (also specified in defaults-config.el)
 (setq ispell-personal-dictionary
       (expand-file-name ".aspell.en.pws" user-emacs-directory))
 

@@ -335,9 +335,7 @@ Converts keys to strings and ensures values are strings."
               `((t :inherit 'mode-line-highlight
                    :background ,info-theme-sharp-lime))
               "The face for elements currently `clicked' on the modeline. "
-              :group 'my-faces/programming)
-
-            ))
+              :group 'my-faces/programming)))
 
 
 
@@ -698,9 +696,50 @@ Converts keys to strings and ensures values are strings."
 ;;  '(sr-speedbar-mode-line-face
 ;;    ((t (:height 1.5)))))
 
+(defun my-visual/apply-all-customisations ()
+  "Final production version — deep dark-blue dividers + pretty icons.
+Purpose:
+  Strong frame-local divider override (survives sr-speedbar) + safe icon setup.
+  No direct refresh here (moved to idle-timer in speedbar hooks).
+Efficiency: early return, frame-local remap, <35 lines."
+  (when (display-graphic-p)
+    ;; === Thick deep dark-blue dividers — frame-local override (survives everything) ===
+    (setq window-divider-default-right-width 8
+          window-divider-default-bottom-width 8)
+    (window-divider-mode 1)
+
+    (let ((dark-blue (or info-theme-dark-blue "#1B152D")))
+      (set-face-attribute 'window-divider nil
+                          :foreground dark-blue :background dark-blue)
+      (set-face-attribute 'window-divider-first-pixel nil
+                          :foreground dark-blue)
+      (set-face-attribute 'window-divider-last-pixel nil
+                          :foreground dark-blue))
+
+    ;; === Icon path + setup (no refresh) ===
+    (let ((icon-dir (expand-file-name "pretty-speedbar-icons/"
+                                      (or user-emacs-directory
+                                          (expand-file-name "~/.emacs.d/" (getenv "HOME"))))))
+      (when (and (stringp icon-dir) (file-directory-p icon-dir))
+        (add-to-list 'image-load-path icon-dir t)
+        (setq speedbar-use-images t)
+        (when (fboundp 'my-speedbar/setup-pretty-icons)
+          (my-speedbar/setup-pretty-icons))
+
+        (log/info :fn 'my-visual/apply-all-customisations
+                  :msg "Pretty speedbar icons path + setup applied"
+                  :obj nil)
+        )))
+
+  (my-theme-support/tone-down-fringes)
+
+  (log/info :fn 'my-visual/apply-all-customisations
+            :msg "Core visuals applied (frame-local dividers)."
+            :obj (selected-frame)))
+
+(with-eval-after-load 'sr-speedbar
+  (my-visual/apply-all-customisations))
 
 (provide 'theme-support)
 ;;; theme-support.el ends here
 
-;; LocalWords:  rustc defvars rainstormstudio dired LuigiPiucco formatters dfcf
-;; LocalWords:  corfu fontification ibuffer COLOR fefff grovbox

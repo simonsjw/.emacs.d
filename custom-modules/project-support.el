@@ -315,13 +315,16 @@ This setting is also saved to `.dir-locals.el'.
 - If it exists and has the setting, merge missing words from user dict to
   project dict.
 - If .dir-locals.el is new, create it with the setting and copy user dict.
-Does not alter other .dir-locals.el content."
+Does not alter other .dir-locals.el content.
+
+The function depends on a project dictionary template being located at
+`var/INFODYNAMICS/dict_project.pws' with respect to the `user-emacs-directory'."
   (interactive)
   (let* ((project-root (or (project-root (project-current))
                            (user-error "No project detected")))
          (dir-locals-file (expand-file-name ".dir-locals.el" project-root))
          (project-dict (expand-file-name ".aspell.en.pws" project-root))
-         (user-dict (expand-file-name ".aspell.en.pws" user-emacs-directory))
+         (user-dict (expand-file-name "var/INFODYNAMICS/dict_project.pws" user-emacs-directory))
          (file-exists (file-exists-p dir-locals-file))
          (has-setting (and file-exists
                            (with-temp-buffer
