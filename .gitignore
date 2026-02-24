@@ -23,7 +23,7 @@ tree-sitter/
 tree-sitter-backup/
 
 # Pretty-Speedbar icons
-pretty-speedbar-icons/
+**/pretty-speedbar-icons/
 
 # undo-tree backup files.       
 var/INFODYNAMICS/backup/
