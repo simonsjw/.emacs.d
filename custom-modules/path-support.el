@@ -68,11 +68,6 @@
 (defvar my-paths/desktop-layout-folder nil
   "Folder containing `window-tree' specifications for UI layouts.")
 
-(defvar my-paths/q-load-balancer-folder)
-;;(defvar my-paths/rainbow-mode)
-(defvar my-paths/systemd-mode)
-(defvar my-paths/logging-view-mode)
-
 (defvar my-paths/ispell-word-replacement)
 (defvar ispell-personal-dictionary)
 
@@ -318,7 +313,7 @@
 
 ;;;; Org Mode
 ;;   --------
-(setq org-directory "~/Documents/org") ; Path to org data.
+(setq org-directory "~/Documents/org")                                            ; Path to org data.
 
 (setq org-contacts-directory                                                      ; Path to the Emacs contacts file for org contacts functionality.
       (expand-file-name  "contacts/" org-directory))
@@ -372,44 +367,43 @@
 
 
 ;; keep the pretty-speedbar-icons in the icon stash.
-;; (defvar pretty-speedbar-icons-dir
-;;   (expand-file-name
-;;    (concat user-emacs-directory "etc/images/pretty-speedbar-icons/"))
-;;   "Store pretty-speedbar-icons in the etc/images/pretty-speedbar-icons folder.
-
-;; This is located in the user's default Emacs directory.")
-;; (setq pretty-speedbar-icons-dir
-;;       (expand-file-name
-;;        (concat user-emacs-directory "etc/images/pretty-speedbar-icons/")))
+(defvar pretty-speedbar-icons-dir
+  (locate-user-emacs-file "etc/images/pretty-speedbar-icons/")
+  "Store pretty-speedbar-icons in the etc/images/pretty-speedbar-icons folder.")
 
 
 ;; define a path to the object-memory-tree custom package.
 (setq my-paths/memory-object-tree-folder
-      (concat user-emacs-directory "custom-packages/memory-object-tree/"))
+      (locate-user-emacs-file "custom-packages/memory-object-tree/"))
 
 ;; define a path to the combobulate custom package
 (setq my-paths/combobulate
-      (concat user-emacs-directory "custom-packages/combobulate/"))
+      (locate-user-emacs-file "custom-packages/combobulate/"))
+
+(defvar my-paths/pretty-speedbar
+  (locate-user-emacs-file "custom-packages/pretty-speedbar/")
+  "Path to the custom pretty-speedbar installation.")
 
 ;; define a path to the q custom package
-(setq my-paths/q-load-balancer-folder
-      (concat user-emacs-directory "custom-packages/q-loadbalancer/"))
-
-;; define a path to the rainbow-mode custom package
-;; (setq my-paths/rainbow-mode
-;;       (concat user-emacs-directory "custom-packages/rainbow-mode/"))
+(defvar my-paths/q-load-balancer-folder
+  (locate-user-emacs-file "custom-packages/q-loadbalancer/")
+  "Mode to run a full KDB/Q loadbalancer from emacs.")
 
 ;; define a path to the systemd-mode custom package
-(setq my-paths/systemd-mode
-      (concat user-emacs-directory "custom-packages/systemd-mode/"))
+(defvar my-paths/systemd-mode
+  (locate-user-emacs-file "custom-packages/systemd-mode/")
+  "Package providing systemd-mode.
+Small change to internal shortcuts made. ")
 
 ;; define a path to the logging-view-mode custom package
-(setq my-paths/logging-view-mode
-      (concat user-emacs-directory "custom-packages/logging-view-mode/"))
+(defvar my-paths/logging-view-mode
+  (locate-user-emacs-file "custom-packages/logging-view-mode/")
+  "Mode enriches the IDE log view." )
 
 ;; define a path to the logging-view-mode custom package
-(setq my-paths/log-ts-mode
-      (concat user-emacs-directory "custom-packages/log-ts-mode/"))
+(defvar my-paths/log-ts-mode
+  (locate-user-emacs-file "custom-packages/log-ts-mode/")
+  "Mode to provide logging-view-mode functionality using treesitter.")
 
 ;; paths to exclude from recentf (base and shortcut).
 (setq recentf-exclude
@@ -435,8 +429,4 @@
 (provide 'path-support)
 ;;; path-support.el ends here
 
-;; LocalWords:  pws prepl systemd combobulate
-;; LocalWords:  recentf
-;; LocalWords:  loadbalancer
-;; LocalWords:  Dape emacs init
-;; LocalWords:  bmk
+

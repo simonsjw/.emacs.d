@@ -12,45 +12,40 @@
  '(outline-minor-mode-prefix [3 64])
  '(outline-minor-mode-use-buttons 'in-margins)
  '(package-selected-packages
-   '(aggressive-indent anaconda-mode apache-mode apheleia auctex-latexmk
-                       cape cargo cargo-mode cargo-transient cdlatex
-                       citar-embark clj-refactor compile-angel
-                       consult-eglot-embark consult-project-extra
-                       corfu dape dashboard delight diff-hl dired+
-                       docker docker-compose-mode dotenv-mode
-                       dumb-jump eldoc-box elisp-demos
-                       etc-sudoers-mode flycheck-clojure
-                       flymake-markdownlint flymake-ruff
+   '(aggressive-indent anaconda-mode apache-mode apheleia auctex-latexmk cape cargo
+                       cargo-mode cargo-transient cdlatex citar-embark
+                       clj-refactor compile-angel consult-eglot-embark
+                       consult-project-extra corfu dape dashboard delight
+                       diff-hl dired+ docker docker-compose-mode dotenv-mode
+                       dumb-jump eldoc-box elisp-demos etc-sudoers-mode
+                       flycheck-clojure flymake-markdownlint flymake-ruff
                        flymake-shellcheck fringe-helper geiser-guile
-                       geiser-racket git-modes google-contacts helpful
-                       ibuffer-vc imenu-list info+ jinx jump
-                       marginalia matlab-mode nerd-icons-completion
-                       nerd-icons-corfu nerd-icons-dired no-littering
-                       numpydoc olivetti orderless org-alert
-                       org-appear org-contacts org-contrib
-                       org-fancy-priorities org-modern org-roam
-                       page-break-lines pandoc-mode pdf-tools popon pq
-                       pretty-speedbar pydoc python-pytest
-                       python-view-data pyvenv qrencode rainbow-mode
-                       robots-txt-mode rustic sly-asdf sly-quicklisp
-                       sly-repl-ansi-color sqlformat sr-speedbar
-                       treesit-fold undo-tree vertico
-                       visual-fill-column vlf vterm web-mode
-                       yasnippet-snippets))
+                       geiser-racket git-modes git-timemachine google-contacts
+                       helpful ibuffer-vc imenu-list info+ jinx jump marginalia
+                       matlab-mode nerd-icons-completion nerd-icons-corfu
+                       nerd-icons-dired no-littering numpydoc olivetti orderless
+                       org-alert org-appear org-contacts org-contrib
+                       org-fancy-priorities org-modern org-roam page-break-lines
+                       pandoc-mode pdf-tools popon pq pretty-speedbar pydoc
+                       python-pytest python-view-data pyvenv qrencode
+                       rainbow-mode robots-txt-mode rustic sly-asdf
+                       sly-quicklisp sly-repl-ansi-color sqlformat sr-speedbar
+                       treesit-fold undo-tree vertico visual-fill-column vlf
+                       vterm web-mode yasnippet-snippets))
  '(pdf-occur-global-minor-mode t)
- '(pretty-speedbar-blank-page '(""))
- '(pretty-speedbar-book '(""))
- '(pretty-speedbar-box-closed '(""))
- '(pretty-speedbar-box-open '(""))
- '(pretty-speedbar-folder '("" t))
- '(pretty-speedbar-folder-open '("" t))
+ '(pretty-speedbar-blank-page '("") t)
+ '(pretty-speedbar-book '("") t)
+ '(pretty-speedbar-box-closed '("") t)
+ '(pretty-speedbar-box-open '("") t)
+ '(pretty-speedbar-folder '("" t) t)
+ '(pretty-speedbar-folder-open '("" t) t)
  '(pretty-speedbar-font "Symbols Nerd Font Mono")
  '(pretty-speedbar-icon-size 20)
- '(pretty-speedbar-info '(""))
- '(pretty-speedbar-mail '(""))
- '(pretty-speedbar-page '(""))
- '(pretty-speedbar-tag '(""))
- '(pretty-speedbar-tags '(""))
+ '(pretty-speedbar-info '("") t)
+ '(pretty-speedbar-mail '("") t)
+ '(pretty-speedbar-page '("") t)
+ '(pretty-speedbar-tag '("") t)
+ '(pretty-speedbar-tags '("") t)
  '(safe-local-variable-values
    '((jinx-project-spellings . t)
      (ispell-personal-dictionary
@@ -64,11 +59,10 @@
       . "/mnt/HDD04_WDD_08TB/workspace/python/character_gen/.aspell.en.pws")))
  '(semantic-sb-info-format-tag-function 'semantic-format-tag-short-doc)
  '(speedbar-add-supported-extension
-   '(".cl" ".li?sp" ".lua" ".fnl" ".fennel" ".kt" ".mvn" ".gradle"
-     ".properties" ".cljs?" ".sh" ".bash" ".php" ".ts" ".html?" ".css"
-     ".less" ".scss" ".sass" ".py" ".p" ".q" ".k" ".rs" ".lock"
-     "makefile" "MAKEFILE" "Makefile" ".json" ".yaml" ".toml" ".md"
-     ".markdown" ".org" ".txt" "README"))
+   '(".cl" ".li?sp" ".lua" ".fnl" ".fennel" ".kt" ".mvn" ".gradle" ".properties"
+     ".cljs?" ".sh" ".bash" ".php" ".ts" ".html?" ".css" ".less" ".scss" ".sass"
+     ".py" ".p" ".q" ".k" ".rs" ".lock" "makefile" "MAKEFILE" "Makefile" ".json"
+     ".yaml" ".toml" ".md" ".markdown" ".org" ".txt" "README"))
  '(speedbar-directory-button-trim-method 'trim)
  '(speedbar-directory-unshown-regexp "^\\(CVS\\|RCS\\|SCCS\\|\\.\\.*$\\)\\'")
  '(speedbar-frame-parameters

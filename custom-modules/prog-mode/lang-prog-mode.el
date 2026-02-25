@@ -182,14 +182,14 @@
   ;; Common programming words (you can run this manually per project)
   (defconst my-prog-mode/prog-mode-accepted-words
     '("bashrc" "zshrc" "foo" "bar" "foobar" "idx" "dotfile" "tstamp" "tex" "csv" "pdf"
-      "ARGS" "Args" "Backtrace" "DDirectory" "LaTeX" "LocalWords" "OPTARG"
-      "README" "SPEEDBAR" "TODO" "alist" "autosave" "aspell" "basedpyright" "cd" "chmod" "chown" "const" "conda"
-      "config" "csv" "defconst" "defcustom" "defvar" "dir" "docstring" 
-      "docstrings" "Eglot" "eglot" "el" "elpa" "env" "flymake" "flyspell" 
+      "ARGS" "Args" "Backtrace" "bmk" "bmenu" "DDirectory" "LaTeX" "LocalWords" "OPTARG"
+      "README" "SPEEDBAR" "TODO" "alist" "autosave" "aspell" "basedpyright" "cd" "chmod" "chown" "concat" "const" "conda"
+      "config" "csv" "defconst" "defcustom" "defvar" "dir" "docstring" "dotfile" "dotfiles"
+      "docstrings" "Eglot" "eglot" "el" "elpa" "Emacs" "emacs"  "env" "flymake" "flyspell" 
       "github" "gitignore" "hdb" "http" "https" "ipynb" "ipython" "jdk" 
       "joinpath" "json" "jsonl" "keymap" "keymaps" "lang" "lvl" "makefile" "md" "mnt" "modeline" "noqa" "odbc" 
-      "prog" "py" "rlwrap" "scipy" "sudo" "setq" "speedbar" "sql" "str" "sym" "tmp" 
-      "txt" "urls" "usr" "vterm" "ws" "yas" "yasnippet")
+      "prog" "py" "rlwrap" "scipy" "sudo" "setq" "speedbar" "sql" "str" "sym" "systemd" "journalctl" "tmp" 
+      "txt" "urls" "usr" "vterm" "ws" "yas" "yasmate" "yasnippet")
     "Words commonly accepted in all programming modes.
 Run `M-x my-spell-check/add-prog-words` once per project to add them.")
 

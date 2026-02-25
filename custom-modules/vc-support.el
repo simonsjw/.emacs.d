@@ -19,6 +19,22 @@
 ;; support for git configuration files.
 (use-package git-modes)
 
+;; git-timemachine (yeah baby...?!)
+(use-package git-timemachine
+  :ensure t
+  :bind
+  ;; Ties it right into the VC keymap you already use
+  ("C-x v t" . git-timemachine-toggle)
+  :custom
+  (git-timemachine-abbreviation-length 10)   ; shorter hash looks nicer (default 12)
+  (git-timemachine-minibuffer-detail 'subject) ; or 'commit if you prefer the SHA
+  (git-timemachine-show-author t)            ; shows who made the change
+  (git-timemachine-show-minibuffer-details t)
+  :config
+  ;; Optional: quit returns you cleanly to the original buffer
+  (setq git-timemachine-quit-to-invoking-buffer t))
+
+
 (use-package diff-hl
   :hook ((prog-mode . diff-hl-mode)                                               ; Enable in code buffers like git-gutter.
          (dired-mode . diff-hl-dired-mode)                                        ; Bonus: Shows diffs in Dired.
@@ -157,6 +173,8 @@ Flow:
 ;;     git submodule add
 ;;        https://gitlab.com/dto/cell-mode.git custom-packages/cell-mode
 ;;
+
+;;;; 2a) additional management:
 ;; ****************
 ;; Always run these commands from the Parent Git repo and not the submodule.
 ;; ****************

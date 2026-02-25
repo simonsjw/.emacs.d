@@ -15,15 +15,28 @@
 ;; • Efficiency first: minimal code, single refresh, full docstrings.
 
 ;;; Code:
+(require 'path-support)
 
 (use-package sr-speedbar)
-(use-package pretty-speedbar)
+
+(use-package pretty-speedbar
+  :load-path my-paths/pretty-speedbar
+  :ensure nil          ; local package – never try ELPA/MELPA/straight
+  :demand t            ; load immediately (best for Speedbar)
+  :custom
+  (ezimage-use-images t)
+  (speedbar-use-images t)
+  :config
+  ;; Generate icons on first run (or if they’re missing)
+  (unless (file-exists-p (expand-file-name "pretty-folder.svg"
+                                           pretty-speedbar-icons-dir))
+    (pretty-speedbar-reload)))
 
 ;; Local memory-object-tree package
-(add-to-list 'load-path my-paths/memory-object-tree-folder)
-(use-package memory-object-tree
-  :ensure nil
-  :demand t)
+;; (add-to-list 'load-path my-paths/memory-object-tree-folder)
+;; (use-package memory-object-tree
+;;   :ensure nil
+;;   :demand t)
 
 ;; ----------------------------------------------------------------------
 ;; Re-entrant pretty-speedbar setup (called from my-visual/apply-all-customisations)
@@ -33,21 +46,23 @@
 Purpose:
   Re-applied on every new frame so icons appear correctly in daemon + client frames.
   Historical note: pre-2026 setups failed here because pretty-speedbar ran only once at load."
+  (require 'pretty-speedbar)
   (setq pretty-speedbar-icon-size 20
         pretty-speedbar-font "Symbols Nerd Font Mono")
 
   ;; Icon glyphs (your existing choices)
-  (setq pretty-speedbar-folder '("\uf07b" t)
-        pretty-speedbar-folder-open '("\uf07c" t)
-        pretty-speedbar-blank-page '("\uf15b")
-        pretty-speedbar-page '("\uf15c")
-        pretty-speedbar-box-closed '("\uebb4")
-        pretty-speedbar-box-open '("\uebb5")
-        pretty-speedbar-book '("\uf02d")
-        pretty-speedbar-mail '("\uf0e0")
-        pretty-speedbar-info '("\uf05a")
-        pretty-speedbar-tags '("\uf02c")
-        pretty-speedbar-tag '("\uf02b"))
+  (setq pretty-speedbar-folder '("\uf07b" t)                                      ;  Closed folder icon.
+        pretty-speedbar-folder-open '("\uf07c" t)                                 ;  Open folder icon.
+        pretty-speedbar-blank-page '("\uf15b")                                    ;  Used for plus and minus file icons.
+        pretty-speedbar-page '("\uf15c")                                          ;  Default file icon.
+        pretty-speedbar-box-closed '("\uebb4")                                    ;  Closed box icon with plus added during generation.
+        pretty-speedbar-box-open '("\uebb5" )                                     ;  Open box icon with minus added during generation.
+        pretty-speedbar-book '("\uf02d")                                          ;  Book icon used for documentation available.
+        pretty-speedbar-mail '("\uf0e0")                                          ;  Envelope icon.
+        pretty-speedbar-info '("\uf05a")                                          ;  Info icon.
+        pretty-speedbar-tags '("\uf02c")                                          ;  Tags icon used for plus and minus tags generation. 
+        pretty-speedbar-tag '("\uf02b"))                                          ;  Single tag icon. Most frequent tag icon.
+  
 
   ;; Colours (use your info-theme variables — defined in theme-support)
   (setq pretty-speedbar-icon-fill info-theme-light-white
@@ -59,7 +74,7 @@ Purpose:
         pretty-speedbar-signs-fill info-theme-light-white)
 
   (when (fboundp 'pretty-speedbar-generate)
-    (pretty-speedbar-generate))
+    (pretty-speedbar-generate) )
 
   (log/info :fn 'my-speedbar/setup-pretty-icons
             :msg "Pretty icons & colours applied."
@@ -101,44 +116,154 @@ Purpose:
                                          :background ,info-theme-dark-blue)))))
 
 ;; ----------------------------------------------------------------------
-;; Functions 
+;; Functions
 ;; ----------------------------------------------------------------------
 (defun my-speedbar/set-speedbar-directory-to-file-path (file-path)
-  "Set speedbar to FILE-PATH and refresh."
+  "Set the speedbar directory to FILE-PATH and refresh it.
+If `sr-speedbar' is not open, open it first."
   (interactive "DDirectory: ")
-  (let ((expanded (expand-file-name file-path)))
-    (when (file-directory-p expanded)
-      (setq default-directory expanded)
+  (let ((expanded-path (expand-file-name file-path)))
+    (when (file-directory-p expanded-path)
+      ;; Open sr-speedbar if it's not already open
+      ;; Set the default directory
+      (setq default-directory expanded-path)
       (speedbar-refresh)
-      (log/info :fn 'my-speedbar/set-speedbar-directory-to-file-path
-                :msg "Speedbar directory set."
-                :obj expanded)
-      )))
+      ;; Clear speedbar cache and force refresh
+      ;; Display a message indicating the new directory
+      (message "speedbar directory set to %s" expanded-path))))
 
 (defun my-speedbar/toggle ()
-  "Toggle sr-speedbar in IDE frames, plain speedbar otherwise."
+  "If the selected frame is an IDE, open `sr-speedbar' else open `speedbar'.
+
+In the case where `sr-speedbar' is opened, it is opened in the  top-left window
+using `sr-speedbar-toggle'."
   (interactive)
-  (if (string-prefix-p "IDE:" (frame-parameter nil 'name))
+  (let ((my-selected-frame-name (frame-parameter nil 'name))
+        (my-selected-frame (selected-frame)))
+    (if (string-prefix-p "IDE:" (frame-parameter nil 'name))
+        (progn
+          (log/debug :fn 'my-speedbar/toggle
+                     :msg "Frame is an IDE - use sr-speedbar."
+                     :obj (list :name my-selected-frame-name
+                                :frame my-selected-frame))
+          (let ((top-left-window
+                 (car
+                  (sort (window-list)
+                        (lambda (w1 w2)
+                          (let ((edges1 (window-edges w1))
+                                (edges2 (window-edges w2)))
+                            (or (< (nth 1 edges1) (nth 1 edges2))                 ; Compare top edges
+                                (and (= (nth 1 edges1) (nth 1 edges2))
+                                     (< (nth 0 edges1) (nth 0 edges2))))))))))
+            (select-window top-left-window))
+          (sr-speedbar-toggle))
       (progn
-        (select-window (car (sort (window-list) (lambda (w1 w2)
-                                                  (let ((e1 (window-edges w1))
-                                                        (e2 (window-edges w2)))
-                                                    (or (< (nth 1 e1) (nth 1 e2))
-                                                        (and (= (nth 1 e1) (nth 1 e2))
-                                                             (< (nth 0 e1) (nth 0 e2)))))))))
-        (sr-speedbar-toggle))
-    (speedbar)))
+        (log/debug :fn 'my-speedbar/toggle
+                   :msg "Frame is not an IDE - use speedbar. "
+                   :obj (list :name my-selected-frame-name
+                              :frame my-selected-frame))
+        (speedbar))
+      )
+    )
+  )
+
+(defun my-speedbar/open-vterm-in-dir ()
+  "Open a vterm session in the directory under the cursor in Speedbar.
+
+This function retrieves the current directory from the Speedbar line,
+binds it as the default directory, and launches vterm with a buffer
+name indicating the directory.  If no directory is selected, it signals
+an error."
+  (interactive)
+  (let* ((dir (speedbar-line-directory))                                          ; Get the directory path from the current line.
+         (buf-name
+          (concat "Vterm: "
+                  (file-name-nondirectory (directory-file-name dir)))))           ; Create a descriptive buffer name.
+    (if dir
+        (let ((default-directory dir))                                            ; Temporarily bind default-directory to the selected path.
+          (vterm buf-name))                                                       ; Launch vterm in that directory.
+      (error "No directory selected in Speedbar"))))                              ; Handle case where no dir is under cursor.
+
+
+(defun my-speedbar/open-in-file-explorer ()
+  "Open the current directory or file in GNOME Files (Nautilus).
+If on a directory line, open that directory externally.
+If on a file line, open the file with the system default application."
+  (interactive)
+  (let ((path (speedbar-line-directory)))
+    (when path
+      (start-process "xdg-open" nil "xdg-open" path))))
+
+
+(defun my-speedbar/go-home ()
+  "Switch SPEEDBAR to home directory if in file mode."
+  (interactive)
+  (when (and (bound-and-true-p speedbar-frame)                                    ; Speedbar frame exists
+             (eq speedbar-frame (selected-frame))                                 ; Speedbar window is active
+             (eq speedbar-buffer (current-buffer))                                ; In Speedbar buffer
+             (string-equal speedbar-initial-expansion-list-name "files"))         ; In file mode
+    (my-speedbar/set-speedbar-directory-to-file-path
+     (expand-file-name "~/"))))
+
+(defun my-speedbar/go-workspace ()
+  "Switch SPEEDBAR to the workspace directory if in file mode."
+  (interactive)
+  (when (and (bound-and-true-p speedbar-frame)                                    ; Speedbar frame exists
+             (eq speedbar-frame (selected-frame))                                 ; Speedbar window is active
+             (eq speedbar-buffer (current-buffer))                                ; In Speedbar buffer
+             (string-equal speedbar-initial-expansion-list-name "files"))         ; In file mode
+    (my-speedbar/set-speedbar-directory-to-file-path
+     (expand-file-name "/mnt/HDD04_WDD_08TB/workspace/"))))
+
+;; This function overrides the original speedbar function so that
+;; the correct speedbar width is reported when speedbar is not the only
+;; window in a frame.
+(defun speedbar-frame-width ()
+  "Return the width of the sr-speedbar window, or a default value."
+  (if (and (boundp 'sr-speedbar-window) sr-speedbar-window)
+      (window-width sr-speedbar-window)                                           ; Use sr-speedbar window width
+    30))                                                                          ; Fallback default width
+
+;; Variable to hold the state of the filter in speedbar.  t or nil.
+;; used in `my-speedbar/toggle-filter'.
+(setq my-speedbar/speedbar-filter-state t)
 
 (defun my-speedbar/toggle-filter ()
-  "Toggle visibility of dotfiles in speedbar."
+  "Toggle the visibility of dotfiles in speedbar."
   (interactive)
-  (setq my-speedbar/speedbar-filter-state (not my-speedbar/speedbar-filter-state))
   (if my-speedbar/speedbar-filter-state
-      (setq speedbar-directory-unshown-regexp "^\\(\\.[^/.].*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$"
-            speedbar-file-unshown-regexp "^\\(\\.[^/]*\\|CVS\\|RCS\\|SCCS\\)$")
-    (setq speedbar-directory-unshown-regexp "^\\.$"
-          speedbar-file-unshown-regexp "^$"))
+      (setq my-speedbar/speedbar-filter-state nil)
+    (setq my-speedbar/speedbar-filter-state t))
+  ;; Check if the current regexp hides dot files
+  (if my-speedbar/speedbar-filter-state
+      ;; If dot files are hidden, modify regexp to show them
+      (progn
+        ;; Hide dot files, directories beginning with "_", and specific VCS
+        ;; directories but always show the `..' file.
+        (setq speedbar-directory-unshown-regexp
+              "^\\(\\.[^/.].*\\|_[^/]*\\|CVS\\|RCS\\|SCCS\\)$")
+        (setq speedbar-file-unshown-regexp
+              "^\\(\\.[^/]*\\|CVS\\|RCS\\|SCCS\\)$"))
+    ;; If dot files are shown, modify regexp to hide them
+    (progn
+      ;; the dot here is the folder denoting the current folder.
+      ;; (just gives a recursive tree)
+      (setq speedbar-directory-unshown-regexp "^\\.$")
+      (setq speedbar-file-unshown-regexp "^$")))
+  ;; Refresh speedbar to apply changes
   (speedbar-refresh))
+
+;; get the name of the available views from
+;; speedbar-initial-expansion-mode-alist
+(defun my-speedbar/switch-speedbar-view (speedbar-view)
+  "Temporarily switch to quick-buffers expansion list.
+Useful for quickly switching to an open buffer.
+Current view is given in SPEEDBAR-VIEW."
+  (interactive)
+  (speedbar-change-initial-expansion-list speedbar-view))
+
+
+
 
 
 ;; ----------------------------------------------------------------------

@@ -722,7 +722,7 @@ Efficiency: early return, frame-local remap, <35 lines."
                                           (expand-file-name "~/.emacs.d/" (getenv "HOME"))))))
       (when (and (stringp icon-dir) (file-directory-p icon-dir))
         (add-to-list 'image-load-path icon-dir t)
-        (setq speedbar-use-images t)
+       ;; (setq speedbar-use-images t)
         (when (fboundp 'my-speedbar/setup-pretty-icons)
           (my-speedbar/setup-pretty-icons))
 
