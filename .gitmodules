@@ -28,3 +28,6 @@
 [submodule "custom-packages/q-loadbalancer"]
 	path = custom-packages/q-loadbalancer
 	url = git@github.com:simonsjw/q-loadbalancer.git
+[submodule "custom-packages/pretty-speedbar"]
+	path = custom-packages/pretty-speedbar
+	url = git@github.com:simonsjw/pretty-speedbar.git
