@@ -74,6 +74,12 @@ The frame has a current working directory PROJECT-PATH."
                    :msg "Created new frame"
                    :obj (list :frame frame :params (frame-parameters frame)))
         
+        (find-file "WINDOW_EDIT")
+        (find-file "WINDOW_DATA")
+        (find-file "WINDOW_CONFIG")
+        (find-file "WINDOW_TERMINAL")
+        (find-file "WINDOW_VC")
+        (find-file "WINDOW_LOGS")
         ;; Load the IDE layout from file
         (let ((ide-file
                (expand-file-name "IDE.el" my-paths/desktop-layout-folder)))
@@ -95,6 +101,7 @@ The frame has a current working directory PROJECT-PATH."
               (with-selected-frame frame
                 ;; Temporarily allow same-window displays
                 ;; (confined to this invisible frame)
+
                 (my-window-tools/with-temporary-display-buffer-settings
                  '((display-buffer-alist (".*" . (display-buffer-same-window)))
                    (switch-to-buffer-obey-display-actions . nil)
@@ -104,18 +111,16 @@ The frame has a current working directory PROJECT-PATH."
                    (log/debug :fn 'my-ui/create-project-frame
                               :msg "Starting buffer creation in new frame..."
                               :obj nil)
-
+                   
                    (dashboard-open)
                    
                    (log/debug :fn 'my-ui/create-project-frame
                               :msg "Opened dashboard"
                               :obj nil)
-                   
-                   (find-file (expand-file-name
-                               "spreadsheet.ses" my-paths/spreadsheet-dir))
-                   (my-ses/force-refresh-via-window-switch)
+                   (find-file "spreadsheet.ses")
+                   (my-llm/new-chat)
                    (log/debug :fn 'my-ui/create-project-frame
-                              :msg "Opened spreadsheet"
+                              :msg "Opened chat & spreadsheet."
                               :obj nil)
                    
                    (with-current-buffer (get-buffer-create "*Ibuffer*")
@@ -123,6 +128,7 @@ The frame has a current working directory PROJECT-PATH."
                        (ibuffer-mode))
                      (ibuffer-update nil t)
                      (goto-char (point-min)))
+                   
                    (log/debug :fn 'my-ui/create-project-frame
                               :msg "Opened Ibuffer"
                               :obj nil)
@@ -149,8 +155,8 @@ The frame has a current working directory PROJECT-PATH."
                    (log/debug :fn 'my-ui/create-project-frame
                               :msg "Opened dired."
                               :obj nil)
-                   (dolist (req-buf '("*Emacs*" "*cell sheet*" "*Ibuffer*"
-                                      "init.log" "*vc-dir*" "*scratch*"))
+                   (dolist (req-buf '("*Emacs*" "xAI Chat" "*Ibuffer*"
+                                      "*Messages*" "*vc-dir*" "*scratch*"))
                      (unless (get-buffer req-buf)
                        (log/warn :fn 'my-ui/create-project-frame
                                  :msg "Required buffer not created!"
