@@ -243,8 +243,8 @@ ARG and KEYS are passed directly to `org-agenda'."
 ;;; 7. Global keybindings
 ;;; ──────────────────────────────────────────────────────────────────────
 
-(global-set-key (kbd "C-c a") #'my-org/agenda-in-new-frame)
-(global-set-key (kbd "C-c l") #'my-agenda/dashboard)
+(global-set-key (kbd "C-c C-l a") #'my-org/agenda-in-new-frame)
+(global-set-key (kbd "C-c C-l") #'my-agenda/dashboard)
 
 (provide 'org-support)
 ;;; org-support.el ends here
