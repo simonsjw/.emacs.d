@@ -5,6 +5,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(bmkp-last-as-first-bookmark-file "~/.emacs.d/var/INFODYNAMICS/bmkp/bookmark-default.bmk")
+ '(gptel-log-level 'debug)
  '(icon-preference '(symbol image text emoji))
  '(org-fold-catch-invisible-edits 'show-and-error nil nil "Customized with use-package org")
  '(outline-minor-mode-cycle t)
@@ -14,24 +15,27 @@
  '(package-selected-packages
    '(aggressive-indent anaconda-mode apache-mode apheleia auctex-latexmk cape cargo
                        cargo-mode cargo-transient cdlatex citar-embark
-                       clj-refactor compile-angel consult-eglot-embark
-                       consult-project-extra corfu dape dashboard delight
-                       diff-hl dired+ docker docker-compose-mode dotenv-mode
-                       dumb-jump eldoc-box elisp-demos etc-sudoers-mode
-                       flycheck-clojure flymake-markdownlint flymake-ruff
-                       flymake-shellcheck fringe-helper geiser-guile
-                       geiser-racket git-modes git-timemachine google-contacts
-                       helpful ibuffer-vc imenu-list info+ jinx jump marginalia
-                       matlab-mode nerd-icons-completion nerd-icons-corfu
-                       nerd-icons-dired no-littering numpydoc olivetti orderless
-                       org-alert org-appear org-contacts org-contrib
-                       org-fancy-priorities org-modern org-roam page-break-lines
-                       pandoc-mode pdf-tools popon pq pretty-speedbar pydoc
-                       python-pytest python-view-data pyvenv qrencode
-                       rainbow-mode robots-txt-mode rustic sly-asdf
-                       sly-quicklisp sly-repl-ansi-color sqlformat sr-speedbar
-                       treesit-fold undo-tree vertico visual-fill-column vlf
-                       vterm web-mode yasnippet-snippets))
+                       clj-refactor combobulate compile-angel
+                       consult-eglot-embark consult-project-extra corfu dape
+                       dashboard delight diff-hl dired+ docker
+                       docker-compose-mode dotenv-mode dumb-jump eldoc-box
+                       elisp-demos etc-sudoers-mode flycheck-clojure
+                       flymake-markdownlint flymake-ruff flymake-shellcheck
+                       fringe-helper geiser-guile geiser-racket git-modes
+                       git-timemachine google-contacts helpful ibuffer-vc
+                       imenu-list info+ jinx jump marginalia matlab-mode
+                       nerd-icons-completion nerd-icons-corfu nerd-icons-dired
+                       no-littering numpydoc olivetti orderless org-alert
+                       org-appear org-contacts org-contrib org-fancy-priorities
+                       org-modern org-roam page-break-lines pandoc-mode
+                       pdf-tools popon pq pretty-speedbar pydoc python-pytest
+                       python-view-data pyvenv qrencode rainbow-mode
+                       robots-txt-mode rustic sly-asdf sly-quicklisp
+                       sly-repl-ansi-color sqlformat sr-speedbar treesit-fold
+                       undo-tree vertico visual-fill-column vlf vterm web-mode
+                       yasnippet-snippets))
+ '(package-vc-selected-packages
+   '((combobulate :url "git@github.com:mickeynp/combobulate.git")))
  '(pdf-occur-global-minor-mode t)
  '(pretty-speedbar-blank-page '("") t)
  '(pretty-speedbar-book '("") t)
