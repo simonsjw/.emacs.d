@@ -38,6 +38,31 @@
   (info-initialize)
   (add-to-list 'Info-directory-list custom-info-dir))
 
+
+;; recentf setup.
+;; paths to exclude from recentf (base and shortcut).
+(use-package recentf
+  :ensure nil   ; built-in
+  :init
+  (setq recentf-exclude
+        '(
+          "/WINDOW_"
+          "/\\.emacs\\.d/recentf\\'"  ; optional: hide the recentf save file itself
+          "/\\.recentf\\'"
+          
+          "^~/sync/primary/dotfiles/emacs/\\.emacs\\.d/init\\.log"
+          "^~/sync/primary/dotfiles/emacs/\\.emacs\\.d/$"
+          "^~/sync/primary/dotfiles/emacs/\\.emacs\\.d/conf\\.org$"
+
+          "^~/\\.emacs\\.d/init\\.log"
+          "^~/\\.emacs\\.d/$"
+          "^~/\\.emacs\\.d/conf\\.org$"))
+  :config
+  (recentf-mode 1)
+  (recentf-cleanup))
+
+(recentf-mode 0)
+
 ;;; Windows
 ;; ensure that you must click a window to select it. The alternative is that
 ;; the window under the mouse is automatically selected when it is hovered over.
@@ -114,7 +139,6 @@ file paths.")
                         'my-dired/open-in-a-new-buffer)
             (define-key dired-mode-map (kbd "^")
                         (lambda () (interactive) (find-alternate-file "..")))))
-
 
 
 ;;;; eShell
