@@ -174,13 +174,13 @@ then replaces original region. Skips on hard syntax/runtime error; proceeds on l
         (error "No region active; use `my-lang-python/format-buffer' for whole buffer")
       (let* ((start (region-beginning))
              (end (region-end))
-             (orig-content (buffer-substring-no-properties start end))  ; Save original.
+             (orig-content (buffer-substring-no-properties start end))            ; Save original.
              (temp-buffer (generate-new-buffer " *python-region-format*" t))
              (check-ok t))
         (unwind-protect
             (with-current-buffer temp-buffer
-              (python-ts-mode)  ; Set mode for Apheleia/align.
-              (insert orig-content)  ; Region as "whole" buffer.
+              (python-ts-mode)                                                    ; Set mode for Apheleia/align.
+              (insert orig-content)                                               ; Region as "whole" buffer.
               ;; Pre-check syntax/lint (plain check).
               (let* ((temp-file (make-temp-file "python-region-" nil ".py"))
                      (check-buffer (generate-new-buffer " *ruff-check*" t)))
@@ -191,14 +191,14 @@ then replaces original region. Skips on hard syntax/runtime error; proceeds on l
                         (let ((check-code (call-process "ruff" nil t t "check" temp-file)))
                           (cond
                            ((= check-code 0) (message "No issues; proceeding."))
-                           ((= check-code 1) (message "Lint violations; still formatting: %s" (buffer-string)))  ; Proceed on lint.
+                           ((= check-code 1) (message "Lint violations; still formatting: %s" (buffer-string))) ; Proceed on lint.
                            (t (setq check-ok nil)
                               (message "Hard error (code %d); skipping format: %s" check-code (buffer-string)))))))
                   (when (file-exists-p temp-file) (delete-file temp-file))
                   (kill-buffer check-buffer)))
               ;; Format + align if check ok (or lint-only).
               (when check-ok
-                (my-lang-python/format-buffer))  ; Full chain on temp.
+                (my-lang-python/format-buffer))                                   ; Full chain on temp.
               ;; Fallback align if skipped.
               (unless check-ok
                 (my-in-buffer-tools/comment-align-buffer (point-min) (point-max))))
@@ -369,7 +369,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
        :help "Create a new Python environment"])
     "Menu for running-related functions in `python-ts-mode'.")
 
-  ;;;; Project settings.
+;;;; Project settings.
 
   ;; keymaps for Pyvenv
   ;; also have "C-c p f" and "C-c p o"
@@ -502,7 +502,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
   (keymap-set python-ts-mode-map "C-c g w" #'my-lang-python/find-symbol)          ; Workspace symbols
 
   (defvar my-custom-menus/python-find-menu
-    '("Find"
+    '("Navigation"
       ["Consult Symbols" consult-eglot-symbols :keys "C-c g s"
        :help "Show symbols in minibuffer"]
       ["Imenu minibuffer" consult-imenu :keys "C-c g m"
@@ -683,7 +683,14 @@ groups of submenus, and separators as per requirements."
        menu nil
        ["Toggle Fold" treesit-fold-toggle
         :help "Toggle folding at point"
-        :keys "C-c f"])
+        :keys "C-c f"]
+       ["New chat" my-llm/new-chat
+        :help "Open a chat buffer."
+        :keys "C c l n"]
+       ["Start Aidermacs" my-llm/aidermacs-menu
+        :help "Start Aidermacs in the project."
+        :keys "C c l a"]
+       )
       ;; Add separator after first group.
       (easy-menu-add-item menu nil "---")
 
@@ -739,8 +746,3 @@ groups of submenus, and separators as per requirements."
 (provide 'lang-python)
 ;;; lang-python.el ends here
 
-;; LocalWords:  pyvenv isort numpydoc el CONDA WORKON ENV serviceEnv lang keymap
-;; LocalWords:  eldoc defun minibuffer pycodestyle pycomplete gitlab melpa
-;; LocalWords:  pythonic dape yasnippet debugpy adapter pytest customisations ui
-                                                                                  ; LocalWords:  treesitter
-                                                                                  ; LocalWords:  Pydoc
