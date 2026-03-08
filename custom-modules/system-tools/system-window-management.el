@@ -68,7 +68,13 @@
                            "^\\*transient.*"                                      ; Transient (Magit-like) popups
                            "^\\*Embark.*"                                         ; Embark action menus
                            ))
-    (:names . (("spreadsheet-support.el" . edit)
+    (:names . (("WINDOW_EDIT" . edit)
+               ("WINDOW_DATA" . data)
+               ("WINDOW_CONFIG" . data)
+               ("WINDOW_TERMINAL" .terminal)
+               ("WINDOW_VC" . vc)
+               ("WINDOW_LOGS" . logs)
+               ("spreadsheet-support.el" . edit)
                ("flymake-config.el" . edit)
                ("*dape-memory*" . data)                                           ; Add missing (memory viewer)
                ("Checkdoc Status" . data)
@@ -76,6 +82,7 @@
                ("Backtrace" . data)
                ("grep" . data)
                ("xref" . data)
+               ("xAI Chat" . data)
                ("Org Agenda" . data)
                ("docker-images" . data)
                ("docker-contexts" . data)
