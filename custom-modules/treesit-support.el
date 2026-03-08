@@ -24,13 +24,14 @@
   :ensure t)
 
 (use-package combobulate
+  :vc (:url "git@github.com:mickeynp/combobulate.git")
+  ensure t
   :custom
   ;; You can customize Combobulate's key prefix here.
   ;; Note that you may have to restart Emacs for this to take effect!
   (combobulate-key-prefix "C-c o")
   :hook ((prog-mode . combobulate-mode))
-  ;; The directory containing Combobulate's source code.
-  :load-path (my-paths/combobulate))
+  )
 
 ;; (use-package treesit-auto
 ;;   :ensure t
