@@ -243,7 +243,7 @@ It respects `nerd-icons-color-icons'."
          "  "
          (vc-status 10 10 :left)
          " "
-         (filename-and-process+vc 50 50 :left :elide)) ; filename-and-process (incorporates logic from vc-relative-file.
+         (filename-and-process+vc 50 50 :left :elide))                            ; filename-and-process (incorporates logic from vc-relative-file.
         ;; Summary view
         (mark
          " "
@@ -264,8 +264,8 @@ It respects `nerd-icons-color-icons'."
 (defun my-ibuffer/build-header-line ()
   "Create a clickable header-line string based on ibuffer-formats."
   (let* ((format (or (ibuffer-current-format t)
-                     (error "No current format: %S" ibuffer-formats)))  ; Debug if nil
-         (window-width (window-width))  ; Respect current window width
+                     (error "No current format: %S" ibuffer-formats)))            ; Debug if nil
+         (window-width (window-width))                                            ; Respect current window width
          (header "")
          (total-width 0))
     (dolist (col format)
@@ -279,7 +279,7 @@ It respects `nerd-icons-color-icons'."
                (max (or (pop rest) -1))
                (align (or (pop rest) :left))
                (elide (or (pop rest) nil))
-               (name (or (get sym 'ibuffer-column-name) (symbol-name sym)))  ; Fallback to symbol
+               (name (or (get sym 'ibuffer-column-name) (symbol-name sym)))       ; Fallback to symbol
                (hmap (get sym 'header-mouse-map))
                (len (length name))
                (padded (ibuffer-format-column name (max 0 (- min len)) align)))
@@ -298,10 +298,41 @@ It respects `nerd-icons-color-icons'."
 (defun my-ibuffer/ibuffer-config-hook (&rest _)
   "Set up the ibuffer header after update."
   (when (eq major-mode 'ibuffer-mode)
+    (ibuffer-auto-mode 1)                                                         ; make ibuffer refresh automatically. 
     (setq header-line-format (my-ibuffer/build-header-line))))
 
 ;; Advice to run config after ibuffer-update
 (advice-add 'ibuffer-update :after #'my-ibuffer/ibuffer-config-hook)
+
+
+(defun my-ibuffer/mouse-bring-to-front (event)
+  "Bring the buffer chosen with the mouse to the front.
+
+If the BUFFER is already displayed in any window (including on other
+frames), select that window and raise the frame to the top.  
+
+Otherwise, visit the buffer in the current window using
+`SWITCH-TO-BUFFER'.
+
+EVENT is the mouse event passed by the keymap.
+This function sets point temporarily to locate the buffer then
+restores normal flow."
+  (interactive "e")
+  (let* ((buf (save-excursion
+                (mouse-set-point event)
+                (ibuffer-current-buffer t)))
+         (win (and buf (get-buffer-window buf t))))
+    (if (window-live-p win)
+        (progn
+          (select-window win)
+          (raise-frame (window-frame win)))
+      (when buf
+        (switch-to-buffer buf)))))
+
+(with-eval-after-load 'ibuffer
+
+  (define-key ibuffer-name-map [mouse-1] #'my-ibuffer/mouse-bring-to-front)       ; set up ibuffer so clicking the names brings that element to the front in whatever window it is in. 
+  )
 
 (provide 'ibuffer-support)
 ;;; ibuffer-support.el ends here
