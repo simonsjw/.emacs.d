@@ -87,3 +87,6 @@ etc/INFODYNAMICS/dape/adapters/bash-debug/extension/
 etc/INFODYNAMICS/dape/adapters/bash-debug/
 var/INFODYNAMICS/undo-tree-hist/
 
+var/INFODYNAMICS/bmkp/
+etc/INFODYNAMICS/custom.el
+var/INFODYNAMICS/auto-save-list/

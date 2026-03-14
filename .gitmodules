@@ -4,9 +4,6 @@
 [submodule "etc/INFODYNAMICS/lang-servers/texlab"]
 	path = etc/INFODYNAMICS/lang-servers/texlab
 	url = https://github.com/latex-lsp/texlab
-[submodule "custom-packages/combobulate"]
-	path = custom-packages/combobulate
-	url = git@github.com:mickeynp/combobulate.git
 [submodule "custom-packages/org-modern-indent"]
 	path = custom-packages/org-modern-indent
 	url = git@github.com:jdtsmith/org-modern-indent.git
