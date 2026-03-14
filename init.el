@@ -4,11 +4,16 @@
 ;; This file is generated from config.org.  If you want to edit the
 ;; configuration, DO NOT edit init.el, edit config.org, instead.
 
-;;; Code
+;;; Code:
 
-;; 1. Early tweaks
-(setq load-prefer-newer t)
+;; Load logging functionality
+(require 'path-support)
 
+(load-file (expand-file-name "custom-modules/system-tools/logging-config.el" user-emacs-directory))
+
+(require 'logging-config)
+
+;; === PACKAGE ARCHIVES (MELPA now guaranteed) ===
 (require 'package)
 (setq package-archives
       '(("gnu" . "https://elpa.gnu.org/packages/")
@@ -22,7 +27,7 @@
         ("elpa-devel" . 0)))
 (package-initialize)
 
-;; Robust use-package bootstrap
+;; === Robust use-package bootstrap ===
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
@@ -31,22 +36,25 @@
   (setq use-package-always-ensure t
         use-package-expand-minimally t))
 
-;; 2. NO-LITTERING — now safe because paths were set in early-init.el
-(use-package no-littering
-  :demand t
-  :config
-  (no-littering-theme-backups)
-  ;; Ensure directories exist
-  (dolist (dir (list no-littering-var-directory no-littering-etc-directory))
-    (unless (file-directory-p dir)
-      (make-directory dir t))))
+(defvar epg-gpg-program "/usr/bin/gpg")
 
-;; Custom file lives inside your config/NAME/ folder (no-littering aware)
-(setq custom-file (no-littering-expand-etc-file-name "custom.el"))
+(menu-bar-mode -1)
+(define-key input-decode-map [C-tab] [control-tab])
+(global-set-key [control-tab] 'menu-bar-mode)
 
-;; 3. COMPILE-ANGEL — immediately after no-littering, before ANY custom modules
+(customize-set-variable 'initial-major-mode 'fundamental-mode)
+
+(use-package menu-keys-support
+  :ensure nil
+  :load-path "custom-modules/")
+
+(use-package lang-prog-mode
+  :ensure nil
+  :load-path "custom-modules/prog-mode/")
+
+;; 2. Compile-angel — must come immediately after the custom modules
+;;    (this was the original Step 3 that you had before we moved paths)
 (use-package compile-angel
-  :ensure t
   :demand t
   :config
   (setq compile-angel-verbose t
@@ -59,18 +67,7 @@
               (when (get-buffer "*Compile-Log*")
                 (bury-buffer "*Compile-Log*")))))
 
-;; 4. Custom modules (they are now fully protected by compile-angel)
-(use-package menu-keys-support
-  :ensure nil
-  :load-path "custom-modules/")
-
-(use-package lang-prog-mode
-  :ensure nil
-  :load-path "custom-modules/prog-mode/")
-
-;; 5. Everything from your original Step 6 onward is unchanged
-(require 'path-support)
-
+;; 3. Everything from your original Step 6 onward is unchanged
 (defvar comp-speed 1 "Set native compilation.")
 (setq comp-speed 1)
 
@@ -80,19 +77,15 @@
 (setq native-comp-async-query-on-exit t)
 (setq confirm-kill-processes t)
 
-
 ;; ensure we can control how minor modes are shown in the modeline. 
 (use-package delight)
 
-        ;;;; Set up logging
-(require 'logging-config)
+;;;; Set up logging
 (require 'system-tools)
-
 
 (log/debug :fn 'init
            :msg "loaded system tools."
            :obj user-emacs-directory)
-
 
 (defvar my/REPO_LIST nil"The path to a list of git projects on the system.")
 (setq my/REPO_LIST (getenv"REPO_LIST"))
@@ -102,11 +95,10 @@
 ;;  :type 'type
 ;;  :group 'group)
 
-
 (use-package bind-key)
 (use-package helpful :ensure t)
 
-      ;;; imports and declarations
+;;; imports and declarations
 (require 'bind-key)                                                              ; if you use any :bind variant
 (require 'elisp-packages)
 
@@ -238,11 +230,12 @@
 (require 'db-support)
 
 (require 'terminal-support)
-(require 'summary-support)
-(require 'system-window-management)
-(require 'startup-config)
-(require 'menu-keys-support)
-(require 'server-support)
+  (require 'summary-support)
+  (require 'system-window-management)
+  (require 'startup-config)
+  (require 'LLM-support)
+  (require 'menu-keys-support)
+  (require 'server-support)
 
 ;; All the autoloaded packages are now loaded.
 ;; set elisp-flymake-byte-compile-load-path
@@ -274,7 +267,6 @@
 
 
 (recentf-mode 1)
-(recentf-cleanup)
 (savehist-mode 1)
 
 (provide 'init)

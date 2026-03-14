@@ -153,71 +153,63 @@ Define settings for =early-init.el=.
 
 ;;; Commentary:
 ;; Work that is done before Emacs can be initialised.
-;; Mainly setting up paths, no-littering directories, eln-cache redirection,
-;; package management, GC, native-comp, and early UI.
+;; All paths + package management + GC + native-comp now live here.
 
 ;;; Code:
 
-;; === Base file paths + MY_NAME support (exactly as you had) ===
-(defvar user-emacs-directory nil "The Emacs base directory.")
+;; === Base file paths + MY_NAME support ===
 (setq user-emacs-directory
       (or (getenv "USER_EMACS_DIRECTORY")
           (expand-file-name "~/.emacs.d/")))
+   
 
-(defvar envvar/SYSTEM_NAME nil
+(defvar envvar/SYSTEM_NAME
+  (or (getenv "MY_NAME") "INFODYNAMICS")
   "The name of the system on which we are currently running Emacs.")
-(setq envvar/SYSTEM_NAME
-      (or (getenv "MY_NAME") "INFODYNAMICS"))
 
-;; === NO-LITTERING paths — defined EARLY (before any package or .eln writes) ===
-(defvar no-littering-var-directory nil
-  "Create the path `no-littering-var-directory`.")
-(setq no-littering-var-directory
-      (expand-file-name (concat "var/" envvar/SYSTEM_NAME "/")
-                        user-emacs-directory))
+;; === NO-LITTERING paths + PACKAGE SETUP (all early) ===
 
-(defvar no-littering-etc-directory nil
-  "Create the path `no-littering-etc-directory`.")
-(setq no-littering-etc-directory
-      (expand-file-name (concat "etc/" envvar/SYSTEM_NAME "/")
-                        user-emacs-directory))
+(defvar no-littering-var-directory
+  (expand-file-name (concat "var/" envvar/SYSTEM_NAME "/")
+                    user-emacs-directory))
 
-;; Load your custom path definitions VERY early (this gives us my-paths/eln-cache)
-(load-file (expand-file-name "custom-modules/path-support.el" user-emacs-directory))
+(defvar no-littering-etc-directory
+  (expand-file-name (concat "etc/" envvar/SYSTEM_NAME "/")
+                    user-emacs-directory))
 
-;; Redirect native-comp cache into YOUR path (exactly as you had)
+;; Force package.el to use our clean location from the VERY beginning
+;; (Directory where ELPA/MELPA packages are installed.)
+(setq package-user-dir
+      (expand-file-name "elpa/" no-littering-var-directory))
+
+;; Redirect native-comp cache
+(setq my-paths/eln-cache
+      (expand-file-name "eln-cache/" no-littering-etc-directory))
 (when (and (fboundp 'startup-redirect-eln-cache)
            (boundp 'my-paths/eln-cache))
+  (message "eln-cache file path set.")
   (startup-redirect-eln-cache my-paths/eln-cache))
+  
+  ;; Load path configuration (single source of truth)
+(load-file (expand-file-name "custom-modules/path-support.el" user-emacs-directory))
 
-(setq epg-gpg-program "/usr/bin/gpg")   ; your original
+;;;; UI configuration
+(add-to-list 'default-frame-alist '(background-color . "#1B152D"))
+(add-to-list 'default-frame-alist '(foreground-color . "#EEEEEC"))
+(push '(tool-bar-lines . 0) default-frame-alist)
+(push '(menu-bar-lines . 0) default-frame-alist)
+(push '(vertical-scroll-bars) default-frame-alist)
+(push '(mouse-color . "white") default-frame-alist)
 
-;;;; Garbage collection, font & eln caching (your original values kept)
+;;;; Garbage collection, font & eln caching
 (setq gc-cons-threshold (* 50 1000 1000))
 (setq inhibit-compacting-font-caches t)
-
-;; Emacs lisp source/compiled preference (your original)
 (setq comp-speed 1)
 (setq load-prefer-newer t)
 (setq package-native-compile t)
 (setq native-comp-async-report-warnings-errors nil)
+;;(setq package-enable-at-startup nil)
 
-;; Stop package.el from running again in init.el
-(setq package-enable-at-startup nil)
-
-;;;; UI configuration (100 % of your original settings preserved)
-(add-to-list 'default-frame-alist '(background-color . "#1B152D"))
-(add-to-list 'default-frame-alist '(foreground-color . "#EEEEEC"))
-
-(push '(tool-bar-lines . 0) default-frame-alist)
-(push '(vertical-scroll-bars) default-frame-alist)
-(push '(mouse-color . "white") default-frame-alist)
-
-(menu-bar-mode -1)                                                                ; Turn off Menu-Bar and then bind it to C-TAB
-(define-key input-decode-map [C-tab] [control-tab])
-(global-set-key [control-tab] 'menu-bar-mode)
-
-(customize-set-variable 'initial-major-mode 'fundamental-mode)                    ; your original
 
 (provide 'early-init)
 ;;; early-init.el ends here
@@ -237,136 +229,128 @@ General principle is that any default settings not set here (so set in the modul
 This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
-;; init.el -- Simon's Emacs user customization file -*- lexical-binding: t; -*-
+  ;; init.el -- Simon's Emacs user customization file -*- lexical-binding: t; -*-
 
-;;; Commentary:
-;; This file is generated from config.org.  If you want to edit the
-;; configuration, DO NOT edit init.el, edit config.org, instead.
+  ;;; Commentary:
+  ;; This file is generated from config.org.  If you want to edit the
+  ;; configuration, DO NOT edit init.el, edit config.org, instead.
 
-;;; Code
+  ;;; Code:
 
-;; 1. Early tweaks
-(setq load-prefer-newer t)
+  ;; Load logging functionality
+  (require 'path-support)
+  
+  (load-file (expand-file-name "custom-modules/system-tools/logging-config.el" user-emacs-directory))
 
-(require 'package)
-(setq package-archives
-      '(("gnu" . "https://elpa.gnu.org/packages/")
-        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-        ("melpa" . "https://melpa.org/packages/")
-        ("elpa-devel" . "https://elpa.gnu.org/devel/")))
-(setq package-archive-priorities
-      '(("gnu" . 2)
-        ("nongnu" . 1)
-        ("melpa" . 0)
-        ("elpa-devel" . 0)))
-(package-initialize)
+  (require 'logging-config)
 
-;; Robust use-package bootstrap
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-(require 'use-package)
-(eval-and-compile
-  (setq use-package-always-ensure t
-        use-package-expand-minimally t))
+  ;; === PACKAGE ARCHIVES (MELPA now guaranteed) ===
+  (require 'package)
+  (setq package-archives
+        '(("gnu" . "https://elpa.gnu.org/packages/")
+          ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+          ("melpa" . "https://melpa.org/packages/")
+          ("elpa-devel" . "https://elpa.gnu.org/devel/")))
+  (setq package-archive-priorities
+        '(("gnu" . 2)
+          ("nongnu" . 1)
+          ("melpa" . 0)
+          ("elpa-devel" . 0)))
+  (package-initialize)
 
-;; 2. NO-LITTERING — now safe because paths were set in early-init.el
-(use-package no-littering
-  :demand t
-  :config
-  (no-littering-theme-backups)
-  ;; Ensure directories exist
-  (dolist (dir (list no-littering-var-directory no-littering-etc-directory))
-    (unless (file-directory-p dir)
-      (make-directory dir t))))
+  ;; === Robust use-package bootstrap ===
+  (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
+    (package-install 'use-package))
+  (require 'use-package)
+  (eval-and-compile
+    (setq use-package-always-ensure t
+          use-package-expand-minimally t))
 
-;; Custom file lives inside your config/NAME/ folder (no-littering aware)
-(setq custom-file (no-littering-expand-etc-file-name "custom.el"))
+  (defvar epg-gpg-program "/usr/bin/gpg")
 
-;; 3. COMPILE-ANGEL — immediately after no-littering, before ANY custom modules
-(use-package compile-angel
-  :ensure t
-  :demand t
-  :config
-  (setq compile-angel-verbose t
-        compile-angel-enable-byte-compile nil
-        compile-angel-enable-native-compile t)
-  (compile-angel-on-load-mode 1)
-  (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode)
-  (add-hook 'after-init-hook
-            (lambda ()
-              (when (get-buffer "*Compile-Log*")
-                (bury-buffer "*Compile-Log*")))))
+  (menu-bar-mode -1)
+  (define-key input-decode-map [C-tab] [control-tab])
+  (global-set-key [control-tab] 'menu-bar-mode)
 
-;; 4. Custom modules (they are now fully protected by compile-angel)
-(use-package menu-keys-support
-  :ensure nil
-  :load-path "custom-modules/")
+  (customize-set-variable 'initial-major-mode 'fundamental-mode)
 
-(use-package lang-prog-mode
-  :ensure nil
-  :load-path "custom-modules/prog-mode/")
+  (use-package menu-keys-support
+    :ensure nil
+    :load-path "custom-modules/")
 
-;; 5. Everything from your original Step 6 onward is unchanged
-(require 'path-support)
+  (use-package lang-prog-mode
+    :ensure nil
+    :load-path "custom-modules/prog-mode/")
 
-(defvar comp-speed 1 "Set native compilation.")
-(setq comp-speed 1)
+  ;; 2. Compile-angel — must come immediately after the custom modules
+  ;;    (this was the original Step 3 that you had before we moved paths)
+  (use-package compile-angel
+    :demand t
+    :config
+    (setq compile-angel-verbose t
+          compile-angel-enable-byte-compile nil
+          compile-angel-enable-native-compile t)
+    (compile-angel-on-load-mode 1)
+    (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode)
+    (add-hook 'after-init-hook
+              (lambda ()
+                (when (get-buffer "*Compile-Log*")
+                  (bury-buffer "*Compile-Log*")))))
 
-;; Ensure that quitting only occurs once Emacs finishes native compiling,
-;; preventing incomplete or leftover compilation files in `/tmp`.
-(defvar native-comp-async-query-on-exit t "Ensure that quitting only occurs once Emacs finishes native compiling.")
-(setq native-comp-async-query-on-exit t)
-(setq confirm-kill-processes t)
+  ;; 3. Everything from your original Step 6 onward is unchanged
+  (defvar comp-speed 1 "Set native compilation.")
+  (setq comp-speed 1)
 
+  ;; Ensure that quitting only occurs once Emacs finishes native compiling,
+  ;; preventing incomplete or leftover compilation files in `/tmp`.
+  (defvar native-comp-async-query-on-exit t "Ensure that quitting only occurs once Emacs finishes native compiling.")
+  (setq native-comp-async-query-on-exit t)
+  (setq confirm-kill-processes t)
 
-;; ensure we can control how minor modes are shown in the modeline. 
-(use-package delight)
+  ;; ensure we can control how minor modes are shown in the modeline. 
+  (use-package delight)
 
-        ;;;; Set up logging
-(require 'logging-config)
-(require 'system-tools)
+  ;;;; Set up logging
+  (require 'system-tools)
 
+  (log/debug :fn 'init
+             :msg "loaded system tools."
+             :obj user-emacs-directory)
 
-(log/debug :fn 'init
-           :msg "loaded system tools."
-           :obj user-emacs-directory)
+  (defvar my/REPO_LIST nil"The path to a list of git projects on the system.")
+  (setq my/REPO_LIST (getenv"REPO_LIST"))
 
+  ;; This is the way we define a custom variable and add it to a group.
+  ;; (defcustom var-name default-value doc-string
+  ;;  :type 'type
+  ;;  :group 'group)
 
-(defvar my/REPO_LIST nil"The path to a list of git projects on the system.")
-(setq my/REPO_LIST (getenv"REPO_LIST"))
+  (use-package bind-key)
+  (use-package helpful :ensure t)
 
-;; This is the way we define a custom variable and add it to a group.
-;; (defcustom var-name default-value doc-string
-;;  :type 'type
-;;  :group 'group)
+  ;;; imports and declarations
+  (require 'bind-key)                                                              ; if you use any :bind variant
+  (require 'elisp-packages)
 
+  ;; ensure the correct org-mode is sourced.
+  ;; install the org package before it is used - otherwise it causes conflict.
+  ;; (add-to-list
+  ;;  'load-path
+  ;;  (expand-file-name "custom-modules/org-support.el" user-emacs-directory))
+  (require 'org-support)
 
-(use-package bind-key)
-(use-package helpful :ensure t)
+  ;; ensure tangling functionality is set up with org mode.
+  (add-hook
+   'org-mode-hook
+   (lambda ()
+     (add-hook 'after-save-hook 'org-babel-tangle
+               'run-at-end
+               'only-in-org-mode)))
 
-      ;;; imports and declarations
-(require 'bind-key)                                                              ; if you use any :bind variant
-(require 'elisp-packages)
-
-;; ensure the correct org-mode is sourced.
-;; install the org package before it is used - otherwise it causes conflict.
-;; (add-to-list
-;;  'load-path
-;;  (expand-file-name "custom-modules/org-support.el" user-emacs-directory))
-(require 'org-support)
-
-;; ensure tangling functionality is set up with org mode.
-(add-hook
- 'org-mode-hook
- (lambda ()
-   (add-hook 'after-save-hook 'org-babel-tangle
-             'run-at-end
-             'only-in-org-mode)))
-
-(log/info :fn 'init
-          :msg "----Begin init.el processing----"
-          :obj t)
+  (log/info :fn 'init
+            :msg "----Begin init.el processing----"
+            :obj t)
 
 
 #+end_src
@@ -465,9 +449,9 @@ This means all variables with external origins in emacs are specified here.
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-  ;; IDE configuration.
-  (require 'treesit-support)
-  (require 'undo-tree-support)
+;; IDE configuration.
+(require 'treesit-support)
+(require 'undo-tree-support)
 
 #+end_src
 
@@ -654,18 +638,18 @@ Load the summary page code then set up the startup configuration.  Finalize the 
   (require 'summary-support)
   (require 'system-window-management)
   (require 'startup-config)
+  (require 'LLM-support)
   (require 'menu-keys-support)
   (require 'server-support)
 
-  ;; All the autoloaded packages are now loaded.
-  ;; set elisp-flymake-byte-compile-load-path
-  (setq elisp-flymake-byte-compile-load-path load-path)
-  (let  ((elisp-flymake-byte-compile-load-path-string
-          (mapconcat 'identity elisp-flymake-byte-compile-load-path ";\n      ")))
-    (log/info :fn 'init
-              :msg "Set elisp-flymake-byte-compile-load-path"
-              :obj (concat "(" elisp-flymake-byte-compile-load-path-string ")")))
-
+;; All the autoloaded packages are now loaded.
+;; set elisp-flymake-byte-compile-load-path
+(setq elisp-flymake-byte-compile-load-path load-path)
+(let  ((elisp-flymake-byte-compile-load-path-string
+        (mapconcat 'identity elisp-flymake-byte-compile-load-path ";\n      ")))
+  (log/info :fn 'init
+            :msg "Set elisp-flymake-byte-compile-load-path"
+            :obj (concat "(" elisp-flymake-byte-compile-load-path-string ")")))
 #+end_src
 
 Show the loading time via a the emacs-startup-hook.
@@ -693,7 +677,6 @@ Show the loading time via a the emacs-startup-hook.
 
 
 (recentf-mode 1)
-(recentf-cleanup)
 (savehist-mode 1)
 
 (provide 'init)
