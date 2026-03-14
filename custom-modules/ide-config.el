@@ -9,8 +9,12 @@
 ;; A selection of packages to provide functionality for the UI.
 
 ;; Eglot has been built-in since Emacs 29.
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'ide-config
+           :msg "Starting load of the ide-config module."
+           :obj t)
 
-(declare-function which-key-mode "which-key")
 
 ;; whichkey is now built in.
 (use-package which-key
@@ -111,6 +115,11 @@
 
 ;;; Key bindings
 ;; -
+
+(log/debug :fn 'ide-config
+           :msg "Finishing the load of the ide-config module."
+           :obj t)
+
 
 (provide 'ide-config)
 ;;; ide-config.el ends here

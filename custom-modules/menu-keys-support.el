@@ -11,6 +11,11 @@
 ;; Better menu organisation and key bindings.
 
 ;;; Code:
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'menu-keys-support
+           :msg "Starting load of the menu-keys-support module."
+           :obj t)
 
 ;; define the master menu toggle.
 (define-key input-decode-map [C-tab] [control-tab])
@@ -222,6 +227,10 @@ These are available in `prog-mode'."
 (with-eval-after-load 'pdf-tools
   (define-key pdf-view-mode-map
               (kbd "<down-mouse-1>") 'pdf-view-mouse-set-region))
+
+(log/debug :fn 'menu-keys-support
+           :msg "Finishing the load of the menu-keys-support module."
+           :obj t)
 
 
 (provide 'menu-keys-support)

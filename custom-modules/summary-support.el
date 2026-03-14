@@ -11,6 +11,13 @@
 
 ;;; Code:
 
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'summary-support
+           :msg "Starting load of the summary-support module."
+           :obj t)
+
+
 ;; [[https://github.com/emacs-dashboard/emacs-dashboard][Dashboard]]
 
 (declare-function dashboard-setup-startup-hook "dashboard")
@@ -98,6 +105,11 @@
   ;; (dashboard-setup-startup-hook)
   )
 
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'summary-support
+           :msg "Finishing load of the summary-support module."
+           :obj t)
 
 (provide 'summary-support)
 ;;; summary-support.el ends here.

@@ -15,6 +15,11 @@
 ;;   (keymap-set prog-mode-map "C-c e p" #'flymake-goto-prev-error))
 
 ;;; Code:
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'flymake-config
+           :msg "Starting load of the flymake-config module."
+           :obj t)
 
 ;; flymake configuration
 ;; ---------------------
@@ -153,6 +158,12 @@
 ;;                 `((display-buffer-reuse-window
 ;;                    display-buffer-at-bottom)
 ;;                   (window-height . fit-window-to-buffer))))))
+
+
+(log/debug :fn 'flymake-config
+           :msg "Finishing load of the flymake-config module."
+           :obj t)
+
 (provide 'flymake-config)
 ;;; flymake-config.el ends here
 

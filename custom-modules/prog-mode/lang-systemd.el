@@ -22,12 +22,22 @@
 ;; Repo home:[[https://github.com/holomorph/systemd-mode][systemd-mode]]
 
 ;;; Code:
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'lang-systemd
+           :msg "Starting load of the lang-systemd module."
+           :obj t)
+
 (defvar my-paths/systemd-mode)                                                    ; path defined in path-support.el
 ;;; Packages phase
 (add-to-list 'load-path my-paths/systemd-mode) ; Add directory to the load path
 
 ;;; Configuration phase
 ;; (non - can add company-mode hooks if you use company though.)
+
+(log/debug :fn 'lang-systemd
+           :msg "Ending load of the lang-systemd module."
+           :obj t)
 
 (provide 'lang-systemd)
 ;;; lang-systemd.el ends here

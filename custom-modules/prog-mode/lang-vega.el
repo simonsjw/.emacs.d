@@ -63,6 +63,12 @@
 ;; (setq vega-view--vega-svg-command "vg2svg"
 ;;       vega-view--vega-png-command "vg2png"))
 
+
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'lang-vega
+           :msg "Starting load of the lang-vega module."
+           :obj t)
 (load-file
  (expand-file-name
   "custom-packages/emacs-vega-view/vega-view.el" user-emacs-directory))
@@ -123,6 +129,11 @@ CHOSEN-SPECIFICATION-TYPE can be `vega' or `vega-light'.  This is an interactive
 ;; Hooks
 
 ;;; Provision
+
+
+(log/debug :fn 'lang-vega
+           :msg "Finnishing load of the lang-vega module."
+           :obj t)
 (provide 'lang-vega)
 ;;; crafted-q-mode-support.el ends here
 

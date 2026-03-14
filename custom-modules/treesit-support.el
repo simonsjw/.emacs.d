@@ -18,6 +18,12 @@
 ;; (use-package tree-sitter-indent)
 ;; (use-package tree-sitter-ispell)
 
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'treesit-support
+           :msg "Starting load of the treesit-support module."
+           :obj t)
+
 (use-package treesit-fold
   :delight
   :vc (:url "https://github.com/emacs-tree-sitter/treesit-fold.git")
@@ -144,7 +150,7 @@
 ;;; LaTeX mode
 
 (add-to-list 'treesit-language-source-alist
-             '(latex "file:///home/simon/sync/primary/dotfiles/emacs/local-treesitter-repo/tree-sitter-latex"
+             '(latex (concat "file://" (expand-file-name "libtree-sitter-latex.so" my-paths/ts-lang-repo))
                      nil    ; REVISION (nil for current local state)
                      "src"  ; SOURCE-DIR
                      "cc"   ; CC compiler
@@ -224,6 +230,10 @@ Useful for implementing toggles for the mode in hydras."
 ;;             (treesit-hl-mode)
 ;;             (font-lock-mode -1)))
 
+
+(log/debug :fn 'treesit-support
+           :msg "Finishing load of the treesit-support module."
+           :obj t)
 
 (provide 'treesit-support)
 ;;; treesit-support.el ends here

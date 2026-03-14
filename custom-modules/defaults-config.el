@@ -1,5 +1,6 @@
-;;; config.el --- Defaults for the Emacs setup config  -*- lexical-binding: t; -*-
-;; Copyright (C) 2023
+;;; defaults-config.el --- Defaults for the Emacs setup config  -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2023 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
@@ -15,53 +16,20 @@
 
 ;;; Code:
 
+(require 'logging-config)
+(log/debug :fn 'defaults-config
+           :msg "Starting load of the defaults-config module."
+           :obj t)
 
 ;;;; Global Settings
-
 (setq-default lexical-binding t)                                                  ; set variable scoping to be within the functions called by default as per modern languages.
 (set-default-coding-systems 'utf-8)                                               ; set default coding system.
-
-(defvar my-paths/ispell-word-replacement)
-(defvar custom-info-dir)
 
 (require 'dired)
 (require 'ispell)
 (require 'xref)
-(require 'system-tools)
-(require 'helpful)
+(require 'path-support)
 ;;(require 'aggressive-indent)
-
-
-;; load in the custom info files for use with the info docs.
-(when (file-directory-p custom-info-dir)
-  (require 'info)
-  (info-initialize)
-  (add-to-list 'Info-directory-list custom-info-dir))
-
-
-;; recentf setup.
-;; paths to exclude from recentf (base and shortcut).
-(use-package recentf
-  :ensure nil   ; built-in
-  :init
-  (setq recentf-exclude
-        '(
-          "/WINDOW_"
-          "/\\.emacs\\.d/recentf\\'"  ; optional: hide the recentf save file itself
-          "/\\.recentf\\'"
-          
-          "^~/sync/primary/dotfiles/emacs/\\.emacs\\.d/init\\.log"
-          "^~/sync/primary/dotfiles/emacs/\\.emacs\\.d/$"
-          "^~/sync/primary/dotfiles/emacs/\\.emacs\\.d/conf\\.org$"
-
-          "^~/\\.emacs\\.d/init\\.log"
-          "^~/\\.emacs\\.d/$"
-          "^~/\\.emacs\\.d/conf\\.org$"))
-  :config
-  (recentf-mode 1)
-  (recentf-cleanup))
-
-(recentf-mode 0)
 
 ;;; Windows
 ;; ensure that you must click a window to select it. The alternative is that
@@ -94,7 +62,6 @@ file paths.")
 
 ;; Revert buffers when the underlying file has changed
 (global-auto-revert-mode 1)
-
 
 ;;;; Dired
 
@@ -140,7 +107,6 @@ file paths.")
             (define-key dired-mode-map (kbd "^")
                         (lambda () (interactive) (find-alternate-file "..")))))
 
-
 ;;;; eShell
 
 ;; scroll eshell buffer to the bottom on input, but only in "this"
@@ -177,7 +143,6 @@ file paths.")
 ;; already links to the manual, if a function is referenced there.
 (global-set-key (kbd "C-h F") #'helpful-function)
 
-
 ;;;; Completion settings
 
 ;; Turn on the best completion-mode available:
@@ -193,8 +158,6 @@ file paths.")
 ;; use completion system instead of popup window for cross-references.
 (customize-set-variable 'xref-show-definitions-function
                         #'xref-show-definitions-completing-read)
-
-
 
 ;;;; Editing
 
@@ -213,7 +176,6 @@ file paths.")
 (setq-default bidi-inhibit-bpa t)
 (global-so-long-mode 1)
 
-
 ;; Kill the fringe continuation indicators completely – fixes the
 ;; visual-fill-column “missing bands” bug when pasting long single lines.
 (setq visual-line-fringe-indicators '(nil nil))   ; left-fringe nil, right-fringe nil
@@ -226,10 +188,10 @@ file paths.")
 ;; define a key to define the word at point.
 (keymap-set global-map "C-c d l" #'dictionary-lookup-definition)
 
-
 ;;;; Set up the spell-checker
 (setq ispell-program-name "aspell") ; Or "hunspell" or "ispell"
 
+;; Use the path defined in path-support.el (no more void-variable error)
 (setq ispell-extra-args
       `("--sug-mode=normal"
         ,(concat "--repl=" my-paths/ispell-word-replacement)))
@@ -249,10 +211,9 @@ file paths.")
 (customize-set-variable
  'ispell-dictionary "Australian" "Set default dictionary locale. ")
 
-(global-set-key (kbd "C-c d a") #'my-dictionary/use-australian)
-(global-set-key (kbd "C-c d b") #'my-dictionary/use-british)
-(global-set-key (kbd "C-c d u") #'my-dictionary/use-american)
-
+;; (global-set-key (kbd "C-c d a") #'my-dictionary/use-australian)
+;; (global-set-key (kbd "C-c d b") #'my-dictionary/use-british)
+;; (global-set-key (kbd "C-c d u") #'my-dictionary/use-american)
 
 (use-package jinx
   :ensure t
@@ -358,7 +319,6 @@ Flow:
 (customize-set-variable 'ediff-window-setup-function
                         'ediff-setup-windows-plain)
 
-
 ;; Make shebang (#!) file executable when saved
 (add-hook 'after-save-hook
           #'executable-make-buffer-file-executable-if-script-p)
@@ -370,6 +330,9 @@ Flow:
 ;; keys, typing, or pressing ESC three times.
 (repeat-mode 1)
 
+(log/debug :fn 'defaults-config
+           :msg "Ending load of the defaults-config module."
+           :obj t)
 
 (provide 'defaults-config)
 ;;; defaults-config.el ends here

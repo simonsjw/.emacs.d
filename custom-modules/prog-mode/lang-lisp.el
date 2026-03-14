@@ -40,9 +40,13 @@
 ;;   * geiser-stklos
 
 
-;;; Requirements: 
-(declare-function aggressive-indent-mode "aggressive-indent-mode")
-(declare-function my-outline-mode/outline-level "ui-config")
+;;; Requirements:
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'lang-lisp
+           :msg "Starting load of the lang-lisp module."
+           :obj t)
+
 
 (require 'system-tools)
 (require 'eldoc)
@@ -256,6 +260,10 @@ a message telling you which statement you are at."
 ;; command for that implementation.
 (customize-set-variable 'scheme-program-name "guile")
 
+
+(log/debug :fn 'lang-lisp
+           :msg "Ending load of the lang-lisp module."
+           :obj t)
 
 (provide 'lang-lisp)
 ;;; lang-lisp.el ends here

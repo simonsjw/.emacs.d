@@ -6,7 +6,11 @@
 ;;
 
 ;;; Code:
-
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'lang-prog-mode
+           :msg "Starting load of the lang-prog-mode module."
+           :obj t)
 (require 'menu-keys-support)
 
 (defvar display-line-numbers-type)                                                ; variable from display-line-numbers - show relative or absolute line numbers.
@@ -217,6 +221,10 @@ Run `M-x my-spell-check/add-prog-words` once per project to add them.")
 
 ;; add the programming mode config to prog-mode
 (add-hook 'prog-mode-hook #'my-prog-mode/programming-mode-config-hook)
+
+(log/debug :fn 'lang-prog-mode
+           :msg "Ending load of the lang-prog-mode module."
+           :obj t)
 
 (provide 'lang-prog-mode)
 ;;; lang-prog-mode.el ends here

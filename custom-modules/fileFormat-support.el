@@ -3,11 +3,14 @@
 ;;; Commentary:
 
 ;;;Declare functions and imports
-(declare-function treesit-fold-mode "treesit-fold")
-(declare-function treesit-fold-indicators-mode "treesit-fold-indicators")
-(declare-function json-mode "json-mode")
 
-;;; Code:
+
+;;; Code: 
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'fileFormat-support
+           :msg "Starting load of the fileFormat-support module."
+           :obj t)
 
 ;; packages
 (use-package vlf)
@@ -210,6 +213,12 @@ Interactively, POINT is point and KILL is the prefix argument."
 
 ;; Add the custom setup to toml-ts-mode-hook
 (add-hook 'toml-ts-mode-hook #'my-fileFormat-support/toml-ts-mode-setup)
+
+
+(log/debug :fn 'fileFormat-support
+           :msg "Finishing load of the fileFormat-support module."
+           :obj t)
+
 
 (provide 'fileFormat-support)
 ;;; fileFormat-support.el ends here

@@ -47,6 +47,13 @@
 ;;   C-c C-n   → send line-by-line
 
 ;;; Code:
+(require 'path-support)
+(require 'logging-config)
+
+(log/debug :fn 'LLM-support
+           :msg "Starting load of the LLM-support module."
+           :obj t)
+
 
 (use-package gptel
   :ensure t)
@@ -364,6 +371,11 @@ Reuses XAI_API_KEY and Ollama from your environment."
           (lambda ()
             (setq-local gptel-backend my-llm/ollama-backend
                         gptel-model "qwen3-coder-next:latest")))
+
+
+(log/debug :fn 'LLM-support
+           :msg "Ending load of the LLM-support module."
+           :obj t)
 
 (provide 'LLM-support)
 ;;; LLM-support.el ends here

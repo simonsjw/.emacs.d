@@ -24,6 +24,12 @@
 ;; Install: apheleia and python-pytest from MELPA.
 
 ;;; Package phase
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'lang-python
+           :msg "Starting load of the lang-python module."
+           :obj t)
+
 (use-package pythonic)
 (use-package pyvenv
   :config
@@ -742,6 +748,11 @@ groups of submenus, and separators as per requirements."
 (add-to-list 'magic-mode-alist
              '((lambda ()
                  (looking-at "^#!.*\\(python\\|python3\\)")) . python-ts-mode))
+
+
+(log/debug :fn 'lang-python
+           :msg "Ending load of the lang-python module."
+           :obj t)
 
 (provide 'lang-python)
 ;;; lang-python.el ends here

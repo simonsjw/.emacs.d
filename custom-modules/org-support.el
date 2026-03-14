@@ -29,6 +29,11 @@
 
 ;;; Code:
 
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'org-support
+           :msg "Starting load of the org-support module."
+           :obj t)
 
 ;;; ──────────────────────────────────────────────────────────────────────
 ;;; 1. Core Org variables & appearance
@@ -101,7 +106,7 @@ Variables: Uses org-table face inheritance.
 Output: Modified text properties for first row.
 Flow: Hook checks buffer, finds tables, adjusts faces."
     (when (derived-mode-p 'org-mode)
-      (font-lock-flush)  ; Ensure fresh rendering
+      (font-lock-flush)                                                           ; Ensure fresh rendering
       ;; Example: Set header background to subtle grey (adjust hex)
       (custom-set-faces
        '(org-table ((t :background "#2E2E2E" :inverse-video nil))))))
@@ -109,7 +114,7 @@ Flow: Hook checks buffer, finds tables, adjusts faces."
   :hook (org-modern-mode . my-org-modern/update-table-header-face))
 
 (use-package org-modern-indent
-  :load-path "~/.emacs.d/custom-packages/org-modern-indent"
+  :load-path my-paths/org-modern-indent-folder
   :hook (org-mode . org-modern-indent-mode)
   :custom (org-modern-indent/block t))
 
@@ -137,7 +142,7 @@ Flow: Hook checks buffer, finds tables, adjusts faces."
 (use-package org-roam
   :custom
   (org-roam-directory
-   (expand-file-name "Documents/org/org-roam/nodes" (getenv "HOME")))
+   (expand-file-name org-roam-directory (getenv "HOME")))
   (org-roam-completion-everywhere t)
   (org-roam-node-display-template
    (concat "${title:*} " (propertize "${tags:30}" 'face 'org-tag)))
@@ -147,8 +152,11 @@ Flow: Hook checks buffer, finds tables, adjusts faces."
          ("C-c n l" . org-roam-buffer-toggle)
          ("C-c n d" . org-roam-dailies-map))
   :config
-  (org-roam-db-autosync-mode)
+  (org-roam-db-autosync-mode 1)
+  
+(org-id-update-id-locations)                                                      ; Rebuild ID locations automatically on startup
   (require 'org-roam-dailies))
+
 
 
 ;;; ──────────────────────────────────────────────────────────────────────
@@ -172,10 +180,10 @@ Flow: Hook checks buffer, finds tables, adjusts faces."
 
 (setq org-capture-templates
       '(("t" "Todo"         entry
-         (file+headline "~/Documents/org/inbox.org" "Tasks")
+         (file+headline org-default-inbox-file "Tasks")
          "* TODO %?\n  %i\n  %a")
         ("j" "Journal"      entry
-         (file+datetree "~/Documents/org/journal/journal.org")
+         (file+datetree org-default-journal-file)
          "* %<\\H:%M> %?\n  %i")))
 
 
@@ -225,7 +233,7 @@ ARG and KEYS are passed directly to `org-agenda'."
 (defun my-agenda/dashboard ()
   "Create 2025-style four-pane Org dashboard in dedicated frame."
   (interactive)
-  (my-org/agenda-in-new-frame nil "a")           ; main agenda
+  (my-org/agenda-in-new-frame nil "a")                                            ; main agenda
 
   (let ((frame (my-window-tools/find-frame-by-project-root "org-agenda")))
     (when (frame-live-p frame)
@@ -236,15 +244,29 @@ ARG and KEYS are passed directly to `org-agenda'."
         (calendar)
         (split-window-below)
         (other-window 1)
-        (org-agenda nil "t")))))                   ; global TODO list
+        (org-agenda nil "t")))))                                                  ; global TODO list
+
 
 
 ;;; ──────────────────────────────────────────────────────────────────────
-;;; 7. Global keybindings
+;;; 7. Hooks
+;;; ──────────────────────────────────────────────────────────────────────
+(add-hook 'org-mode-hook
+          (lambda ()
+            (setq org-table-header-line-p t)))                                    ; keeps header visible when scrolling
+
+
+;;; ──────────────────────────────────────────────────────────────────────
+;;; 8. Global keybindings
 ;;; ──────────────────────────────────────────────────────────────────────
 
 (global-set-key (kbd "C-c C-l a") #'my-org/agenda-in-new-frame)
 (global-set-key (kbd "C-c C-l") #'my-agenda/dashboard)
+
+
+(log/debug :fn 'org-support
+           :msg "Finishing load of the org-support module."
+           :obj t)
 
 (provide 'org-support)
 ;;; org-support.el ends here

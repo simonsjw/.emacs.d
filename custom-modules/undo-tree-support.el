@@ -14,6 +14,11 @@
 ;;; Packages:
 
 (require 'system-tools)
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'undo-tree-support
+           :msg "Starting load of the undo-tree-support module."
+           :obj t)
 
 ;; Undo-tree package
 ;; https://gitlab.com/tsc25/undo-tree/-/blob/master/undo-tree.el
@@ -81,6 +86,10 @@ Note: Requires Emacs version 24.3 or higher."
     (after undo-tree activate)
   (setq ad-return-value (concat ad-return-value ".gz")))
 
+
+(log/debug :fn 'undo-tree-support
+           :msg "Finishing load of the undo-tree-support module."
+           :obj t)
 
 (provide 'undo-tree-support)
 ;;; undo-tree-support.el ends here

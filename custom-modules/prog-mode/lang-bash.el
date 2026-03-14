@@ -14,7 +14,11 @@
 
 
 ;;; Code:
-
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'lang-bash
+           :msg "Starting load of the lang-bash module."
+           :obj t)
 ;; Always ensure flymake-shellcheck is loaded as a fallback
 (use-package flymake-shellcheck
   :ensure t)
@@ -181,6 +185,10 @@
 (add-to-list 'magic-mode-alist
              '((lambda ()
                  (looking-at "^#!.*\\(bash\\|sh\\)")) . bash-ts-mode))
+
+(log/debug :fn 'lang-bash
+           :msg "Finishing load of the lang-bash module."
+           :obj t)
 
 (provide 'lang-bash)
 ;;; lang-bash.el ends here

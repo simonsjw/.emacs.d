@@ -14,6 +14,12 @@
 
 (require 'delight)
 
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'modeline-support
+           :msg "Starting load of the modeline-support module."
+           :obj t)
+
 (declare-function
  my-in-buffer-tools/get-matching-bracket-position "system-tools")
 (declare-function
@@ -141,6 +147,12 @@ The matching bracket info is shown if the cursor is near a bracket.")
 
 ;;;; Org Capture
 ;; (global-set-key (kbd "C-c c") #'org-capture)
+
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'modeline-support
+           :msg "Finishing load of the modeline-support module."
+           :obj t)
 
 (provide 'modeline-support)
 ;;; modeline-support.el ends here

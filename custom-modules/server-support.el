@@ -18,6 +18,11 @@
 
 ;;; Code:
 
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'server-support
+           :msg "Starting load of the server-support module."
+           :obj t)
 ;; ----------------------------------------------------------------------
 ;; 1. Start server
 ;; ----------------------------------------------------------------------
@@ -31,7 +36,10 @@ warnings in systemd user units pre-2024."
   (when (and (fboundp 'server-running-p)
              (not (server-running-p)))
     (server-start)
-    (message "[INFO; server] Emacs server started")))
+    (log/info :fn 'my-server/start-if-not-running
+              :msg "Emacs server started."
+              :obj t)
+    ))
 
 (my-server/start-if-not-running)
 
@@ -89,6 +97,11 @@ Efficiency: single make-frame + apply call, no recursion, <40 lines."
 ;; absolutely sure here too (idempotent, harmless to call twice).
 (when (daemonp)
   (add-hook 'server-after-make-frame-hook #'my-visual/apply-all-customisations t))
+
+
+(log/debug :fn 'server-support
+           :msg "Ending load of the server-support module."
+           :obj t)
 
 (provide 'server-support)
 ;;; server-support.el ends here

@@ -16,13 +16,10 @@
 ;;    * Hook phase
 ;;    * keymap phase
 
-(defvar save-sql-history-dir)
-(defvar sql-mode-syntax-table)
-(defvar sql-mode-postgres-font-lock-keywords)
-(defvar sql-product)
-(defvar sqlformat-command)
-(defvar sqlformat-args)
+;;; Code:
 
+(require 'path-support)
+(require 'logging-config)
 
 ;;; Package phase
 

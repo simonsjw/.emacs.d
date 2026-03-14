@@ -14,6 +14,11 @@
 ;;     (none)
 
 ;;; Package phase
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'vc-support
+           :msg "Starting load of the vc-support module."
+           :obj t)
 
 ;; git-modes
 ;; support for git configuration files.
@@ -490,6 +495,11 @@ Flow:
              '("^\\*\\(vc-diff\\|vc-log\\|log-edit\\|vc-change-log\\)\\*"
                (display-buffer-same-window)))
 
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'vc-support
+           :msg "Finishing load of the vc-support module."
+           :obj t)
 
 (provide 'vc-support)
 ;;; vc-support.el ends here

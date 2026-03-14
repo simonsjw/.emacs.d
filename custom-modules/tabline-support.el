@@ -20,8 +20,12 @@
 
 ;;; Code:
 
-(declare-function my-buffer-tools/switch-to-buffer-in-current-window
-                  "system-tools")
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'tabline-support
+           :msg "Starting load of the tabline-support module."
+           :obj t)
+
 
 (require 'tab-line)                                                               ; Built-in package for tab-line functionality.
 
@@ -380,6 +384,7 @@ This overrides the default `tab-line-tabs-function' for cleaner tabs."
                            (string-match-p "\\` \\*corfu\\*\\'" name)             ; Corfu popups.
                            (string-match-p "\\` \\*speedbar\\*\\'" name)          ; Speedbar.
                            (string-match-p "\\` \\*Marginalia\\*\\'" name))       ; Marginalia.
+                 
                  buf)))                                                           ; Keep if not excluded.
            buflist))))
 
@@ -489,6 +494,11 @@ Interactive for user input."
     (when buffer                                                                  ; If exists:
       (my-buffer-tools/switch-to-buffer-in-current-window buffer-name)            ; Switch to it.
       (my-tab-line/tab-line-close-tab-given-buffer buffer))))                     ; Close safely.
+
+
+(log/debug :fn 'tabline-support
+           :msg "Finishing load of the tabline-support module."
+           :obj t)
 
 (provide 'tabline-support)
 ;;; tabline-support.el ends here

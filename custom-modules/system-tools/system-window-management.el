@@ -28,16 +28,13 @@
 ;; as it would was this functionality not present.
 ;;
 
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'system-window-management
+           :msg "Starting load of the system-window-management module."
+           :obj t)
 
-(defvar sr-speedbar-window)                                                       ; variable defined in sr-speedbar - the current window of sr-speedbar.
 
-(defvar my-window-tools/buffer-window-map)
-(declare-function my-tab-line/tab-line-close-tab-given-buffer "tabline-support")
-(declare-function sr-speedbar-exist-p "sr-speedbar")
-(declare-function sr-speedbar-refresh-turn-off "sr-speedbar")
-(declare-function sr-speedbar-close "sr-speedbar")
-
-(declare-function log/debug "system-window-management")
 
 (require 'ui-config)
 
@@ -1023,6 +1020,10 @@ TAG must be one of the symbols defined in the :IDE entry of
                                :msg "Set active window tag. "
                                :obj (list :tag tag)))
 
+
+(log/debug :fn 'system-window-management
+           :msg "Finishing load of the system-window-management module."
+           :obj t)
 (provide 'system-window-management)
 
 ;;; system-window-management.el ends here

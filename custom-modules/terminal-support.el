@@ -11,12 +11,14 @@
 ;; manage term ansi-term and the rest here.
 
 ;;; Imports
-(defvar vterm-mode-map)
-(defvar vterm-send-key)
 
-(declare-function vterm-undo "vterm")
-(declare-function vterm-send-string "vterm")
-(declare-function vterm-send-key "vterm")
+
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'terminal-support
+           :msg "Starting load of the terminal-support module."
+           :obj t)
+
 
 ;;; Packages
 
@@ -81,6 +83,12 @@ NOECHO is set to t to avoid this statement showing in the console."
 ;;; Hooks:
 (add-hook 'term-mode-hook #'my-terminal/unset_bash_file_loader_flags)
 (add-hook 'vterm-mode-hook #'my-terminal/unset_bash_file_loader_flags)
+
+
+
+(log/debug :fn 'terminal-support
+           :msg "Finish load of the terminal-support module."
+           :obj t)
 
 
 (provide 'terminal-support)

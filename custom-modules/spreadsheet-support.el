@@ -11,7 +11,16 @@
 ;; configure a spreadsheet like buffer.
 
 ;;; Code:
-(use-package ses)
+
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'spreadsheet-support
+           :msg "Starting load of the spreadsheet-support module."
+           :obj t)
+
+
+(use-package ses
+  :ensure nil)
 ;; (use-package ses
 ;;   :ensure nil  ; Built-in, no need to install
 ;;   :defer t     ; Load only when needed (e.g., on .ses file open)
@@ -104,6 +113,13 @@ Flow: Save current buffer, switch to 'spreadsheet.ses', then restore original."
 ;;(add-hook 'ses-mode-hook #'my-ses/adjust-headers-for-line-numbers)
 ;;(add-hook 'window-configuration-change-hook
 ;;          #'my-ses/adjust-headers-for-line-numbers)
+
+
+
+(log/debug :fn 'spreadsheet-support
+           :msg "Finishing load of the spreadsheet-support module."
+           :obj t)
+
 
 (provide 'spreadsheet-support)
 ;;; spreadsheet-support.el ends here

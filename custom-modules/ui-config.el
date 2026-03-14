@@ -20,7 +20,11 @@
 
 ;;; Code:
 
-
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'ui-config
+           :msg "Starting load of the ui-config module."
+           :obj t)
 ;; Add frame borders and window dividers
 (modify-all-frames-parameters
  '(
@@ -71,7 +75,9 @@
 ;;  For detailed information about using linkd-mode, see the online
 ;;  manual: http://dto.github.com/notebook/linkd.html.
 
-(let ((crnt-package-dir "/home/simon/sync/primary/dotfiles/emacs/.emacs.d/emacs-wiki/linkd/")
+
+
+(let ((crnt-package-dir (expand-file-name "emacs-wiki/linkd/" user-emacs-directory))
       (emacswiki-base "https://www.emacswiki.org/emacs/download/")
       (package-files '("linkd.el")))
   (require 'url)
@@ -128,7 +134,8 @@
 ;;    and then follow (e.g. click) the link `Send Bug Report', which
 ;;    helps you prepare an email to the author Drew Adams.
 
-(let* ((bookmarkplus-dir "/home/simon/sync/primary/dotfiles/emacs/.emacs.d/emacs-wiki/bookmark+/")
+(let* (
+       (bookmarkplus-dir (expand-file-name "emacs-wiki/bookmark+/" user-emacs-directory))
        (macros-file-already-exists-p
         (file-exists-p (concat bookmarkplus-dir "bookmark+-mac.el")))
        (emacswiki-base "https://www.emacswiki.org/emacs/download/")
@@ -393,6 +400,11 @@ parameters for the minibuffer function."
 ;; system-tools
 (global-set-key [mode-line C-mouse-1]
                 'my-buffer-tools/copy-buffer-in-new-frame)
+
+
+(log/debug :fn 'ui-config
+           :msg "Finishing load of the ui-config module."
+           :obj t)
 
 (provide 'ui-config)
 ;;; ui-config.el ends here

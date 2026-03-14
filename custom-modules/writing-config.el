@@ -12,44 +12,12 @@
 ;; and readability by decomposing long functions.
 
 ;;; Code:
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'writing-config
+           :msg "Starting load of the writing-config module."
+           :obj t)
 
-(defvar citar-templates)
-(defvar TeX-auto-save)
-(defvar TeX-parse-self)
-(defvar TeX-master)
-(defvar TeX-engine)
-(defvar TeX-PDF-mode)
-(defvar reftex-plug-into-AUCTeX)
-(defvar LaTeX-indent-environment-list)
-(defvar LaTeX-verbatim-environments)
-(defvar LaTeX-verbatim-macros-with-braces)
-(defvar LaTeX-verbatim-macros-with-delims)
-(defvar LaTeX-electric-left-right-brace)
-(defvar TeX-command-default)
-(defvar TeX-electric-sub-and-superscript)
-(defvar TeX-electric-math)
-(defvar TeX-view-program-selection)
-(defvar TeX-view-program-list)
-(defvar TeX-source-correlate-start-server)
-(defvar TeX-output-dir)
-(defvar TeX-command-extra-options)
-(defvar auctex-latexmk-inherit-TeX-PDF-mode)
-(defvar bibtex-dialect)
-
-(declare-function LaTeX-math-mode "tex")
-(declare-function TeX-source-correlate-mode "tex")
-(declare-function TeX-revert-document-buffer "tex")
-(declare-function TeX-run-style-hooks "tex")
-(declare-function TeX-add-to-alist "tex")
-(declare-function TeX-add-style-hook "tex")
-
-(declare-function conditionally-turn-on-pandoc "pandoc-mode")
-(declare-function pdf-tools-install "pdf-tools")
-(declare-function auctex-latexmk-setup "auctex")
-(declare-function citar-embark-mode "citar-embark")
-
-(declare-function auto-fill-mode "simple")
-(declare-function yas-minor-mode-on "yasnippet")
 
 (use-package markdown-mode)                                                       ; Markdown support
 (use-package flymake-markdownlint)                                                ; Lint markdown in flymake if markdownlint-cli is installed.
@@ -502,6 +470,11 @@ Calls decomposed helpers for modularity.
 
 ;; Hook the function to LaTeX mode.
 (add-hook 'LaTeX-mode-hook 'my-lang-tex/latex-setup)
+
+
+(log/debug :fn 'writing-config
+           :msg "Finishing load of the writing-config module."
+           :obj t)
 
 (provide 'writing-config)
 ;;; writing-config.el ends here

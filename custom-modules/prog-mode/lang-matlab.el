@@ -15,16 +15,12 @@
 
 
 ;;; Code:
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'lang-matlab
+           :msg "Starting load of the lang-matlab module."
+           :obj t)
 
-(declare-function matlab-shell "matlab-mode")
-
-(declare-function yas-minor-mode "yasnippet")
-(declare-function treesit-fold-mode "treesit-fold")
-(declare-function treesit-fold-indicators-mode "treesit-fold")
-
-(declare-function flymake-show-project-diagnostics "flymake")
-
-(declare-function my-outline-mode/outline-level "ui-config")
 
 (defun matlab-mode-treesit-setup ()
   "Enable Tree-sitter features in `matlab-mode`."
@@ -218,6 +214,13 @@
             (lambda (orig-fun &rest args)
               "Wrap matlab-shell-delete-backwards-no-prompt to ignore errors at prompt start."
               (ignore-errors (apply orig-fun args))))
+
+
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'lang-matlab
+           :msg "Ending load of the lang-matlab module."
+           :obj t)
 
 (provide 'lang-matlab)
 ;;; lang-matlab.el ends here

@@ -16,7 +16,11 @@
 ;; Set defaults for any loadBalancer environmental variables not
 ;; already set.
 
-
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'custom-loadbalancer-support
+           :msg "Starting load of the LLM-support module."
+           :obj t)
 
 ;;;; 1. functions to set/get environmental variables for KDB setup.
 ;;   --------------------------------------------------------------
@@ -466,6 +470,9 @@ KDB/Q process."
 ;; To stop the process, call
 ;; (stop-process "loadBalancer")
 
+(log/debug :fn 'custom-loadbalancer-support
+           :msg "Ending load of the custom-loadbalancer-support.el module."
+           :obj t)
 
 (provide 'custom-loadbalancer-support)
 ;;; custom-loadbalancer-support.el ends here

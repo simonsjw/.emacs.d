@@ -1,432 +1,380 @@
-;;; path-support.el --- path configuration for emacs  -*- lexical-binding: t; -*-
+;;; path-support.el --- Path configuration for Emacs (with no-littering)  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2024
+;; Copyright (C) 2024 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; configure the paths used by Emacs.
-;; We use the no-littering package to keep things neat.
-
-;;; Declarations and imports.
-(defvar no-littering-var-directory 'uninitialized
-  "`no-littering-var-directory' set in init.el before this module runs.")
-(when (eq no-littering-var-directory 'uninitialized)
-  (warn
-   "no-littering-var-directory is not set. Please ensure it is set in init.el"))
-
-(defvar no-littering-etc-directory 'uninitialized
-  "`no-littering-etc-directory' set in init.el before this module runs.")
-(when (eq no-littering-etc-directory 'uninitialized)
-  (warn
-   "no-littering-etc-directory is not set. Please ensure it is set in init.el"))
-
-
-(defvar my-paths/eln-cache)
-(defvar epg-gpg-program)
-(defvar custom-info-dir)
-(defvar custom-packages-dir)
-(defvar undo-tree-history-directory-alist)
-(defvar auto-save-dir)
-(defvar backup-dir)
-(defvar org-preview-latex-image-directory)
-(defvar save-sql-history-dir)
-
-(defvar project-templates-archive nil
-  "Path to the project templates archive file.")
-
-(defvar yasnippets-directory-personal)
-(defvar yasnippets-directory-default)
-(defvar yasnippets-directory-yasmate)
-(defvar yas-snippet-dirs)
-
-;; (defvar bookmark-default-file)
-;; (defvar bmkp-desktop-default-directory)
-
-(defvar dape-default-breakpoints-file)
-
-(defvar org-directory)
-(defvar org-contacts-directory)
-(defvar org-roam-directory)
-(defvar org-roam-dailies-directory)
-(defvar org-agenda-files)
-
-(defvar org-contacts-files nil
-  "Load the path to each file in the contacts directory.")
-
-;; Notes file for org capture.
-(defvar org-default-notes-file nil
-  "Path to the Emacs notes file for org notes functionality.")
-
-;; I include the built in diary functionality in the Org-mode setup
-(defvar diary-file nil
-  "Path to the Emacs diary file for built in diary functionality.")
-
-
-(defvar my-paths/desktop-layout-folder nil
-  "Folder containing `window-tree' specifications for UI layouts.")
-
-(defvar my-paths/ispell-word-replacement)
-(defvar ispell-personal-dictionary)
-
-
-;;; Packages:
-
+;; Single source of truth for ALL Emacs paths.
+;; Loaded exactly once from early-init.el.
+;; We fully replicate the useful parts of no-littering here so there is zero dependency
+;; on the package for any path logic.
 
 ;;; Code:
 
-;; this function is take from TOOLS FOR THE FILE SYSTEM in system-tools.
-;; It is reproduced here so custom-path-support can be loaded without
-;; dependencies.
+
 
+(defvar envvar/SYSTEM_NAME
+  (or (getenv "MY_NAME") "INFODYNAMICS")
+  "The name of the system on which we are currently running Emacs.")
+
+;; === NO-LITTERING paths + PACKAGE SETUP (all early) ===
+
+(defvar no-littering-var-directory
+  (expand-file-name (concat "var/" envvar/SYSTEM_NAME "/")
+                    user-emacs-directory))
+
+(defvar no-littering-etc-directory
+  (expand-file-name (concat "etc/" envvar/SYSTEM_NAME "/")
+                    user-emacs-directory))
+
+;;; Early safety check
+(unless (and no-littering-var-directory no-littering-etc-directory)
+  (warn "no-littering-var-directory and/or no-littering-etc-directory were not set in early-init.el"))
+
+
+
+;; set up the info directory.
+(defconst custom-info-dir
+  (expand-file-name "docs/" user-emacs-directory)
+  "Directory containing custom Info documentation files.")
+
+(with-eval-after-load 'info
+  (info-initialize)
+  (when (and custom-info-dir (file-directory-p custom-info-dir))
+    (add-to-list 'Info-additional-directory-list custom-info-dir)))
+
+
+;;;
+;; Local helper (dependency-free)
 (defun my-on-disk-tools/ensure-directory-exists (dir)
-  "Ensure the directory DIR exists, create it if it does not."
+  "Ensure the directory DIR exists, creating it (and parents) if needed."
   (unless (file-directory-p dir)
-    (message "creating %s" dir)
+    (message "Creating directory: %s" dir)
     (make-directory dir t)))
 
-;;;; no-littering
-;;   ------------
-;; no-littering package is central to the directory organisation in this
-;; setup
-(message
- "no-littering var directory set: %s" no-littering-var-directory)
-(message
- "no-littering etc directory set: %s" no-littering-etc-directory)
-
-;;;; Emacs internal Directory
-;;   -----------------------
-
-;; set up my eln-cache.
-(setq my-paths/eln-cache
-      (expand-file-name "eln-cache/" no-littering-etc-directory))
-(my-on-disk-tools/ensure-directory-exists my-paths/eln-cache)
-
-;; set a path to local custom packages.
-(setq custom-packages-dir
-      (expand-file-name "custom-packages/" user-emacs-directory))
-
-(add-to-list 'load-path custom-packages-dir)
-
-;; set a path to local custom modules.
-(setq custom-modules-dir
-      (expand-file-name "custom-modules/" user-emacs-directory))
-
-(add-to-list 'load-path custom-modules-dir)
-
-;; set a path to local custom modules.
-(setq custom-system-tools-dir
-      (expand-file-name "custom-modules/system-tools/" user-emacs-directory))
-
-(add-to-list 'load-path custom-system-tools-dir)
-
-;; set a path to local custom modules.
-(setq custom-prog-mode-dir
-      (expand-file-name "custom-modules/prog-mode/" user-emacs-directory))
-
-(add-to-list 'load-path custom-prog-mode-dir)
-
-;; set a path to custom documentation to be searchable with `info'.
-(setq custom-info-dir
-      (expand-file-name "docs" user-emacs-directory))
-
-(add-to-list 'load-path custom-info-dir)
-
-;;(log/debug :fn 'init
-;;           :msg "Current load-path:"
-;;           :obj (format "%s" load-path))
-
-
-;;;; custom.el
-(defvar custom-file nil "Set location of custom.el.")
-(setq custom-file
-      (expand-file-name "custom.el" no-littering-etc-directory))
-
-
-;;;; GPG application
-;;   ---------------
-;; (setq epg-gpg-program "/usr/bin/gpg")
-
-;; Automatically create the auto-save and backup directories if they don't
-;; exist
-
-;; Define the path to the undo-tree cache.
-(setq undo-tree-history-directory-alist
-      `(("." . ,(expand-file-name "undo" no-littering-var-directory))))
-
-(setq auto-save-dir
-      (expand-file-name "auto-save/" no-littering-var-directory))
-(my-on-disk-tools/ensure-directory-exists auto-save-dir)
-
-(setq backup-dir
-      (expand-file-name "backups/" no-littering-var-directory))
-(my-on-disk-tools/ensure-directory-exists backup-dir)
-
-(setq org-preview-latex-image-directory
-      (expand-file-name ".cache_latex/" no-littering-var-directory))
-(my-on-disk-tools/ensure-directory-exists org-preview-latex-image-directory)
-
-(setq save-sql-history-dir
-      (expand-file-name "sql-history/" no-littering-var-directory))
-(my-on-disk-tools/ensure-directory-exists save-sql-history-dir)
-
-
-;; Use customize-set-variable to set the directory for backup files
-(setq backup-directory-alist `(("." . ,backup-dir)))
-
-;; Use customize-set-variable to set the directory for auto-save files
-(setq auto-save-file-name-transforms `((".*" ,auto-save-dir t)))
-
-;; Set the tree-sitter load paths.
-;;(note treesit-extra-load-path is set in early-init.el)
-
-;; (defvar treesit-load-path '())
-;; (defvar treesit-extra-load-path nil)
-;; (add-to-list 'treesit-load-path  (expand-file-name "~/.emacs.d/tree-sitter/"))
-;; (add-to-list 'treesit-extra-load-path  (expand-file-name "~/.emacs.d/tree-sitter/"))
-
-
-;;;; Bookmark+
-;;   ---------
-;; The location of the default bookmark desktop directory bmkp is set under
-;;     no-littering-var-directory
-;; the variable files for bookmark+ (and bookmark) are in bmkp.
-;; bmkp-desktop-default-directory is set to bmkp/desktops
-;;     - this is where desktop bookmarks are stored.
-;; bmkp-bmenu-state-file is set to bmkp/emacs-bmk-bmenu-state.el
-;;     - this is where the current state of the list-bookmark buffer is stored.
-;; bookmark-default-file is set to bmkp/bookmark-default.bmk
-;;     - this is the default location for bookmark files.
-(with-eval-after-load 'bookmark+
-
-  ;; Set the default location of bookmarks.
-  (setq bmkp-current-bookmark-file
-        (expand-file-name
-         "bmkp/bookmark-default.bmk" no-littering-var-directory))
-  
-  ;; Set the default location of bookmarks.
-  (setq bookmark-default-file
-        (expand-file-name
-         "bmkp/bookmark-default.bmk" no-littering-var-directory))
-  
-  ;; Set the location of the default bookmark desktop directory.
-  (setq
-   bmkp-desktop-default-directory
-   (expand-file-name "bmkp/desktops" no-littering-var-directory))
-  
-  ;; ensure the desktop file exists.
-  (my-on-disk-tools/ensure-directory-exists
-   bmkp-desktop-default-directory)
-  
-  (setq bmkp-bmenu-state-file
-        (expand-file-name
-         "bmkp/emacs-bmk-bmenu-state.el" no-littering-var-directory))
-  )
-
-
-
-;;;; UI configuration
-;;   ----------------
-;; note this is different to the bookmark desktop.
-(setq my-paths/desktop-layout-folder
-      (expand-file-name
-       "desktop-layout/" no-littering-var-directory))
-
-
-;;;; Yasnippet directories
-;;   ---------------------
-;; (no-littering only sets the yasnippet personal directory automatically)
-(with-eval-after-load 'yasnippet
-  (progn
-    (setq yasnippets-directory-personal
-          (expand-file-name "yasnippet/snippets/"
-                            no-littering-var-directory))
-    (setq yasnippets-directory-default
-          (expand-file-name
-           "yasnippet-snippets-1.0/snippets/"
-           package-user-dir))
-    (setq yasnippets-directory-yasmate
-          (expand-file-name
-           "yasnippet/yasmate/snippets/" no-littering-var-directory))
-
-    ;; set the list of the yasnippet directories.
-    ;; no-littering only sets up a link to an empty
-    ;; directory under etc.
-    (setq yas-snippet-dirs
-          `(,yasnippets-directory-personal
-            ,yasnippets-directory-default
-            ,yasnippets-directory-yasmate)))
-
-  ;; ensure the yasnippet directories exist.
-  (my-on-disk-tools/ensure-directory-exists yasnippets-directory-personal)
-  (my-on-disk-tools/ensure-directory-exists yasnippets-directory-yasmate))
-
-;;;; Projects.el
-;;   -----------
-;; Set the location of the project template archive.
-(setq project-templates-archive
-      (expand-file-name "var/project-templates.tar.xz" user-emacs-directory))
-
-;; Set location of saved project paths and master work-spaces containing
-;; multiple projects.
-
-(setq project-list-file
-      (expand-file-name "projects/project-list.el" no-littering-var-directory))
-(setq my-project/workspace-list-file
-      (expand-file-name "projects/workspace-list.el" no-littering-var-directory))
-(my-on-disk-tools/ensure-directory-exists
- (expand-file-name "projects/" no-littering-var-directory))
-
-
-;;;; Spreadsheet
-;;   -----------
-(setq my-paths/spreadsheet-dir
-      (expand-file-name "spreadsheet" no-littering-var-directory))
-(my-on-disk-tools/ensure-directory-exists my-paths/spreadsheet-dir)
-
-;;;; language servers
-
-;; LaTeX lsp bin
-(setq lsp-bin-texlab
-      (expand-file-name
-       "lang-servers/texlab/target/release/texlab" no-littering-etc-directory))
-;;;; Dape
-;;   ----
-;; Set the location of the adapters.
-(setq dape-adapter-dir
-      (expand-file-name "dape/adapters/" no-littering-etc-directory))
-
-;; Set the location of the bash adapter. (note - etc not var)
-(setq dape-adapter-directory-bash
-      (expand-file-name "dape/adapters/bash-debug" no-littering-etc-directory))
-
-(my-on-disk-tools/ensure-directory-exists dape-adapter-directory-bash)
-
-;; Set location of saved breakpoints (note - var not etc)
-(setq dape-default-breakpoints-file
-      (expand-file-name "dape/dape-breakpoints" no-littering-var-directory))
-
-(my-on-disk-tools/ensure-directory-exists
- (expand-file-name "dape" no-littering-var-directory))
-
-;;;; Org Mode
-;;   --------
-(setq org-directory "~/Documents/org")                                            ; Path to org data.
-
-(setq org-contacts-directory                                                      ; Path to the Emacs contacts file for org contacts functionality.
-      (expand-file-name  "contacts/" org-directory))
-
-(customize-set-variable
- 'org-contacts-files
- (directory-files-recursively org-contacts-directory "\\.org$")
- "Load the path to each file in the contacts directory. ")
-
-;; Notes file for org capture.
-(setq org-default-notes-file
-      (expand-file-name "notes/notes.org" org-directory))
-
-;; I include the built in diary functionality in the Org-mode setup
-(setq diary-file (expand-file-name "emacsDiary/diary" org-directory))
-
-;; put all of org under org-roam.
-(setq org-roam-directory (expand-file-name "org-roam/" org-directory))
-;;(setq org-roam-dailies-directory (expand-file-name "daily" org-directory))
-
-;; Automatically include all Org files in a directory
-;; (setq org-agenda-files (list "~/Documents/org/work.org"
-;;                              "~/Documents/org/home.org"x
-;;                              "~/Documents/org/projects/"))
-(setq org-agenda-files
-      (directory-files-recursively
-       (concat org-directory "/agenda") "\\.org$"))
-
-;; Using Org with Latex
-;; --------------------
-;; This needs a cache set up to store any rendered latex shown in org.
-;; Here we set up that directory.
-;; Set the path for Org LaTeX preview images
-(defvar
-  org-preview-latex-image-directory
-  (expand-file-name ".cache_latex/" no-littering-etc-directory)
-  "Path for the directory used to cache latex images.")
-
-
-;;;; Dictionary settings
-;;   -------------------
-;; Set up dictionary paths (also specified in defaults-config.el)
-(setq ispell-personal-dictionary
-      (expand-file-name ".aspell.en.pws" user-emacs-directory))
-
-(setq my-paths/ispell-word-replacement
-      (expand-file-name ".aspell.en.prepl" user-emacs-directory))
-
-(setq save-sql-history-dir
-      (expand-file-name "sql-history/" no-littering-var-directory))
-
-
-;; keep the pretty-speedbar-icons in the icon stash.
-(defvar pretty-speedbar-icons-dir
-  (locate-user-emacs-file "etc/images/pretty-speedbar-icons/")
-  "Store pretty-speedbar-icons in the etc/images/pretty-speedbar-icons folder.")
-
-
-;; define a path to the object-memory-tree custom package.
-(setq my-paths/memory-object-tree-folder
-      (locate-user-emacs-file "custom-packages/memory-object-tree/"))
-
-;; define a path to the combobulate custom package
-(setq my-paths/combobulate
-      (locate-user-emacs-file "custom-packages/combobulate/"))
-
-(defvar my-paths/pretty-speedbar
+;; === ALL PATHS AS defconst (value + rich docstring in one place) ===
+
+;;;
+
+;; **** eln-cache set in early-init.el
+(defconst my-paths/eln-cache
+  (expand-file-name "eln-cache/" no-littering-etc-directory)
+  "Path for the folder for the eln compile cache.")
+
+(defconst my-paths/desktop-layout-folder
+  (expand-file-name "desktop-layout/" no-littering-var-directory)
+  "Folder storing desktop layouts for the IDE (uses `window-tree' output).")
+
+(defconst my-paths/spreadsheet-dir
+  (expand-file-name "spreadsheet/" no-littering-var-directory)
+  "Folder for storing spreadsheet (.ses) templates.")
+
+(defconst my-paths/ispell-word-replacement
+  (expand-file-name ".aspell.en.prepl" user-emacs-directory)
+  "Personal ispell prepl file: list of words and their automatic replacements.")
+
+(defconst my-paths/memory-object-tree-folder
+  (locate-user-emacs-file "custom-packages/memory-object-tree/")
+  "Project to show objects in memory under various languages (similar to a file explorer).")
+
+(defconst my-paths/pretty-speedbar
   (locate-user-emacs-file "custom-packages/pretty-speedbar/")
-  "Path to the custom pretty-speedbar installation.")
+  "Update of pretty-speedbar to work correctly with emacsclient.")
 
-;; define a path to the q custom package
-(defvar my-paths/q-load-balancer-folder
+(defconst my-paths/q-load-balancer-folder
   (locate-user-emacs-file "custom-packages/q-loadbalancer/")
-  "Mode to run a full KDB/Q loadbalancer from emacs.")
+  "Project to set up a full KDB/Q load balancer directly inside Emacs.")
 
-;; define a path to the systemd-mode custom package
-(defvar my-paths/systemd-mode
+(defconst my-paths/org-modern-indent-folder
+  (locate-user-emacs-file "custom-packages/org-modern-indent/")
+  "Project to use org-modern-indent in  Emacs.")
+
+(defconst my-paths/systemd-mode
   (locate-user-emacs-file "custom-packages/systemd-mode/")
-  "Package providing systemd-mode.
-Small change to internal shortcuts made. ")
+  "systemD font-locking and keywords — minor local update to fix loading issue.")
 
-;; define a path to the logging-view-mode custom package
-(defvar my-paths/logging-view-mode
+(defconst my-paths/logging-view-mode
   (locate-user-emacs-file "custom-packages/logging-view-mode/")
-  "Mode enriches the IDE log view." )
+  "Font-locking and useful filters for a custom logging mode.")
 
-;; define a path to the logging-view-mode custom package
-(defvar my-paths/log-ts-mode
+(defconst my-paths/log-ts-mode
   (locate-user-emacs-file "custom-packages/log-ts-mode/")
-  "Mode to provide logging-view-mode functionality using treesitter.")
+  "New logging mode project (treesitter-based version of logging-view-mode).")
 
-;; paths to exclude from recentf (base and shortcut).
-(setq recentf-exclude
-      '(
-        "^~/sync/primary/dotfiles/emacs/\\.emacs\\.d/init\\.log"
-        "^~/sync/primary/dotfiles/emacs/\\.emacs\\.d/$"
-        "^~/sync/primary/dotfiles/emacs/\\.emacs\\.d/conf\\.org$"
+(defconst my-paths/ts-lang-repo
+  (expand-file-name "tree-sitter/" user-emacs-directory)
+  "Home of the Tree-sitter language specifications.")
 
-        "^~/\\.emacs\\.d/init\\.log"
-        "^~/\\.emacs\\.d/$"
-        "^~/\\.emacs\\.d/conf\\.org$"))
-
-;; set global variables for 'special files'.
 (defconst my-paths/default-config-file
   (expand-file-name "conf.org" user-emacs-directory)
-  "Path to the literate config file.")
+  "Path to conf.org — the literate code file used to generate early-init.el and init.el.")
 
 (defconst my-paths/default-log-file
   (expand-file-name "init.log" user-emacs-directory)
-  "Path to the init log file.")
+  "Path to the Emacs initialization log file.")
 
+;; Standard/third-party paths (original names kept)
+(defconst custom-packages-dir
+  (expand-file-name "custom-packages/" user-emacs-directory)
+  "Directory containing manually installed / git-submodule packages.")
+
+(defconst custom-modules-dir
+  (expand-file-name "custom-modules/" user-emacs-directory)
+  "Directory containing my custom Emacs Lisp modules.")
+
+(defconst custom-system-tools-dir
+  (expand-file-name "custom-modules/system-tools/" user-emacs-directory)
+  "Directory containing system-related custom modules.")
+
+(defconst custom-prog-mode-dir
+  (expand-file-name "custom-modules/prog-mode/" user-emacs-directory)
+  "Directory containing programming-mode custom modules.")
+
+(defconst custom-file
+  (expand-file-name "custom.el" no-littering-etc-directory)
+  "Location of custom.el (set here so it is available extremely early).")
+
+(defconst undo-tree-history-directory-alist
+  `(("." . ,(expand-file-name "undo/" no-littering-var-directory)))
+  "Alist for undo-tree history files.")
+
+(defconst auto-save-dir
+  (expand-file-name "auto-save/" no-littering-var-directory)
+  "Directory for auto-save files.")
+
+(defconst backup-dir
+  (expand-file-name "backups/" no-littering-var-directory)
+  "Directory for backup files.")
+
+(defconst org-preview-latex-image-directory
+  (expand-file-name "latex-preview/" no-littering-var-directory)
+  "Directory used to cache LaTeX preview images in Org buffers.")
+
+(defconst save-sql-history-dir
+  (expand-file-name "sql-history/" no-littering-var-directory)
+  "Directory for SQL history files.")
+
+(defconst project-templates-archive
+  (expand-file-name "var/project-templates.tar.xz" user-emacs-directory)
+  "Path to the project templates archive file.")
+
+(defconst project-list-file
+  (expand-file-name "projects/project-list.el" no-littering-var-directory)
+  "Location of the project-list.el file used by project.el.")
+
+(defconst my-project/workspace-list-file
+  (expand-file-name "projects/workspace-list.el" no-littering-var-directory)
+  "Location of my custom workspace list.")
+
+(defconst lsp-bin-texlab
+  (expand-file-name "lang-servers/texlab/target/release/texlab" no-littering-etc-directory)
+  "Path to the texlab language-server binary.")
+
+(defconst dape-adapter-dir
+  (expand-file-name "dape/adapters/" no-littering-etc-directory)
+  "Directory containing Dape debug adapters.")
+
+(defconst dape-adapter-directory-bash
+  (expand-file-name "dape/adapters/bash-debug/" no-littering-etc-directory)
+  "Directory for the bash debug adapter.")
+
+(defconst dape-default-breakpoints-file
+  (expand-file-name "dape/dape-breakpoints" no-littering-var-directory)
+  "Location of the default Dape debugger breakpoints file.")
+
+(defconst org-directory "~/Documents/org"
+  "Root directory for all Org-mode files.")
+
+(defconst org-contacts-directory
+  (expand-file-name "contacts/" org-directory)
+  "Path to the Emacs contacts directory for org-contacts functionality.")
+
+(defconst org-roam-directory
+  (expand-file-name "org-roam/" org-directory)
+  "Root directory for Org-roam (all Org data lives under org-directory).")
+
+(defconst org-default-notes-file
+  (expand-file-name "notes/notes.org" org-directory)
+  "Path to the Emacs notes file for org-capture functionality.")
+
+(defconst org-default-inbox-file
+  (expand-file-name "inbox.org" org-directory)
+  "Path to the org-journal for Emacs.")
+
+(defconst org-default-journal-file
+  (expand-file-name "journal/journal.org" org-directory)
+  "Path to the org-journal for Emacs.")
+
+(defconst diary-file
+  (expand-file-name "emacsDiary/diary" org-directory)
+  "Path to the Emacs diary file (integrated with Org).")
+
+(defconst pretty-speedbar-icons-dir
+  (locate-user-emacs-file "etc/images/pretty-speedbar-icons/")
+  "Directory containing icons for the pretty-speedbar package.")
+
+;; Cleanups for a perfectly tidy ~/.emacs.d root
+(defconst recentf-save-file
+  (expand-file-name "recentf-save.el" no-littering-var-directory)
+  "Location of the recent-files list (recentf-save.el).")
+
+(defconst savehist-file
+  (expand-file-name "savehist.el" no-littering-var-directory)
+  "Location of the savehist (minibuffer/command history) file.")
+
+(defconst package-user-dir
+  (expand-file-name "elpa/" no-littering-var-directory)
+  "Directory where ELPA/MELPA packages are installed.")
+
+(defconst org-roam-db-location
+  (expand-file-name "org/org-roam.db" no-littering-var-directory)
+  "Location of the Org-roam SQLite database.")
+
+(defconst org-id-locations-file
+  (expand-file-name "org/org-id-locations.el" no-littering-var-directory)
+  "Location of the Org-roam locations tracker.")
+
+
+
+;; === Paths that no-littering would set automatically (now explicit) ===
+
+(defconst abbrev-file-name
+  (expand-file-name "abbrev.el" no-littering-etc-directory)
+  "Location of abbrev definitions (auto-saved word expansions).")
+
+(defconst auto-save-list-file-prefix
+  (expand-file-name "auto-save-list/.saves-" no-littering-var-directory)
+  "Prefix for auto-save-list session files.
+Creates the folder under var/INFODYNAMICS/.")
+
+(defconst eshell-directory-name
+  (expand-file-name "eshell/" no-littering-var-directory)
+  "Directory for Eshell history, aliases, and other data.")
+
+(defconst server-auth-dir
+  (expand-file-name "server/auth/" no-littering-var-directory)
+  "Directory for Emacs server authentication files.")
+
+(defconst tramp-persistency-file-name
+  (expand-file-name "tramp/persistency.el" no-littering-var-directory)
+  "Location of Tramp connection persistency file.")
+
+(defconst url-configuration-directory
+  (expand-file-name "url/" no-littering-var-directory)
+  "Directory for URL package configuration, cookies, and history.")
+
+(defconst url-cookie-file
+  (expand-file-name "url/cookies.el" no-littering-var-directory)
+  "Location of URL cookies file.")
+
+(defconst url-history-file
+  (expand-file-name "url/history.el" no-littering-var-directory)
+  "Location of URL history file.")
+
+;; Yasnippet placeholders (set inside with-eval-after-load)
+(defconst yasnippets-directory-personal nil
+  "Personal yasnippet directory (set after yasnippet loads).")
+(defconst yasnippets-directory-default nil)
+(defconst yasnippets-directory-yasmate nil)
+(defconst yas-snippet-dirs nil
+  "List of directories YASnippet searches for templates.")
+
+
+
+;; === Path setup & directory creation ===
+(message "no-littering var directory set: %s" no-littering-var-directory)
+(message "no-littering etc directory set: %s" no-littering-etc-directory)
+
+;; Ensure main no-littering directories
+(dolist
+    (dir
+     (list
+      no-littering-var-directory
+      no-littering-etc-directory
+      )
+     )
+  (my-on-disk-tools/ensure-directory-exists dir))
+
+;; Ensure all writeable directories (including the new ones)
+(dolist (dir (list my-paths/eln-cache
+                   auto-save-dir
+                   backup-dir
+                   org-preview-latex-image-directory
+                   save-sql-history-dir
+                   my-paths/desktop-layout-folder
+                   my-paths/spreadsheet-dir
+                   dape-adapter-directory-bash
+                   (expand-file-name "dape/" no-littering-var-directory)
+                   (expand-file-name "projects/" no-littering-var-directory)
+                   package-user-dir
+                   (expand-file-name "auto-save-list/" no-littering-var-directory)
+                   (expand-file-name "auto-save/sessions/" no-littering-var-directory)
+                   eshell-directory-name
+                   server-auth-dir
+                   (expand-file-name "tramp/" no-littering-var-directory)
+                   url-configuration-directory))
+  (my-on-disk-tools/ensure-directory-exists dir))
+
+
+;; Load paths
+(add-to-list 'load-path custom-packages-dir)
+(add-to-list 'load-path custom-modules-dir)
+(add-to-list 'load-path custom-system-tools-dir)
+(add-to-list 'load-path custom-prog-mode-dir)
+
+
+;;;
+;; Custom Info docs — deferred until info.el is loaded (
+;; fixes the void-variable error)
+(with-eval-after-load 'info
+  (add-to-list 'Info-additional-directory-list custom-info-dir))
+
+;; Backup & auto-save settings
+(setq backup-directory-alist `(("." . ,backup-dir)))
+(setq auto-save-file-name-transforms `((".*" ,auto-save-dir t)))
+
+;; Recentf / savehist / ELPA
+(setq recentf-save-file recentf-save-file)
+(setq savehist-file savehist-file)
+
+;; Bookmark+
+(with-eval-after-load 'bookmark+
+  (setq bmkp-current-bookmark-file
+        (expand-file-name "bmkp/bookmark-default.bmk" no-littering-var-directory))
+  (setq bookmark-default-file bmkp-current-bookmark-file)
+  (setq bmkp-desktop-default-directory
+        (expand-file-name "bmkp/desktops/" no-littering-var-directory))
+  (my-on-disk-tools/ensure-directory-exists bmkp-desktop-default-directory)
+  (setq bmkp-bmenu-state-file
+        (expand-file-name "bmkp/emacs-bmk-bmenu-state.el" no-littering-var-directory)))
+
+;; Yasnippet
+(with-eval-after-load 'yasnippet
+  (setq yasnippets-directory-personal
+        (expand-file-name "yasnippet/snippets/" no-littering-var-directory))
+  (setq yasnippets-directory-default
+        (expand-file-name "yasnippet-snippets-1.0/snippets/" package-user-dir))
+  (setq yasnippets-directory-yasmate
+        (expand-file-name "yasnippet/yasmate/snippets/" no-littering-var-directory))
+  (setq yas-snippet-dirs
+        (list yasnippets-directory-personal
+              yasnippets-directory-default
+              yasnippets-directory-yasmate))
+  (my-on-disk-tools/ensure-directory-exists yasnippets-directory-personal)
+  (my-on-disk-tools/ensure-directory-exists yasnippets-directory-yasmate))
+
+;; Org Mode dynamic lists
+
+;;;
+(setq org-contacts-files
+      (directory-files-recursively org-contacts-directory "\\.org$"))
+(setq org-agenda-files
+      (directory-files-recursively (concat org-directory "/agenda") "\\.org$"))
+
+(message "✅ path-support.el loaded successfully — all paths defined (including former no-littering auto-paths)")
 
 (provide 'path-support)
 ;;; path-support.el ends here
-
-

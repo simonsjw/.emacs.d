@@ -16,6 +16,10 @@
 
 ;;; Code:
 (require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'speedbar-support
+           :msg "Starting load of the speedbar-support module."
+           :obj t)
 
 (use-package sr-speedbar)
 
@@ -307,6 +311,10 @@ Current view is given in SPEEDBAR-VIEW."
               (when (fboundp 'sr-speedbar-refresh)
                 (sr-speedbar-refresh))
               (message "[INFO; speedbar] Icons regenerated after sr-speedbar toggle"))))
-              
+
+(log/debug :fn 'speedbar-support
+           :msg "Ending load of the speedbar-support module."
+           :obj t)
+
 (provide 'speedbar-support)
 ;;; speedbar-support.el ends here

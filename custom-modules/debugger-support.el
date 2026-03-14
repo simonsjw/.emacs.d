@@ -83,8 +83,11 @@
 ;;(defvar dape-configs)
 ;;(declare-function dape "dape")
 
-
-
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'debugger-support
+           :msg "Starting load of the debugger-support module."
+           :obj t)
 
 
 ;; The latest version of jsonrpc is needed. You need to swap it in the
@@ -325,6 +328,9 @@ variable my-dape/adapter-names as well as returned by the function."
       (message "No settings found for %s" key)
       nil)))
 
+(log/debug :fn 'debugger-support
+           :msg "Finishing load of the debugger-support module."
+           :obj t)
 
 (provide 'debugger-support)
 ;;; debugger-support.el ends here

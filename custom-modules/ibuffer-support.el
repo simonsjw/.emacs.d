@@ -11,10 +11,16 @@
 
 ;;; Imports:
 
+
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'ibuffer-support
+           :msg "Starting load of the ibuffer-support module."
+           :obj t)
+
 (use-package ibuffer-vc)
 
 ;;(use-package buffer-menu+)
-
 (require 'ibuffer)
 (require 'ibuffer-vc)
 (require 'nerd-icons)
@@ -333,6 +339,11 @@ restores normal flow."
 
   (define-key ibuffer-name-map [mouse-1] #'my-ibuffer/mouse-bring-to-front)       ; set up ibuffer so clicking the names brings that element to the front in whatever window it is in. 
   )
+
+
+(log/debug :fn 'ibuffer-support
+           :msg "Finishing load of the ibuffer-support module."
+           :obj t)
 
 (provide 'ibuffer-support)
 ;;; ibuffer-support.el ends here

@@ -18,6 +18,11 @@
 ;;; Code:
 
 ;;; Packages phase
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'lang-rust
+           :msg "Starting load of the lang-rust module."
+           :obj t)
 
 (use-package rust-mode
   :init
@@ -172,6 +177,12 @@
   )
 
 (add-hook 'rustic-mode-hook #'my-lang/rust-setup)
+
+
+(log/debug :fn 'lang-rust
+           :msg "Ending load of the lang-rust module."
+           :obj t)
+
 
 (provide 'lang-rust)
 ;;; lang-rust.el ends here

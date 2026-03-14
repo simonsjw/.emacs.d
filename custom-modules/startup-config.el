@@ -13,6 +13,15 @@
 
 ;;; Code:
 
+
+
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'startup-config
+           :msg "Starting load of the startup-config module."
+           :obj t)
+
+
 ;; Imports
 (require 'summary-support)
 (require 'system-window-management)
@@ -227,6 +236,12 @@ closed as a result of this action."
 ;; ensure that all frames unique to a frame are killed when
 ;; the frame is closed.
 (add-hook 'delete-frame-functions #'my-frame-tools/kill-buffers-on-frame-close)
+
+
+(log/debug :fn 'startup-config
+           :msg "Finishing load of the startup-config module."
+           :obj t)
+
 
 (provide 'startup-config)
 ;;; startup-config.el ends here

@@ -12,6 +12,13 @@
 ;; good doom-themes: pale-night, material and grovbox.
 
 ;;; Code:
+
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'theme-support
+           :msg "Starting load of the theme-support module."
+           :obj t)
+
 ;; rainbow-mode variables.
 ;; (defvar rainbow-x-colors)                                                         ; Disable color names like "red"
 ;; (defvar rainbow-x-colors-font-lock-keywords)                                      ; Set to nil to stop any color names being highlighted (including customs)
@@ -739,6 +746,11 @@ Efficiency: early return, frame-local remap, <35 lines."
 
 (with-eval-after-load 'sr-speedbar
   (my-visual/apply-all-customisations))
+
+
+(log/debug :fn 'theme-support
+           :msg "Ending the load of the theme-support module."
+           :obj t)
 
 (provide 'theme-support)
 ;;; theme-support.el ends here

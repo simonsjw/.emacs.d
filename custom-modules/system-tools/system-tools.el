@@ -18,19 +18,13 @@
 
 
 ;;; Code:
-(defvar ispell-dictionary)
-(defvar org-link-abbrev-alist)
 
-(declare-function speedbar-refresh "speedbar")
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'system-tools
+           :msg "Starting load of the system-tools module."
+           :obj t)
 
-(declare-function sr-speedbar-exist-p "sr-speedbar")
-(declare-function sr-speedbar-open "sr-speedbar")
-(declare-function sr-speedbar-refresh "sr-speedbar")
-(declare-function image-supported-file-p "image")
-
-(declare-function org-link-abbrev-alist "ol")
-
-(declare-function dired-get-file-for-visit "dired")
 
 ;;;; Hash table management
 
@@ -672,6 +666,9 @@ USED-PORTS:  the ports that are not available."
 
 ;; ---end of TOOLS FOR LANGUAGE & DICTIONARIES---
 
+(log/debug :fn 'system-tools
+           :msg "Finishing load of the system-tools module."
+           :obj t)
 
 (provide 'system-tools)
 ;;; system-tools.el ends here

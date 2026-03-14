@@ -9,6 +9,11 @@
 ;;; Commentary:
 
 ;;; Code:
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'vterm-support
+           :msg "Starting load of the vterm-support module."
+           :obj t)
 
 (defun my-vterm/cd-to-current-dir ()
   "Change directory in the vterm buffer to the directory of the active buffer.
@@ -79,6 +84,10 @@ Send the command with a newline."
                   (vterm-send-string (concat "cd "
                                              (shell-quote-argument path) "\n"))))))
 
+
+(log/debug :fn 'vterm-support
+           :msg "Finishing load of the vterm-support module."
+           :obj t)
 
 (provide 'vterm-support)
 ;;; vterm-support.el ends here

@@ -20,22 +20,30 @@
 ;; each setting.
 
 ;;; Code:
+
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'completion-support
+           :msg "Starting load of the completion-support module."
+           :obj t)
+
 (use-package vertico
   :ensure t
   :custom
-  ;; Enable cycling: pressing the edge of the candidate list wraps around
-  ;; to the opposite end for easier navigation.
   (vertico-cycle t)
   :init
-  (vertico-mode 1)
-  :config
-  (vertico-multiform-mode 1)
+  (vertico-mode 1))
 
+(use-package vertico-multiform
+  :ensure nil          ; ← important: it’s part of the vertico package
+  :after vertico
+  :init
+  (vertico-multiform-mode 1)
+  :config
   ;; Jinx correction menu – compact grid for technical jargon (en_AU)
-  ;; Official recommendation from Jinx README (v2.6, February 2026)
+  ;; Official recommendation style from Jinx README (v2.6–2.7)
   (add-to-list 'vertico-multiform-categories
                '(jinx grid (vertico-grid-annotate . 25) (vertico-count . 6))))
-
 
 (use-package orderless
   :ensure t
@@ -184,6 +192,11 @@ Flow: Return literal-prefix style only for first word <4 chars."
   (which-key-show-remaining-keys t)                                               ; Show remaining key count in mode-line.
   :init
   (which-key-mode 1))
+
+
+(log/debug :fn 'completion-support
+           :msg "Ending load of the completion-support module."
+           :obj t)
 
 (provide 'completion-support)
 ;;; completion-support.el ends here

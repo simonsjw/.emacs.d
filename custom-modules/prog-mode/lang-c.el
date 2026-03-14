@@ -44,7 +44,11 @@
 
 ;;;; Packages phase
 (require 'eglot)
-
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'lang-c
+           :msg "Starting load of the lang-c module."
+           :obj t)
 
 (defvar dape-configs)                                                             ; list of configs by language for the debugger.
 
@@ -292,6 +296,11 @@
    (current-time-string)))
 
 (add-hook 'python-ts-mode-hook #'my-lang-python/python-mode-setup)
+
+
+(log/debug :fn 'lang-c
+           :msg "Finishing load of the lang-c module."
+           :obj t)
 
 (provide 'lang-c)
 ;;; lang-c.el ends here

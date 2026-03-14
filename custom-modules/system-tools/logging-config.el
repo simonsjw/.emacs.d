@@ -368,13 +368,6 @@ Overwriting without prompt."
 
 
 
-;;  warning-suppress-types '((emacs));
-;;  Example: suppress 'emacs category display.
-
-(use-package menu-keys-support
-  :ensure nil  ; Local file, not a package
-  :load-path "custom-modules/")
-
 (provide 'logging-config)
 ;;; logging-config.el ends here
 

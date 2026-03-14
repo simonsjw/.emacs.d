@@ -10,7 +10,11 @@
 
 
 ;;; Code:
-
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'lang-docker
+           :msg "Starting load of the lang-docker module."
+           :obj t)
 ;;; Packages phase
 
 ;; base docker commands.
@@ -25,6 +29,10 @@
 (defvar docker-run-as-root)
 (setq docker-run-as-root t)
 
+
+(log/debug :fn 'lang-docker
+           :msg "Finishing load of the lang-docker module."
+           :obj t)
 
 (provide 'lang-docker)
 ;;; lang-docker.el ends here

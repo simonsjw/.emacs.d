@@ -23,6 +23,13 @@
 
 
 ;;; Code:
+
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'lang-q
+           :msg "Starting load of the lang-q module."
+           :obj t)
+
 (defvar my-paths/q-load-balancer-folder)
 (defvar my-ide/comment-delimiter-char)
 
@@ -87,6 +94,10 @@
 (add-hook 'ess-mode-hook #'remove-ess-q-extn)
 (add-hook 'inferior-ess-mode-hook #'remove-ess-q-extn)
 (add-hook 'q-script-mode-hook #'my-lang/q-mode-setup)
+
+(log/debug :fn 'lang-q
+           :msg "Ending load of the lang-q module."
+           :obj t)
 
 
 ;;; Provision
