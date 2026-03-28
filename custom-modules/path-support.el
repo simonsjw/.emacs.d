@@ -80,6 +80,10 @@
   (locate-user-emacs-file "custom-packages/memory-object-tree/")
   "Project to show objects in memory under various languages (similar to a file explorer).")
 
+(defconst my-paths/project-view
+  (locate-user-emacs-file "custom-packages/project-view/")
+  "Project to show multiple projects and workspaces with git status with vc integration.")
+
 (defconst my-paths/pretty-speedbar
   (locate-user-emacs-file "custom-packages/pretty-speedbar/")
   "Update of pretty-speedbar to work correctly with emacsclient.")
@@ -165,7 +169,7 @@
   (expand-file-name "projects/project-list.el" no-littering-var-directory)
   "Location of the project-list.el file used by project.el.")
 
-(defconst my-project/workspace-list-file
+(defconst project-view/workspace-list-file
   (expand-file-name "projects/workspace-list.el" no-littering-var-directory)
   "Location of my custom workspace list.")
 
