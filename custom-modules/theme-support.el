@@ -280,22 +280,22 @@ Converts keys to strings and ensures values are strings."
              `(default
                ((t (:inherit nil
                              :weight regular :height 100
-                             :family "noto mono"))))   ;; fira code
+                             :family "Noto Mono"))))   ;; fira code
 
              '(fixed-pitch
                ((t (:inherit nil
                              :weight regular :height 100
-                             :family "source code pro"))))
+                             :family "Source Code Pro"))))
 
              '(variable-pitch
                ((t (:inherit nil
                              :weight regular :height 100
-                             :family "times new roman"))))
+                             :family "Times New Roman"))))
 
              '(fixed-pitch-serif
                ((t (:inherit nil
                              :weight regular :height 100
-                             :family "courier new"))))
+                             :family "Courier New"))))
 
              ;; Now generate the modus themes faces.
              `(modus-themes-heading-0
