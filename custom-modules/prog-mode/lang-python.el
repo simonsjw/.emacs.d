@@ -75,7 +75,7 @@
 
 ;; functions for python to run before entering the mode.
 (defun my-lang-python/update-python-path ()
-  "Update exec-path and PATH for the active pyvenv (Conda/virtualenv compatible)."
+  "Update `exec-path' and PATH for the active pyvenv (Conda/virtualenv compatible)."
   (when-let ((env-dir pyvenv-virtual-env))
     (let ((bin-dir (expand-file-name "bin" env-dir)))
       (setq exec-path (cons bin-dir (delete bin-dir exec-path)))
@@ -125,17 +125,44 @@ point and avoiding full reformatting."
     (apheleia-format-buffer 'ruff-isort))
 
   (defun my-lang-python/generate-stub ()
-    "Generate a typing stub (.pyi) for the current Python file using mypy's stubgen.
-Runs stubgen on the current file, placing output in the default ./out directory
-(or customise with --output if preferred)."
+    "Generate a typing stub (.pyi) for the current Python file.
+Uses MyPy's stubgen:
+- -o is set to the parent directory of the file.
+- The full absolute path to the .py file is passed.
+This places the stub in the same directory as the source file."
     (interactive)
     (unless (buffer-file-name)
       (user-error "No file associated with this buffer"))
-    (let* ((file-path (file-name-nondirectory (buffer-file-name)))                ; e.g., "mymodule.py"
-           (command (format "stubgen %s" file-path)))
+    (let* ((py-file    (buffer-file-name))
+           (file-dir   (file-name-directory py-file))                    ; e.g. …/data_structures/
+           (output-dir file-dir) ; parent: …/ai_api/  (file-name-directory (directory-file-name file-dir))
+           (command    (format "stubgen -o %s %s"
+                               (shell-quote-argument (directory-file-name output-dir))
+                               (shell-quote-argument py-file))))
       (shell-command command)
-      (message "stubgen executed: %s" command)))
+      (message "stubgen completed: %s.pyi placed in same directory as source"
+               (file-name-sans-extension (file-name-nondirectory py-file)))))
 
+
+  (defun my-lang-python/generate-dir-stubs ()
+    "Generate typing stubs (.pyi) for all Python files in the the current dir. 
+Uses MyPy's stubgen:
+- -o is set to the parent directory of the file.
+- The full absolute path to the .py file is passed.
+This places the stub in the same directory as the source file."
+    (interactive)
+    (unless (buffer-file-name)
+      (user-error "No file associated with this buffer"))
+    (let* ((py-file    (buffer-file-name))
+           (file-dir   (file-name-directory py-file))                    ; e.g. …/data_structures/
+           (output-dir file-dir) ; parent: …/ai_api/     (output-dir (file-name-directory (directory-file-name file-dir))) 
+           (command    (format "stubgen -o %s %s"
+                               (shell-quote-argument (directory-file-name output-dir))
+                               (shell-quote-argument file-dir))))
+      (shell-command command)
+      (message "Directory stubgen completed: stubs generated for %s" file-dir)
+      ))
+  
   ;; apheleia so Ruff formatting can be used.
   (apheleia-mode 1)
 
@@ -502,7 +529,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
   (keymap-set python-ts-mode-map "C-c g l" #'imenu-list)
   (keymap-set python-ts-mode-map "M-." #'xref-find-definitions)                   ; xref-find-definitions
   (keymap-set python-ts-mode-map "M-?" #'xref-find-references)                    ; xref-find-references
-  (keymap-set python-ts-mode-map "C-c g t" #'eglot-find-typeDefinition)           ; Go to type definition
+  (keymap-set python-ts-mode-map "C-c g t" #'eglot-find-type-definition)          ; Go to type definition
   (keymap-set python-ts-mode-map "C-c g d" #'eglot-find-declaration)              ; Go to declaration
   (keymap-set python-ts-mode-map "C-c g i" #'eglot-find-implementation)           ; Go to implementation
   (keymap-set python-ts-mode-map "C-c g w" #'my-lang-python/find-symbol)          ; Workspace symbols
@@ -524,7 +551,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
        :help "Go to the definition of the symbol at point"]
       ["Find References" xref-find-references :keys "M-?"
        :help "Find all references to the symbol at point"]
-      ["Find Type Definition" eglot-find-typeDefinition :keys "C-c g t"
+      ["Find Type Definition" eglot-find-type-definition :keys "C-c g t"
        :help "Go to the type definition"]
       ["Find Declaration" eglot-find-declaration :keys "C-c g d"
        :help "Go to the declaration"]
@@ -599,13 +626,17 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
 
   (keymap-set python-ts-mode-map "C-c d n" #'numpydoc-generate)
   (keymap-set python-ts-mode-map "C-c d s" #'my-lang-python/generate-stub)
+  (keymap-set python-ts-mode-map "C-c d d" #'my-lang-python/generate-dir-stubs)
+  
   (defvar my-custom-menus/python-object-menu
     '("Python code helpers"
       ["NumpyDoc template" numpydoc-generate :keys "C-c d n"
        :help "Template for function/class doc strings."]
       "---"
       ["Generate stub" my-lang-python/generate-stub :keys "C-c d s"
-       :help "Generate a stub file for the active buffer."])
+       :help "Generate a stub file for the active buffer."]
+      ["Generate dir stubs" my-lang-python/generate-dir-stubs :keys "C-c d d"
+       :help "Generate stub files for the active buffer directory."])
     "Code writing helpers in `python-ts-mode'.")
 
 
@@ -677,6 +708,11 @@ groups of submenus, and separators as per requirements."
         :keys "C-c d s"])
       (easy-menu-add-item
        menu nil
+       ["Generate dir stubs" my-lang-python/generate-dir-stubs
+        :help "Generate stub files (all files in the active buffers directory)."
+        :keys "C-c d d"])
+      (easy-menu-add-item
+       menu nil
        ["Sort Imports" my-lang-python/organize-imports
         :help "Organise imports via Ruff-isort"
         :keys "C-c i o"])
@@ -689,14 +725,18 @@ groups of submenus, and separators as per requirements."
        menu nil
        ["Toggle Fold" treesit-fold-toggle
         :help "Toggle folding at point"
-        :keys "C-c f"]
+        :keys "C-c f"])
+      (easy-menu-add-item
+       menu nil
        ["New chat" my-llm/new-chat
         :help "Open a chat buffer."
-        :keys "C c l n"]
+        :keys "C c l n"])
+      (easy-menu-add-item
+       menu nil
        ["Start Aidermacs" my-llm/aidermacs-menu
         :help "Start Aidermacs in the project."
-        :keys "C c l a"]
-       )
+        :keys "C c l a"])
+      
       ;; Add separator after first group.
       (easy-menu-add-item menu nil "---")
 
@@ -726,10 +766,10 @@ groups of submenus, and separators as per requirements."
 
 ;; update python interpreter paths after pyvenv activates a new environment.
 (add-hook
- 'pyvenv-post-activate-hooks #'my-lang-python/update-python-path nil t)
-;; restart eglot after pyvenv has changed environments. 
+'pyvenv-post-activate-hooks #'my-lang-python/update-python-path nil t)
+;; restart eglot after pyvenv has changed environments.
 (add-hook 'pyvenv-post-activate-hooks #'my-lang-python/restart-eglot-on-env-change nil t)
-;; Set up python mode when python-ts-mode is started. 
+;; Set up python mode when python-ts-mode is started.
 (add-hook 'python-ts-mode-hook #'my-lang-python/python-mode-setup)
 
 ;; Make sure that files with the suffix .p are recognised as python files.
