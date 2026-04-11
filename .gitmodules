@@ -28,3 +28,6 @@
 [submodule "custom-packages/pretty-speedbar"]
 	path = custom-packages/pretty-speedbar
 	url = git@github.com:simonsjw/pretty-speedbar.git
+[submodule "custom-packages/project-view"]
+	path = custom-packages/project-view
+	url = git@github.com:simonsjw/project-view.git
