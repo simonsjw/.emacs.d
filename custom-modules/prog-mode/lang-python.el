@@ -62,14 +62,14 @@
     (setf (alist-get 'python-ts-mode apheleia-mode-alist) '(ruff-isort ruff))
     (setf (alist-get 'python-mode apheleia-mode-alist) '(ruff-isort ruff))))
 
-(use-package flymake-ruff
-  :ensure t
-  :after flymake
-  :hook (python-ts-mode . flymake-ruff-load)
-  :custom
-  (setq flymake-ruff-program-args
-        '("check" "--quiet" "--format=json" "--ignore=D203,COM812"))              ; Match your toml ignores
-  )
+;; (use-package flymake-ruff
+;;   :ensure t
+;;   :after flymake
+;;   :hook (python-ts-mode . flymake-ruff-load)
+;;   :custom
+;;   (flymake-ruff-program-args
+;;    '("check" "--quiet" "--format=json" "--ignore=D203,COM812"))              ; Match your toml ignores
+;;   )
 
 ;;; Code:
 
@@ -126,42 +126,65 @@ point and avoiding full reformatting."
 
   (defun my-lang-python/generate-stub ()
     "Generate a typing stub (.pyi) for the current Python file.
-Uses MyPy's stubgen:
-- -o is set to the parent directory of the file.
-- The full absolute path to the .py file is passed.
-This places the stub in the same directory as the source file."
+Runs stubgen into a temporary directory (preserving its natural
+package hierarchy), moves the .pyi file next to the source, then cleans up."
     (interactive)
     (unless (buffer-file-name)
       (user-error "No file associated with this buffer"))
     (let* ((py-file    (buffer-file-name))
-           (file-dir   (file-name-directory py-file))                    ; e.g. …/data_structures/
-           (output-dir file-dir) ; parent: …/ai_api/  (file-name-directory (directory-file-name file-dir))
+           (file-dir   (file-name-directory py-file))
+           (temp-dir   (make-temp-file "stubgen-" t))
            (command    (format "stubgen -o %s %s"
-                               (shell-quote-argument (directory-file-name output-dir))
+                               (shell-quote-argument temp-dir)
                                (shell-quote-argument py-file))))
       (shell-command command)
-      (message "stubgen completed: %s.pyi placed in same directory as source"
+      ;; Relocate .pyi files, stripping the extra top-level package directory
+      ;; that stubgen creates when __init__.py is present.
+      (shell-command
+       (format "find %s -name '*.pyi' -exec sh -c '
+       for f; do
+         rel=\"${f#$1/}\"
+         new_rel=\"${rel#*/}\"
+         target=\"$2/$new_rel\"
+         mkdir -p \"$(dirname \"$target\")\"
+         mv \"$f\" \"$target\"
+       done' sh {} + %s %s"
+               (shell-quote-argument temp-dir)
+               (shell-quote-argument temp-dir)
+               (shell-quote-argument file-dir)))
+      (delete-directory temp-dir t)
+      (message "stubgen completed: %s.pyi placed next to source file"
                (file-name-sans-extension (file-name-nondirectory py-file)))))
 
 
   (defun my-lang-python/generate-dir-stubs ()
-    "Generate typing stubs (.pyi) for all Python files in the the current dir. 
-Uses MyPy's stubgen:
-- -o is set to the parent directory of the file.
-- The full absolute path to the .py file is passed.
-This places the stub in the same directory as the source file."
+    "Generate typing stubs (.pyi) for all Python files in the current directory.
+Runs stubgen into a temporary directory, moves the stubs to the correct
+colocated locations, then removes the temporary directory."
     (interactive)
     (unless (buffer-file-name)
       (user-error "No file associated with this buffer"))
-    (let* ((py-file    (buffer-file-name))
-           (file-dir   (file-name-directory py-file))                    ; e.g. …/data_structures/
-           (output-dir file-dir) ; parent: …/ai_api/     (output-dir (file-name-directory (directory-file-name file-dir))) 
-           (command    (format "stubgen -o %s %s"
-                               (shell-quote-argument (directory-file-name output-dir))
-                               (shell-quote-argument file-dir))))
+    (let* ((file-dir  (file-name-directory (buffer-file-name)))
+           (temp-dir  (make-temp-file "stubgen-" t))
+           (command   (format "stubgen -o %s %s"
+                              (shell-quote-argument temp-dir)
+                              (shell-quote-argument (directory-file-name file-dir)))))
       (shell-command command)
-      (message "Directory stubgen completed: stubs generated for %s" file-dir)
-      ))
+      ;; Same relocation logic as the single-file function
+      (shell-command
+       (format "find %s -name '*.pyi' -exec sh -c '
+       for f; do
+         rel=\"${f#$1/}\"
+         new_rel=\"${rel#*/}\"
+         target=\"$2/$new_rel\"
+         mkdir -p \"$(dirname \"$target\")\"
+         mv \"$f\" \"$target\"
+       done' sh {} + %s %s"
+               (shell-quote-argument temp-dir)
+               (shell-quote-argument temp-dir)
+               (shell-quote-argument file-dir)))
+      (delete-directory temp-dir t)
+      (message "Directory stub generation completed: all .pyi files placed in source locations")))
   
   ;; apheleia so Ruff formatting can be used.
   (apheleia-mode 1)
@@ -272,6 +295,8 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
 
   ;; Diagnostics: Solely from Pyrefly via Eglot (covers types + semantics)
   (flymake-mode 1)                                                                ; Eglot auto-adds its backend
+  ;; Disable the built-in python-flymake backend (we rely exclusively on Pyrefly via Eglot)
+  (remove-hook 'flymake-diagnostic-functions #'python-flymake t)
 
   ;; Ya-snippets
   (yas-minor-mode 1)
