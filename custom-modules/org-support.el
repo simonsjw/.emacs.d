@@ -81,15 +81,15 @@
                "|" "DONE(d!)" "CANCELLED(c@)"))))
 
 
-;;; ──────────────────────────────────────────────────────────────────────
-;;; 2. Visual enhancement packages
-;;; ──────────────────────────────────────────────────────────────────────
+;;;  ──────────────────────────────────────────────────────────────────────
+;;   2. Visual enhancement packages
+;;   ──────────────────────────────────────────────────────────────────────
 
 (use-package org-modern
   :custom
   (org-modern-star             '("◉" "○" "✸" "✿" "✤" "◆" "▶" "•"))
   (org-modern-block-fringe     nil)
-  (org-modern-table-vertical   1)
+  (org-modern-table-vertical   1)      ; keep your current values
   (org-modern-table-horizontal 2)
   (org-modern-list             '((?* . "•") (?+ . "◦") (?- . "–")))
   (org-modern-checkbox         '((?X . "✔") (?- . "❍") (?\s . "☐")))
@@ -106,12 +106,19 @@ Variables: Uses org-table face inheritance.
 Output: Modified text properties for first row.
 Flow: Hook checks buffer, finds tables, adjusts faces."
     (when (derived-mode-p 'org-mode)
-      (font-lock-flush)                                                           ; Ensure fresh rendering
-      ;; Example: Set header background to subtle grey (adjust hex)
+      (font-lock-flush)
       (custom-set-faces
-       '(org-table ((t :background "#2E2E2E" :inverse-video nil))))))
-  
+       '(org-table ((t (:height 0.88
+                                :inherit fixed-pitch
+                                :background "#2E2E2E"
+                                :inverse-video nil)))))))
   :hook (org-modern-mode . my-org-modern/update-table-header-face))
+
+(use-package valign
+  :ensure t
+  :hook (org-mode . valign-mode)
+  :custom
+  (valign-fancy-bar t))
 
 (use-package org-modern-indent
   :load-path my-paths/org-modern-indent-folder
@@ -134,6 +141,15 @@ Flow: Hook checks buffer, finds tables, adjusts faces."
   (org-lowest-priority       ?C)
   (org-default-priority      ?B))
 
+
+;; useful text calendar views.
+(use-package calfw-org
+  :ensure t)
+
+;; good gant chart.
+;;(use-package elgantt
+;;  :ensure t)
+
 
 ;;; ──────────────────────────────────────────────────────────────────────
 ;;; 3. Org-roam (knowledge graph / Zettelkasten)
@@ -154,7 +170,7 @@ Flow: Hook checks buffer, finds tables, adjusts faces."
   :config
   (org-roam-db-autosync-mode 1)
   
-(org-id-update-id-locations)                                                      ; Rebuild ID locations automatically on startup
+  (org-id-update-id-locations)                                                      ; Rebuild ID locations automatically on startup
   (require 'org-roam-dailies))
 
 
@@ -190,6 +206,100 @@ Flow: Hook checks buffer, finds tables, adjusts faces."
 ;;; ──────────────────────────────────────────────────────────────────────
 ;;; 6. Dedicated Agenda frame & Dashboard
 ;;; ──────────────────────────────────────────────────────────────────────
+
+;; good gant chart.
+(use-package org-super-agenda
+  :ensure t
+  :after org
+  :custom
+  (org-super-agenda-groups
+   '(;; Each group has an implicit boolean OR operator between its selectors.
+     (:name "EPIC Surveillance LLM Project"
+            :category "LLM Project")          ; matches the :CATEGORY: you already set
+     
+     (:name "Today"  ; Optionally specify section name
+            :time-grid t  ; Items that appear on the time grid
+            :todo "TODAY")  ; Items that have this TODO keyword
+     (:name "Important"
+            ;; Single arguments given alone
+            :tag "bills"
+            :priority "A")
+     ;; Set order of multiple groups at once
+     (:order-multi (2 (:name "Shopping in town"
+                             ;; Boolean AND group matches items that match all subgroups
+                             :and (:tag "shopping" :tag "@town"))
+                      (:name "Food-related"
+                             ;; Multiple args given in list with implicit OR
+                             :tag ("food" "dinner"))
+                      (:name "Personal"
+                             :habit t
+                             :tag "personal")
+                      (:name "Space-related (non-moon-or-planet-related)"
+                             ;; Regexps match case-insensitively on the entire entry
+                             :and (:regexp ("space" "NASA")
+                                           ;; Boolean NOT also has implicit OR between selectors
+                                           :not (:regexp "moon" :tag "planet")))))
+     ;; Groups supply their own section names when none are given
+     (:todo "WAITING" :order 8)  ; Set order of this section
+     (:todo ("SOMEDAY" "TO-READ" "CHECK" "TO-WATCH" "WATCHING")
+            ;; Show this group at the end of the agenda (since it has the
+            ;; highest number). If you specified this group last, items
+            ;; with these todo keywords that e.g. have priority A would be
+            ;; displayed in that group instead, because items are grouped
+            ;; out in the order the groups are listed.
+            :order 9)
+     (:priority<= "B"
+                  ;; Show this section after "Today" and "Important", because
+                  ;; their order is unspecified, defaulting to 0. Sections
+                  ;; are displayed lowest-number-first.
+                  :order 1)
+     ;; After the last group, the agenda will display items that didn't
+     ;; match any of these groups, with the default order position of 99
+     ))
+  :hook
+  (org-agenda-mode . org-super-agenda-mode)
+  :config
+  (org-super-agenda-mode 1))
+
+(use-package calfw-org
+  :ensure t)
+
+(use-package calfw-cal
+  :ensure t)
+
+
+(defun my-org/update-parent-dates ()
+  "Update the current heading's SCHEDULED  and DEADLIN.
+This is based on the earliest scheduled and latest deadline in subtree.
+These are formatted to be on separate lines, SCHEDULED first."
+  (interactive)
+  (save-excursion
+    (org-back-to-heading)
+    (let ((min-s nil)
+          (max-d nil)
+          (parent-level (org-current-level)))
+      (org-map-entries
+       (lambda ()
+         (unless (= (org-current-level) parent-level)
+           (let ((s (org-get-scheduled-time (point)))
+                 (d (org-get-deadline-time (point))))
+             (when s (setq min-s (if (or (not min-s) (time-less-p s min-s)) s min-s)))
+             (when d (setq max-d (if (or (not max-d) (time-less-p max-d d)) d max-d))))))
+       nil 'tree)
+      ;; Remove any existing SCHEDULED/DEADLINE lines
+      (let ((end (org-entry-end-position)))
+        (goto-char (org-entry-beginning-position))
+        (while (re-search-forward "^[ \t]*\\(SCHEDULED:\\|DEADLINE:\\)" end t)
+          (beginning-of-line)
+          (kill-line 1)
+          (setq end (org-entry-end-position))))
+      ;; Insert clean lines in the desired order
+      (forward-line 1)
+      (when min-s
+        (insert "  SCHEDULED: " (format-time-string "<%Y-%m-%d %a>" min-s) "\n"))
+      (when max-d
+        (insert "  DEADLINE:  " (format-time-string "<%Y-%m-%d %a>" max-d) "\n"))
+      (message "Parent dates updated (SCHEDULED then DEADLINE on separate lines)."))))
 
 (defun my-org/agenda-in-new-frame (&optional arg keys)
   "Open `org-agenda' in a new dedicated frame.
@@ -251,6 +361,7 @@ ARG and KEYS are passed directly to `org-agenda'."
 ;;; ──────────────────────────────────────────────────────────────────────
 ;;; 7. Hooks
 ;;; ──────────────────────────────────────────────────────────────────────
+
 (add-hook 'org-mode-hook
           (lambda ()
             (setq org-table-header-line-p t)))                                    ; keeps header visible when scrolling
@@ -260,8 +371,21 @@ ARG and KEYS are passed directly to `org-agenda'."
 ;;; 8. Global keybindings
 ;;; ──────────────────────────────────────────────────────────────────────
 
-(global-set-key (kbd "C-c C-l a") #'my-org/agenda-in-new-frame)
-(global-set-key (kbd "C-c C-l") #'my-agenda/dashboard)
+;; Create a dedicated prefix keymap for all Org-related commands.
+(defvar my-org-keymap (make-sparse-keymap)
+  "Keymap for Org-related commands under C-c C-o.")
+
+;; Bind the prefix itself.
+(global-set-key (kbd "C-c C-o") my-org-keymap)
+
+;; Sub-commands (add more here later without conflicts).
+(define-key my-org-keymap (kbd "a") #'my-org/agenda-in-new-frame)
+(define-key my-org-keymap (kbd "d") #'my-agenda/dashboard)
+
+;; Optional: keep the original C-c C-o behaviour for the dashboard
+;; (uncomment the line below *instead* of the define-key for "d" if you prefer):
+;; (global-set-key (kbd "C-c C-o") #'my-agenda/dashboard)
+
 
 
 (log/debug :fn 'org-support
