@@ -52,6 +52,10 @@
   (diff-hl-flydiff-mode 1)
   (setq diff-hl-flydiff-delay 0.1)                                                ; Matches your old git-gutter interval.
 
+  ;; Set some useful vc keyboard shortcuts.
+  (global-set-key (kbd "C-x v f r") #'vc-rename-file) ; Track renamed files in git by renaming them *in* git.
+
+  
   ;; Customise symbols/faces if needed (efficient: Reuse your theme vars).
   (setq diff-hl-margin-symbols-alist
         '((insert . "+")
@@ -141,6 +145,40 @@ Flow:
 
 ;; Call setup on load (efficient: Runs once).
 (my-vc/diff-hl-setup-menu)
+
+;; TODO: Other menus
+;; branch commands
+(defvar my-custom-menus/vc-branch
+  '("VC"
+    ["Branches" :enable nil]                                                    ; Section header; disabled for display.
+    ["Create branch" vc-create-branch :keys "C-x v b c"
+     :help "Make a branch called NAME in directory DIR.."]
+    ["Switch branch" vc-swich-branch  :keys "C-x v b s"
+     :help "Switch to the branch NAME in the directory DIR."]
+    ["Print Branch" vc-print-branch-log :keys "C-x v b l"
+     :help "Show the change log for BRANCH in another window."])
+  "Menu for git branch operations in VC.")
+
+;; how do I merge a development branch `features/grok-client-refactor'
+;; back to the main?
+;; -----------------
+;; Go back to the master branch
+;; M-x vc-switch-branch RET master RET
+
+;; Get the latest copy of `master'.
+;; C-x v u (this runs git pull)
+
+;; from `master' perform a merge of branch  `features/grok-client-refactor'
+;; M-! git merge features/grok-client-refactor RET
+
+;; Push the updated master back to the remote.
+;; M-! git push origin master RET
+
+;; submodule commands
+;; git timemachine
+;; git gutter
+
+
 
 ;; The preferred mode is always to use git-ignore. However, here we show how we
 ;; can modify the regular expression that tells Emacs which directories to
@@ -288,6 +326,7 @@ Flow:
     ("[refactor]" . "refactor of existing functionality")
     ("[doc]" . "supporting documentation for the code")
     ("[tidy]" . "clean up of the project files, spelling-checking")
+    ("[test]" . "Testing functionality")
     ("[gitRefactor]"
      . "change to the repo (creating of new branches and such)"))
   "Alist of tags for git commit messages.
