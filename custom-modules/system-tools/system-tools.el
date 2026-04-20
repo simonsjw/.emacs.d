@@ -476,28 +476,53 @@ buffer."
         (message "Longest line length in the region: %d" max-length))
     max-length))
 
-(defun my-in-buffer-tools/comment-align-buffer (beg end)
-  "Apply `comment-indent' to lines with an existing inline comment.
+(defun my-in-buffer-tools/treesit-indent-standalone-comment ()
+  "Indent the current line (assumed to be a standalone comment) using Tree-sitter.
+Falls back gracefully when treesit is unavailable or not in python-ts-mode."
+  (if (and (treesit-available-p)
+           (bound-and-true-p treesit-parser-list)
+           (derived-mode-p 'python-ts-mode))
+      ;; Use python-ts-mode's full treesit indentation engine
+      ;; (this respects the syntax tree and gives the "correct" block level)
+      (indent-according-to-mode)
+    ;; Non-treesitter fallback (classic python-mode or no treesit)
+    (comment-indent)))
 
-Operates on  region or buffer to align existing comments (syntax-aware),
-avoiding new insertions.  If no region active interactively, uses whole buffer.
-ARGS:
-  BEG - region start
-  END - region end"
+(defun my-in-buffer-tools/comment-align-buffer (beg end)
+  "Smart comment alignment for Python buffers.
+BEG and END set the region to align.
+- Inline comments (code # comment) are aligned to `comment-column'.
+- Standalone comments (# on its own line) get proper structural indentation
+  via Tree-sitter (in python-ts-mode) or a safe fallback otherwise.
+Operates on the region or the whole buffer.
+Preserves point and works with Apheleia/Ruff."
   (interactive (if (use-region-p)
                    (list (region-beginning) (region-end))
                  (list (point-min) (point-max))))
-  (when comment-start  ; Skip modes without comments.
-    (let ((beg-marker (copy-marker beg))  ; Markers auto-adjust on inserts.
-          (end-marker (copy-marker end t)))  ; t: insert before marker.
-      (save-excursion
-        (goto-char beg-marker)
-        (while (and (comment-search-forward end-marker t)
-                    (< (point) end-marker))
-          (comment-indent)
-          (comment-forward 1)))  ; Skip to after current comment.
-      (set-marker beg-marker nil)  ; Clean up.
-      (set-marker end-marker nil))))
+  (when (not comment-start)
+    (cl-return-from my-in-buffer-tools/comment-align-buffer))
+  
+  (let ((beg-marker (copy-marker beg))
+        (end-marker (copy-marker end t)))
+    (save-excursion
+      (goto-char beg-marker)
+      (while (and (comment-search-forward end-marker t)
+                  (< (point) end-marker))
+        (let ((comment-pos (point)))
+          (save-excursion
+            (beginning-of-line)
+            (skip-chars-forward " \t")
+            (if (looking-at-p (regexp-quote comment-start))
+                ;; Standalone comment → use Tree-sitter-aware indentation
+                (progn
+                  (goto-char comment-pos)
+                  (my-in-buffer-tools/treesit-indent-standalone-comment))
+              ;; Inline comment → classic alignment to comment-column
+              (goto-char comment-pos)
+              (comment-indent))))
+        (comment-forward 1)))
+    (set-marker beg-marker nil)
+    (set-marker end-marker nil)))
 
 (defun my-in-buffer-tools/my-comment-align-region-or-line ()
   "Align inline comments in the active region or the current line.
