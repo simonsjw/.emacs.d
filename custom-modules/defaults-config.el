@@ -26,7 +26,6 @@
 (set-default-coding-systems 'utf-8)                                               ; set default coding system.
 
 (require 'dired)
-(require 'ispell)
 (require 'xref)
 (require 'path-support)
 ;;(require 'aggressive-indent)
@@ -50,15 +49,15 @@
 
 ;; show the path to the sym-link rather than the underlying file
 ;; when using sym-link file paths in emacs.
-(customize-set-variable
- 'find-file-visit-truename t
- "Show path to sym-link rather than underlying file when viewing sym-link
-file paths.")
+;; Show path to sym-link rather than underlying file when viewing 
+;; sym-link file paths.
+(setopt find-file-visit-truename t)
 
 ;; Revert Dired and other buffers
-(customize-set-variable
- 'global-auto-revert-non-file-buffers t
- "Automatically refresh files found with changes on disk.")
+;; Automatically refresh files found with changes on disk.
+(setopt
+ global-auto-revert-non-file-buffers t)
+ 
 
 ;; Revert buffers when the underlying file has changed
 (global-auto-revert-mode 1)
@@ -69,7 +68,7 @@ file paths.")
 ;; in separate dired buffers.  Makes copying or moving files between
 ;; directories easier.  The value `t' means to guess the default
 ;; target directory.
-(customize-set-variable 'dired-dwim-target t)
+(setopt dired-dwim-target t)
 
 ;; Enable the dired-find-alternate-file function, removing any
 ;; restrictions on its use. After evaluating this line, users can use
@@ -81,7 +80,7 @@ file paths.")
 (put 'dired-find-alternate-file 'disabled nil)
 
 ;; automatically update dired buffers on revisiting their directory
-(customize-set-variable 'dired-auto-revert-buffer t)
+(setopt dired-auto-revert-buffer t)
 
 ;; ensure that we start with a detailed view of our directories and
 ;; show the breadcrumbs header.
@@ -111,14 +110,14 @@ file paths.")
 
 ;; scroll eshell buffer to the bottom on input, but only in "this"
 ;; window.
-(customize-set-variable 'eshell-scroll-to-bottom-on-input 'this)
+(setopt eshell-scroll-to-bottom-on-input 'this)
 
 ;; pop up dedicated buffers in a different window.
-;;(customize-set-variable 'switch-to-buffer-in-dedicated-window 'pop)
+;;(setopt switch-to-buffer-in-dedicated-window 'pop)
 
 ;; treat manual buffer switching (C-x b for example) the same as
 ;; programmatic buffer switching.
-(customize-set-variable 'switch-to-buffer-obey-display-actions t)
+(setopt switch-to-buffer-obey-display-actions t)
 
 ;;;; helpful
 
@@ -149,15 +148,15 @@ file paths.")
 ;; - Assume use of vertico
 
 ;; No matter which completion mode is used:
-(customize-set-variable 'tab-always-indent 'complete)
-(customize-set-variable 'completion-cycle-threshold 3)
-(customize-set-variable 'completion-category-overrides
-                        '((file (styles . (partial-completion)))))
-(customize-set-variable 'completions-detailed t)
+(setopt tab-always-indent 'complete)
+(setopt completion-cycle-threshold 3)
+(setopt completion-category-overrides
+        '((file (styles . (partial-completion)))))
+(setopt completions-detailed t)
 
 ;; use completion system instead of popup window for cross-references.
-(customize-set-variable 'xref-show-definitions-function
-                        #'xref-show-definitions-completing-read)
+(setopt xref-show-definitions-function
+        #'xref-show-definitions-completing-read)
 
 ;;;; Editing
 
@@ -169,7 +168,7 @@ file paths.")
 (setq-default indent-tabs-mode nil)
 
 ;; Do not save duplicates in kill-ring
-(customize-set-variable 'kill-do-not-save-duplicates t)
+(setopt kill-do-not-save-duplicates t)
 
 ;; Better support for files with long lines
 (setq-default bidi-paragraph-direction 'left-to-right)
@@ -178,38 +177,39 @@ file paths.")
 
 ;; Kill the fringe continuation indicators completely – fixes the
 ;; visual-fill-column “missing bands” bug when pasting long single lines.
-(setq visual-line-fringe-indicators '(nil nil))   ; left-fringe nil, right-fringe nil
+(setq visual-line-fringe-indicators '(nil nil))                                   ; left-fringe nil, right-fringe nil
+
+
+;; Setup of enchant
+;; ----------------
+;; sudo apt-get install hunspell hunspell-au
+;;
+;; ~/.config/enchant/
+;; <+> ..
+;; [?] en.dic
+;; [?] en.exc
+;; [?] en_AU.dic
+;; [?] en_AU.exc
+;; [?] en_GB.dic
+;; [?] en_GB.exc
+;; [?] en_US.dic
+;; [?] en_US.exc
+;; [?] enchant.ordering
+;;
+;; content of enchant.ordering:
+;; *:hunspell,aspell
+;; en_AU:hunspell
+;;
+;; ------------------
 
 ;; Dictionary/Thesaurus
 ;; Set the default dictionary server.
-(defconst dictionary-server
-  "dict.org" "Ensure the look-up is defined with a locally available dict.")
+(setopt dictionary-server "dict.org")
+
+(setopt dictionary-default-dictionary "gcide")
 
 ;; define a key to define the word at point.
 (keymap-set global-map "C-c d l" #'dictionary-lookup-definition)
-
-;;;; Set up the spell-checker
-(setq ispell-program-name "aspell") ; Or "hunspell" or "ispell"
-
-;; Use the path defined in path-support.el (no more void-variable error)
-(setq ispell-extra-args
-      `("--sug-mode=normal"
-        ,(concat "--repl=" my-paths/ispell-word-replacement)))
-
-(setq ispell-local-dictionary-alist
-      '(("Australian"
-         "[A-Za-z]" "[^A-Za-z]" "[']" nil
-         ("-B" "-d" "en_AU" "--encoding=utf-8") nil utf-8)
-        ("British"
-         "[A-Za-z]" "[^A-Za-z]" "[']" nil
-         ("-B" "-d" "en_GB" "--encoding=utf-8") nil utf-8)
-        ("American"
-         "[A-Za-z]" "[^A-Za-z]" "[']" nil
-         ("-B" "-d" "en_US" "--encoding=utf-8") nil utf-8)))
-
-;; now set the dictionary locale to en_AU.
-(customize-set-variable
- 'ispell-dictionary "Australian" "Set default dictionary locale. ")
 
 ;; (global-set-key (kbd "C-c d a") #'my-dictionary/use-australian)
 ;; (global-set-key (kbd "C-c d b") #'my-dictionary/use-british)
@@ -221,6 +221,8 @@ file paths.")
   :config
   (setq jinx-languages "en_AU en_GB"
         jinx-delay 0.1))
+
+(require 'jinx)
 
 ;;; Set up the Jinx spellchecker.
 ;;; Jinx project/personal dictionary control (Simon’s preferred behaviour)
@@ -235,7 +237,7 @@ file paths.")
     '("foo" "bar" "foobar" "idx" "dotfile" "tstamp" "tex" "csv" "pdf"
       "ARGS" "Args" "Backtrace" "DDirectory" "LaTeX" "LocalWords" "OPTARG"
       "README" "SPEEDBAR" "TODO" "alist" "aspell" "basedpyright" "cd" "conda"
-      "config" "csv" "defconst" "defcustom" "defvar" "dir" "docstring" 
+      "config" "csv" "defconst" "defcustom" "defvar" "dir" "docstring"
       "docstrings" "el" "elpa" "env" "flymake" "flyspell" "github" "gitignore"
       "hdb" "http" "https" "ipynb" "ipython" "jdk" "joinpath" "json" "jsonl"
       "lvl" "md" "mnt" "modeline" "noqa" "odbc" "prog" "py" "rlwrap" "scipy"
@@ -249,8 +251,9 @@ Loaded to session only (no .dir-locals.el write).")
 LOCATION is one of:
   'session    -- in-memory session only (no disk write – ideal for base setup)
   'file       -- buffer file-local (adds to Local Variables section)
-  'directory  -- project .dir-locals.el (creates file in project root if missing)
-Purpose: Bulk/scripted adds while leaving interactive `jinx-correct` menu untouched.
+  'directory  -- project .dir-locals.el (creates missing file in project root).
+Purpose: Bulk/scripted adds while leaving interactive `jinx-correct` menu
+         untouched.
 Variables:
   WORDS    -- list of strings (duplicates ignored).
   LOCATION -- symbol as above.
@@ -273,12 +276,14 @@ Flow:
             ('directory
              (jinx--add-local-word 'jinx-dir-local-words word)
              (let ((default-directory
-                    (or (locate-dominating-file default-directory ".dir-locals.el")
+                    (or (locate-dominating-file default-directory
+                                                ".dir-locals.el")
                         (when-let* ((proj (project-current)))
                           (project-root proj))
                         default-directory)))
                (save-window-excursion
-                 (add-dir-local-variable nil 'jinx-dir-local-words jinx-dir-local-words))))
+                 (add-dir-local-variable nil 'jinx-dir-local-words
+                                         jinx-dir-local-words))))
             (_ (message "Unknown Jinx location: %S" location)))
           (setq added (1+ added)))
         ;; Log only when useful
@@ -296,7 +301,7 @@ Flow:
 ;; save the bookmarks file every time a bookmark is made or deleted
 ;; rather than waiting for Emacs to be killed.  Useful especially when
 ;; Emacs is a long running process.
-(customize-set-variable 'bookmark-save-flag 1)
+(setopt bookmark-save-flag 1)
 
 ;; Make scrolling less stuttered
 (setq auto-window-vscroll nil)
@@ -313,16 +318,16 @@ Flow:
 
 ;; open man pages in their own window, and switch to that window to
 ;; facilitate reading and closing the man page.
-;;(customize-set-variable 'Man-notify-method 'aggressive)
+;;(setopt Man-notify-method 'aggressive)
 
 ;; keep the Ediff control panel in the same frame
-(customize-set-variable 'ediff-window-setup-function
-                        'ediff-setup-windows-plain)
+(setopt ediff-window-setup-function
+        'ediff-setup-windows-plain)
 
 ;; Make shebang (#!) file executable when saved
 (add-hook 'after-save-hook
           #'executable-make-buffer-file-executable-if-script-p)
-
+          
 ;; Turn on repeat mode to allow certain keys to repeat on the last
 ;; keystroke. For example, C-x [ to page backward, after pressing this
 ;; keystroke once, pressing repeated [ keys will continue paging
