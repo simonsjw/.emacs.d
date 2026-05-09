@@ -124,7 +124,3 @@
 (provide 'ide-config)
 ;;; ide-config.el ends here
 
-
-;; LocalWords:  eglot dape ide cEnter basepyright
-;; LocalWords:  eldoc
-;; LocalWords:  UI

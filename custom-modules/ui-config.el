@@ -409,7 +409,3 @@ parameters for the minibuffer function."
 (provide 'ui-config)
 ;;; ui-config.el ends here
 
-                                                                                  ; LocalWords:  ibuffer Ediff Elisp
-                                                                                  ; LocalWords:  Dired ediff
-                                                                                  ; LocalWords:  propertized
-                                                                                  ; LocalWords:  propertizes
