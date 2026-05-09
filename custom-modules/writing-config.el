@@ -25,6 +25,11 @@
 (use-package olivetti)
 
 
+(use-package markdown-toc
+  :ensure t
+  :config
+  (add-hook 'markdown-mode-hook #'markdown-toc-mode))
+
 ;; PDF support
 ;; -----------
 ;; First ensure you have the right tools installed:
