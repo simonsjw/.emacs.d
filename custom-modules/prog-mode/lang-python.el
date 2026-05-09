@@ -22,6 +22,25 @@
 ;; - Retained pytest, path updates, inlay hints, and folding.
 ;;
 ;; Install: apheleia and python-pytest from MELPA.
+;;
+;; Updating conda/python:
+;; ----------------------
+;; # 1. Update conda itself first (very important!)
+;; conda update --name base conda
+
+;; # 2. Then update everything else
+;; conda update --all
+
+;; # 3. Update pip
+;; python -m pip install --upgrade pip
+
+;; # 4. Update ipython (alternative if you want ipython update only
+;; (previous --all should have you covered but using 'all' here captures any
+;; packages that may have been missed.)
+;; conda update ipython[all]
+;;
+;; see ipython details: https://ipython.org/
+;;
 
 ;;; Package phase
 (require 'path-support)
@@ -61,15 +80,6 @@
   (with-eval-after-load 'apheleia
     (setf (alist-get 'python-ts-mode apheleia-mode-alist) '(ruff-isort ruff))
     (setf (alist-get 'python-mode apheleia-mode-alist) '(ruff-isort ruff))))
-
-;; (use-package flymake-ruff
-;;   :ensure t
-;;   :after flymake
-;;   :hook (python-ts-mode . flymake-ruff-load)
-;;   :custom
-;;   (flymake-ruff-program-args
-;;    '("check" "--quiet" "--format=json" "--ignore=D203,COM812"))              ; Match your toml ignores
-;;   )
 
 ;;; Code:
 
@@ -168,7 +178,8 @@ colocated locations, then removes the temporary directory."
            (temp-dir  (make-temp-file "stubgen-" t))
            (command   (format "stubgen -o %s %s"
                               (shell-quote-argument temp-dir)
-                              (shell-quote-argument (directory-file-name file-dir)))))
+                              (shell-quote-argument
+                               (directory-file-name file-dir)))))
       (shell-command command)
       ;; Same relocation logic as the single-file function
       (shell-command
@@ -218,7 +229,8 @@ This applies Ruff's code style formatter, preserving point."
       (user-error "Not in a Python mode"))
     (apheleia-format-buffer 'ruff-format)
 
-    (my-in-buffer-tools/comment-align-buffer (point-min) (point-max)))
+    (my-in-buffer-tools/comment-align-buffer (point-min) (point-max))
+    )
 
 
   (defun my-lang-python/format-region ()
@@ -434,7 +446,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
   (keymap-set python-ts-mode-map "C-c p b" #'consult-project-buffer)
   (keymap-set python-ts-mode-map "C-c p s" #'my-lang-python/save-env-to-project)
   (keymap-set python-ts-mode-map "C-c p p" #'my-prog-mode/set-project-dictionary)
-  (keymap-set python-ts-mode-map "C-c p d" #'flymake-show-project-diagnostics)
+  (keymap-set python-ts-mode-map "C-c e p" #' my-flymake/show-project-diagnostics)
   
   (defvar my-custom-menus/python-project-menu
     '("Project"
@@ -480,8 +492,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
 ;;;; Errors/linting
   (keymap-set python-ts-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)     ; list errors in buffer
   (keymap-set python-ts-mode-map "C-c e m" #'consult-flymake)                     ; list errors in minibuffer
-  (keymap-set
-   python-ts-mode-map "C-c e p" #'flymake-show-project-diagnostics)               ; list errors in project
+  ;; (keymap-set python-ts-mode-map "C-c e p" #'flymake-show-project-diagnostics) SET IN PROJECT MENU PREVIOUSLY.              ; list errors in project
   ;; formatting errors (not applicable)
   ;; (keymap-set python-ts-mode-map "C-c C-n" )
   (keymap-set python-ts-mode-map "C-c e n" #'flymake-goto-next-error)             ; go to next error
@@ -490,9 +501,11 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
   (defvar my-custom-menus/python-errors-menu
     '("Errors/Linting"
       ["Display errors" :enable nil]
+      ["Visit Project Buffers" my-flymake/preload-project-for-diagnostics :keys "C-c e o"
+       :help "Visit project buffers without selecting them."]
       ["Error buffer" flymake-show-buffer-diagnostics :keys "C-c e b"
        :help "Show buffer errors in a buffer"]
-      ["Project error buffer" flymake-show-project-diagnostics :keys "C-c e p"
+      ["Project error buffer" my-flymake/show-project-diagnostics :keys "C-c e p"
        :help "Show project errors in a buffer"]
       ["Error list" consult-flymake :keys "C-c e m"
        :help "Show errors in the mini-buffer"]
