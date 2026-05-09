@@ -658,7 +658,6 @@ Load the summary page code then set up the startup configuration.  Finalize the 
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-  (require 'terminal-support)
   (require 'summary-support)
   (require 'system-window-management)
   (require 'startup-config)
