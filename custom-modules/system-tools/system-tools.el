@@ -406,6 +406,44 @@ my-buffer-tools/display-buffer-by-name-and-tag"
       (open-line 1))))                                                            ; Insert a blank line
 
 
+(defun my-in-buffer-tools/line-is-blank-or-pure-comment-p ()
+  "Return t if the current line is blank or consists only of a comment.
+Uses the major mode's `comment-start' (and Tree-sitter when available for extra accuracy)."
+  (save-excursion
+    (beginning-of-line)
+    (skip-chars-forward " \t")
+    (or (eolp)                                      ; blank line
+        ;; Tree-sitter check (most accurate when available)
+        (my-in-buffer-tools/line-is-pure-comment-treesit-p)
+        ;; Classic fallback — works everywhere
+        (and comment-start
+             (not (string-empty-p comment-start))
+             (looking-at-p (regexp-quote comment-start))))))
+
+(defun my-in-buffer-tools/line-is-pure-comment-treesit-p ()
+  "Helper: Tree-sitter aware check for pure comment lines."
+  (when (and (treesit-available-p)
+             (treesit-parser-list))
+    (let ((node (treesit-node-at (point))))
+      (and node
+           (string-match-p "comment" (treesit-node-type node))))))
+
+(defun my-in-buffer-tools/previous-code-line-indent ()
+  "Generalised: return indentation of nearest previous *code* line.
+Skips all blank lines and pure comment lines (Python #, C++ //, Lisp ;, etc.).
+This is the robust heuristic used by most Emacs formatting tools."
+  (save-excursion
+    (forward-line -1)
+    (while (and (not (bobp))
+                (my-in-buffer-tools/line-is-blank-or-pure-comment-p))
+      (forward-line -1))
+    (current-indentation)))
+
+(defun my-in-buffer-tools/treesit-indent-standalone-comment ()
+  "Indent the current standalone comment line.
+Now fully language-agnostic and reliable even inside large functions with section comments."
+  (indent-line-to (my-in-buffer-tools/previous-code-line-indent)))
+
 (defun my-in-buffer-tools/get-matching-bracket-position (cursor-position)
   "Given a bracket at point in a buffer, return the matching bracket position.
 
@@ -476,32 +514,26 @@ buffer."
         (message "Longest line length in the region: %d" max-length))
     max-length))
 
-(defun my-in-buffer-tools/treesit-indent-standalone-comment ()
-  "Indent the current line (assumed to be a standalone comment) using Tree-sitter.
-Falls back gracefully when treesit is unavailable or not in python-ts-mode."
-  (if (and (treesit-available-p)
-           (bound-and-true-p treesit-parser-list)
-           (derived-mode-p 'python-ts-mode))
-      ;; Use python-ts-mode's full treesit indentation engine
-      ;; (this respects the syntax tree and gives the "correct" block level)
-      (indent-according-to-mode)
-    ;; Non-treesitter fallback (classic python-mode or no treesit)
-    (comment-indent)))
+
 
 (defun my-in-buffer-tools/comment-align-buffer (beg end)
-  "Smart comment alignment for Python buffers.
-BEG and END set the region to align.
-- Inline comments (code # comment) are aligned to `comment-column'.
-- Standalone comments (# on its own line) get proper structural indentation
-  via Tree-sitter (in python-ts-mode) or a safe fallback otherwise.
-Operates on the region or the whole buffer.
-Preserves point and works with Apheleia/Ruff."
+  "Align ONLY inline comments (code # comment) to `comment-column'.
+
+All standalone comments (# on its own line, including
+ # 1., # 2., ##+ headings, and any other section comments) are left completely
+untouched.
+This is the most reliable behaviour for users who use visual sectioning inside
+functions.
+Works in any mode that sets `comment-start`
+(Python, C++, JS/TS, Lisp, Rust, Go, etc.).
+Preserves point and plays nicely with Apheleia/Ruff.
+BEG and END denote the region being formatted."
   (interactive (if (use-region-p)
                    (list (region-beginning) (region-end))
                  (list (point-min) (point-max))))
   (when (not comment-start)
     (cl-return-from my-in-buffer-tools/comment-align-buffer))
-  
+
   (let ((beg-marker (copy-marker beg))
         (end-marker (copy-marker end t)))
     (save-excursion
@@ -512,12 +544,8 @@ Preserves point and works with Apheleia/Ruff."
           (save-excursion
             (beginning-of-line)
             (skip-chars-forward " \t")
-            (if (looking-at-p (regexp-quote comment-start))
-                ;; Standalone comment → use Tree-sitter-aware indentation
-                (progn
-                  (goto-char comment-pos)
-                  (my-in-buffer-tools/treesit-indent-standalone-comment))
-              ;; Inline comment → classic alignment to comment-column
+            ;; Only touch lines that have NON-WHITESPACE code before the comment
+            (unless (looking-at-p (regexp-quote comment-start))
               (goto-char comment-pos)
               (comment-indent))))
         (comment-forward 1)))
@@ -697,8 +725,3 @@ USED-PORTS:  the ports that are not available."
 
 (provide 'system-tools)
 ;;; system-tools.el ends here
-
-;; LocalWords:  LISTB sr ol dired
-;; LocalWords:  netstat isn
-;; LocalWords:  minibuffer
-;; LocalWords:  PREC SIGFIGS STRLENGTH
