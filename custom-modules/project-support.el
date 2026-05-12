@@ -39,6 +39,22 @@
 
 
 
+;;; Make every visited directory a transient project if no VC/other root is found.
+;;; This is exactly the "current dir as project parent" behavior you want.
+(defun my/project-fallback (dir)
+  "Treat DIR itself as a transient project root when no other finder succeeds.
+This provides a sensible default for ad-hoc directories (e.g. ~/Documents/MATLAB/)."
+  (let ((expanded (expand-file-name dir)))
+    (unless (or (string-prefix-p "/tmp/" expanded)
+                (string-prefix-p "/var/tmp/" expanded)
+                (string-prefix-p "/proc/" expanded))
+      (cons 'transient (file-name-as-directory expanded)))))
+
+;; Append so it only runs after project-try-vc (and any other finders) return nil.
+(add-to-list 'project-find-functions #'my/project-fallback t)
+
+
+
 ;; the path to the templates archive should already be set in
 ;; custom-path-support.el as below.  It is commented out here so we know if
 ;; there are any issues with that process.
