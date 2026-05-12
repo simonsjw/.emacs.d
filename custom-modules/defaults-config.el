@@ -216,6 +216,7 @@
 ;; (global-set-key (kbd "C-c d u") #'my-dictionary/use-american)
 
 (use-package jinx
+  :delight
   :ensure t
   :bind ("C-c C-j" . jinx-correct)
   :config
