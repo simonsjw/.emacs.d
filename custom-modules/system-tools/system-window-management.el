@@ -239,6 +239,27 @@
 (add-to-list 'window-persistent-parameters '(window-category . writable))
 
 
+;; Ensure the window manager never sends buffers to speedbar (which may have
+;; been accidentally tagged).
+(defun my-window-tools/tag-speedbar-window (&optional _)
+  "Tag the speedbar window with a non-edit category so it is never chosen for normal buffers."
+  (when-let* ((w (get-buffer-window "*SPEEDBAR*" t)))   ; t = include other frames if needed
+    (unless (eq (window-parameter w 'window-category) 'sidebar)
+      (set-window-parameter w 'window-category 'sidebar)
+      (when log-window-management-flag
+        (log/debug :fn 'my-window-tools/tag-speedbar-window
+                   :msg "Tagged speedbar window as sidebar"
+                   :obj (list :window w))))))
+
+;; Hook it so it runs whenever speedbar appears or the window config changes
+(add-hook 'speedbar-mode-hook #'my-window-tools/tag-speedbar-window)
+(add-hook 'window-configuration-change-hook #'my-window-tools/tag-speedbar-window)
+
+;; sr-speedbar equivalent.
+(with-eval-after-load 'sr-speedbar
+  (advice-add 'sr-speedbar-toggle :after #'my-window-tools/tag-speedbar-window))
+
+
 (defvar log-window-management-flag nil
   "Non-nil means enable detailed logging for window management operations.
 Set to nil to reduce overhead in production or when debugging other areas.")
