@@ -48,6 +48,8 @@
     (:whitelist-names . ("*Speedbar*"
                          "*SPEEDBAR*"
                          "*SR-SPEEDBAR*"
+                         "*Ilist*"
+                         "*Dictionary*"
                          "*Completions*"                                          ; Completion dropdowns
                          "*Echo Area 0*"                                          ; Minibuffer echo areas
                          "*Echo Area 1*"                                          ; Minibuffer echo areas
@@ -77,7 +79,7 @@
                ("Checkdoc Status" . data)
                ("SQL Results" . data)
                ("Backtrace" . data)
-               ("grep" . data)
+               ("*grep*" . data)
                ("xref" . data)
                ("xAI Chat" . data)
                ("Org Agenda" . data)
@@ -157,8 +159,8 @@
                  ("^\\*VC-.*" . vc)                                               ; Containing *VC- (for vc mode)
                  (".*Annotate .*" . vc)                                           ; Any chars + "Annotate " + any chars
                  (".*ede-proj.*" . vc)                                            ; Any chars + "ede-proj" + any chars
-                 ("^\\*dape-info.*" . data)  ; Starting with *dape-info" + any chars
-                 ("^\\*undo-tree.*" data)                                         ; Starting with *undo-tree" + any chars
+                 ("^\\*dape-info.*" . data)                                       ; Starting with *dape-info" + any chars
+                 ("^\\*undo-tree.*" . data)                                       ; Starting with *undo-tree" + any chars
                  ("^\\*Flymake diagnostics.*" . data)                             ; Starting with literal "*Flymake diagnostics" + any chars
                  ("^flymake-.*" . data)                                           ; Starting with "flymake-" + any chars
                  (".*cell sheet.*" . data)                                        ; Any chars + "cell sheet" + any chars
@@ -340,27 +342,49 @@ Flow:
 - Loop over windows, skip untaggables, assign tags modulo tag-count.
 - If SET-QUIT-RESTORE t, set 'quit-restore nil post-tagging.
 - Log assignments for debug.
+- Windows that already have a non-nil `window-category' parameter are left
+    untouched.  This preserves semantic layout after manual splits (when
+    combined with the split-window inherit advice) and after other config
+    changes.
+  - Only windows that lack a category (and are not whitelisted/untaggable)
+    receive a new tag.  They are assigned cyclically starting from the
+    beginning of TAG-LIST in the order they appear in the sorted window list.
+  - Consequence: after the initial IDE layout, the hook is usually a cheap
+    no-op.  It only performs work for genuinely new untagged windows (which
+    receive an 'edit'-biased assignment as a safe default).
+  - This change, together with split inheritance and whitelisting of side
+    panels, eliminates the tag-shifting bug you observed.
 
 Edge cases:
 - Empty TAG-LIST: No tags applied; logs but no errors.
 - More windows than tags: Cycles (e.g., 7th gets first tag).
 - Untaggable: Skipped, preserving nil category."
-  (let ((windows (my-window-tools/sorted-window-list frame))  ; Sorted list
+  (let ((windows (my-window-tools/sorted-window-list frame))
         (tag-count (length tag-list))
         (tag-index 0))
     (dolist (window windows)
-      (if (my-window-tools/is-untaggable-window window)
-          (log/debug-window-management :fn 'my-window-tools/tag-windows-by-list
-                                  :msg "Skipped untaggable window"
-                                  :obj (list :window window :buffer (buffer-name (window-buffer window))))
+      (cond
+       ((my-window-tools/is-untaggable-window window)
+        (log/debug-window-management
+         :fn 'my-window-tools/tag-windows-by-list
+         :msg "Skipped untaggable window (whitelist or space prefix)"
+         :obj (list :window window :buffer (buffer-name (window-buffer window)))))
+       ((window-parameter window 'window-category)
+        (log/debug-window-management
+         :fn 'my-window-tools/tag-windows-by-list
+         :msg "Preserved existing category (stable after split or config change)"
+         :obj (list :window window
+                    :category (window-parameter window 'window-category))))
+       (t
         (let ((tag (nth (mod tag-index tag-count) tag-list)))
           (set-window-parameter window 'window-category tag)
           (when set-quit-restore
             (set-window-parameter window 'quit-restore nil))
-          (log/debug-window-management :fn 'my-window-tools/tag-windows-by-list
-                                  :msg "Tagged window"
-                                  :obj (list :window window :tag tag))
-          (setq tag-index (1+ tag-index)))))))
+          (log/debug-window-management
+           :fn 'my-window-tools/tag-windows-by-list
+           :msg "Assigned category to previously untagged window"
+           :obj (list :window window :tag tag))
+          (setq tag-index (1+ tag-index))))))))
 
 (defconst my-window-tools/default-tag 'edit
   "The default tag assigned to non-system buffers when no tag is found.
@@ -711,7 +735,7 @@ Flow:
 - Extract category from alist.
 - Get current frame.
 - Find target window (exact or default).
-- If found: Check dedication; unset if Dape buffer; set new buffer.               ; ;
+- If found: Check dedication; unset if Dape buffer; set new buffer. 
 - If not: Pop new window, tag it.
 - Log decisions.  
 
@@ -734,23 +758,16 @@ Edge cases:
           ;; Check and unset dedication if current buffer is Dape- or VC-related.
           ;; This prevents "stuck" windows from packages like Dape or VC/log-edit.
           (let ((current-buf (window-buffer target-window)))
-            (when
-                (window-dedicated-p target-window)
-              ;; (and
-              ;;  (window-dedicated-p target-window)
-              ;;  (or (string-match-p "^\\*dape-" (buffer-name current-buf))
-              ;;      (string-match-p "^\\*\\(vc-\\|log-edit-\\)"
-              ;;                      (buffer-name current-buf))))                 ; Broad match for VC/log-edit variants.
+            (when (and (window-dedicated-p target-window)
+                       (or (string-match-p "^\\*dape-" (buffer-name current-buf))
+                           (string-match-p "^\\*\\(vc-\\|log-edit-\\)" (buffer-name current-buf))))
               (set-window-dedicated-p target-window nil)
-              (log/debug-window-management :fn 'display-buffer-in-category-window
-                                           :msg (format "Unset dedication for %s window"
-                                                        (cond
-                                                         ((string-match-p
-                                                           "^\\*dape-" (buffer-name current-buf))
-                                                          "Dape")
-                                                         (t "vc")))                                 ; Dynamic msg for traceability.
-                                           :obj (list :window target-window
-                                                      :buffer current-buf))))
+              (log/debug-window-management
+               :fn 'display-buffer-in-category-window
+               :msg (format "Unset dedication for %s window to allow category reuse"
+                            (if (string-match-p "^\\*dape-" (buffer-name current-buf))
+                                "Dape" "VC/log-edit"))
+               :obj (list :window target-window :buffer current-buf))))
           (log/debug-window-management :fn 'display-buffer-in-category-window
                                        :msg "Found matching or default window"
                                        :obj (list :window target-window
@@ -943,6 +960,55 @@ merging in `display-buffer'."
         nil))))
 
 (advice-add 'display-buffer :around #'my-window-tools/assign-category-advice)
+
+;; Ensure tags are inherited on splitting windows. 
+(defun my-window-tools/split-window-with-category-inherit (orig-fun &rest args)
+  "Around advice for `split-window' (and transitively `split-window-below',
+`split-window-right', and the `C-x 2' / `C-x 3' commands) that copies the
+`window-category' parameter from the window being split to the newly created
+window.
+
+Purpose:
+  When a user manually splits a window to obtain two simultaneous views of the
+  same buffer (or same category), both resulting windows should retain the
+  original category.  This prevents the later re-tagging pass from
+  mis-assigning categories and keeps `display-buffer-in-category-window'
+  routing stable.
+
+  Without this, the new window starts untagged; the configuration-change hook
+  then assigns it (and shifts all subsequent windows) according to sorted
+  position, destroying the semantic layout.
+
+Arguments:
+  ORIG-FUN  The original `split-window' function (or wrapper).
+  ARGS      The argument list passed to `split-window' (WINDOW, optional SIZE,
+            SIDE, PIXELWISE).  The first element is the window being split.
+
+Returns:
+  The newly created window object (the return value of ORIG-FUN), after
+  possibly setting its `window-category' parameter.
+
+Edge cases & considerations:
+  - Works for both horizontal and vertical splits.
+  - If the parent had no category (rare after initial tagging), nothing is
+    copied.
+  - Internal window splits (e.g. some package helpers) are also covered.
+  - Complements the updated `tag-windows-by-list' logic below; together they
+    make the hook mostly a no-op after the initial layout."
+  (let* ((old-window (car args))
+         (old-category (window-parameter old-window 'window-category))
+         (new-window (apply orig-fun args)))
+    (when old-category
+      (set-window-parameter new-window 'window-category old-category)
+      (log/debug-window-management
+       :fn 'my-window-tools/split-window-with-category-inherit
+       :msg "Inherited window-category across manual split for stable routing"
+       :obj (list :old-window old-window
+                  :new-window new-window
+                  :category old-category)))
+    new-window))
+
+(advice-add 'split-window :around #'my-window-tools/split-window-with-category-inherit)
 
 ;; Configure display-buffer-alist
 ;;   ------------------------------
