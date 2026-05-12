@@ -76,14 +76,18 @@
   ;; start up Eglot in this mode.
   (eglot-ensure)
 
-  ;; flymake
-  (flymake-show-project-diagnostics)
-
+  ;; flymake — show project-wide diagnostics only when we actually have a project.
+  ;; Prevents the project-root(nil) error for files outside classic projects.
+  ;; With the fallback above, this will succeed almost everywhere.
+  (when (project-current)
+    (flymake-show-project-diagnostics))
+  
   ;; ensure memory-tree is available for inspection from speedbar.
   (require 'matlab-mode)
-  (require 'memory-object-tree)
-  (require 'matlab-workspace-tree)
-  (matlab-memory-tree-init)
+  ;; (require 'memory-object-tree)
+  ;; (require 'matlab-workspace-tree)
+  ;; (matlab-memory-tree-init)
+  
   ;;;;; Set up outline
 
   ;; Set up customisations for outline-minor-mode.
