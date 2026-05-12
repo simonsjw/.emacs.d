@@ -30,6 +30,7 @@
   :ensure t)
 
 (use-package combobulate
+  :delight
   :vc (:url "git@github.com:mickeynp/combobulate.git")
   ensure t
   :custom
