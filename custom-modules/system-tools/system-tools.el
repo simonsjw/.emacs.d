@@ -719,6 +719,17 @@ USED-PORTS:  the ports that are not available."
 
 ;; ---end of TOOLS FOR LANGUAGE & DICTIONARIES---
 
+
+;;;; TOOLS FOR SSH
+(defun my-ssh/refresh-ssh-agent ()
+  "Reload SSH identities into the agent from Emacs."
+  (interactive)
+  (shell-command "ssh-add ~/.ssh/id_ed25519")
+  (message "SSH key added to agent."))
+
+;; ---end of TOOLS FOR SSH---
+
+
 (log/debug :fn 'system-tools
            :msg "Finishing load of the system-tools module."
            :obj t)
