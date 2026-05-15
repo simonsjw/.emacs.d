@@ -19,16 +19,32 @@
            :obj t)
 
 
-(use-package markdown-mode)                                                       ; Markdown support
-(use-package flymake-markdownlint)                                                ; Lint markdown in flymake if markdownlint-cli is installed.
 (use-package pandoc-mode)
 (use-package olivetti)
 
-
+;; Markdown support
+;; ----------------
+(use-package markdown-mode)                                                       ; Markdown support
+(use-package markdown-preview-mode
+  :ensure t
+  :config
+  (setq markdown-preview-stylesheets
+        (list "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css"))
+  (setq markdown-preview-javascript
+        (list "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"
+              "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js")))
 (use-package markdown-toc
   :ensure t
   :config
   (add-hook 'markdown-mode-hook #'markdown-toc-mode))
+
+;; npm install -g markdownlint-cli # install the backend first. 
+(use-package flymake-markdownlint
+  :ensure t
+  :hook
+  (markdown-mode . flymake-markdownlint-setup)   ; Registers the markdownlint backend
+  (markdown-mode . flymake-mode))                ; Activates Flymake in markdown buffers                                                ; Lint markdown in flymake if markdownlint-cli is installed.
+
 
 ;; PDF support
 ;; -----------
@@ -121,12 +137,13 @@
   :no-require
   :config (citar-embark-mode))
 
-(use-package visual-fill-column
-  :ensure t
-  :hook ((org-mode org-roam-mode) . visual-fill-column-mode)
-  :custom
-  (visual-fill-column-width 88)                                                   ; or 88 if you’re strict
-  (visual-fill-column-center-text t))                                             ; optional but very popular
+;; (use-package visual-fill-column
+;;   :ensure t
+;;   :hook ((org-mode org-roam-mode) . visual-fill-column-mode)
+;;   :custom
+;;   (visual-fill-column-width 88)                                                   ; or 88 if you’re strict
+;;   (visual-fill-column-center-text t))    
+                                                                                  ; optional but very popular
 
 ;; Soft-wrap lines at the window edge instead of hard line breaks
 (add-hook 'org-mode-hook #'visual-line-mode)

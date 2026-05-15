@@ -194,7 +194,7 @@ Structured exactly as `gptel-make-xai' expects.")
     :description "Emacs Lisp / Python coding"
     :backend "Ollama"
     :model "qwen3-coder-next:latest"
-    :system "Expert Emacs Lisp / Python coder. Prioritise efficiency then clarity.")
+    :system "You are an expert Emacs Lisp / Python coder. Prioritise efficiency then clarity.")
 
   (gptel-make-preset 'chat
     :description "General chat / assistant"
@@ -206,7 +206,7 @@ Structured exactly as `gptel-make-xai' expects.")
     :description "Concise tag extractor"
     :backend "Ollama"
     :model "glm-4.7-flash:latest"
-    :system "Concise tag extractor. Output ONLY :tag1: :tag2: ... line."))
+    :system "You are a concise tag extractor. Output ONLY :tag1: :tag2: ... line."))
 
 ;; ----------------------------------------------------------------------------
 ;; 3. Preset Switching (Interactive + Programmatic)
@@ -299,15 +299,15 @@ Applies preset *after* `gptel-mode' so the PROPERTIES header is correct."
 Uses Architect mode by default (best for complex coding).
 Reuses XAI_API_KEY and Ollama from your environment."
   (interactive)
-  (setq aidermacs-default-chat-mode 'architect)     ; reasoning + editing models
-  (setq aidermacs-default-model "xai/grok-4-fast-reasoning") ; fallback
+  (setq aidermacs-default-chat-mode 'architect)                                   ; reasoning + editing models
+  (setq aidermacs-default-model "xai/grok-4-fast-reasoning")                      ; fallback
   (setq aidermacs-architect-model "xai/grok-4-fast-reasoning")
-  (setq aidermacs-editor-model "ollama/qwen3-coder-next:latest") ; fast local edits
-  (setq aidermacs-weak-model "ollama/glm-4.7-flash:latest")     ; for commits/summaries
-  (setq aidermacs-backend 'vterm)                  ; better UI (fallback to comint)
+  (setq aidermacs-editor-model "ollama/qwen3-coder-next:latest")                  ; fast local edits
+  (setq aidermacs-weak-model "ollama/glm-4.7-flash:latest")                       ; for commits/summaries
+  (setq aidermacs-backend 'vterm)                                                 ; better UI (fallback to comint)
   (setq aidermacs-show-diff-after-change t)
-  (setq aidermacs-auto-commits nil)                ; safer for Relysium workflows
-  (setq aidermacs-auto-accept-architect nil)       ; you review everything
+  (setq aidermacs-auto-commits nil)                                               ; safer for Relysium workflows
+  (setq aidermacs-auto-accept-architect nil)                                      ; you review everything
 
   ;; Optional: global read-only files (e.g. your AI rules)
   ;; (setq aidermacs-global-read-only-files '("~/.aider/AI_RULES.md"))

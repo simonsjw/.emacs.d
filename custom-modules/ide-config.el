@@ -89,10 +89,7 @@
      'eglot-server-programs
      '((bash-mode bash-ts-mode) . ("bash-language-server" "start"))))
 
-  (when (executable-find "taplo")
-    (with-eval-after-load 'eglot
-      (add-to-list 'eglot-server-programs
-                   '(toml-ts-mode . ("taplo" "lsp" "stdio")))))
+
 
   ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ;; Documentation/help setup
@@ -114,8 +111,6 @@
 
 
 ;;; Key bindings
-;; -
-
 (log/debug :fn 'ide-config
            :msg "Finishing the load of the ide-config module."
            :obj t)

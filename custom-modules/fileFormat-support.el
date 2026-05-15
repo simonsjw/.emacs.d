@@ -5,17 +5,12 @@
 ;;;Declare functions and imports
 
 
-;;; Code: 
+;;; Code:
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'fileFormat-support
            :msg "Starting load of the fileFormat-support module."
            :obj t)
-
-;; packages
-(use-package vlf)
-(use-package csv-mode)
-(use-package dotenv-mode)
 
 
 ;;;; Visudo editing the sudo file
@@ -99,48 +94,83 @@ to check for syntax errors.  It reports diagnostics via REPORT-FN."
   :config
   ;; Any post-load config can go here; currently none needed for basics
   )
+;; Marksman for Markdown
+(when (executable-find "marksman")
+  (add-to-list 'eglot-server-programs
+               '(markdown-mode . ("marksman"))))
+
 
 ;;;; Very Large Files (vlf)
 ;;   ----------------------
+(use-package vlf)
 ;; ensure vlf is used automatically.
 (custom-set-variables
  '(vlf-application 'dont-ask))
 
 ;;;; .env files
 ;;   ----------
+(use-package dotenv-mode)
 ;; support additional file extensions such as `.env.test' with this major mode.
 (add-to-list 'auto-mode-alist '("\\.env\\..*\\'" . dotenv-mode))
 
+
 ;;;; CSV formatted files
 ;;   -------------------
+(use-package csv-mode)
 (add-to-list 'auto-mode-alist '("\\.csv\\'\\|\\.CSV\\'" . csv-mode))
 (customize-set-variable 'csv-align-mode t)
 
+
+;;;; Yaml formatted files
+;;   --------------------
+;; yaml-pro — excellent structural editing for YAML
+(use-package yaml-pro
+  :ensure t
+  :hook (yaml-ts-mode . yaml-pro-mode))
+;; install: npm install -g yaml-language-server
+(when (executable-find "yaml-language-server")
+  (setq eglot-server-programs
+        (assq-delete-all 'yaml-mode eglot-server-programs))
+  (setq eglot-server-programs
+        (assq-delete-all 'yaml-ts-mode eglot-server-programs))
+  (add-to-list 'eglot-server-programs
+               '((yaml-mode yaml-ts-mode) . ("yaml-language-server" "--stdio"))))
+(add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-ts-mode))
+
+(defun my-fileFormat-support/yaml-ts-mode-setup ()
+  "Custom configurations for yaml-ts-mode."
+  (require 'treesit-fold)
+  (eglot-ensure)
+  (treesit-fold-mode 1)
+  (treesit-fold-indicators-mode 1)
+  (display-fill-column-indicator-mode 1)
+  (setq display-fill-column-indicator-column 80
+        fill-column 80))
+
 ;;;; JSON formatted files
 ;;   --------------------
-
-;; apply json-ts-mode to file name suffix .json/ .JSON or .jsonl/ .JSONL
-(add-to-list 'auto-mode-alist '("\\.json\\'\\|\\.JSON\\'" . json-ts-mode))
-(add-to-list 'auto-mode-alist '("\\.jsonl\\'\\|\\.JSONL\\'" . json-ts-mode))
+;; install: npm install -g vscode-langservers-extracted
+(when (executable-find "vscode-json-languageserver")
+  (add-to-list 'eglot-server-programs
+               '((json-mode json-ts-mode) . ("vscode-json-languageserver" "--stdio"))))
 
 ;; apply this mode to any file up to 2GB in size.
 (setq treesit-max-buffer-size 2000000000)
 
 (defun my-fileFormat-support/json-ts-mode-setup ()
   "Custom configurations for json-ts-mode."
-
-  ;; Remove the fill column indicator.
-  (display-fill-column-indicator-mode -1)
+  (require 'treesit-fold)
+  (eglot-ensure)
+  (treesit-fold-mode 1)
+  (treesit-fold-indicators-mode 1)
+  (setq display-fill-column-indicator-column 80)                                  ; Edge
+  (setq fill-column 80                                                            ; Column beyond which line wrapping occurs if it is activated.
+        comment-fill-column 80                                                    ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
+        comment-column 82)                                                        ; Column to indent right-margin comments to.
+  (display-fill-column-indicator-mode 1)                                          ; show fill column indicator 
   
   ;; Set the fringe mode specifically for json-ts-mode
   (set-fringe-mode '(12 . 5))
-
-  ;; Enable treesit-fold-mode
-  (require 'treesit-fold)
-  (treesit-fold-mode 1)
-  ;; Enable treesit-fold-indicators-mode
-  (treesit-fold-indicators-mode 1)
-
 
   ;; Note the below is the work of Eshel Yaron at
   ;; [[https://eshelyaron.com/posts/2023-05-17-orientation-in-json-documents-with-emacs-and-tree-sitter.html][eshelyaron.com]]
@@ -187,32 +217,40 @@ Interactively, POINT is point and KILL is the prefix argument."
 
 ;; Add the custom setup to json-ts-mode-hook
 (add-hook 'json-ts-mode-hook #'my-fileFormat-support/json-ts-mode-setup)
+;; apply json-ts-mode to file name suffix .json/ .JSON or .jsonl/ .JSONL
+(add-to-list 'auto-mode-alist '("\\.json\\'\\|\\.JSON\\'" . json-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.jsonl\\'\\|\\.JSONL\\'" . json-ts-mode))
 
 
 ;;;; TOML formatted files
 ;;   --------------------
-(add-to-list 'auto-mode-alist '("\\.toml\\'\\|\\.TOML\\'" . toml-ts-mode))
+(with-eval-after-load 'eglot
+  ;; TOML
+  ;; Use https://taplo.tamasfe.dev/ for editing toml files.
+  ;; install: cargo install taplo-cli --features lsp
+  (when (executable-find "taplo")
+    (setq eglot-server-programs
+          (assq-delete-all 'toml-ts-mode eglot-server-programs))
+    (add-to-list 'eglot-server-programs
+                 '(toml-ts-mode . ("taplo" "lsp" "stdio")))))
 
 (defun my-fileFormat-support/toml-ts-mode-setup ()
   "Custom configurations for toml-ts-mode."
   (require 'treesit-fold)
-  
-  (setq display-fill-column-indicator-column 50)                                  ; Edge
-  (setq fill-column 50)                                                           ; Column beyond which line wrapping occurs if it is activated.
-  (setq comment-fill-column 270)                                                  ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
-  (setq comment-column 52)                                                        ; Column to indent right-margin comments to.
+  (eglot-ensure)
+  (treesit-fold-mode 1)
+  (treesit-fold-indicators-mode 1)
+  (setq display-fill-column-indicator-column 80)                                  ; Edge
+  (setq fill-column 80                                                            ; Column beyond which line wrapping occurs if it is activated.
+        comment-fill-column 80                                                    ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
+        comment-column 82)                                                        ; Column to indent right-margin comments to.
   (display-fill-column-indicator-mode 1)                                          ; show fill column indicator 
   
-  ;; Set the fringe mode specifically for json-ts-mode
-  (set-fringe-mode '(12 . 5))
-
-  ;; Enable treesit-fold-mode
-  (treesit-fold-mode 1)
-  ;; Enable treesit-fold-indicators-mode
-  (treesit-fold-indicators-mode 1))
+  )
 
 ;; Add the custom setup to toml-ts-mode-hook
 (add-hook 'toml-ts-mode-hook #'my-fileFormat-support/toml-ts-mode-setup)
+(add-to-list 'auto-mode-alist '("\\.toml\\'\\|\\.TOML\\'" . toml-ts-mode))
 
 
 (log/debug :fn 'fileFormat-support

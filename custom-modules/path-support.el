@@ -186,7 +186,7 @@
   "Directory for the bash debug adapter.")
 
 (defconst dape-default-breakpoints-file
-  (expand-file-name "dape/dape-breakpoints" no-littering-var-directory)
+  (expand-file-name "dape/dape-breakpoints.eld" no-littering-var-directory)
   "Location of the default Dape debugger breakpoints file.")
 
 (defconst org-directory "~/Documents/org"

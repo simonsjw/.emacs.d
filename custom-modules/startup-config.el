@@ -91,7 +91,7 @@ The frame has a current working directory PROJECT-PATH."
         (find-file "WINDOW_LOGS")
         ;; Load the IDE layout from file
         (let ((ide-file
-               (expand-file-name "IDE.el" my-paths/desktop-layout-folder)))
+               (expand-file-name "IDE_TEMPLATE.eld" my-paths/desktop-layout-folder)))
           (if (file-readable-p ide-file)
               (setq my-window-state/ide
                     (with-temp-buffer
@@ -102,7 +102,7 @@ The frame has a current working directory PROJECT-PATH."
                        :obj  ide-file)
             ))
         (log/debug :fn 'my-ui/create-project-frame
-                   :msg  "IDE layout loaded from IDE.el"
+                   :msg  "IDE layout loaded from IDE_TEMPLATE.eld."
                    :obj nil)
         (let ((old-frame (selected-frame))
               (old-buffer (current-buffer)))
