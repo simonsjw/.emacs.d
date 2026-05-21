@@ -208,11 +208,9 @@ symbol, return its value; if unbound, nil; else apply original function."
   (advice-add 'dape--config-eval-value :around #'my-dape--config-eval-value-advice)
 
   (defun my-dape--kill-buffers-no-delete (orig-fn &optional skip-process-buffers)
-    "Advice around `dape--kill-buffers' to prevent window deletions.
-Skips `delete-window' calls during cleanup, allowing windows to remain open
-and switch to other buffers/tabs from history if available. This addresses
-the explicit window deletion in the current version (0.25.0)."
-    (cl-letf (((symbol-function 'delete-window) (lambda (&optional _win) nil)))
+    "Force-kill dape buffers and processes without confirmation or window deletion."
+    (cl-letf (((symbol-function 'delete-window) #'ignore)
+              ((symbol-function 'process-query-on-exit-flag) (lambda (_) nil)))
       (funcall orig-fn skip-process-buffers)))
 
   (advice-add 'dape--kill-buffers :around #'my-dape--kill-buffers-no-delete)
@@ -226,9 +224,8 @@ and setting `dedicated-p' to nil."
       (let ((buf (window-buffer win)))
         (when (and (buffer-live-p buf)
                    (string-match-p "^\\*dape-" (buffer-name buf)))
-          (set-window-dedicated-p win nil)))))
+          (set-window-dedicated-p win nil))))))
 
-  (add-hook 'dape-update-ui-hook #'my-dape--unset-window-dedication))
 
 ;; (add-to-list 'dape-configs
 ;;              `(bash-debug-custom
@@ -246,6 +243,28 @@ and setting `dedicated-p' to nil."
 ;;                                     (plist-put :pathBashdb (file-name-concat bashdb-dir "bashdb"))
 ;;                                     (plist-put :env `(:BASHDB_HOME ,bashdb-dir)))))))
 
+;; Automatically kill dape connection buffers (including stderr) without prompting
+(defun my-dape/kill-connection-buffers ()
+  "Kill any existing dape connection buffers and their processes without asking."
+  (dolist (buf (buffer-list))
+    (when (string-match-p "^ ?\\*dape-connection" (buffer-name buf))
+      (let ((proc (get-buffer-process buf)))
+        (when proc
+          (set-process-query-on-exit-flag proc nil)
+          (kill-process proc))
+        (kill-buffer buf)))))
+
+(add-hook 'dape-start-hook #'my-dape/kill-connection-buffers)
+
+(defun my-dape/kill-stale-buffers ()
+  "Kill any leftover dape connection buffers before starting a new session."
+  (interactive)
+  (dolist (buf (buffer-list))
+    (when (string-match-p "^ ?\\*dape-connection" (buffer-name buf))
+      (kill-buffer buf))))
+
+(add-hook 'dape-update-ui-hook #'my-dape--unset-window-dedication)
+(add-hook 'dape-start-hook #'my-dape/kill-stale-buffers)
 ;; add dape config for python (debugging)
 ;; note debugpy must be installed in the environment in use.
 ;; Add custom configurations to `dape-configs` after loading `dape`
@@ -274,15 +293,25 @@ and setting `dedicated-p' to nil."
                :args dape-args  ; Prompt for script args, or set to list
                :trace t))  ; Enable tracing for debug logs
 
+;; debugpy configuration for Anaconda + proper warning suppression
+(assq-delete-all 'debugpy dape-configs)   ; Remove any old entry first
 (add-to-list 'dape-configs
              `(debugpy
                modes (python-ts-mode python-mode)
                command "python"
                command-args ("-m" "debugpy.adapter")
+               ensure dape-ensure-command
                :type "executable"
                :request "launch"
-               :cwd dape-cwd-fn  ; Or hardcode a string like default-directory if issues persist
-               :program dape-find-file-buffer-default))
+               :cwd dape-cwd-fn
+               :program dape-find-file-buffer-default
+               :python ["/home/simon/anaconda3/envs/grok/bin/python"]
+               ;; Frozen modules: a method used in the standard library that speeds code execution
+               ;; but prevents debugging. If a debugger attempts to use these files, it will error.
+               ;; :PYDEVD_DISABLE_FILE_VALIDATION "1" and "-Xfrozen_modules=off" prevent this.
+               :env (:PYDEVD_DISABLE_FILE_VALIDATION "1")
+               :pythonArgs ["-Xfrozen_modules=off"]
+               :justMyCode :json-false))
 
 (add-hook 'dape-start-hook
           (lambda ()
@@ -335,4 +364,3 @@ variable my-dape/adapter-names as well as returned by the function."
 (provide 'debugger-support)
 ;;; debugger-support.el ends here
 
-                                                                                  ; LocalWords:  Keymaps dape repl
