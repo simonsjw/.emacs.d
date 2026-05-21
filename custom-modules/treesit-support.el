@@ -123,9 +123,9 @@
         (json
          .
          ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
-        (markdown
-         .
-         ("https://github.com/ikatyang/tree-sitter-markdown" "v0.7.1"))
+       ;; (markdown
+    ;;     .
+     ;;    ("https://github.com/ikatyang/tree-sitter-markdown" "v0.7.1"))  ; see markdown-support.el
         (matlab
          .
          ("https://github.com/acristoffers/tree-sitter-matlab"))             ; added by simon watson
