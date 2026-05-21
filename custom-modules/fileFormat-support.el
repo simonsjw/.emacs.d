@@ -71,33 +71,7 @@ to check for syntax errors.  It reports diagnostics via REPORT-FN."
 
 
 
-;;;; Markdown formatted files
-;;   ------------------------
 
-(use-package markdown-mode
-  :ensure t                                                                       ; Install automatically if missing
-  :defer t                                                                        ; Load lazily for efficiency
-  :mode ("\\.md\\'" . markdown-mode)                                              ; Auto-associate .md files
-  :hook (markdown-mode . visual-line-mode)
-  ;; :custom-face
-  ;; ;; Inline code: Distinct blue, monospaced for readability
-  ;; (markdown-inline-code-face ((t (:family "Courier" :weight normal))))            ; :foreground "#00BFFF"                                                                                  ; :background "#F0F8FF"
-  ;; ;; Headers: Progressive scaling with bold and colour gradients
-  ;; (markdown-header-face-1 ((t (:height 1.5 :weight bold))))                       ; :foreground "#00008B"
-  ;; (markdown-header-face-2 ((t (:height 1.3 :weight bold))))                       ; :foreground "#0000CD"
-  ;; (markdown-header-face-3 ((t (:height 1.2 :weight bold))))                       ; :foreground "#4169E1"
-  ;; ;; Add more header levels as needed, e.g., 4-6
-  ;; ;; Other elements: Bold, italic, links for emphasis
-  ;; (markdown-bold-face ((t (:weight bold))))                                       ; :foreground "#FF0000"
-  ;; (markdown-italic-face ((t (:slant italic))))                                    ; :foreground "#808080"
-  ;; (markdown-link-fxace ((t (:underline t))))                                      ; :foreground "#1E90FF"
-  :config
-  ;; Any post-load config can go here; currently none needed for basics
-  )
-;; Marksman for Markdown
-(when (executable-find "marksman")
-  (add-to-list 'eglot-server-programs
-               '(markdown-mode . ("marksman"))))
 
 
 ;;;; Very Large Files (vlf)
@@ -121,26 +95,28 @@ to check for syntax errors.  It reports diagnostics via REPORT-FN."
 (customize-set-variable 'csv-align-mode t)
 
 
-;;;; Yaml formatted files
-;;   --------------------
-;; yaml-pro — excellent structural editing for YAML
+;; Yaml formatted files
+;; --------------------
 (use-package yaml-pro
   :ensure t
   :hook (yaml-ts-mode . yaml-pro-mode))
+
 ;; install: npm install -g yaml-language-server
-(when (executable-find "yaml-language-server")
-  (setq eglot-server-programs
-        (assq-delete-all 'yaml-mode eglot-server-programs))
-  (setq eglot-server-programs
-        (assq-delete-all 'yaml-ts-mode eglot-server-programs))
-  (add-to-list 'eglot-server-programs
-               '((yaml-mode yaml-ts-mode) . ("yaml-language-server" "--stdio"))))
+(with-eval-after-load 'eglot
+  (when (executable-find "yaml-language-server")
+    (setq eglot-server-programs
+          (assq-delete-all 'yaml-mode eglot-server-programs))
+    (setq eglot-server-programs
+          (assq-delete-all 'yaml-ts-mode eglot-server-programs))
+    (add-to-list 'eglot-server-programs
+                 '((yaml-mode yaml-ts-mode) . ("yaml-language-server" "--stdio")))))
 (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-ts-mode))
 
 (defun my-fileFormat-support/yaml-ts-mode-setup ()
   "Custom configurations for yaml-ts-mode."
   (require 'treesit-fold)
-  (eglot-ensure)
+  (when (fboundp 'eglot-ensure)
+    (eglot-ensure))
   (treesit-fold-mode 1)
   (treesit-fold-indicators-mode 1)
   (display-fill-column-indicator-mode 1)
@@ -150,9 +126,10 @@ to check for syntax errors.  It reports diagnostics via REPORT-FN."
 ;;;; JSON formatted files
 ;;   --------------------
 ;; install: npm install -g vscode-langservers-extracted
-(when (executable-find "vscode-json-languageserver")
-  (add-to-list 'eglot-server-programs
-               '((json-mode json-ts-mode) . ("vscode-json-languageserver" "--stdio"))))
+(with-eval-after-load 'eglot
+  (when (executable-find "vscode-json-languageserver")
+    (add-to-list 'eglot-server-programs
+                 '((json-mode json-ts-mode) . ("vscode-json-languageserver" "--stdio")))))
 
 ;; apply this mode to any file up to 2GB in size.
 (setq treesit-max-buffer-size 2000000000)
@@ -164,9 +141,9 @@ to check for syntax errors.  It reports diagnostics via REPORT-FN."
   (treesit-fold-mode 1)
   (treesit-fold-indicators-mode 1)
   (setq display-fill-column-indicator-column 80)                                  ; Edge
-  (setq fill-column 80                                                            ; Column beyond which line wrapping occurs if it is activated.
-        comment-fill-column 80                                                    ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
-        comment-column 82)                                                        ; Column to indent right-margin comments to.
+  (setq fill-column 140                                                            ; Column beyond which line wrapping occurs if it is activated.
+        comment-fill-column 140                                                    ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
+        comment-column 142)                                                        ; Column to indent right-margin comments to.
   (display-fill-column-indicator-mode 1)                                          ; show fill column indicator 
   
   ;; Set the fringe mode specifically for json-ts-mode
@@ -241,9 +218,9 @@ Interactively, POINT is point and KILL is the prefix argument."
   (treesit-fold-mode 1)
   (treesit-fold-indicators-mode 1)
   (setq display-fill-column-indicator-column 80)                                  ; Edge
-  (setq fill-column 80                                                            ; Column beyond which line wrapping occurs if it is activated.
-        comment-fill-column 80                                                    ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
-        comment-column 82)                                                        ; Column to indent right-margin comments to.
+  (setq fill-column 100                                                            ; Column beyond which line wrapping occurs if it is activated.
+        comment-fill-column 100                                                    ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
+        comment-column 102)                                                        ; Column to indent right-margin comments to.
   (display-fill-column-indicator-mode 1)                                          ; show fill column indicator 
   
   )
