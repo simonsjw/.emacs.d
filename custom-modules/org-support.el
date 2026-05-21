@@ -56,7 +56,7 @@
   (org-ellipsis                "…")
   (org-return-follows-link     t)
   (org-link-descriptive        t)
-
+  
   ;; ── Tags & columns ──
   (org-auto-align-tags         nil)
   (org-tags-column             0)
@@ -379,8 +379,8 @@ ARG and KEYS are passed directly to `org-agenda'."
 (global-set-key (kbd "C-c C-o") my-org-keymap)
 
 ;; Sub-commands (add more here later without conflicts).
-(define-key my-org-keymap (kbd "a") #'my-org/agenda-in-new-frame)
-(define-key my-org-keymap (kbd "d") #'my-agenda/dashboard)
+;;(define-key my-org-keymap (kbd "a") #'my-org/agenda-in-new-frame)
+;;(define-key my-org-keymap (kbd "d") #'my-agenda/dashboard)
 
 ;; Optional: keep the original C-c C-o behaviour for the dashboard
 ;; (uncomment the line below *instead* of the define-key for "d" if you prefer):
