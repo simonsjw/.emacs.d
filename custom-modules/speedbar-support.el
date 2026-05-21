@@ -122,19 +122,37 @@ Purpose:
 ;; ----------------------------------------------------------------------
 ;; Functions
 ;; ----------------------------------------------------------------------
-(defun my-speedbar/set-speedbar-directory-to-file-path (file-path)
+(defun my-speedbar/set-speedbar-directory-to-file-path (file-path &optional pin)
   "Set the speedbar directory to FILE-PATH and refresh it.
-If `sr-speedbar' is not open, open it first."
+With prefix argument or PIN non-nil, also pin the directory."
+  (interactive "DDirectory: \nP")
+  (if pin
+      (my-speedbar/set-speedbar-directory-and-pin file-path)
+    (let ((expanded-path (expand-file-name file-path)))
+      (when (file-directory-p expanded-path)
+        (setq default-directory expanded-path)
+        (speedbar-refresh)
+        (message "speedbar directory set to %s" expanded-path)))))
+
+(defun my-speedbar/set-speedbar-directory-and-pin (directory &optional quiet)
+  "Set speedbar's directory to DIRECTORY and automatically pin it.
+This is the central function used by project switching commands.
+When called, it enables protection and sets the pinned directory.
+
+If QUIET is non-nil, suppress the success message."
   (interactive "DDirectory: ")
-  (let ((expanded-path (expand-file-name file-path)))
-    (when (file-directory-p expanded-path)
-      ;; Open sr-speedbar if it's not already open
-      ;; Set the default directory
-      (setq default-directory expanded-path)
+  (let ((expanded (expand-file-name directory)))
+    (when (file-directory-p expanded)
+      (setq default-directory expanded)
       (speedbar-refresh)
-      ;; Clear speedbar cache and force refresh
-      ;; Display a message indicating the new directory
-      (message "speedbar directory set to %s" expanded-path))))
+
+      ;; Automatically enable protection + pinning
+      (setq my-speedbar/protect-directory-clicks-p t)
+      (setq my-speedbar/pinned-directory expanded)
+
+      (unless quiet
+        (message "🔒 Speedbar set and pinned to project root: %s" expanded))
+      expanded)))
 
 (defun my-speedbar/toggle ()
   "If the selected frame is an IDE, open `sr-speedbar' else open `speedbar'.
@@ -199,25 +217,6 @@ If on a file line, open the file with the system default application."
       (start-process "xdg-open" nil "xdg-open" path))))
 
 
-(defun my-speedbar/go-home ()
-  "Switch SPEEDBAR to home directory if in file mode."
-  (interactive)
-  (when (and (bound-and-true-p speedbar-frame)                                    ; Speedbar frame exists
-             (eq speedbar-frame (selected-frame))                                 ; Speedbar window is active
-             (eq speedbar-buffer (current-buffer))                                ; In Speedbar buffer
-             (string-equal speedbar-initial-expansion-list-name "files"))         ; In file mode
-    (my-speedbar/set-speedbar-directory-to-file-path
-     (expand-file-name "~/"))))
-
-(defun my-speedbar/go-workspace ()
-  "Switch SPEEDBAR to the workspace directory if in file mode."
-  (interactive)
-  (when (and (bound-and-true-p speedbar-frame)                                    ; Speedbar frame exists
-             (eq speedbar-frame (selected-frame))                                 ; Speedbar window is active
-             (eq speedbar-buffer (current-buffer))                                ; In Speedbar buffer
-             (string-equal speedbar-initial-expansion-list-name "files"))         ; In file mode
-    (my-speedbar/set-speedbar-directory-to-file-path
-     (expand-file-name "/mnt/HDD04_WDD_08TB/workspace/"))))
 
 ;; This function overrides the original speedbar function so that
 ;; the correct speedbar width is reported when speedbar is not the only
@@ -268,10 +267,169 @@ Current view is given in SPEEDBAR-VIEW."
 
 
 
-
-
+;;; Directory click protection + pinning (handles pretty-speedbar + sr-speedbar)
 ;; ----------------------------------------------------------------------
-;; Hooks & keymaps (all re-entrant)
+(defvar my-speedbar/protect-directory-clicks-p t
+  "When non-nil, block clicks on directory *names* (speedbar-dir-follow).
+Users must click the folder icon or press SPC to expand/collapse.
+This is the primary mechanism for preventing accidental root changes.
+Automatically enabled for frames named \"IDE:*\".")
+
+(defvar my-speedbar/pinned-directory nil
+  "If non-nil, speedbar refuses to follow directory name clicks away from path.
+Set via `my-speedbar/pin-current-directory'.  Works together with
+`my-speedbar/protect-directory-clicks-p'.")
+
+(defun my-speedbar--ide-frame-p ()
+  "Return non-nil if the current frame is an IDE frame."
+  (string-prefix-p "IDE:" (frame-parameter nil 'name)))
+
+
+;;;; Core advice on speedbar-dir-follow (primary protection + divert-to-expand)
+;; ----------------------------------------------------------------------
+(defun my-speedbar/dir-follow-advice (orig-fun text token indent)
+  "Protect pinned/protected directories by diverting name clicks to expand.
+When protection or pinning is active, clicking a directory *name* will
+expand or collapse the subtree (same as clicking the icon or pressing SPC)
+instead of changing speedbar's root directory.
+
+This is the recommended behaviour for project pinning."
+  (cond
+   ((and my-speedbar/pinned-directory
+         (not (string-equal (expand-file-name default-directory)
+                            (expand-file-name my-speedbar/pinned-directory))))
+    (unless my-speedbar--divert-message-shown
+      (message "🔒 Pinned directory — name clicks now expand instead of follow")
+      (setq my-speedbar--divert-message-shown t))
+    (speedbar-toggle-line-expansion)
+    nil)
+
+   (my-speedbar/protect-directory-clicks-p
+    (speedbar-toggle-line-expansion)   ; silent divert
+    nil)
+
+   (t
+    (funcall orig-fun text token indent))))
+
+(advice-add 'speedbar-dir-follow :around #'my-speedbar/dir-follow-advice)
+
+
+;;;; Secondary safety net via dframe-click (kept for robustness)
+;; ----------------------------------------------------------------------
+(defun my-speedbar--current-line-is-directory-p ()
+  "Return t if current line looks like a directory (works with pretty icons)."
+  (condition-case nil
+      (let ((line (buffer-substring-no-properties
+                   (line-beginning-position) (line-end-position))))
+        (or (string-match-p "<[-+?]>]\\|[\uf07b\uf07c\uebb4\uebb5]" line)
+            (string-match-p "folder\\|directory" line)))
+    (error nil)))
+
+(defun my-speedbar--dframe-click-advice (orig-fun event)
+  "Extra safety net. Blocks directory name clicks at the dframe level."
+  (if (and my-speedbar/protect-directory-clicks-p
+           (with-selected-window (posn-window (event-start event))
+             (save-excursion
+               (mouse-set-point event)
+               (my-speedbar--current-line-is-directory-p))))
+      (progn
+        (message
+         "🔒 Directory name click BLOCKED (dframe level) — use icon or SPC")
+        nil)
+    (funcall orig-fun event)))
+
+(advice-add 'dframe-click :around #'my-speedbar--dframe-click-advice)
+
+
+;;;; User commands: toggle, pin, unpin
+;; ----------------------------------------------------------------------
+(defun my-speedbar/toggle-directory-protection ()
+  "Toggle protection against clicking directory names.
+When enabled, clicking a directory name will expand/collapse it instead of
+changing speedbar's root directory (same as clicking the folder icon or SPC).
+This is ideal for keeping speedbar pinned to a project."
+  (interactive)
+  (setq my-speedbar/protect-directory-clicks-p
+        (not my-speedbar/protect-directory-clicks-p))
+  (message (if my-speedbar/protect-directory-clicks-p
+               "🔒 Directory protection ON — name clicks now expand (not follow)"
+             "🔓 Directory protection OFF — name clicks will change root")))
+
+(defun my-speedbar/pin-current-directory ()
+  "Pin speedbar to the current directory.
+Future directory name clicks will be blocked until you unpin."
+  (interactive)
+  (setq my-speedbar/pinned-directory (expand-file-name default-directory))
+  (setq my-speedbar/protect-directory-clicks-p t) ; ensure protection is on
+  (message "🔒 Speedbar pinned to: %s" my-speedbar/pinned-directory))
+
+(defun my-speedbar/unpin-directory ()
+  "Remove any pinned directory restriction."
+  (interactive)
+  (setq my-speedbar/pinned-directory nil)
+  (message "🔓 Speedbar unpinned"))
+
+(defun my-speedbar/go-workspace ()
+  "Switch SPEEDBAR to the workspace directory and automatically pin it.
+This is the main command for project switching with auto-pinning."
+  (interactive)
+  (when (and (bound-and-true-p speedbar-frame)
+             (eq speedbar-frame (selected-frame))
+             (eq speedbar-buffer (current-buffer))
+             (string-equal speedbar-initial-expansion-list-name "files"))
+    (my-speedbar/set-speedbar-directory-and-pin
+     "/mnt/HDD04_WDD_08TB/workspace/")))
+
+(defun my-speedbar/go-home ()
+  "Switch SPEEDBAR to home directory and automatically pin it."
+  (interactive)
+  (when (and (bound-and-true-p speedbar-frame)
+             (eq speedbar-frame (selected-frame))
+             (eq speedbar-buffer (current-buffer))
+             (string-equal speedbar-initial-expansion-list-name "files"))
+    (my-speedbar/set-speedbar-directory-and-pin (expand-file-name "~/"))))
+
+(defun my-speedbar/toggle ()
+  "If the selected frame is an IDE, open `sr-speedbar' else open `speedbar'.
+
+In the case where `sr-speedbar' is opened, it is opened in the top-left window
+using `sr-speedbar-toggle'.
+Automatically enables directory click protection for IDE frames."
+  (interactive)
+  (let ((my-selected-frame-name (frame-parameter nil 'name))
+        (my-selected-frame (selected-frame)))
+    (if (string-prefix-p "IDE:" my-selected-frame-name)
+        (progn
+          (log/debug :fn 'my-speedbar/toggle
+                     :msg "Frame is an IDE - use sr-speedbar."
+                     :obj (list :name my-selected-frame-name
+                                :frame my-selected-frame))
+          ;; === NEW: Automatically enable protection for IDE frames ===
+          (setq my-speedbar/protect-directory-clicks-p t)
+          (when my-speedbar/pinned-directory
+            (message "🔒 IDE frame: protection active (pinned to %s)"
+                     my-speedbar/pinned-directory))
+
+          (let ((top-left-window
+                 (car
+                  (sort (window-list)
+                        (lambda (w1 w2)
+                          (let ((edges1 (window-edges w1))
+                                (edges2 (window-edges w2)))
+                            (or (< (nth 1 edges1) (nth 1 edges2))
+                                (and (= (nth 1 edges1) (nth 1 edges2))
+                                     (< (nth 0 edges1) (nth 0 edges2))))))))))
+            (select-window top-left-window))
+          (sr-speedbar-toggle))
+      (progn
+        (log/debug :fn 'my-speedbar/toggle
+                   :msg "Frame is not an IDE - use speedbar."
+                   :obj (list :name my-selected-frame-name
+                              :frame my-selected-frame))
+        (speedbar)))))
+
+
+;;; Hooks & keymaps (all re-entrant)
 ;; ----------------------------------------------------------------------
 (add-hook 'speedbar-mode-hook
           (lambda ()
@@ -283,25 +441,42 @@ Current view is given in SPEEDBAR-VIEW."
             (define-key speedbar-mode-map "." #'my-speedbar/toggle-filter)))
 
 (with-eval-after-load 'speedbar
+  (define-key
+   speedbar-file-key-map
+   (kbd "l") #'my-speedbar/toggle-directory-click-protection)
   (define-key speedbar-file-key-map (kbd "w") #'my-speedbar/go-workspace)
   (define-key speedbar-file-key-map (kbd "h") #'my-speedbar/go-home)
-  (define-key speedbar-file-key-map (kbd "o") #'my-speedbar/open-in-file-explorer)
-  (define-key speedbar-mode-map "b" (lambda () (interactive) (my-speedbar/switch-speedbar-view "quick buffers")))
-  (define-key speedbar-mode-map "i" (lambda () (interactive) (my-speedbar/switch-speedbar-view "Info")))
+  (define-key
+   speedbar-file-key-map (kbd "o") #'my-speedbar/open-in-file-explorer)
+  (define-key
+   speedbar-mode-map "b" (lambda ()
+                           (interactive)
+                           (my-speedbar/switch-speedbar-view "quick buffers")))
+  (define-key
+   speedbar-mode-map "i" (lambda ()
+                           (interactive)
+                           (my-speedbar/switch-speedbar-view "Info")))
   (define-key speedbar-mode-map "v" #'my-speedbar/open-vterm-in-dir))
 
 (global-set-key (kbd "C-c s") #'my-speedbar/toggle)
 
-;; ----------------------------------------------------------------------
-;; Safe icon regeneration when speedbar buffer is actually ready
+
+;;; Safe icon regeneration when speedbar buffer is actually ready
 ;; ----------------------------------------------------------------------
 (add-hook 'speedbar-mode-hook
           (lambda ()
             (when (fboundp 'my-speedbar/setup-pretty-icons)
               (my-speedbar/setup-pretty-icons))
+            (message
+             "[INFO; speedbar] Icons regenerated via speedbar-mode-hook")
             (when (fboundp 'speedbar-refresh)
               (speedbar-refresh))
-            (message "[INFO; speedbar] Icons regenerated via speedbar-mode-hook")))
+            (when (my-speedbar--ide-frame-p)
+              (setq my-speedbar/protect-directory-clicks-p t)
+              (message "[speedbar] Protection auto-enabled for IDE frame"))))
+
+
+
 
 (with-eval-after-load 'sr-speedbar
   (add-hook 'sr-speedbar-after-toggle-hook
@@ -310,7 +485,8 @@ Current view is given in SPEEDBAR-VIEW."
                 (my-speedbar/setup-pretty-icons))
               (when (fboundp 'sr-speedbar-refresh)
                 (sr-speedbar-refresh))
-              (message "[INFO; speedbar] Icons regenerated after sr-speedbar toggle"))))
+              (message
+               "[INFO; speedbar] Icons regenerated after sr-speedbar toggle"))))
 
 (log/debug :fn 'speedbar-support
            :msg "Ending load of the speedbar-support module."
