@@ -22,30 +22,6 @@
 (use-package pandoc-mode)
 (use-package olivetti)
 
-;; Markdown support
-;; ----------------
-(use-package markdown-mode)                                                       ; Markdown support
-(use-package markdown-preview-mode
-  :ensure t
-  :config
-  (setq markdown-preview-stylesheets
-        (list "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css"))
-  (setq markdown-preview-javascript
-        (list "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"
-              "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js")))
-(use-package markdown-toc
-  :ensure t
-  :config
-  (add-hook 'markdown-mode-hook #'markdown-toc-mode))
-
-;; npm install -g markdownlint-cli # install the backend first. 
-(use-package flymake-markdownlint
-  :ensure t
-  :hook
-  (markdown-mode . flymake-markdownlint-setup)   ; Registers the markdownlint backend
-  (markdown-mode . flymake-mode))                ; Activates Flymake in markdown buffers                                                ; Lint markdown in flymake if markdownlint-cli is installed.
-
-
 ;; PDF support
 ;; -----------
 ;; First ensure you have the right tools installed:
@@ -275,6 +251,24 @@ Example usage:
     (customize-set-variable 'markdown-enable-math t)
     (customize-set-variable 'markdown-enable-html t)
     (add-hook 'markdown-mode-hook #'conditionally-turn-on-pandoc)))
+
+(defun my-writing-config/markdown-mode-setup ()
+  "Custom configurations for markdown-mode."
+  (require 'treesit-fold)
+  (eglot-ensure)
+  (treesit-fold-mode 1)
+  (treesit-fold-indicators-mode 1)
+  (setq display-fill-column-indicator-column 140)                                  ; Edge
+  (setq fill-column 140                                                            ; Column beyond which line wrapping occurs if it is activated.
+        comment-fill-column 140                                                    ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
+        comment-column 142)                                                        ; Column to indent right-margin comments to.
+  (display-fill-column-indicator-mode 1)                                          ; show fill column indicator 
+  
+  )
+
+;; Add the custom setup to toml-ts-mode-hook
+(add-hook 'markdown-ts-mode #'my-writing-config/markdown-mode-setup)
+(add-to-list 'auto-mode-alist '("\\.md\\'\\|\\.MD\\'" . markdown-ts-mode))
 
 ;;; PDF support fix
 ;; When you attempt to scroll before the first page or after
