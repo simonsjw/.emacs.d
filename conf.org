@@ -70,6 +70,8 @@ Make sure you have the following external dependencies:
 |                      | markdownlint-cli                       |                      | lint markdown.          |
 |                      |                                        |                      |                         |
 |----------------------+----------------------------------------+----------------------+-------------------------|
+| marksman             | sudo snap install marksman             | markdown-mode        | tools for markdown.     |
+|----------------------+----------------------------------------+----------------------+-------------------------|
 | texlab               | sudo apt install                       | tex-mode             | tex language server     |
 |                      | texlab                                 |                      | for eglot.              |
 |                      |                                        |                      |                         |
@@ -271,7 +273,7 @@ This means all variables with external origins in emacs are specified here.
 
   ;; Load logging functionality
   (require 'path-support)
-  
+
   (load-file (expand-file-name "custom-modules/system-tools/logging-config.el" user-emacs-directory))
 
   (require 'logging-config)
@@ -300,6 +302,21 @@ This means all variables with external origins in emacs are specified here.
           use-package-expand-minimally t))
 
   (defvar epg-gpg-program "/usr/bin/gpg")
+
+
+  (defvar my/required-packages
+  '(markdown-mode          ; needed by rustic, aidermacs, etc.
+    rustic
+    eglot
+    corfu
+    treesit-fold
+    ;; add any other packages you consider essential here
+    ))
+
+  (dolist (pkg my/required-packages)
+  (unless (package-installed-p pkg)
+    (message "Installing missing core package: %s" pkg)
+    (package-install pkg)))
 
   (menu-bar-mode -1)
   (define-key input-decode-map [C-tab] [control-tab])
@@ -577,6 +594,9 @@ This means all variables with external origins in emacs are specified here.
   ;; Handle writing config (Latex and the like)
   (require 'writing-config)
 
+  ;; Markdown support
+  (require 'markdown-support)
+
 #+end_src
 
  [[file:./custom-modules/fileFormat-support.el][Support for file formatting]]
@@ -682,6 +702,17 @@ Load the summary page code then set up the startup configuration.  Finalize the 
             :msg "Set elisp-flymake-byte-compile-load-path"
             :obj (concat "(" elisp-flymake-byte-compile-load-path-string ")")))
 #+end_src
+
+Implement accounting functionality with hledger.
+
+ [[file:./custom-modules/accounting-support.el][Accouting support]]:       Support for accounting features.  
+
+#+begin_src emacs-lisp :tangle ./init.el
+
+  (require 'accounting-support)
+  
+#+end_src
+
 
 Show the loading time via a the emacs-startup-hook.
 
