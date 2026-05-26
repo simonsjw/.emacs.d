@@ -625,7 +625,7 @@ This is the area inside the window margin which can hold icons.
 
 Purpose:
   Make fringes blend perfectly with the buffer so they disappear visually.
-  Uses strongest possible override so Modus themes and sr-speedbar cannot win.
+  Uses strongest possible override so Modus themes cannot win.
 
 Variables:
   None — uses current default face colours (always safe).

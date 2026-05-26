@@ -84,6 +84,10 @@
   (locate-user-emacs-file "custom-packages/project-view/")
   "Project to show multiple projects and workspaces with git status with vc integration.")
 
+(defconst my-paths/speedbar-support
+  (expand-file-name "custom-modules/speedbar/" user-emacs-directory)
+  "Directory containing speedbar functionality support.")
+
 (defconst my-paths/pretty-speedbar
   (locate-user-emacs-file "custom-packages/pretty-speedbar/")
   "Update of pretty-speedbar to work correctly with emacsclient.")

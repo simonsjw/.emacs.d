@@ -46,6 +46,7 @@
 (defvar my-buffer-tools/category-map
   '(
     (:whitelist-names . ("*Speedbar*"
+                         " SPEEDBAR"
                          "*SPEEDBAR*"
                          "*SR-SPEEDBAR*"
                          "*Ilist*"
