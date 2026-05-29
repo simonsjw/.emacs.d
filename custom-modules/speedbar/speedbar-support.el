@@ -12,7 +12,7 @@
 
 ;;; Code:
 
-(defvar my-speedbar/use-pretty-icons nil
+(defvar my-speedbar/use-pretty-icons t
   "If non-nil, use pretty-speedbar icons.
 Otherwise use native ezimage icons with file-type support.")
 

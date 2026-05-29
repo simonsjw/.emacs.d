@@ -24,6 +24,7 @@
 (with-eval-after-load 'speedbar
   (define-key speedbar-file-key-map (kbd "l") #'my-speedbar/toggle-directory-protection)
   (define-key speedbar-file-key-map (kbd "w") #'my-speedbar/go-workspace)
+  (define-key speedbar-file-key-map (kbd "r") #'my-speedbar/set-speedbar-to-project-root)
   (define-key speedbar-file-key-map (kbd "h") #'my-speedbar/go-home)
   (define-key speedbar-file-key-map (kbd "o") #'my-speedbar/open-in-file-explorer)
   (define-key speedbar-file-key-map (kbd "I") #'my-speedbar/toggle-pretty-icons)

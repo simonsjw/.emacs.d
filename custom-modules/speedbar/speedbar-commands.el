@@ -115,5 +115,32 @@ Automatically enables directory protection for IDE frames."
   (interactive)
   (speedbar-change-initial-expansion-list speedbar-view))
 
+(defun my-speedbar/go-workspace ()
+  "Switch Speedbar to the workspace directory and automatically pin it.
+
+This command checks that Speedbar is active in file mode on an appropriate
+frame before calling the internal setter with the hardcoded workspace
+path '/mnt/HDD04_WDD_08TB/workspace/'.  No arguments.  Useful for quick project
+root locking in a specific environment."
+  (interactive)
+  (when (and (bound-and-true-p speedbar-frame)
+             (eq speedbar-frame (selected-frame))
+             (eq speedbar-buffer (current-buffer))
+             (string-equal speedbar-initial-expansion-list-name "files"))
+    (my-speedbar/set-speedbar-directory-and-pin
+     "/mnt/HDD04_WDD_08TB/workspace/")))
+
+(defun my-speedbar/go-home ()
+  "Switch Speedbar to home directory and automatically pin it.  
+
+Similar guard conditions as `my-speedbar/go-workspace' before pinning to `~/'.  No arguments."
+  (interactive)
+  (when (and (bound-and-true-p speedbar-frame)
+             (eq speedbar-frame (selected-frame))
+             (eq speedbar-buffer (current-buffer))
+             (string-equal speedbar-initial-expansion-list-name "files"))
+    (my-speedbar/set-speedbar-directory-and-pin (expand-file-name "~/"))))
+
+
 (provide 'speedbar-commands)
 ;;; speedbar-commands.el ends here
