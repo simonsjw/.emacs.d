@@ -11,6 +11,8 @@
 ;;; Code:
 
 (require 'speedbar)
+(require 'speedbar-pinning)
+(require 'speedbar-commands)
 
 (add-hook 'speedbar-mode-hook
           (lambda ()
@@ -22,7 +24,7 @@
             (define-key speedbar-mode-map "." #'my-speedbar/toggle-filter)))
 
 (with-eval-after-load 'speedbar
-  (define-key speedbar-file-key-map (kbd "l") #'my-speedbar/toggle-directory-protection)
+  (define-key speedbar-file-key-map (kbd "l") #'my-speedbar/my-speedbar/toggle-pin-project-root)
   (define-key speedbar-file-key-map (kbd "w") #'my-speedbar/go-workspace)
   (define-key speedbar-file-key-map (kbd "r") #'my-speedbar/set-speedbar-to-project-root)
   (define-key speedbar-file-key-map (kbd "h") #'my-speedbar/go-home)

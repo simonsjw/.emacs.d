@@ -1,4 +1,4 @@
-;;; speedbar-commands.el --- Interactive Speedbar commands -*- lexical-binding: t; -*-
+;;; speedbar-commands.el --- Interactive Speedbar commands (updated for new pinning) -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
@@ -6,52 +6,67 @@
 ;; Author: Simon Watson
 
 ;;; Commentary:
-;; All user-facing interactive functions for Speedbar.
+;; User-facing interactive commands for Speedbar.
+;; Updated to work with the new dynamic MY-SPEEDBAR/PIN-PROJECT-ROOT model.
+;;
+;; Note on manual root commands:
+;; Functions like `my-speedbar/set-speedbar-directory-and-pin`, `my-speedbar/go-workspace`
+;; and `my-speedbar/go-home` are retained as **explicit manual overrides**.
+;; They jump to a specific root and enable pinning. They are still useful
+;; even in the new dynamic model (e.g. for quickly locking to workspace or home).
 
 ;;; Code:
 
 (require 'speedbar)
 (require 'logging-config)
 
-(defun my-speedbar/set-speedbar-directory-to-file-path (file-path &optional pin)
-  "Set the speedbar directory to FILE-PATH and refresh it.
-With prefix argument or PIN non-nil, also pin the directory."
-  (interactive "DDirectory: \nP")
-  (if pin
-      (my-speedbar/set-speedbar-directory-and-pin file-path)
-    (let ((expanded-path (expand-file-name file-path)))
-      (when (file-directory-p expanded-path)
-        (setq default-directory expanded-path)
-        (speedbar-refresh)
-        (message "speedbar directory set to %s" expanded-path)))))
+(defun my-speedbar/set-speedbar-directory-to-file-path (FILE-PATH &optional PIN)
+  "Set the Speedbar directory to FILE-PATH and refresh it.
 
-(defun my-speedbar/set-speedbar-directory-and-pin (directory &optional quiet)
-  "Set speedbar's directory to DIRECTORY and automatically pin it.
-This is the central function used by project switching commands."
+FILE-PATH is the directory path (string).
+With prefix argument or PIN non-nil, also enable project pinning
+(MY-SPEEDBAR/PIN-PROJECT-ROOT set to t)."
+  (interactive "DDirectory: \nP")
+  (let ((expanded-path (expand-file-name FILE-PATH)))
+    (when (file-directory-p expanded-path)
+      (setq default-directory expanded-path)
+      (speedbar-refresh)
+      (when PIN
+        (setq my-speedbar/pin-project-root t)
+        (setq my-speedbar/file-tree-root default-directory))
+      (message "Speedbar directory set to %s" expanded-path))))
+
+(defun my-speedbar/set-speedbar-directory-and-pin (DIRECTORY &optional QUIET)
+  "Set Speedbar's directory to DIRECTORY and enable project pinning.
+
+DIRECTORY is the target directory path (string).
+This is an explicit manual override that sets MY-SPEEDBAR/PIN-PROJECT-ROOT to t.
+Useful for quickly locking Speedbar to a specific project root."
   (interactive "DDirectory: ")
-  (let ((expanded (expand-file-name directory)))
+  (let ((expanded (expand-file-name DIRECTORY)))
     (when (file-directory-p expanded)
       (setq default-directory expanded)
       (speedbar-refresh)
-      (setq my-speedbar/protect-directory-clicks-p t)
-      (setq my-speedbar/pinned-directory expanded)
-      (unless quiet
+      (setq my-speedbar/pin-project-root t)
+      (setq my-speedbar/file-tree-root default-directory)
+      (unless QUIET
         (message "🔒 Speedbar set and pinned to project root: %s" expanded))
       expanded)))
 
 (defun my-speedbar/toggle ()
   "Toggle Speedbar (sr-speedbar for IDE frames, regular speedbar otherwise).
-Automatically enables directory protection for IDE frames."
+Automatically enables project pinning (MY-SPEEDBAR/PIN-PROJECT-ROOT = t)
+for IDE frames."
   (interactive)
   (let ((my-selected-frame-name (frame-parameter nil 'name)))
     (if (string-prefix-p "IDE:" my-selected-frame-name)
         (progn
           (log/debug :fn 'my-speedbar/toggle
                      :msg "Frame is an IDE - use sr-speedbar.")
-          (setq my-speedbar/protect-directory-clicks-p t)
-          (when my-speedbar/pinned-directory
-            (message "🔒 IDE frame: protection active (pinned to %s)"
-                     my-speedbar/pinned-directory))
+          (setq my-speedbar/pin-project-root t)
+          (when my-speedbar/file-tree-root
+            (message "🔒 IDE frame: pinning active (root: %s)"
+                     my-speedbar/file-tree-root))
           (let ((top-left-window
                  (car (sort (window-list)
                             (lambda (w1 w2)
@@ -96,7 +111,7 @@ Automatically enables directory protection for IDE frames."
 (setq my-speedbar/speedbar-filter-state t)
 
 (defun my-speedbar/toggle-filter ()
-  "Toggle the visibility of dotfiles in speedbar."
+  "Toggle the visibility of dotfiles in Speedbar."
   (interactive)
   (setq my-speedbar/speedbar-filter-state (not my-speedbar/speedbar-filter-state))
   (if my-speedbar/speedbar-filter-state
@@ -110,18 +125,18 @@ Automatically enables directory protection for IDE frames."
       (setq speedbar-file-unshown-regexp "^$")))
   (speedbar-refresh))
 
-(defun my-speedbar/switch-speedbar-view (speedbar-view)
-  "Temporarily switch to another Speedbar expansion list (e.g. \"quick buffers\")."
+(defun my-speedbar/switch-speedbar-view (SPEEDBAR-VIEW)
+  "Temporarily switch to another Speedbar expansion list (e.g. \"quick buffers\").
+
+SPEEDBAR-VIEW is the name of the desired expansion list (string)."
   (interactive)
-  (speedbar-change-initial-expansion-list speedbar-view))
+  (speedbar-change-initial-expansion-list SPEEDBAR-VIEW))
 
 (defun my-speedbar/go-workspace ()
-  "Switch Speedbar to the workspace directory and automatically pin it.
+  "Switch Speedbar to the workspace directory and enable project pinning.
 
-This command checks that Speedbar is active in file mode on an appropriate
-frame before calling the internal setter with the hardcoded workspace
-path '/mnt/HDD04_WDD_08TB/workspace/'.  No arguments.  Useful for quick project
-root locking in a specific environment."
+Checks that Speedbar is active in file view before pinning to the workspace path.
+This is an explicit manual override that sets MY-SPEEDBAR/PIN-PROJECT-ROOT to t."
   (interactive)
   (when (and (bound-and-true-p speedbar-frame)
              (eq speedbar-frame (selected-frame))
@@ -131,16 +146,16 @@ root locking in a specific environment."
      "/mnt/HDD04_WDD_08TB/workspace/")))
 
 (defun my-speedbar/go-home ()
-  "Switch Speedbar to home directory and automatically pin it.  
+  "Switch Speedbar to home directory and enable project pinning.
 
-Similar guard conditions as `my-speedbar/go-workspace' before pinning to `~/'.  No arguments."
+Similar guard conditions as `my-speedbar/go-workspace' before pinning to `~/'.
+This is an explicit manual override that sets MY-SPEEDBAR/PIN-PROJECT-ROOT to t."
   (interactive)
   (when (and (bound-and-true-p speedbar-frame)
              (eq speedbar-frame (selected-frame))
              (eq speedbar-buffer (current-buffer))
              (string-equal speedbar-initial-expansion-list-name "files"))
     (my-speedbar/set-speedbar-directory-and-pin (expand-file-name "~/"))))
-
 
 (provide 'speedbar-commands)
 ;;; speedbar-commands.el ends here
