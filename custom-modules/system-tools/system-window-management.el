@@ -40,6 +40,7 @@
 
 ;;; Code:
 
+
 (defvar switch-to-buffer-obey-display-actions t
   "Use custom window management if t.")
 
@@ -60,6 +61,7 @@
                          "*company-documentation*"                                ; Company mode popups
                          "*corfu-popup*"                                          ; Corfu completion overlays
                          "*posframe-buffer*"                                      ; Posframe child frame buffers
+                         "*Ediff Control Panel*"
                          ))
     (:whitelist-regexps . ("^\\*temp.*"                                           ; Temporary buffers starting with *temp
                            "^\\*ivy-.*"                                           ; Ivy/Counsel dropdowns
@@ -67,6 +69,9 @@
                            "^\\*vertico.*"                                        ; Vertico minibuffer extensions
                            "^\\*transient.*"                                      ; Transient (Magit-like) popups
                            "^\\*Embark.*"                                         ; Embark action menus
+                           "^\\*Ediff.*"                                          ; Ediff windows
+                           "^\\*?\\(ediff\\|Ediff\\|dired-diff\\|vc-diff\\|smerge\\)"
+                           ".*\\(ediff\\|diff\\|smerge\\).*"
                            ))
     (:names . (("WINDOW_EDIT" . edit)
                ("WINDOW_DATA" . data)
@@ -217,12 +222,27 @@
   "Mapping of buffer properties to window categories.  Any name beginning with a space is white listed automatically.")
 
 
-;; temp as we move to frame specific assignment.
-(setq my-window-tools/frame-map
-      `((:IDE . ,my-buffer-tools/category-map)))
+(defvar my-window-tools/category-map
+  '((:IDE . (edit data config logs vc terminal))))
 
-(setq my-window-tools/category-map
-      `((:IDE . ,(list 'edit 'data 'config 'logs 'vc 'terminal))))
+(defvar my-window-tools/in-ediff-session nil
+  "Non-nil when inside an Ediff session (frame-local).")
+
+
+
+;;; ----------------------------------------------------------------------
+;;; Helpers
+;;; ----------------------------------------------------------------------
+
+(defun my-window-tools--in-ide-frame-p ()
+  "Return t if current frame is an IDE frame."
+  (eq (frame-parameter nil 'UI-TYPE) 'IDE))
+
+(defun my-window-tools--in-ediff-p ()
+  "Return t if we are currently in an Ediff session."
+  (or my-window-tools/in-ediff-session
+      (string-match-p "Ediff" (or (buffer-name) ""))))
+
 
 ;; Allow splitting small windows (default 80 too high for a 15-line 'vc)
 (setq split-height-threshold 14)
@@ -266,7 +286,7 @@
 Set to nil to reduce overhead in production or when debugging other areas.")
 
 (defmacro log/debug-window-management (&rest args)
-  "Log using `LOG/DEBUG' only when `LOG-WINDOW-MANAGEMENT-FLAG' is non-nil.  
+  "Log using `LOG/DEBUG' only when `LOG-WINDOW-MANAGEMENT-FLAG' is non-nil.
 
 Purpose: Provide conditional logging that skips argument evaluation for
 performance when the flag is nil.
@@ -312,14 +332,14 @@ Purpose: Restore categories post-splits/quits without per-split advice.
 Variables: None (frame-local).
 Output: Nil (side-effect).
 Flow: Check IDE frame, get sorted windows, tag by list."
-  (when (eq (frame-parameter nil 'UI-TYPE) 'IDE)                                  ; Limit to IDE
+  (when (my-window-tools--in-ide-frame-p)                                         ; Limit to IDE
     (let ((frame (selected-frame))
           (tag-list '(edit data config logs vc terminal)))
       (my-window-tools/tag-windows-by-list frame tag-list t)
 
       (log/debug-window-management :fn 'my-window-tools/retag-on-config-change
-                              :msg "Re-tagged on config change"
-                              :obj frame)
+                                   :msg "Re-tagged on config change"
+                                   :obj frame)
       )))
 
 (add-hook 'window-configuration-change-hook #'my-window-tools/retag-on-config-change)
@@ -340,6 +360,8 @@ Flow: Check IDE frame, get sorted windows, tag by list."
 
 (defun my-window-tools/tag-windows-by-list (frame tag-list &optional set-quit-restore)
   "Tag each window in FRAME from TAG-LIST based on an ordered window list.
+
+Tags applied in an IDE frame only.
 
 The window list is sorted by top-left position for consistent assignment.
 If there are more windows than tags, tags are reused cyclically.
@@ -381,32 +403,33 @@ Edge cases:
 - Empty TAG-LIST: No tags applied; logs but no errors.
 - More windows than tags: Cycles (e.g., 7th gets first tag).
 - Untaggable: Skipped, preserving nil category."
-  (let ((windows (my-window-tools/sorted-window-list frame))
-        (tag-count (length tag-list))
-        (tag-index 0))
-    (dolist (window windows)
-      (cond
-       ((my-window-tools/is-untaggable-window window)
-        (log/debug-window-management
-         :fn 'my-window-tools/tag-windows-by-list
-         :msg "Skipped untaggable window (whitelist or space prefix)"
-         :obj (list :window window :buffer (buffer-name (window-buffer window)))))
-       ((window-parameter window 'window-category)
-        (log/debug-window-management
-         :fn 'my-window-tools/tag-windows-by-list
-         :msg "Preserved existing category (stable after split or config change)"
-         :obj (list :window window
-                    :category (window-parameter window 'window-category))))
-       (t
-        (let ((tag (nth (mod tag-index tag-count) tag-list)))
-          (set-window-parameter window 'window-category tag)
-          (when set-quit-restore
-            (set-window-parameter window 'quit-restore nil))
+  (when (my-window-tools--in-ide-frame-p)
+    (let ((windows (my-window-tools/sorted-window-list frame))
+          (tag-count (length tag-list))
+          (tag-index 0))
+      (dolist (window windows)
+        (cond
+         ((my-window-tools/is-untaggable-window window)
           (log/debug-window-management
            :fn 'my-window-tools/tag-windows-by-list
-           :msg "Assigned category to previously untagged window"
-           :obj (list :window window :tag tag))
-          (setq tag-index (1+ tag-index))))))))
+           :msg "Skipped untaggable window (whitelist or space prefix)"
+           :obj (list :window window :buffer (buffer-name (window-buffer window)))))
+         ((window-parameter window 'window-category)
+          (log/debug-window-management
+           :fn 'my-window-tools/tag-windows-by-list
+           :msg "Preserved existing category (stable after split or config change)"
+           :obj (list :window window
+                      :category (window-parameter window 'window-category))))
+         (t
+          (let ((tag (nth (mod tag-index tag-count) tag-list)))
+            (set-window-parameter window 'window-category tag)
+            (when set-quit-restore
+              (set-window-parameter window 'quit-restore nil))
+            (log/debug-window-management
+             :fn 'my-window-tools/tag-windows-by-list
+             :msg "Assigned category to previously untagged window"
+             :obj (list :window window :tag tag))
+            (setq tag-index (1+ tag-index)))))))))
 
 (defconst my-window-tools/default-tag 'edit
   "The default tag assigned to non-system buffers when no tag is found.
@@ -690,17 +713,17 @@ Edge cases:
   (let* ((effective-frame (or frame (selected-frame)))                            ; Ensure locality to active frame if not specified.
          (use-custom
           (frame-parameter effective-frame 'custom-window-management)))           ; Check for IDE tag.
-    (if (not use-custom)
+    (if (or (not use-custom) (my-window-tools--in-ediff-p))
         ;; Non-IDE: Skip all custom logic, apply original display-buffer with
         ;; unmodified action.
         ;; This ensures default behavior, e.g., 'other-window' reuses or splits
         ;; in current frame.
         (progn
           (log/debug-window-management :fn 'my-window-tools/assign-category-advice
-                                  :msg "Non-IDE frame detected, skipping category assignment and using default display"
-                                  :obj (list :buffer buffer-or-name
-                                             :frame effective-frame
-                                             :action action))
+                                       :msg "Non-IDE frame detected, skipping category assignment and using default display"
+                                       :obj (list :buffer buffer-or-name
+                                                  :frame effective-frame
+                                                  :action action))
           (apply orig-fun buffer-or-name action frame))
       ;; IDE: Proceed with category assignment and modified action.
       (let* ((buffer (get-buffer buffer-or-name))                                 ; Get buffer for category check.
@@ -709,8 +732,8 @@ Edge cases:
                 (my-window-tools/determine-buffer-category buffer))))             ; Use map for category.
         (when category
           (log/debug-window-management :fn 'my-window-tools/assign-category-advice
-                                  :msg "IDE frame: Category computed"
-                                  :obj (list :category category :buffer buffer-or-name)))
+                                       :msg "IDE frame: Category computed"
+                                       :obj (list :category category :buffer buffer-or-name)))
         ;; Conditional override only if dape-buffer-window-arrangement
         ;; has value set to nil
         (let
@@ -721,10 +744,10 @@ Edge cases:
                   ;; dape-buffer-window-arrangement is nil then do this: 
                   (let ((stripped-action (assoc-delete-all 'category action)))    ; Strip the Dape category so we can use the custom version. 
                     (log/debug-window-management :fn 'my-window-tools/assign-category-advice
-                                            :msg "Stripped Dape category, re-injecting custom."
-                                            :obj (list :original-action action
-                                                       :category category
-                                                       :buffer buffer-or-name))
+                                                 :msg "Stripped Dape category, re-injecting custom."
+                                                 :obj (list :original-action action
+                                                            :category category
+                                                            :buffer buffer-or-name))
                     (my-window-tools/process-display-action
                      stripped-action category))
                 ;; else it is a simple category assignment. 
@@ -766,48 +789,49 @@ Edge cases:
 - No category: Log/fallback to pop-up.
 - New window: Inherits category for reuse.
 - Historical: Aligns with Emacs 24+ quit-restore for stability."
-  (let* ((category (cdr (assq 'category alist)))
-         (frame (selected-frame))
-         (target-window
-          (when category
-            (my-window-tools/get-window-for-window-category category frame))))
-    (log/debug-window-management :fn 'display-buffer-in-category-window
-                                 :msg "Searching for window"
-                                 :obj (list :category category
-                                            :buffer (buffer-name buffer) :frame frame))
-    (if target-window
-        (progn
-          ;; Check and unset dedication if current buffer is Dape- or VC-related.
-          ;; This prevents "stuck" windows from packages like Dape or VC/log-edit.
-          (let ((current-buf (window-buffer target-window)))
-            (when (and (window-dedicated-p target-window)
-                       (or (string-match-p "^\\*dape-" (buffer-name current-buf))
-                           (string-match-p "^\\*\\(vc-\\|log-edit-\\)" (buffer-name current-buf))))
-              (set-window-dedicated-p target-window nil)
-              (log/debug-window-management
-               :fn 'display-buffer-in-category-window
-               :msg (format "Unset dedication for %s window to allow category reuse"
-                            (if (string-match-p "^\\*dape-" (buffer-name current-buf))
-                                "Dape" "VC/log-edit"))
-               :obj (list :window target-window :buffer current-buf))))
-          (log/debug-window-management :fn 'display-buffer-in-category-window
-                                       :msg "Found matching or default window"
-                                       :obj (list :window target-window
-                                                  :category (window-parameter
-                                                             target-window 'window-category)))
-          (set-window-buffer target-window buffer)
-          target-window)
-      ;; No match or default: Fallback to pop-up and tag the new window.
+  (when (my-window-tools--in-ide-frame-p)
+    (let* ((category (cdr (assq 'category alist)))
+           (frame (selected-frame))
+           (target-window
+            (when category
+              (my-window-tools/get-window-for-window-category category frame))))
       (log/debug-window-management :fn 'display-buffer-in-category-window
-                                   :msg "No matching or default window found, falling back to pop-up"
-                                   :obj (list :category category :frame frame))
-      (let ((new-window (display-buffer-pop-up-window buffer alist)))
-        (when new-window
-          (set-window-parameter new-window 'window-category category)
-          (log/debug-window-management :fn 'display-buffer-in-category-window
-                                       :msg "Created and tagged new window"
-                                       :obj (list :new-window new-window :category category)))
-        new-window))))
+                                   :msg "Searching for window"
+                                   :obj (list :category category
+                                              :buffer (buffer-name buffer) :frame frame))
+      (if target-window
+          (progn
+            ;; Check and unset dedication if current buffer is Dape- or VC-related.
+            ;; This prevents "stuck" windows from packages like Dape or VC/log-edit.
+            (let ((current-buf (window-buffer target-window)))
+              (when (and (window-dedicated-p target-window)
+                         (or (string-match-p "^\\*dape-" (buffer-name current-buf))
+                             (string-match-p "^\\*\\(vc-\\|log-edit-\\)" (buffer-name current-buf))))
+                (set-window-dedicated-p target-window nil)
+                (log/debug-window-management
+                 :fn 'display-buffer-in-category-window
+                 :msg (format "Unset dedication for %s window to allow category reuse"
+                              (if (string-match-p "^\\*dape-" (buffer-name current-buf))
+                                  "Dape" "VC/log-edit"))
+                 :obj (list :window target-window :buffer current-buf))))
+            (log/debug-window-management :fn 'display-buffer-in-category-window
+                                         :msg "Found matching or default window"
+                                         :obj (list :window target-window
+                                                    :category (window-parameter
+                                                               target-window 'window-category)))
+            (set-window-buffer target-window buffer)
+            target-window)
+        ;; No match or default: Fallback to pop-up and tag the new window.
+        (log/debug-window-management :fn 'display-buffer-in-category-window
+                                     :msg "No matching or default window found, falling back to pop-up"
+                                     :obj (list :category category :frame frame))
+        (let ((new-window (display-buffer-pop-up-window buffer alist)))
+          (when new-window
+            (set-window-parameter new-window 'window-category category)
+            (log/debug-window-management :fn 'display-buffer-in-category-window
+                                         :msg "Created and tagged new window"
+                                         :obj (list :new-window new-window :category category)))
+          new-window)))))
 
 (defun my-window-tools/determine-buffer-category (buffer)
   "Determine the category for BUFFER based on its properties.
@@ -821,60 +845,68 @@ The category is derived from:
 - Regex patterns on buffer names.
 - Major mode associations.
 Logs the decision process at debug level."
-  (with-current-buffer buffer
-    (let* ((buf-name (buffer-name))                                               ; Get the buffer's name
-           (buf-mode major-mode)                                                  ; Get the current major mode
-           (whitelist-names
-            (cdr (assq :whitelist-names my-buffer-tools/category-map)))           ; Fetch whitelist names
-           (whitelist-regexps
-            (cdr (assq :whitelist-regexps my-buffer-tools/category-map))))        ; Fetch whitelist regexps
-      (log/debug-window-management :fn 'my-window-tools/determine-buffer-category
-                                   :msg "Computing category"
-                                   :obj (list :buffer-name buf-name :major-mode buf-mode))
+  (when (my-window-tools--in-ide-frame-p)
+    (with-current-buffer buffer
+      (let* ((buf-name (buffer-name))                                               ; Get the buffer's name
+             (buf-mode major-mode)                                                  ; Get the current major mode
+             (whitelist-names
+              (cdr (assq :whitelist-names my-buffer-tools/category-map)))           ; Fetch whitelist names
+             (whitelist-regexps
+              (cdr (assq :whitelist-regexps my-buffer-tools/category-map))))        ; Fetch whitelist regexps
+        (log/debug-window-management
+         :fn 'my-window-tools/determine-buffer-category
+         :msg "Computing category"
+         :obj (list :buffer-name buf-name :major-mode buf-mode))
 
-      ;; Check if buffer should be ignored based on whitelists
-      (if (or
-           (string-prefix-p " " buf-name)                                         ; Auto-whitelist if starts with space
-           (member buf-name whitelist-names)                                      ; Exact match in whitelist names
-           (seq-some (lambda (re) (string-match-p re buf-name))
-                     whitelist-regexps))                                          ; Regex match
-          (progn
-            (log/debug-window-management :fn 'my-window-tools/determine-buffer-category
-                                         :msg "Buffer whitelisted, no category assigned"
-                                         :obj (list :buffer-name buf-name))
-            nil)                                                                  ; No category if whitelisted
-        ;; Proceed with category matching
-        (let* ((names (cdr (assq :names my-buffer-tools/category-map)))           ; Name-to-category mappings
-               (regexps (cdr (assq :regexps my-buffer-tools/category-map)))       ; Regex-to-category mappings
-               (modes (cdr (assq :modes my-buffer-tools/category-map)))           ; Mode-to-category mappings
-               (name-match (assoc buf-name names)))                               ; Check for exact name match
-          (cond
-           (name-match
-            (log/debug-window-management :fn 'my-window-tools/determine-buffer-category
-                                         :msg "Matched by exact name"
-                                         :obj (list :match name-match))
-            (cdr name-match))                                                     ; Return category from name match
-           ((seq-some (lambda (pair)                                              ; Check regex matches
-                        (when (string-match-p (car pair) buf-name)
-                          (log/debug-window-management :fn 'my-window-tools/determine-buffer-category
-                                                       :msg "Matched by regex"
-                                                       :obj (list :regex (car pair)
-                                                                  :category (cdr pair)))
-                          (cdr pair)))
-                      regexps))
-           ((if-let ((mode-match (assoc buf-mode modes)))                         ; Check mode match
-                (progn
-                  (log/debug-window-management :fn 'my-window-tools/determine-buffer-category
-                                               :msg "Matched by mode"
-                                               :obj (list :mode buf-mode
-                                                          :category (cdr mode-match)))
-                  (cdr mode-match))))
-           (t
-            (log/debug-window-management :fn 'my-window-tools/determine-buffer-category
-                                         :msg "No match found, falling back to default category"
-                                         :obj (list :buffer-name buf-name))
-            my-window-tools/default-tag)                                          ; Returns 'edit
-           )
+        ;; Check if buffer should be ignored based on whitelists
+        (if (or
+             (string-prefix-p " " buf-name)                                         ; Auto-whitelist if starts with space
+             (member buf-name whitelist-names)                                      ; Exact match in whitelist names
+             (seq-some (lambda (re) (string-match-p re buf-name))
+                       whitelist-regexps))                                          ; Regex match
+            (progn
+              (log/debug-window-management
+               :fn 'my-window-tools/determine-buffer-category
+               :msg "Buffer whitelisted, no category assigned"
+               :obj (list :buffer-name buf-name))
+              nil)                                                                  ; No category if whitelisted
+          ;; Proceed with category matching
+          (let* ((names (cdr (assq :names my-buffer-tools/category-map)))           ; Name-to-category mappings
+                 (regexps (cdr (assq :regexps my-buffer-tools/category-map)))       ; Regex-to-category mappings
+                 (modes (cdr (assq :modes my-buffer-tools/category-map)))           ; Mode-to-category mappings
+                 (name-match (assoc buf-name names)))                               ; Check for exact name match
+            (cond
+             (name-match
+              (log/debug-window-management
+               :fn 'my-window-tools/determine-buffer-category
+               :msg "Matched by exact name"
+               :obj (list :match name-match))
+              (cdr name-match))                                                     ; Return category from name match
+             ((seq-some (lambda (pair)                                              ; Check regex matches
+                          (when (string-match-p (car pair) buf-name)
+                            (log/debug-window-management
+                             :fn 'my-window-tools/determine-buffer-category
+                             :msg "Matched by regex"
+                             :obj (list :regex (car pair)
+                                        :category (cdr pair)))
+                            (cdr pair)))
+                        regexps))
+             ((if-let ((mode-match (assoc buf-mode modes)))                         ; Check mode match
+                  (progn
+                    (log/debug-window-management
+                     :fn 'my-window-tools/determine-buffer-category
+                     :msg "Matched by mode"
+                     :obj (list :mode buf-mode
+                                :category (cdr mode-match)))
+                    (cdr mode-match))))
+             (t
+              (log/debug-window-management
+               :fn 'my-window-tools/determine-buffer-category
+               :msg "No match found, falling back to default category"
+               :obj (list :buffer-name buf-name))
+              my-window-tools/default-tag)                                          ; Returns 'edit
+             )
+            )
           )
         )
       )
@@ -922,9 +954,10 @@ merging in `display-buffer'."
   ;; as alists.
   (when (eq action 'other-window)
     (setq action '(display-buffer-use-some-window (inhibit-same-window . t)))
-    (log/debug-window-management :fn 'my-window-tools/process-display-action
-                                 :msg "Translated 'other-window' to standard action"
-                                 :obj action))
+    (log/debug-window-management
+     :fn 'my-window-tools/process-display-action
+     :msg "Translated 'other-window' to standard action"
+     :obj action))
 
   ;; Parse into functions and alist with robust type checks to handle diverse
   ;; action formats.
@@ -968,10 +1001,11 @@ merging in `display-buffer'."
           (new-functions (if category
                              '(display-buffer-in-category-window)                 ; Prioritize category reuse
                            action-functions)))                                    ; Else keep original
-      (log/debug-window-management :fn 'my-window-tools/process-display-action
-                                   :msg "Processed action"
-                                   :obj (list :original-action action :category category
-                                              :functions new-functions :new-alist new-alist))       ; Log new-functions
+      (log/debug-window-management
+       :fn 'my-window-tools/process-display-action
+       :msg "Processed action"
+       :obj (list :original-action action :category category
+                  :functions new-functions :new-alist new-alist))       ; Log new-functions
       ;; Reconstruct the final action: Always (functions . alist) if either
       ;; non-nil, with functions as nil (empty list) if absent.
       ;; This prevents pure alist returns, avoiding Emacs' append errors on
@@ -1030,7 +1064,8 @@ Edge cases & considerations:
                   :category old-category)))
     new-window))
 
-(advice-add 'split-window :around #'my-window-tools/split-window-with-category-inherit)
+(advice-add 'split-window
+            :around #'my-window-tools/split-window-with-category-inherit)
 
 ;; Configure display-buffer-alist
 ;;   ------------------------------
@@ -1108,6 +1143,29 @@ TAG must be one of the symbols defined in the :IDE entry of
                                :msg "Set active window tag. "
                                :obj (list :tag tag)))
 
+;;; ----------------------------------------------------------------------
+;;; Ediff Support
+;;; ----------------------------------------------------------------------
+
+(with-eval-after-load 'ediff
+  (defun my-window-tools/ediff-setup-windows-advice (orig-fun &rest args)
+    "Let Ediff manage its windows cleanly inside IDE frames."
+    (let ((use-custom (frame-parameter nil 'custom-window-management)))
+      (if (or (not use-custom)
+              (bound-and-true-p my-window-tools/in-ediff-session))
+          (apply orig-fun args)
+        (let ((my-window-tools/in-ediff-session t)
+              (display-buffer-alist nil)
+              (switch-to-buffer-obey-display-actions nil))
+          (apply orig-fun args)
+          (run-with-timer 0.2 nil #'my-window-tools/retag-on-config-change)))))
+
+  (advice-add 'ediff-setup-windows-plain
+              :around #'my-window-tools/ediff-setup-windows-advice)
+  (advice-add 'ediff-setup-windows-multi
+              :around #'my-window-tools/ediff-setup-windows-advice))
+
+
 
 (log/debug :fn 'system-window-management
            :msg "Finishing load of the system-window-management module."
@@ -1116,5 +1174,4 @@ TAG must be one of the symbols defined in the :IDE entry of
 
 ;;; system-window-management.el ends here
 
-;; LocalWords:  Customize vc repl alists listp shorthands advices rgrep gracie
-;; LocalWords:  elisp tabline defun eldoc evie Checkdoc dape pydoc
+
