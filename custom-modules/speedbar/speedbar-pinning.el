@@ -109,7 +109,9 @@ Only the IDE frame is allowed to change or act on this variable.")
   (setq speedbar-last-selected-file FILE))
 
 (defun my-speedbar/apply-pinning-for-file (FILE)
-  "Apply project pinning logic for FILE (only on IDE frame)."
+  "Apply project pinning for FILE.
+When pinning is active, switch Speedbar to the project root of FILE
+(if different) and expand to the file."
   (when (and my-speedbar/pin-project-root
              (my-speedbar--in-file-view-p)
              (my-speedbar--in-ide-frame-p)
@@ -118,19 +120,20 @@ Only the IDE frame is allowed to change or act on this variable.")
     (setq my-speedbar/current-file (expand-file-name FILE))
     (let* ((project-root (my-speedbar/find-project-root FILE))
            (sb-buf (or (and (boundp 'speedbar-buffer) speedbar-buffer)
-                       (get-buffer "*speedbar*"))))
+                       (get-buffer "*speedbar*")
+                       (and (boundp 'sr-speedbar-buffer) sr-speedbar-buffer))))
       (when (and sb-buf (buffer-live-p sb-buf))
         (with-current-buffer sb-buf
-          (let ((current-root (expand-file-name default-directory))
+          (let ((current-root (expand-file-name (or default-directory "")))
                 (new-root (expand-file-name project-root)))
-            (if (string-equal current-root new-root)
-                (my-speedbar/expand-to-file FILE)
-              (progn
-                (setq default-directory (file-name-as-directory new-root))
-                (let ((speedbar-smart-directory-expand-flag t))
-                  (speedbar-update-contents))
-                (setq my-speedbar/file-tree-root default-directory)
-                (my-speedbar/expand-to-file FILE)))))))))
+            (unless (string-equal current-root new-root)
+              ;; Different project → switch root
+              (setq default-directory (file-name-as-directory new-root))
+              (setq my-speedbar/file-tree-root default-directory)
+              (let ((speedbar-smart-directory-expand-flag t))
+                (speedbar-update-contents)))
+            ;; Always try to expand/highlight the file
+            (my-speedbar/expand-to-file FILE)))))))
 
 ;;;;; Directory / File click advice
 
@@ -190,19 +193,19 @@ Only the IDE frame is allowed to change or act on this variable.")
 ;;;;; Update contents protection
 
 (defun my-speedbar/speedbar-update-contents-advice (orig-fun &rest args)
-  "Protect pinned state during updates (IDE frame only)."
+  "Protect pinning during updates, but allow project switches."
   (if (and my-speedbar/pin-project-root
            my-speedbar/current-file
            (my-speedbar--in-file-view-p)
            (my-speedbar--in-ide-frame-p))
       (let ((sb-buf (or (and (boundp 'speedbar-buffer) speedbar-buffer)
-                        (get-buffer "*speedbar*")))
-            (pinned-root my-speedbar/file-tree-root)
+                        (get-buffer "*speedbar*")
+                        (and (boundp 'sr-speedbar-buffer) sr-speedbar-buffer)))
             (result nil))
         (when (and sb-buf (buffer-live-p sb-buf))
           (with-current-buffer sb-buf
-            (when pinned-root
-              (setq default-directory (file-name-as-directory pinned-root)))
+            ;; Do NOT force the old root here any more.
+            ;; Let apply-pinning-for-file decide based on the current file.
             (setq result (apply orig-fun args))
             (my-speedbar/apply-pinning-for-file my-speedbar/current-file)))
         result)

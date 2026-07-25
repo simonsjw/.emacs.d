@@ -37,11 +37,7 @@ With prefix argument or PIN non-nil, also enable project pinning
       (message "Speedbar directory set to %s" expanded-path))))
 
 (defun my-speedbar/set-speedbar-directory-and-pin (DIRECTORY &optional QUIET)
-  "Set Speedbar's directory to DIRECTORY and enable project pinning.
-
-DIRECTORY is the target directory path (string).
-This is an explicit manual override that sets MY-SPEEDBAR/PIN-PROJECT-ROOT to t.
-Useful for quickly locking Speedbar to a specific project root."
+  "Set Speedbar directory to DIRECTORY and enable pinning."
   (interactive "DDirectory: ")
   (let ((expanded (expand-file-name DIRECTORY)))
     (when (file-directory-p expanded)
@@ -50,23 +46,22 @@ Useful for quickly locking Speedbar to a specific project root."
       (setq my-speedbar/pin-project-root t)
       (setq my-speedbar/file-tree-root default-directory)
       (unless QUIET
-        (message "🔒 Speedbar set and pinned to project root: %s" expanded))
+        (message "🔒 Pinned to: %s" expanded))
       expanded)))
 
 (defun my-speedbar/toggle ()
-  "Toggle Speedbar (sr-speedbar for IDE frames, regular speedbar otherwise).
-Automatically enables project pinning (MY-SPEEDBAR/PIN-PROJECT-ROOT = t)
-for IDE frames."
+  "Toggle Speedbar (sr-speedbar for IDE frames, regular speedbar otherwise)."
   (interactive)
-  (let ((my-selected-frame-name (frame-parameter nil 'name)))
-    (if (string-prefix-p "IDE:" my-selected-frame-name)
+  (let ((name (frame-parameter nil 'name))
+        (ui-type (frame-parameter nil 'UI-TYPE)))
+    (if (or (eq ui-type 'IDE)
+            (string-prefix-p "IDE:" (or name "")))
         (progn
-          (log/debug :fn 'my-speedbar/toggle
-                     :msg "Frame is an IDE - use sr-speedbar.")
+          (log/debug :fn 'my-speedbar/toggle :msg "IDE frame – using sr-speedbar.")
+          ;; Enable pinning by default on IDE frames
           (setq my-speedbar/pin-project-root t)
           (when my-speedbar/file-tree-root
-            (message "🔒 IDE frame: pinning active (root: %s)"
-                     my-speedbar/file-tree-root))
+            (message "🔒 Pinning active (root: %s)" my-speedbar/file-tree-root))
           (let ((top-left-window
                  (car (sort (window-list)
                             (lambda (w1 w2)
@@ -78,8 +73,7 @@ for IDE frames."
             (select-window top-left-window))
           (sr-speedbar-toggle))
       (progn
-        (log/debug :fn 'my-speedbar/toggle
-                   :msg "Frame is not an IDE - use speedbar.")
+        (log/debug :fn 'my-speedbar/toggle :msg "Non-IDE frame – using regular speedbar.")
         (speedbar)))))
 
 (defun my-speedbar/open-vterm-in-dir ()
