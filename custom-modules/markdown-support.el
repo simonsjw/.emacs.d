@@ -117,7 +117,7 @@ Edge-case behaviour:
   has no adverse effects.
 - It is safe to call even if the buffer is not actually a Markdown
   buffer (it simply does nothing harmful)."
-  (visual-line-mode 1)
+  (visual-line-mode -1)                                                           ; switch off visual line mode. 
 
   (when (fboundp 'eglot-ensure)
     (eglot-ensure))
@@ -271,25 +271,29 @@ Edge-case behaviour:
 ;;;; Preview, TOC, and Linting Tools
 ;;   -------------------------------
 
-;; (use-package markdown-preview-mode
-;;   :ensure t
-;;   :config
-;;   (setq markdown-preview-stylesheets
-;;         (list "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css"))
-;;   (setq markdown-preview-javascript
-;;         (list "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js")))
+(use-package markdown-preview-mode
+  :ensure t
+  :config
+  (setq markdown-preview-stylesheets
+        (list "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css"))
+  (setq markdown-preview-javascript
+        (list "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js")))
 
-;; (use-package markdown-toc
-;;   :ensure t
-;;   :config
-;;   (add-hook 'markdown-mode-hook #'markdown-toc-mode)
-;;   (add-hook 'markdown-ts-mode-hook #'markdown-toc-mode))
+(use-package markdown-toc
+  :ensure t
+  :config
+  (add-hook 'markdown-mode-hook #'markdown-toc-mode)
+  (add-hook 'markdown-ts-mode-hook #'markdown-toc-mode))
 
-;; (use-package flymake-markdownlint
-;;   :ensure t
-;;   :hook
-;;   ((markdown-mode markdown-ts-mode) . flymake-markdownlint-setup)
-;;   ((markdown-mode markdown-ts-mode) . flymake-mode))
+(use-package flymake-markdownlint-cli2
+  :vc (:url "https://github.com/ewilderj/flymake-markdownlint-cli2.git"
+       :rev :newest
+       :branch "main")
+  :hook ((markdown-mode markdown-ts-mode) . flymake-markdownlint-cli2-setup)
+  :config
+  ;; Make sure flymake-mode is on for Markdown buffers
+  (add-hook 'markdown-mode-hook #'flymake-mode)
+  (add-hook 'markdown-ts-mode-hook #'flymake-mode))
 
 
 ;;;; Additional safe hooks
@@ -305,3 +309,4 @@ Edge-case behaviour:
 
 (provide 'markdown-support)
 ;;; markdown-support.el ends here
+
