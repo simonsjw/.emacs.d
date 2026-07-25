@@ -49,29 +49,122 @@
 ;;; ----------------------------------------------------------------------
 ;;; Robust IDE frame creation (handles uniquify + residual buffers)
 ;;; ----------------------------------------------------------------------
+(defun my-ui--ensure-layout-buffers ()
+  "Make sure the six buffers named in IDE_TEMPLATE.eld exist with exact names."
+  (my-ui--force-buffer-name (or (get-buffer "*Emacs*") (get-buffer "*GNU Emacs*"))
+                            "*Emacs*")
+  (my-ui--force-buffer-name (or (get-buffer "xAI Chat")
+                                (progn (my-llm/new-chat) (current-buffer)))
+                            "xAI Chat")
+  (my-ui--force-buffer-name (get-buffer-create "*Ibuffer*") "*Ibuffer*")
+  (my-ui--force-buffer-name (get-buffer-create "*Warnings*") "*Warnings*")
+  (my-ui--ensure-clean-vc-dir default-directory)
+  (my-ui--force-buffer-name (or (get-buffer "*scratch*") (scratch-buffer))
+                            "*scratch*"))
 
 (defun my-ui--force-buffer-name (buffer desired-name)
-  "Rename BUFFER to DESIRED-NAME, killing any existing buffer of that name first.
-Returns the (possibly renamed) live buffer, or nil."
+  "Rename BUFFER to DESIRED-NAME if it is live and different.
+Kills any pre-existing buffer of the desired name first.
+Returns the buffer that now has the desired name, or nil."
   (when (and buffer (buffer-live-p buffer))
     (let ((existing (get-buffer desired-name)))
       (when (and existing (not (eq existing buffer)))
-        (kill-buffer existing)))
+        (let ((kill-buffer-query-functions nil)
+              (kill-buffer-hook nil))
+          (kill-buffer existing))))
     (with-current-buffer buffer
-      (rename-buffer desired-name t))          ; t = unique if somehow still conflict
+      (unless (string= (buffer-name) desired-name)
+        (rename-buffer desired-name t)))
     (get-buffer desired-name)))
 
+(defun my-ui--create-and-force (creator-fn desired-name &optional setup-fn)
+  "Call CREATOR-FN, then force the resulting buffer to DESIRED-NAME.
+If CREATOR-FN does not produce a new buffer, create one explicitly
+and optionally run SETUP-FN in it.
+Returns the live buffer with the desired name."
+  (let ((before (current-buffer)))
+    (funcall creator-fn)
+    (let ((after (current-buffer)))
+      (cond
+       ;; Creator switched to a different live buffer – rename it
+       ((and (not (eq after before)) (buffer-live-p after))
+        (my-ui--force-buffer-name after desired-name))
+       ;; Creator did nothing useful – create explicitly
+       (t
+        (let ((buf (get-buffer-create desired-name)))
+          (with-current-buffer buf
+            (when setup-fn (funcall setup-fn)))
+          (my-ui--force-buffer-name buf desired-name)
+          buf))))))
+
+(defun my-ui--neutralize-git-processes ()
+  "Prevent any pending or running git processes from selecting deleted buffers.
+This is the only reliable way to stop the classic
+\"Selecting deleted buffer\" error that appears when a vc-dir
+status process outlives its buffer."
+  (dolist (proc (process-list))
+    (when (string-match-p "\\`git" (process-name proc))
+      (set-process-sentinel proc #'ignore)
+      (when (process-live-p proc)
+        (ignore-errors (delete-process proc))))))
+
 (defun my-ui--ensure-clean-vc-dir (dir)
-  "Kill every buffer whose name matches ^\\*vc-dir and create a fresh
-one for DIR that is forced to the exact name \"*vc-dir*\".
+  "Ensure a *vc-dir* buffer for DIR exists under the exact name \"*vc-dir*\".
+
+- Neutralises every git process first (stops residual callbacks).
+- Reuses an existing buffer for the same directory when possible.
+- Only kills *vc-dir* buffers that belong to a different directory.
+- Forces the exact name the IDE template expects.
+
 Returns the live *vc-dir* buffer."
+  (setq dir (file-name-as-directory (expand-file-name dir)))
+
+  ;; 1. Stop every git process that could still fire a callback
+  (my-ui--neutralize-git-processes)
+
+  ;; 2. Kill only *vc-dir* buffers that are NOT for this directory
   (dolist (buf (buffer-list))
     (when (and (buffer-live-p buf)
                (string-match-p "^\\*vc-dir" (buffer-name buf)))
-      (kill-buffer buf)))
+      (with-current-buffer buf
+        (let ((buf-dir (and (local-variable-p 'default-directory)
+                            (file-name-as-directory
+                             (expand-file-name default-directory)))))
+          (unless (and buf-dir (string= buf-dir dir))
+            ;; Different directory – safe to destroy
+            (when (fboundp 'vc-dir-kill-dir-status-process)
+              (ignore-errors (vc-dir-kill-dir-status-process)))
+            (when-let ((proc (get-buffer-process buf)))
+              (set-process-sentinel proc #'ignore)
+              (ignore-errors (delete-process proc)))
+            (when (and (boundp 'vc-dir-process-buffer)
+                       (buffer-live-p vc-dir-process-buffer))
+              (when-let ((p (get-buffer-process vc-dir-process-buffer)))
+                (set-process-sentinel p #'ignore)
+                (ignore-errors (delete-process p)))
+              (let ((kill-buffer-query-functions nil)
+                    (kill-buffer-hook nil))
+                (kill-buffer vc-dir-process-buffer)))
+            (let ((kill-buffer-query-functions nil)
+                  (kill-buffer-hook nil))
+              (kill-buffer buf)))))))
+
+  ;; 3. Let vc-dir reuse (or create) a buffer for this directory
   (vc-dir dir)
   (vc-dir-hide-up-to-date)
-  (my-ui--force-buffer-name (current-buffer) "*vc-dir*"))
+
+  ;; 4. Force the exact name the template hard-codes
+  (my-ui--force-buffer-name (current-buffer) "*vc-dir*")
+
+  ;; 5. Keep the global list tidy
+  (when (boundp 'vc-dir-buffers)
+    (setq vc-dir-buffers
+          (cl-delete-if-not #'buffer-live-p vc-dir-buffers))
+    (cl-pushnew (get-buffer "*vc-dir*") vc-dir-buffers :test #'eq))
+
+  (get-buffer "*vc-dir*"))
+
+
 
 (defun my-ui/create-project-frame (project-path)
   "Create a new frame with a UI-TYPE of IDE.
@@ -134,36 +227,43 @@ restored."
                               :obj nil)
 
                    ;; ---- 1. Create / force the exact names the template expects ----
-                   (dashboard-open)
-                   (my-ui--force-buffer-name (current-buffer) "*Emacs*")
 
-                   ;; Create the chat *before* any project file is visited
-                   (my-llm/new-chat)
-                   (my-ui--force-buffer-name (current-buffer) "xAI Chat")
+                   ;; *Emacs* (dashboard)
+                   (my-ui--create-and-force #'dashboard-open "*Emacs*")
 
-                   (with-current-buffer (get-buffer-create "*Ibuffer*")
-                     (unless (eq major-mode 'ibuffer-mode)
-                       (ibuffer-mode))
-                     (ibuffer-update nil t)
-                     (goto-char (point-min)))
-                   (my-ui--force-buffer-name (get-buffer "*Ibuffer*") "*Ibuffer*")
+                   ;; xAI Chat – must be a *new* buffer
+                   (my-ui--create-and-force #'my-llm/new-chat "xAI Chat"
+                                            (lambda ()
+                                              ;; optional: any extra setup the chat needs
+                                              ))
 
-                   ;; Template wants *Warnings*
-                   (get-buffer-create "*Warnings*")
-                   (my-ui--force-buffer-name (get-buffer "*Warnings*") "*Warnings*")
-                   (view-echo-area-messages)               ; keeps *Messages* alive for logs
+                   ;; *Ibuffer*
+                   (my-ui--create-and-force
+                    (lambda ()
+                      (ibuffer)
+                      (ibuffer-update nil t)
+                      (goto-char (point-min)))
+                    "*Ibuffer*")
 
-                   ;; Critical: clean + force exact *vc-dir*
+                   ;; *Warnings* (template expects this name)
+                   (my-ui--create-and-force
+                    (lambda () (get-buffer-create "*Warnings*"))
+                    "*Warnings*")
+
+                   ;; keep *Messages* alive for logging
+                   (view-echo-area-messages)
+
+                   ;; *vc-dir* (already hardened)
                    (my-ui--ensure-clean-vc-dir project-path)
 
-                   (scratch-buffer)
-                   (my-ui--force-buffer-name (current-buffer) "*scratch*")
+                   ;; *scratch*
+                   (my-ui--create-and-force #'scratch-buffer "*scratch*")
 
-                   ;; Background buffers that only appear in prev-buffers of the template
-                   (find-file "spreadsheet.ses")           ; safe – chat already exists
+                   ;; Background buffers that only appear in prev-buffers
+                   (find-file "spreadsheet.ses")
                    (vterm nil)
                    (dired project-path)
-                   
+
                    ;; ---- 2. Verify the exact set the template needs ----
                    (let ((required '("*Emacs*" "xAI Chat" "*Ibuffer*"
                                      "*Warnings*" "*vc-dir*" "*scratch*")))
@@ -179,6 +279,9 @@ restored."
                 ;; ---- 3. Apply the saved window layout ----
                 (condition-case err
                     (progn
+                      ;; Re-guarantee the exact names the template expects
+                      (my-ui--ensure-layout-buffers)
+
                       (let ((ide-file
                              (expand-file-name "IDE_TEMPLATE.eld"
                                                my-paths/desktop-layout-folder)))
@@ -191,8 +294,16 @@ restored."
                       (window-state-put my-window-state/ide
                                         (frame-root-window frame))
 
+                      ;; Tag first so we can address windows by category
                       (let ((tag-list (cdr (assoc :IDE my-window-tools/category-map))))
                         (my-window-tools/tag-windows-by-list frame tag-list t))
+
+                      ;; Explicitly put the right buffers into the data & config windows
+                      ;; (protects against any collapse that occurred during the put)
+                      (when-let ((data-win (my-window-tools/get-window-for-window-category 'data frame)))
+                        (set-window-buffer data-win (get-buffer "xAI Chat")))
+                      (when-let ((config-win (my-window-tools/get-window-for-window-category 'config frame)))
+                        (set-window-buffer config-win (get-buffer "*Ibuffer*")))
 
                       (log/info :fn 'my-ui/create-project-frame
                                 :msg "Window layout applied to new frame."
@@ -210,7 +321,8 @@ restored."
                   (error
                    (log/error :fn 'my-ui/create-project-frame
                               :msg "Layout apply error | Check missing buffers?"
-                              :obj err))))
+                              :obj err)))
+                )
 
             ;; Restore previous frame/buffer
             (when (frame-live-p old-frame)
@@ -242,6 +354,14 @@ closed as a result of this action."
 ;; ensure that all frames unique to a frame are killed when
 ;; the frame is closed.
 (add-hook 'delete-frame-functions #'my-frame-tools/kill-buffers-on-frame-close)
+
+
+;; Ensure we handle git process buffers
+(defun my-ui--cleanup-vc-on-frame-delete (frame)
+  "Neutralise git processes before buffers belonging to FRAME are killed."
+  (my-ui--neutralize-git-processes))
+
+(add-hook 'delete-frame-functions #'my-ui--cleanup-vc-on-frame-delete)
 
 
 (log/debug :fn 'startup-config
