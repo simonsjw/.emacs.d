@@ -234,64 +234,69 @@ If called interactively, offer `completing-read' of all defined presets."
                     :obj chosen))
       (user-error "No preset chosen"))))
 
+
 ;; ----------------------------------------------------------------------------
-;; 4. New Chat — Pure gptel (no Org-roam capture)
+;; 3. New Chat — Pure gptel (no Org-roam capture)
 ;; ----------------------------------------------------------------------------
+
+(defun my-llm/persist-chat-on-first-response ()
+  "Persist the gptel chat buffer to disk on the *first* assistant response.
+Only runs once per buffer (via buffer-local hook). Intended to be added to
+`gptel-post-response-hook'."
+  (when (and (derived-mode-p 'org-mode)
+             (not (buffer-file-name)))   ; not already persisted
+    (let* ((created-time (or (bound-and-true-p my-llm--chat-created-time)
+                             (current-time)))
+           (timestamp (format-time-string "%Y%m%d%H%M%S" created-time))
+           (filename (expand-file-name (format "%s-xAI-chat.org" timestamp)
+                                       my-llm/chat-directory)))
+      ;; Very rare collision guard (two new chats in the same second)
+      (when (file-exists-p filename)
+        (setq filename (expand-file-name
+                        (format "%s-%s-xAI-chat.org"
+                                timestamp
+                                (format-time-string "%N")) ; nanoseconds
+                        my-llm/chat-directory)))
+      (setq buffer-file-name filename)
+      (save-buffer)
+      (when (fboundp 'org-roam-db-sync)
+        (org-roam-db-sync))
+      (message "✅ Chat persisted → %s" (file-name-nondirectory filename))
+      ;; Remove ourselves so we don't re-persist on every subsequent turn
+      (remove-hook 'gptel-post-response-hook #'my-llm/persist-chat-on-first-response t)
+      (kill-local-variable 'my-llm--chat-created-time))))
 
 (defun my-llm/new-chat ()
-  "Create a new LLM chat using pure gptel.
-Applies 'chat preset buffer-locally and saves to Org-roam directory."
+  "Create a new LLM chat buffer using the 'chat preset (Grok by xAI).
+The file is NOT saved to disk until the first chat turn completes
+ (user message + assistant response).  This prevents empty skeleton files."
   (interactive)
   (my-llm/setup-chat-directory)
-  
-  (let ((buf (gptel "xAI Chat" nil nil)))  ; ← no system prompt needed
-    (with-current-buffer buf
-      (my-llm/switch-preset 'chat)
-      (let* ((timestamp (format-time-string "%Y%m%d%H%M%S"))
-             (filename (expand-file-name (format "%s-xAI-chat.org" timestamp)
-                                         my-llm/chat-directory)))
-        (setq buffer-file-name filename)
-        (org-mode)
-        (erase-buffer)
-        (insert "** User\n\n** Assistant\n")
-        (gptel-mode 1)
-        (goto-char (point-max))
-        (save-buffer)
-        (org-roam-db-sync)
-        (log/info :fn 'my-llm/new-chat
-                  :msg "✅ New LLM chat ready — type under ** User and press C-c RET"
-                  :obj t)))))
 
-;; ----------------------------------------------------------------------------
-;; 4. New Chat — Pure gptel (no Org-roam capture)
-;; ----------------------------------------------------------------------------
-
-(defun my-llm/new-chat ()
-  "Create a new LLM chat using the 'chat preset (Grok by xAI).
-Applies preset *after* `gptel-mode' so the PROPERTIES header is correct."
-  (interactive)
-  (my-llm/setup-chat-directory)
-  
   (let ((buf (gptel "xAI Chat" nil nil)))
     (with-current-buffer buf
       (org-mode)
-      (gptel-mode 1)                    ; ← MUST come FIRST
-      (my-llm/switch-preset 'chat)      ; ← now the header updates correctly
-      (let* ((timestamp (format-time-string "%Y%m%d%H%M%S"))
-             (filename (expand-file-name (format "%s-xAI-chat.org" timestamp)
-                                         my-llm/chat-directory)))
-        (setq buffer-file-name filename)
-        (erase-buffer)
-        (insert "** User\n\n** Assistant\n")
-        (goto-char (point-max))
-        (save-buffer)
-        (org-roam-db-sync)
-        (log/info :fn 'my-llm/new-chat
-                  :msg "✅ New Grok chat ready — type under ** User and press C-c RET"
-                  :obj t)))))
+      (gptel-mode 1)
+      (my-llm/switch-preset 'chat)
+
+      ;; Insert clean skeleton
+      (erase-buffer)
+      (insert "** User\n\n** Assistant\n")
+      (goto-char (point-max))
+      (set-buffer-modified-p nil)   ; don't prompt to save on kill if unused
+
+      ;; Defer persistence until first actual turn
+      (setq-local my-llm--chat-created-time (current-time))
+      (add-hook 'gptel-post-response-hook
+                #'my-llm/persist-chat-on-first-response
+                nil t)   ; buffer-local
+
+      (log/info :fn 'my-llm/new-chat
+                :msg "✅ New Grok chat ready (will persist on first turn)"
+                :obj t))))
 
 ;; ----------------------------------------------------------------------------
-;; 5. Aidermacs Setup — AI Pair Programming (NEW SECTION)
+;; 4. Aidermacs Setup — AI Pair Programming (NEW SECTION)
 ;; ----------------------------------------------------------------------------
 
 (defun my-llm/setup-aidermacs ()
@@ -337,7 +342,7 @@ Reuses XAI_API_KEY and Ollama from your environment."
     (aidermacs-start-session)))
 
 ;; ----------------------------------------------------------------------------
-;; 6. Initialisation
+;; 5. Initialisation
 ;; ----------------------------------------------------------------------------
 
 (defun my-llm/init ()
