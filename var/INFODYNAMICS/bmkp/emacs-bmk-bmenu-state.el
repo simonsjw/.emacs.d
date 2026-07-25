@@ -4,14 +4,21 @@
   bmkp-alpha-p)
  (last-reverse-sort-p) (last-reverse-multi-sort-p)
  (last-latest-bookmark-alist
-  ("org-capture-last-stored"
+  (".profile"
    (filename
-    . "~/sync/primary/Documents/org/org-roam/nodes/20260313092018-evie_s_breakfast_ideas.org")
-   (buffer-name . "20260313092018-evie_s_breakfast_ideas.org")
-   (front-context-string . "| /             ")
-   (rear-context-string . "reakfast ideas\n\n") (front-context-region-string)
-   (rear-context-region-string) (visits . 0) (time 27059 15560 165558 21000)
-   (created 27059 15560 165558 21000) (position . 101))
+    . "/mnt/HDD04_WDD_08TB/workspace/dotfiles/shell/INFODYNAMICS/.profile")
+   (buffer-name . ".profile") (front-context-string . "\n# set PATH so i")
+   (rear-context-string) (front-context-region-string)
+   (rear-context-region-string) (visits . 1) (time 27080 64265 980677 316000)
+   (created 27078 15810 726243 401000) (position . 1))
+  ("org-capture-last-stored" (annotation) (tags)
+   (filename
+    . "~/sync/primary/Documents/org/org-roam/20260720222217-grok_session.org")
+   (buffer-name . "20260720222217-grok_session.org")
+   (front-context-string . "  grok --resume ")
+   (rear-context-string . "on 20 july 2026\n") (front-context-region-string)
+   (rear-context-region-string) (visits . 0) (time 27230 4886 646236 768000)
+   (created 27230 4886 646236 768000) (position . 103))
   ("python" (filename . "/mnt/HDD04_WDD_08TB/workspace/python/") (position . 0)
    (created 26628 28288 797444 985000))
   ("workspace" (filename . "/mnt/HDD04_WDD_08TB/workspace/") (position . 0)
@@ -93,7 +100,7 @@
   ("init.log" (tags "emacs") (filename . "~/.emacs.d/init.log")
    (buffer-name . "init.log") (front-context-string . "[Tue Mar 12 11:1")
    (rear-context-string) (front-context-region-string)
-   (rear-context-region-string) (visits . 0) (time 26095 41075 691133 666000)
+   (rear-context-region-string) (visits . 1) (time 27236 35598 52927 515000)
    (created 26095 41075 691133 666000) (position . 1))
   (".bash_profile" (tags "user") (filename . "~/.bash_profile")
    (buffer-name . ".bash_profile") (front-context-string . "#!/usr/bin/env b")

@@ -92,8 +92,9 @@
           package-files))
 
 
-
+;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;;;; Bookmark+:
+;; -----------------------------------------------------------------------------
 ;;
 ;;    Documentation for the Bookmark+ package, which provides
 ;;    extensions to standard library `bookmark.el'.
@@ -229,8 +230,9 @@
 ;; replace form-feed with clean lines.
 (global-page-break-lines-mode 1)
 
-
+;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;;;; Outline-mode/Outline-minor-mode
+;; -----------------------------------------------------------------------------
 
 ;; The below function can be used to determine the outline-level for use with
 ;; outline-mode and outline-minor-mode.
@@ -314,11 +316,9 @@
             (when outline-minor-mode
               (my-outline-mode/faces-for-prog-mode))))
 
-
-
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; Clickable links.
-;; -----------------------------------------------
+;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;;;; Clickable links.
+;; -----------------------------------------------------------------------------
 ;; Ensure we can use hyperlinks and org type links throughout emacs.
 ;; Enable clickable URLs in all modes
 (global-goto-address-mode 1)
@@ -326,9 +326,9 @@
 
 
 
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; Fix 'use minibuffer whilst in minibuffer' error with Vertico compatibility
-;; ----------------------------------------------------------------------------
+;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;;;; Fix 'use minibuffer whilst in minibuffer' error with Vertico compatibility
+;; -----------------------------------------------------------------------------
 
 (defun my-ui/cancel-minibuffer-before-using-again (sub-read &rest args)
   "Safely cancel the minibuffer session if called within an active minibuffer.
@@ -349,10 +349,9 @@ parameters for the minibuffer function."
 (advice-add 'read-from-minibuffer
             :around #'my-ui/cancel-minibuffer-before-using-again)
 
-
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; Dired functionality
-;; -------------------
+;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;;;; Dired functionality
+;; -----------------------------------------------------------------------------
 
 ;; Buffer title
 (defun my-dired/set-dired-buffer-title ()
@@ -369,9 +368,26 @@ parameters for the minibuffer function."
 
 (add-hook 'dired-after-readin-hook 'my-dired/set-dired-buffer-title)
 
-;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; Ediff functionality
-;; -------------------
+;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;;;; Manually apply fontification
+;; -----------------------------------------------------------------------------
+;; Force reapplication of fonts where jit has failed to manage a high volume of
+;; text added to a buffer in a small period of time. 
+(defun my-refontify-buffer (&optional beg end)
+  "Force `font-lock' to re-examine the buffer or the active region.
+With a region, only that region is refontified; otherwise the whole
+accessible buffer is processed.
+
+BEG and END are optional variables to specify a region to fontify."
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end))
+                 (list (point-min) (point-max))))
+  (font-lock-flush beg end)
+  (font-lock-ensure beg end))
+
+;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;;;; Ediff functionality
+;; -----------------------------------------------------------------------------
 
 ;; (defun my-ediff/rename-buffers ()
 ;;   "Rename buffers in Ediff sessions to a custom format."
@@ -390,17 +406,22 @@ parameters for the minibuffer function."
 ;; (setq ediff-window-setup-function 'ediff-setup-windows-plain)                  ; prevent frame creation.
 ;; (setq ediff-split-window-function 'ignore)                                     ; Prevent any window splitting
 
-;; Define key maps
+;; 
+;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;;; Define key maps
+;; -----------------------------------------------------------------------------
 
-;; set up functionality to reopen a buffer in a new frame here you click on the
-;; modeline with Cntrl pressed and the buffer opens in a new frame.
-;; This is adapted from `tear-off-window' but unlike that package does not
-;; delete the buffer from the window which the new frame is spawned from.
-;; The function my-buffer-tools/copy-buffer-in-new-fram is in
-;; system-tools
+;; Reopen a buffer in a new frame here you click on the modeline with Cntrl
+;; pressed and the buffer opens in a new frame.  This is adapted from
+;; `tear-off-window' but unlike that package does not delete the buffer from the
+;; window which the new frame is spawned from.  The function
+;; my-buffer-tools/copy-buffer-in-new-fram is in system-tools
 (global-set-key [mode-line C-mouse-1]
                 'my-buffer-tools/copy-buffer-in-new-frame)
 
+
+
+(global-set-key (kbd "C-c f") #'my-refontify-buffer)
 
 (log/debug :fn 'ui-config
            :msg "Finishing load of the ui-config module."

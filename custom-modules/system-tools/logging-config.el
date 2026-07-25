@@ -370,5 +370,3 @@ Overwriting without prompt."
 
 (provide 'logging-config)
 ;;; logging-config.el ends here
-
-; LocalWords:  Uncomment

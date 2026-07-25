@@ -17,7 +17,7 @@
 
 (require 'pretty-speedbar)
 (require 'logging-config)
-
+(require 'theme-support)
 ;;; ------------------------------------------------------------------
 ;;; 1. Base Icon Definitions (Nerd Font glyphs)
 ;;; ------------------------------------------------------------------
@@ -92,8 +92,8 @@
   "Return the appropriate icon for FILENAME based on its extension.
 Falls back to default file icon if no specific icon exists."
   (let* ((ext (downcase (or (file-name-extension filename) "")))
-         (icon (cdr (assoc ext my-speedbar/file-type-icons))))
-    (or icon (cdr (assoc 'file my-speedbar/base-icons)))))
+         (icon (cdr (assoc ext my-speedbar/file-type-icons))))\
+        (or icon (cdr (assoc 'file my-speedbar/base-icons)))))
 
 ;;; ------------------------------------------------------------------
 ;;; 3. Make File-Type Icons Actually Work (Advice)

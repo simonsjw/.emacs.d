@@ -12,7 +12,8 @@
 
 (require 'speedbar)
 (require 'sr-speedbar)
-
+(require 'path-support)
+(require 'theme-support)
 ;; ----------------------------------------------------------------------
 ;; pretty-speedbar (icon package) - must load early
 ;; ----------------------------------------------------------------------

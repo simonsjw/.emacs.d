@@ -12,7 +12,7 @@
 ;; good doom-themes: pale-night, material and grovbox.
 
 ;;; Code:
-
+(require 'system-tools)
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'theme-support

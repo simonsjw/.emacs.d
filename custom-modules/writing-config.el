@@ -27,10 +27,12 @@
 ;; First ensure you have the right tools installed:
 ;; # Install pdf-tools dependencies for Ubuntu/Debian.
 ;; sudo apt update
-;; sudo apt install -y libpoppler-dev libpoppler-glib-dev libcairo2-dev libpng-dev zlib1g-dev libglib2.0-dev make
+;; sudo apt install -y libpoppler-dev libpoppler-glib-dev libcairo2-dev
+;;    libpng-dev zlib1g-dev libglib2.0-dev make
 ;; # Optional: For following image links in PDFs.
 ;; sudo apt install -y libmagickwand-dev
-;; # Optional: Ubuntu-packaged epdfinfo binary to skip manual compile (if available in 24.04 repos).
+;; # Optional: Ubuntu-packaged epdfinfo binary to skip manual compile
+;; (if available in 24.04 repos).
 ;; sudo apt install -y elpa-pdf-tools-server
 (package-initialize)
 (use-package pdf-tools

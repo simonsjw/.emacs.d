@@ -39,24 +39,6 @@
 
   (require 'dape)
 
-  ;; [stderr]  node:internal/modules/cjs/loader:1137
-  ;; [stderr]    throw err;
-  ;; [stderr]    ^
-  ;; [stderr]
-  ;; [stderr]  Error: Cannot find module '/home/simon/sync/primary/bin/~/.emacs.d/debug-adapters/bash-debug/extension/out/bashDebug.js'
-  ;; [stderr]      at Module._resolveFilename (node:internal/modules/cjs/loader:1134:15)
-  ;; [stderr]      at Module._load (node:internal/modules/cjs/loader:975:27)
-  ;; [stderr]      at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:128:12)
-  ;; [stderr]      at node:internal/main/run_main_module:28:49 {
-  ;; [stderr]    code: 'MODULE_NOT_FOUND',
-  ;; [stderr]    requireStack: []
-  ;; [stderr]  }
-  ;; [stderr]  
-  ;; [stderr]  Node.js v18.19.1
-
-
-
-
   ;; Use Eglot if bash-language-server is available
   (if (executable-find "bash-language-server")
       (eglot-ensure)
