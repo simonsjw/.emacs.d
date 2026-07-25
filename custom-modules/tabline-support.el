@@ -234,8 +234,11 @@ This function is optimised for IDE setups by minimising buffer loss."
                (cons (tab-line-tabs-window-buffers) list))                        ; Collect tabs.
              (window-list) nil))))
       (select-window given-window)                                                ; Restore original window.
+      
       (if (> (seq-count (lambda (b) (eq b buffer)) buffer-list) 1)                ; Buffer in multiple places?
-          (progn                                                                  ; Bury to hide without killing.
+          
+          ;; If the buffer is in other windows - bury in this one to hide without killing.
+          (progn
             (if (eq buffer (current-buffer))                                      ; If current, bury directly.
                 (bury-buffer)
               (set-window-prev-buffers                                            ; Remove from history lists.
@@ -246,9 +249,12 @@ This function is optimised for IDE setups by minimising buffer loss."
                (delq buffer (window-next-buffers))))
             (unless (cdr tab-list)                                                ; No more tabs? Delete window.
               (ignore-errors (delete-window given-window))))
-        (and (kill-buffer buffer)                                                 ; Kill if unique.
+        
+        ;; If the buffer is not in other windows - just kill it from this one.
+        (and (kill-buffer buffer)
              (unless (cdr tab-list)
-               (ignore-errors (delete-window given-window))))))))                 ; Clean up window.
+               (ignore-errors (delete-window given-window))))
+        ))))                 ; Clean up window.
 
 
 
@@ -503,4 +509,4 @@ Interactive for user input."
 (provide 'tabline-support)
 ;;; tabline-support.el ends here
 
-;; LocalWords: Dired ediff customisations ui
+
