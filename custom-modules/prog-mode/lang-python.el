@@ -196,6 +196,20 @@ colocated locations, then removes the temporary directory."
                (shell-quote-argument file-dir)))
       (delete-directory temp-dir t)
       (message "Directory stub generation completed: all .pyi files placed in source locations")))
+
+  ;; === Performance tuning for Eglot + Pyrefly (typing lag fix) ===
+  ;; These reduce server load during rapid typing.
+  (setq-local eglot-send-changes-idle-time 0.8)   ; buffer-local override if you want per-project tuning
+  (setq flymake-no-changes-timeout 1.5)           ; longer delay before Flymake re-runs
+
+  ;; Optional but recommended: Install flymake-pyrefly from NonGNU ELPA
+  ;; (M-x package-refresh-contents RET, then package-install flymake-pyrefly)
+  ;; It provides a dedicated, very lightweight Pyrefly diagnostic backend.
+  (when (require 'flymake-pyrefly nil 'noerror)
+    (pyrefly-setup-flymake-backend)
+    ;; Remove Eglot's general diagnostic backend to avoid duplication/overhead.
+    ;; Keep Eglot for completion, navigation, hover, code actions, inlays, etc.
+    (remove-hook 'flymake-diagnostic-functions 'eglot-flymake-backend t))
   
   ;; apheleia so Ruff formatting can be used.
   (apheleia-mode 1)
