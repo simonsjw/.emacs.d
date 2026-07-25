@@ -81,6 +81,10 @@
    'eglot-server-programs
    '((python-ts-mode python-mode) . ("pyrefly" "lsp")))
 
+  ;; Performance: reduce how often we notify the server during typing
+  (setq eglot-send-changes-idle-time 0.8)   ; 0.5–1.5 is the sweet spot; higher = smoother typing, slightly delayed diagnostics
+  (setq eglot-autoshutdown t)
+
   (add-to-list 'eglot-server-programs `(LaTeX-mode . (,lsp-bin-texlab)))
   
   ;; If bash-language-server is installed, configure Eglot LSP for Bash
@@ -88,7 +92,6 @@
     (add-to-list
      'eglot-server-programs
      '((bash-mode bash-ts-mode) . ("bash-language-server" "start"))))
-
 
 
   ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

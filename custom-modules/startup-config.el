@@ -46,9 +46,42 @@
 (defvar my-paths/default-log-file)
 (defvar my-paths/spreadsheet-dir)
 
+;;; ----------------------------------------------------------------------
+;;; Robust IDE frame creation (handles uniquify + residual buffers)
+;;; ----------------------------------------------------------------------
+
+(defun my-ui--force-buffer-name (buffer desired-name)
+  "Rename BUFFER to DESIRED-NAME, killing any existing buffer of that name first.
+Returns the (possibly renamed) live buffer, or nil."
+  (when (and buffer (buffer-live-p buffer))
+    (let ((existing (get-buffer desired-name)))
+      (when (and existing (not (eq existing buffer)))
+        (kill-buffer existing)))
+    (with-current-buffer buffer
+      (rename-buffer desired-name t))          ; t = unique if somehow still conflict
+    (get-buffer desired-name)))
+
+(defun my-ui--ensure-clean-vc-dir (dir)
+  "Kill every buffer whose name matches ^\\*vc-dir and create a fresh
+one for DIR that is forced to the exact name \"*vc-dir*\".
+Returns the live *vc-dir* buffer."
+  (dolist (buf (buffer-list))
+    (when (and (buffer-live-p buf)
+               (string-match-p "^\\*vc-dir" (buffer-name buf)))
+      (kill-buffer buf)))
+  (vc-dir dir)
+  (vc-dir-hide-up-to-date)
+  (my-ui--force-buffer-name (current-buffer) "*vc-dir*"))
+
 (defun my-ui/create-project-frame (project-path)
   "Create a new frame with a UI-TYPE of IDE.
-The frame has a current working directory PROJECT-PATH."
+The frame has a current working directory PROJECT-PATH.
+
+This version is robust against uniquify and residual buffers left
+behind when an IDE frame is closed without restarting the Emacs
+server.  All buffer names that appear in IDE_TEMPLATE.eld are
+forced to their exact expected strings before the window state is
+restored."
   (interactive)
   (cd project-path)
   (setq default-directory project-path)
@@ -65,52 +98,31 @@ The frame has a current working directory PROJECT-PATH."
                        :msg "Tagged existing IDE frame"
                        :obj (list :frame existing-ide-frame)))
           (select-frame-set-input-focus existing-ide-frame)
-
           (log/debug :fn 'my-ui/create-project-frame
                      :msg "IDE frame already exists; focusing it."
                      :obj nil)
-
           existing-ide-frame)
-      
+
+      ;; === Create a brand-new IDE frame ===
       (let* ((frame-class 'IDE)
              (frame (make-frame `((UI-TYPE . ,frame-class)
-                                  (width . 300) (height . 75)
-                                  ;; (visibility . nil)                              ; Make the new frame invisible.
+                                  (width . 300)
+                                  (height . 75)
                                   (no-focus-on-map . t)
-                                  ;; (inhibit-switch-frame . t)
                                   (custom-window-management . t)))))
+
         (log/debug :fn 'my-ui/create-project-frame
                    :msg "Created new frame"
                    :obj (list :frame frame :params (frame-parameters frame)))
-        
-        (find-file "WINDOW_EDIT")
-        (find-file "WINDOW_DATA")
-        (find-file "WINDOW_CONFIG")
-        (find-file "WINDOW_TERMINAL")
-        (find-file "WINDOW_VC")
-        (find-file "WINDOW_LOGS")
-        ;; Load the IDE layout from file
-        (let ((ide-file
-               (expand-file-name "IDE_TEMPLATE.eld" my-paths/desktop-layout-folder)))
-          (if (file-readable-p ide-file)
-              (setq my-window-state/ide
-                    (with-temp-buffer
-                      (insert-file-contents ide-file)
-                      (read (current-buffer))))
-            (log/debug :fn 'my-ui/create-project-frame
-                       :msg  "IDE.el not found or unreadable."
-                       :obj  ide-file)
-            ))
-        (log/debug :fn 'my-ui/create-project-frame
-                   :msg  "IDE layout loaded from IDE_TEMPLATE.eld."
-                   :obj nil)
+
+        ;; Initialise any frame-specific state *after* the frame exists
+        (set-frame-parameter frame 'my-window-tools/in-ediff-session nil)
+
         (let ((old-frame (selected-frame))
               (old-buffer (current-buffer)))
           (unwind-protect
               (with-selected-frame frame
-                ;; Temporarily allow same-window displays
-                ;; (confined to this invisible frame)
-
+                ;; Temporarily force same-window behaviour while we build the layout
                 (my-window-tools/with-temporary-display-buffer-settings
                  '((display-buffer-alist (".*" . (display-buffer-same-window)))
                    (switch-to-buffer-obey-display-actions . nil)
@@ -120,103 +132,97 @@ The frame has a current working directory PROJECT-PATH."
                    (log/debug :fn 'my-ui/create-project-frame
                               :msg "Starting buffer creation in new frame..."
                               :obj nil)
-                   
+
+                   ;; ---- 1. Create / force the exact names the template expects ----
                    (dashboard-open)
-                   
-                   (log/debug :fn 'my-ui/create-project-frame
-                              :msg "Opened dashboard"
-                              :obj nil)
-                   (find-file "spreadsheet.ses")
+                   (my-ui--force-buffer-name (current-buffer) "*Emacs*")
+
+                   ;; Create the chat *before* any project file is visited
                    (my-llm/new-chat)
-                   (log/debug :fn 'my-ui/create-project-frame
-                              :msg "Opened chat & spreadsheet."
-                              :obj nil)
-                   
+                   (my-ui--force-buffer-name (current-buffer) "xAI Chat")
+
                    (with-current-buffer (get-buffer-create "*Ibuffer*")
                      (unless (eq major-mode 'ibuffer-mode)
                        (ibuffer-mode))
                      (ibuffer-update nil t)
                      (goto-char (point-min)))
-                   
-                   (log/debug :fn 'my-ui/create-project-frame
-                              :msg "Opened Ibuffer"
-                              :obj nil)
-                   
-                   (view-echo-area-messages)
-                   (log/debug :fn 'my-ui/create-project-frame
-                              :msg "Opened load history & log file."
-                              :obj nil)
-                   (vc-dir project-path)
-                   (vc-dir-hide-up-to-date)
+                   (my-ui--force-buffer-name (get-buffer "*Ibuffer*") "*Ibuffer*")
 
-                   (log/debug :fn 'my-ui/create-project-frame
-                              :msg "Opened vc-dir."
-                              :obj nil)
+                   ;; Template wants *Warnings*
+                   (get-buffer-create "*Warnings*")
+                   (my-ui--force-buffer-name (get-buffer "*Warnings*") "*Warnings*")
+                   (view-echo-area-messages)               ; keeps *Messages* alive for logs
+
+                   ;; Critical: clean + force exact *vc-dir*
+                   (my-ui--ensure-clean-vc-dir project-path)
+
                    (scratch-buffer)
-                   (log/debug :fn 'my-ui/create-project-frame
-                              :msg "Opened scratch-buffer"
-                              :obj nil)
+                   (my-ui--force-buffer-name (current-buffer) "*scratch*")
+
+                   ;; Background buffers that only appear in prev-buffers of the template
+                   (find-file "spreadsheet.ses")           ; safe – chat already exists
                    (vterm nil)
-                   (log/debug :fn 'my-ui/create-project-frame
-                              :msg "Opened vterm."
-                              :obj nil)
                    (dired project-path)
-                   (log/debug :fn 'my-ui/create-project-frame
-                              :msg "Opened dired."
-                              :obj nil)
-                   (dolist (req-buf '("*Emacs*" "xAI Chat" "*Ibuffer*"
-                                      "*Messages*" "*vc-dir*" "*scratch*"))
-                     (unless (get-buffer req-buf)
-                       (log/warn :fn 'my-ui/create-project-frame
-                                 :msg "Required buffer not created!"
-                                 :obj (list :buffer req-buf))))
+                   
+                   ;; ---- 2. Verify the exact set the template needs ----
+                   (let ((required '("*Emacs*" "xAI Chat" "*Ibuffer*"
+                                     "*Warnings*" "*vc-dir*" "*scratch*")))
+                     (dolist (name required)
+                       (unless (get-buffer name)
+                         (log/warn :fn 'my-ui/create-project-frame
+                                   :msg "Required buffer still missing after force-rename!"
+                                   :obj (list :buffer name)))))
                    (log/info :fn 'my-ui/create-project-frame
-                             :msg "Buffer creation complete"
+                             :msg "Buffer creation + name forcing complete"
                              :obj nil)))
 
+                ;; ---- 3. Apply the saved window layout ----
                 (condition-case err
                     (progn
+                      (let ((ide-file
+                             (expand-file-name "IDE_TEMPLATE.eld"
+                                               my-paths/desktop-layout-folder)))
+                        (when (file-readable-p ide-file)
+                          (setq my-window-state/ide
+                                (with-temp-buffer
+                                  (insert-file-contents ide-file)
+                                  (read (current-buffer))))))
+
                       (window-state-put my-window-state/ide
                                         (frame-root-window frame))
-                      (let ((tag-list
-                             (cdr (assoc :IDE my-window-tools/category-map))     ; (list 'edit 'data 'config 'logs 'vc 'terminal)
-                             ))
+
+                      (let ((tag-list (cdr (assoc :IDE my-window-tools/category-map))))
                         (my-window-tools/tag-windows-by-list frame tag-list t))
+
                       (log/info :fn 'my-ui/create-project-frame
-                                :msg  "Window layout applied to new frame. SET-QUIT-RESTORE set to t to prevent windows being deleted. "
+                                :msg "Window layout applied to new frame."
                                 :obj nil)
-                      ;; Apply all visual customisations NOW that we have a real graphical frame.
-                      ;; This restores thick blue dividers + pretty speedbar icons for emacsclient -c.
-                      (my-visual/apply-all-customisations))
-                  
+
+                      ;; Visual polish
+                      (my-visual/apply-all-customisations)
+
+                      (setq frame-title-format
+                            '((:eval
+                               (if (eq (frame-parameter nil 'UI-TYPE) 'IDE)
+                                   (concat "IDE: " (buffer-name))
+                                 "%b"))))
+                      (global-tab-line-mode))
                   (error
                    (log/error :fn 'my-ui/create-project-frame
                               :msg "Layout apply error | Check missing buffers?"
-                              :obj err)))
+                              :obj err))))
 
-                ;; ensure that only the IDE frames have their name
-                ;; prefixed 'IDE: '.
-                (setq frame-title-format
-                      '((:eval
-                         (if (eq (frame-parameter nil 'UI-TYPE) 'IDE)
-                             (concat "IDE: " (buffer-name))
-                           "%b"))))
-                (global-tab-line-mode))
-
+            ;; Restore previous frame/buffer
             (when (frame-live-p old-frame)
               (select-frame old-frame 'norecord))
             (when (buffer-live-p old-buffer)
-              (set-buffer old-buffer))))
+              (set-buffer old-buffer)))
 
-        (make-frame-visible frame)
-        
-        (log/info :fn 'my-ui/create-project-frame
-                  :msg "Created frame with layout applied!"
-                  :obj frame-class)
-        frame))))
-
-
-
+          (make-frame-visible frame)
+          (log/info :fn 'my-ui/create-project-frame
+                    :msg "Created frame with layout applied!"
+                    :obj frame-class)
+          frame)))))
 
 (defun my-ui/startup-layout()
   "Reset the Emacs session to the default window layout.
