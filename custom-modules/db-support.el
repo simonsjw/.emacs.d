@@ -108,7 +108,8 @@ This function uses an environment variable for the password if available."
 ;;                       transaction regroupement.
 ;;                       Default is to group statements.
 ;;    -s | --spaces size: change space indent, default 4 spaces.
-(setq sqlformat-args '("-s2" "-g"))
+;;    -w | --wrap-limit N   : wrap queries at a certain length.
+(setq sqlformat-args '("-s2" "-g" "-w70"))
 
 
 
@@ -130,7 +131,7 @@ This function uses an environment variable for the password if available."
 ;;; keymaps phase
 
 ;; C-c C-f to format the code (as usual)
-;;(define-key sql-mode-map (kbd "C-c C-f") 'sqlformat)
+(define-key sql-mode-map (kbd "C-c C-f") 'sqlformat)
 
 
 (provide 'db-support)
