@@ -41,114 +41,114 @@ export JUPYTER_ANACONDA_ENVIRONMENT="gpt4"
 ** External dependencies
 Make sure you have the following external dependencies:
 
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-|                      |                                        |                      |                         |
-| Dependency           | Install expression                     | Associated mode      | Additional info-look    |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| imagemagik           | sudo apt install                       | Global               | Convert image files and |
-|                      | imagemagik                             |                      | other goodies.          |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| latex                | sudo apt install                       | projectile           | fast search tool for    |
-|                      | silversearcher-ag                      |                      | text files              |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| texlive-full         | sudo apt install                       | tex-mode             | fast search tool for    |
-|                      | texlive-full                           |                      | text files.             |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| pandoc               | sudo apt install                       | writing modes        | convert/manage latex,   |
-|                      | pandoc                                 |                      | markdown and others     |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| taplo                | cargo install taplo-cli --features lsp | toml-mode            | functionality for       |
-|                      |                                        |                      | toml files.             |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| markdownlint-cli     | npm install -g                         | flymake-markdownlint | flymake plugin to       |
-|                      | markdownlint-cli                       |                      | lint markdown.          |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| marksman             | sudo snap install marksman             | markdown-mode        | tools for markdown.     |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| texlab               | sudo apt install                       | tex-mode             | tex language server     |
-|                      | texlab                                 |                      | for eglot.              |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| git-man              | sudo apt install                       | magit                | Use git manual with     |
-|                      | git-man                                |                      | magit.                  |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| shfmt                | sudo apt install                       | bash-ts-mode         | format bash scripts.    |
-|                      | shfmt                                  |                      |                         |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| bash-language-server | snap install                           | bash-ts-mode         | LSP for bash-ts-mode    |
-|                      | bash-language-server                   | shell-script-mode    | with eglot.             |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| ruff        (1 of 2) | pip install ruff                       | python-ts-mode       | Python language server  |
-|                      |                                        |                      | (linting/ formatting)   |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| basedpyright(2 of 2) | pip install                            | python-ts-mode       | Python language server  |
-|                      | basedpyright                           |                      | (docs/ navigation)      |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| vega                 | npm install -g vega                    | vega-view            | allows edit and         |
-|                      | vega-lite vega-cli                     |                      | generation of vega      |
-|                      |                                        |                      | visuals in Emacs.       |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| shellcheck           |                                        | bash-mode            | lint bash code.         |
-|                      | cabal (to install                      |                      |                         |
-|                      | from source)                           |                      |                         |
-|                      | add to path:                           |                      |                         |
-|                      | export PATH= \                         |                      |                         |
-|                      | "$PATH:/home/simon/                    |                      |                         |
-|                      | .cabal/bin"                            |                      |                         |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| png                  | npm install -g                         | vega-view            | generate png rather     |
-|                      | canvas                                 |                      | than svg - more         |
-|                      |                                        |                      | efficient for dealing   |
-|                      |                                        |                      | with thousands of       |
-|                      |                                        |                      | data points.            |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| php & php-pgsql      | sudo apt install                       | sql-mode             | integrate postgres to   |
-|                      | php php-pgsql                          |                      | web page.               |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| postgres             | sudo apt install                       | sql-mode             | Open source database.   |
-|                      | postgresql                             |                      |                         |
-|                      | doc-postgresql                         |                      |                         |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| pq                   | sudo apt-get install                   | sql-mode             | library for interacting |
-|                      | postgresql libpq-dev                   |                      | with postgres           |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| pgFormatter          |                                        | sql-mode             | format sql code for     |
-|                      |                                        |                      | postgresql.             |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| ss                   | sudo apt install ss                    | loadbalancer         | check for used ports    |
-|                      | (if not installed by                   |                      | on the system.          |
-|                      | default)                               |                      |                         |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| emacswiki            | cd .crafted-emacs                      |                      | The emacs wiki is       |
-|                      | git clone                              |                      | full of useful          |
-|                      |                                        |                      | functionality.          |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
-| Hunspell             | sudo apt install                       | dictionary           |                         |
-|                      | hunspell                               |                      |                         |
-|                      | hunspell-en-au                         |                      |                         |
-|                      |                                        |                      |                         |
-|----------------------+----------------------------------------+----------------------+-------------------------|
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+|                           |                                        |                      |                         |
+| Dependency                | Install expression                     | Associated mode      | Additional info-look    |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| imagemagik                | sudo apt install                       | Global               | Convert image files and |
+|                           | imagemagik                             |                      | other goodies.          |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| latex                     | sudo apt install                       | projectile           | fast search tool for    |
+|                           | silversearcher-ag                      |                      | text files              |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| texlive-full              | sudo apt install                       | tex-mode             | fast search tool for    |
+|                           | texlive-full                           |                      | text files.             |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| pandoc                    | sudo apt install                       | writing modes        | convert/manage latex,   |
+|                           | pandoc                                 |                      | markdown and others     |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| taplo                     | cargo install taplo-cli --features lsp | toml-mode            | functionality for       |
+|                           |                                        |                      | toml files.             |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| flymake-markdownlint-cli2 | npm install -g                         | flymake-markdownlint | flymake plugin to       |
+|                           | markdownlint-cli2                      |                      | lint markdown.          |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| marksman                  | sudo snap install marksman             | markdown-mode        | tools for markdown.     |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| texlab                    | sudo apt install                       | tex-mode             | tex language server     |
+|                           | texlab                                 |                      | for eglot.              |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| git-man                   | sudo apt install                       | magit                | Use git manual with     |
+|                           | git-man                                |                      | magit.                  |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| shfmt                     | sudo apt install                       | bash-ts-mode         | format bash scripts.    |
+|                           | shfmt                                  |                      |                         |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| bash-language-server      | snap install                           | bash-ts-mode         | LSP for bash-ts-mode    |
+|                           | bash-language-server                   | shell-script-mode    | with eglot.             |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| ruff        (1 of 2)      | pip install ruff                       | python-ts-mode       | Python language server  |
+|                           |                                        |                      | (linting/ formatting)   |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| basedpyright(2 of 2)      | pip install                            | python-ts-mode       | Python language server  |
+|                           | basedpyright                           |                      | (docs/ navigation)      |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| vega                      | npm install -g vega                    | vega-view            | allows edit and         |
+|                           | vega-lite vega-cli                     |                      | generation of vega      |
+|                           |                                        |                      | visuals in Emacs.       |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| shellcheck                |                                        | bash-mode            | lint bash code.         |
+|                           | cabal (to install                      |                      |                         |
+|                           | from source)                           |                      |                         |
+|                           | add to path:                           |                      |                         |
+|                           | export PATH= \                         |                      |                         |
+|                           | "$PATH:/home/simon/                    |                      |                         |
+|                           | .cabal/bin"                            |                      |                         |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| png                       | npm install -g                         | vega-view            | generate png rather     |
+|                           | canvas                                 |                      | than svg - more         |
+|                           |                                        |                      | efficient for dealing   |
+|                           |                                        |                      | with thousands of       |
+|                           |                                        |                      | data points.            |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| php & php-pgsql           | sudo apt install                       | sql-mode             | integrate postgres to   |
+|                           | php php-pgsql                          |                      | web page.               |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| postgres                  | sudo apt install                       | sql-mode             | Open source database.   |
+|                           | postgresql                             |                      |                         |
+|                           | doc-postgresql                         |                      |                         |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| pq                        | sudo apt-get install                   | sql-mode             | library for interacting |
+|                           | postgresql libpq-dev                   |                      | with postgres           |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| pgFormatter               |                                        | sql-mode             | format sql code for     |
+|                           |                                        |                      | postgresql.             |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| ss                        | sudo apt install ss                    | loadbalancer         | check for used ports    |
+|                           | (if not installed by                   |                      | on the system.          |
+|                           | default)                               |                      |                         |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| emacswiki                 | cd .crafted-emacs                      |                      | The emacs wiki is       |
+|                           | git clone                              |                      | full of useful          |
+|                           |                                        |                      | functionality.          |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
+| Hunspell                  | sudo apt install                       | dictionary           |                         |
+|                           | hunspell                               |                      |                         |
+|                           | hunspell-en-au                         |                      |                         |
+|                           |                                        |                      |                         |
+|---------------------------+----------------------------------------+----------------------+-------------------------|
 
 [[https://github.com/koalaman/shellcheck][shellcheck]]      
 [[https://github.com/darold/pgFormatter/tree/master][pgFormatter]]  
@@ -564,7 +564,11 @@ This means all variables with external origins in emacs are specified here.
   (require 'ui-config)
   (require 'ibuffer-support)
   (require 'tabline-support)
-  (require 'speedbar-support)
+
+  (use-package speedbar-support
+  :load-path my-paths/speedbar-support
+  :demand t)
+  
   (require 'modeline-support)
   (require 'vterm-support)
   (require 'spreadsheet-support)
