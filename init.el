@@ -38,6 +38,21 @@
 
 (defvar epg-gpg-program "/usr/bin/gpg")
 
+
+(defvar my/required-packages
+'(markdown-mode          ; needed by rustic, aidermacs, etc.
+  rustic
+  eglot
+  corfu
+  treesit-fold
+  ;; add any other packages you consider essential here
+  ))
+
+(dolist (pkg my/required-packages)
+(unless (package-installed-p pkg)
+  (message "Installing missing core package: %s" pkg)
+  (package-install pkg)))
+
 (menu-bar-mode -1)
 (define-key input-decode-map [C-tab] [control-tab])
 (global-set-key [control-tab] 'menu-bar-mode)
@@ -185,7 +200,11 @@
 (require 'ui-config)
 (require 'ibuffer-support)
 (require 'tabline-support)
-(require 'speedbar-support)
+
+(use-package speedbar-support
+:load-path my-paths/speedbar-support
+:demand t)
+
 (require 'modeline-support)
 (require 'vterm-support)
 (require 'spreadsheet-support)
@@ -206,6 +225,9 @@
 
 ;; Handle writing config (Latex and the like)
 (require 'writing-config)
+
+;; Markdown support
+(require 'markdown-support)
 
 ;; Additional file format support.
 (require 'fileFormat-support)
@@ -229,8 +251,7 @@
 ;; database integration and SQL support.
 (require 'db-support)
 
-(require 'terminal-support)
-  (require 'summary-support)
+(require 'summary-support)
   (require 'system-window-management)
   (require 'startup-config)
   (require 'LLM-support)
@@ -245,6 +266,8 @@
   (log/info :fn 'init
             :msg "Set elisp-flymake-byte-compile-load-path"
             :obj (concat "(" elisp-flymake-byte-compile-load-path-string ")")))
+
+(require 'accounting-support)
 
 ;; ---------------------------------------------
 ;; All config and support files are now loaded.
