@@ -131,7 +131,7 @@ This function uses an environment variable for the password if available."
 ;;; keymaps phase
 
 ;; C-c C-f to format the code (as usual)
-(define-key sql-mode-map (kbd "C-c C-f") 'sqlformat)
+;; (define-key sql-mode-map (kbd "C-c C-f") 'sqlformat)
 
 
 (provide 'db-support)
