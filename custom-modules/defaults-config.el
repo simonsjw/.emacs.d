@@ -40,7 +40,7 @@
   (setq exec-path-from-shell-variables
         '(;; --- Core / always useful ---
           "PATH" "MANPATH"
-          "SSH_AUTH_SOCK" "SSH_AGENT_PID"
+          "SSH_AGENT_PID"               ; keep if you want, but we will override SOCK
           "GPG_AGENT_INFO" "GPG_TTY"
           "LANG" "LANGUAGE" "LC_ALL" "LC_CTYPE"
           "XDG_RUNTIME_DIR" "DBUS_SESSION_BUS_ADDRESS"
@@ -58,7 +58,7 @@
           ;; --- Ollama / local LLMs ---
           "OLLAMA_API_BASE" "OLLAMA_CONFIG_DIR"
 
-          ;; --- API keys (only if you deliberately want them in Emacs) ---
+          ;; --- API keys ---
           "XAI_API_KEY"
           "OPENAI_API_KEY" "OPENAI_API_EMBEDDINGS_KEY" "OPENAI_API_MODELS_KEY"
 
@@ -67,10 +67,10 @@
           "QHOME" "QSPACE" "Q_MAIN_PROJECT_PATH"
           "AXLIBRARIES_HOME" "BIB_HOME"
           "DEVELOPER_HOME" "LLVM_HOME" "MATHEMATICA_HOME"
-          "WORKON_HOME"                       ; virtualenvwrapper / similar
+          "WORKON_HOME"
           "USER_EMACS_DIRECTORY"
 
-          ;; --- Selected KDB / q related (core ones only) ---
+          ;; --- Selected KDB / q related ---
           "kdb_q_executable"
           "kdb_env_file"
           "kdb_port_range"
@@ -81,12 +81,33 @@
           "EDITOR" "VISUAL"
           "TERM" "COLORTERM"
           ))
+
   (when (or (daemonp) (memq window-system '(x pgtk ns mac)))
     (exec-path-from-shell-initialize))
 
+  ;; ------------------------------------------------------------------
+  ;; CRITICAL: force the desktop SSH agent AFTER exec-path-from-shell
+  ;; has potentially overwritten it with a bad value from the shell.
+  ;; ------------------------------------------------------------------
+  (defun my/force-ssh-auth-sock ()
+    "Force SSH_AUTH_SOCK to the GNOME Keyring or gcr agent."
+    (let ((uid (user-uid))
+          (candidates '("/run/user/%d/keyring/ssh"
+                        "/run/user/%d/gcr/ssh")))
+      (catch 'done
+        (dolist (fmt candidates)
+          (let ((sock (format fmt uid)))
+            (when (file-exists-p sock)
+              (setenv "SSH_AUTH_SOCK" sock)
+              (message "Forced SSH_AUTH_SOCK → %s" sock)
+              (throw 'done sock))))
+        (message "WARNING: no keyring/gcr SSH socket found"))))
+
+  (my/force-ssh-auth-sock)
+
   ;; Log the status
   (log/debug :fn 'defaults-config
-             :msg "Environment variable status after exec-path-from-shell"
+             :msg "Environment variable status after exec-path-from-shell + force"
              :obj (my-env-tools/exec-path-from-shell-report)))
 
 
