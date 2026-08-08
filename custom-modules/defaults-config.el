@@ -17,13 +17,78 @@
 ;;; Code:
 
 (require 'logging-config)
+(require 'system-tools)
+
 (log/debug :fn 'defaults-config
            :msg "Starting load of the defaults-config module."
            :obj t)
 
+
+
+
+
+
 ;;;; Global Settings
 (setq-default lexical-binding t)                                                  ; set variable scoping to be within the functions called by default as per modern languages.
 (set-default-coding-systems 'utf-8)                                               ; set default coding system.
+
+
+;;;; Environmental variables
+(use-package exec-path-from-shell
+  :ensure t
+  :config
+  (setq exec-path-from-shell-variables
+        '(;; --- Core / always useful ---
+          "PATH" "MANPATH"
+          "SSH_AUTH_SOCK" "SSH_AGENT_PID"
+          "GPG_AGENT_INFO" "GPG_TTY"
+          "LANG" "LANGUAGE" "LC_ALL" "LC_CTYPE"
+          "XDG_RUNTIME_DIR" "DBUS_SESSION_BUS_ADDRESS"
+          "DISPLAY" "WAYLAND_DISPLAY"
+          "BROWSER"
+
+          ;; --- Conda / Python ---
+          "CONDA_DEFAULT_ENV" "CONDA_PREFIX" "CONDA_EXE"
+          "CONDA_PYTHON_EXE" "CONDA_SHLVL"
+          "CONDA_PROMPT_MODIFIER"
+
+          ;; --- Node / NVM ---
+          "NVM_DIR" "NVM_BIN" "NVM_INC"
+
+          ;; --- Ollama / local LLMs ---
+          "OLLAMA_API_BASE" "OLLAMA_CONFIG_DIR"
+
+          ;; --- API keys (only if you deliberately want them in Emacs) ---
+          "XAI_API_KEY"
+          "OPENAI_API_KEY" "OPENAI_API_EMBEDDINGS_KEY" "OPENAI_API_MODELS_KEY"
+
+          ;; --- Project / tool homes ---
+          "INFODYNAMICS_HOME"
+          "QHOME" "QSPACE" "Q_MAIN_PROJECT_PATH"
+          "AXLIBRARIES_HOME" "BIB_HOME"
+          "DEVELOPER_HOME" "LLVM_HOME" "MATHEMATICA_HOME"
+          "WORKON_HOME"                       ; virtualenvwrapper / similar
+          "USER_EMACS_DIRECTORY"
+
+          ;; --- Selected KDB / q related (core ones only) ---
+          "kdb_q_executable"
+          "kdb_env_file"
+          "kdb_port_range"
+          "EMBED_Q_ANACONDA_ENV"
+          "Q_STORE_DATA" "Q_STORE_HDB" "Q_STORE_INBOX"
+
+          ;; --- Misc useful ---
+          "EDITOR" "VISUAL"
+          "TERM" "COLORTERM"
+          ))
+  (when (or (daemonp) (memq window-system '(x pgtk ns mac)))
+    (exec-path-from-shell-initialize))
+
+  ;; Log the status
+  (log/debug :fn 'defaults-config
+             :msg "Environment variable status after exec-path-from-shell"
+             :obj (my-env-tools/exec-path-from-shell-report)))
+
 
 (require 'dired)
 (require 'xref)
@@ -49,7 +114,7 @@
 
 ;; show the path to the sym-link rather than the underlying file
 ;; when using sym-link file paths in emacs.
-;; Show path to sym-link rather than underlying file when viewing 
+;; Show path to sym-link rather than underlying file when viewing
 ;; sym-link file paths.
 (setopt find-file-visit-truename t)
 
@@ -57,7 +122,7 @@
 ;; Automatically refresh files found with changes on disk.
 (setopt
  global-auto-revert-non-file-buffers t)
- 
+
 
 ;; Revert buffers when the underlying file has changed
 (global-auto-revert-mode 1)
@@ -87,7 +152,7 @@
 (add-hook 'dired-mode-hook
           (lambda ()
             (dired-hide-details-mode nil)
-	    (diredp-breadcrumbs-in-header-line-mode 1)))
+            (diredp-breadcrumbs-in-header-line-mode 1)))
 
 ;; Ensure that we navigate through directories using the same dired
 ;; buffer whilst files are opened in a new buffer.
@@ -328,7 +393,7 @@ Flow:
 ;; Make shebang (#!) file executable when saved
 (add-hook 'after-save-hook
           #'executable-make-buffer-file-executable-if-script-p)
-          
+
 ;; Turn on repeat mode to allow certain keys to repeat on the last
 ;; keystroke. For example, C-x [ to page backward, after pressing this
 ;; keystroke once, pressing repeated [ keys will continue paging
