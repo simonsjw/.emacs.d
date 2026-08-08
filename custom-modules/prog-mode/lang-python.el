@@ -197,7 +197,21 @@ colocated locations, then removes the temporary directory."
       (delete-directory temp-dir t)
       (message "Directory stub generation completed: all .pyi files placed in source locations")))
 
-  ;; === Performance tuning for Eglot + Pyrefly (typing lag fix) ===
+  ;;;;;; Sphinx document integration. 
+  (defun my-lang-python/sphinx-build ()
+    "Build the Sphinx documentation for the current project."
+    (interactive)
+    (let ((default-directory (expand-file-name "docs" (project-root (project-current t)))))
+      (compile "sphinx-build -b html . _build/html")))
+
+  (defun my-lang-python/sphinx-autobuild ()
+    "Run sphinx-autobuild for live preview (requires sphinx-autobuild)."
+    (interactive)
+    (let ((default-directory (expand-file-name "docs" (project-root (project-current t)))))
+      (async-shell-command "sphinx-autobuild . _build/html --open-browser")))
+  
+
+  ;;;;;; === Performance tuning for Eglot + Pyrefly (typing lag fix) ===
   ;; These reduce server load during rapid typing.
   (setq-local eglot-send-changes-idle-time 0.8)   ; buffer-local override if you want per-project tuning
   (setq flymake-no-changes-timeout 1.5)           ; longer delay before Flymake re-runs
@@ -235,6 +249,7 @@ colocated locations, then removes the temporary directory."
   ;;     ;; Align comments on whole buffer.
   ;;     (my-in-buffer-tools/comment-align-buffer (point-min) (point-max)))
 
+  ;;;;;; Formatting functionality.
   (defun my-lang-python/format-buffer ()
     "Format the entire buffer using ruff-format via Apheleia.
 This applies Ruff's code style formatter, preserving point."
@@ -306,11 +321,12 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
       "ValueError" "ImportError")
     "Python-specific keywords often appearing in comments/docstrings.")
 
+  ;;;;;; spellchecking with jinx
   (my-spell-check/add-words-to-jinx
    my-prog-mode/python-base-mode-accepted-words 'session 'python-mode)
 
   
-  ;; LSP with Pyrefly
+  ;;;;;; LSP with Pyrefly
   (eglot-ensure)
   ;; no need to enable inlay hints on the server since they are default enabled.
 
@@ -344,12 +360,12 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
         numpydoc-prompt-for-input t)                                              ; Prompt for descriptions (wraps long input).
   (add-hook 'numpydoc-mode-hook 'auto-fill-mode)                                  ; Auto-wrap at fill-column=88.
 
-;;;; Dape integration.
+  ;;;;;; Dape integration.
   (dape-active-mode 1)
   ;; debugging the code with dape
   (my-dape/breakpoint-mode)
   
-;;;; Folding
+  ;;;;;; Folding
   ;; Set up customisations for outline-minor-mode.
   (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons
   (setq-local outline-blank-line t)                                               ; Blank line before headers
@@ -369,7 +385,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
        :help "Toggle folding at point"])
     "Menu for folding-related functions in `python-ts-mode'.")
   
-;;;; Imenu with treesitter.
+  ;;;;;; Imenu with treesitter.
   (setq-local treesit-simple-imenu-settings
               '(
                 ("Classes" "\\`class_definition\\'" nil
@@ -395,7 +411,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
                 )
               )
   
-;;;; debug/Testing
+  ;;;;;; debug/Testing
   (keymap-set python-ts-mode-map "C-x C-a d" #'dape)
   (keymap-set python-ts-mode-map "C-c t t" #'python-pytest-dispatch)
   (keymap-set python-ts-mode-map "C-c t r" #'python-pytest-repeat)
@@ -413,7 +429,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
        :help "Repeat the last pytest."])
     "Menu for running-related functions in `python-ts-mode'.")
   
-;;;; running the code
+  ;;;;;; running the code
   ;; these keys are already set in python mode.
   ;; (keymap-set python-ts-mode-map "C-c C-c" #'eval-buffer)
   ;; (keymap-set python-ts-mode-map "C-c C-r" #'python-shell-send-region)
@@ -453,7 +469,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
        :help "Create a new Python environment"])
     "Menu for running-related functions in `python-ts-mode'.")
 
-;;;; Project settings.
+  ;;;; Project settings.
 
   ;; keymaps for Pyvenv
   ;; also have "C-c p f" and "C-c p o"
@@ -480,7 +496,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
        :help "Find other project sources"])
     "Menu for project related functions in `python-ts-mode'.")
 
-;;;; document thing at point:
+  ;;;; document thing at point:
   (keymap-set python-ts-mode-map "C-c h p" #'eldoc-box-help-at-point)             ; Key for hover docs
   (keymap-set python-ts-mode-map "C-c h b" #'eldoc-doc-buffer)                    ; Override default Eldoc
   (keymap-set python-ts-mode-map "C-c h h" #'eldoc)                               ; Trigger hover/signature help from eglot
@@ -503,7 +519,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
     "Menu for documentation-related functions in `python-ts-mode'.")
   
 
-;;;; Errors/linting
+  ;;;; Errors/linting
   (keymap-set python-ts-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)     ; list errors in buffer
   (keymap-set python-ts-mode-map "C-c e m" #'consult-flymake)                     ; list errors in minibuffer
   ;; (keymap-set python-ts-mode-map "C-c e p" #'flymake-show-project-diagnostics) SET IN PROJECT MENU PREVIOUSLY.              ; list errors in project
@@ -531,7 +547,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
        :help "Move to the previous error."])
     "Menu for errors/linting-related functions in `python-ts-mode'.")
 
-;;;; Navigation
+  ;;;; Navigation
 
   ;; (keymap-set python-ts-mode-map "C-c g s" #'consult-eglot-symbols)               ; show symbols in minibuffer
   ;; (keymap-set python-ts-mode-map "M-." #'eglot-find-definition)                   ; xref-find-definitions
@@ -568,7 +584,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
   ;;      :help "Search for symbols in the workspace"])                              ; Workspace symbols
   ;;   "Menu for navigation-related functions in `python-ts-mode'.")
   
-;;;; Variable/function references
+  ;;;; Variable/function references
   (defun my-lang-python/find-symbol ()
     (interactive)
     (eglot--request (eglot-current-server)
@@ -613,7 +629,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
        :help "Search for symbols in the workspace"])                              ; Workspace symbols
     "Menu for navigation-related functions in `python-ts-mode'.")
 
-;;;; add-missing-dependencies from Ruff + Eglot code related functions.
+  ;;;; add-missing-dependencies from Ruff + Eglot code related functions.
   ;; add format, import, remove import, sort import and fix import
   (keymap-set python-ts-mode-map "M-TAB" #'corfu-complete)
   (keymap-set python-ts-mode-map "C-c i b" #'my-lang-python/format-buffer)        ; Format whole buffer
@@ -640,7 +656,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
        :help "Apply quick fixes."])
     "Menu for imports and fixes-related functions in `python-ts-mode'.")
 
-;;;; Eglot LSP management and additional features
+  ;;;; Eglot LSP management and additional features
   (defun my-lang-python/view-current-eglot-server ()
     (interactive)
     (switch-to-buffer
@@ -692,7 +708,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
     "Code writing helpers in `python-ts-mode'.")
 
 
-;;; Construct menu map.
+  ;;; Construct menu map.
   ;; Integrate menus into the mode's menu-bar
   (easy-menu-add-item nil '("Tools") my-custom-menus/python-documentation-menu)
   (easy-menu-add-item nil '("Tools") "--")                                        ; Separator
