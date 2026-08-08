@@ -26,6 +26,58 @@
            :obj t)
 
 
+;;;; Environmental variable tools
+(defun my-env-tools/exec-path-from-shell-report (&optional variables)
+  "Return a report of which environment variables are missing or empty.
+
+VARIABLES defaults to `exec-path-from-shell-variables'.
+The return value is a plist suitable for logging with :obj.
+
+Example usage:
+
+  (log/debug :fn 'defaults-config
+             :msg \"Environment variable status after exec-path-from-shell\"
+             :obj (my/exec-path-from-shell-report))"
+  (let* ((vars (or variables exec-path-from-shell-variables))
+         (missing '())
+         (empty '())
+         (present '()))
+    (dolist (var vars)
+      (let ((val (getenv var)))
+        (cond
+         ((null val)   (push var missing))
+         ((string-empty-p val) (push var empty))
+         (t            (push (cons var val) present)))))
+    (list :missing (nreverse missing)
+          :empty   (nreverse empty)
+          :present (length present)   ; just a count to keep the log readable
+          :total   (length vars))))
+
+
+(defun my-env-tools/exec-path-from-shell-report-full (&optional variables)
+  "Get full environmental variable values (optionally only those in VARIABLES).
+
+This function is similar `my-env-tools/exec-path-from-shell-report' but also
+returns the present values.  Use in debugging."
+  (let* ((vars (or variables exec-path-from-shell-variables))
+         (missing '())
+         (empty '())
+         (present '()))
+    (dolist (var vars)
+      (let ((val (getenv var)))
+        (cond
+         ((null val)           (push var missing))
+         ((string-empty-p val) (push var empty))
+         (t                    (push (cons var val) present)))))
+    (list :missing (nreverse missing)
+          :empty   (nreverse empty)
+          :present (nreverse present)
+          :total   (length vars))))
+
+;; end of environmental variable tools.
+;; ---------------------------
+
+
 ;;;; Hash table management
 
 ;; utility for creating a hash table.
@@ -612,6 +664,61 @@ it applies the function to the current line only."
           (format "%s%s ... %s" path-name start end))
       ;; Otherwise show full path
       (format "%s%s" path-name rel-path))))
+
+(defun my-in-buffer-tools/insert-section-header (&optional level)
+  "Insert a language-agnostic ruled section header at point.
+
+LEVEL is 1 (default) for a major section or 2 for a sub-section.
+The rule character is '=' for level 1 and '-' for level 2.
+
+The final column of the rule is determined in this order:
+  1. `display-fill-column-indicator-column' (when it is a positive integer)
+  2. `comment-column'
+  3. 88
+
+Uses the Emacs comment framework (`comment-start' / `comment-end') so the
+correct comment leader is chosen automatically for the current major mode
+ (Python #, Emacs Lisp ;, C-like //, etc.).
+
+The header is inserted on its own line(s) and point is left after it."
+  (interactive (list (if current-prefix-arg 2 1)))  ; Use C-u to set the section level.
+  (comment-normalize-vars)   ; ensure comment-start etc. are set
+  (unless comment-start
+    (user-error "No comment syntax defined for this mode"))
+
+  (let* ((level (or level 1))
+         (title (read-string (format "Section title (level %d): " level)))
+         (rule-char (if (= level 1) ?= ?-))
+         (prefix (string-trim-right comment-start))
+         (suffix (if (and comment-end (not (string-empty-p comment-end)))
+                     (concat " " (string-trim comment-end))
+                   ""))
+         ;; Determine target column
+         (target-col
+          (cond
+           ((and (boundp 'display-fill-column-indicator-column)
+                 (integerp display-fill-column-indicator-column)
+                 (> display-fill-column-indicator-column 0))
+            display-fill-column-indicator-column)
+           ((and (boundp 'comment-column)
+                 (integerp comment-column)
+                 (> comment-column 0))
+            comment-column)
+           (t 88)))
+         ;; Build the rule line so that the last rule character lands on target-col
+         (prefix-len (length prefix))
+         (suffix-len (length suffix))
+         (available (- target-col prefix-len suffix-len))
+         (rule (make-string (max 4 available) rule-char))
+         (header-line (concat prefix " " title))
+         (rule-line   (concat prefix rule suffix)))
+
+    (beginning-of-line)
+    (unless (looking-at-p "^[[:space:]]*$")
+      (open-line 1)
+      (forward-line 1))
+    (insert header-line "\n" rule-line "\n")
+    (forward-line 1)))
 
 ;; ---end of TOOLS FOR THE FILE SYSTEM---
 
