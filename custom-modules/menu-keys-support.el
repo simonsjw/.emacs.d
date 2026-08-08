@@ -66,6 +66,8 @@ These are available in `prog-mode'."
 (define-prefix-command 'my-key-maps/prog-mode-comment-map)
 
 (keymap-set
+ 'my-key-maps/prog-mode-comment-map "h" 'my-in-buffer-tools/insert-section-header)
+(keymap-set
  'my-key-maps/prog-mode-comment-map "TAB" 'comment-indent)
 (keymap-set
  'my-key-maps/prog-mode-comment-map "f" 'fill-comment-paragraph)
@@ -73,8 +75,6 @@ These are available in `prog-mode'."
  'my-key-maps/prog-mode-comment-map "a" 'my-in-buffer-tools/comment-align-buffer)
 (keymap-set
  'my-key-maps/prog-mode-comment-map "b" 'comment-box)
-;; (keymap-set
-;;   'my-key-maps/prog-mode-comment-map "s" 'checkdoc-ispell-comments)
 ;; (keymap-set
 ;;   'my-key-maps/prog-mode-comment-map "p" 'ispell-comment-or-string-at-point)
 ;; (keymap-set
@@ -96,6 +96,7 @@ These are available in `prog-mode'."
   '("Comments"
     "---"
     ["Format Comment" :enable nil]
+    ["Create Header" my-in-buffer-tools/my-comment-align-region-or-line :keys "C-c c h" :help "Create comment header"]
     ["Align Comment" my-in-buffer-tools/my-comment-align-region-or-line :keys "C-c c TAB" :help "Align comment"]
     ["Fill Comment Paragraph" fill-comment-paragraph :keys "C-c c f" :help "Fill comment paragraph"]
     ["Add Box Around Comment" comment-box :keys "C-c c b" :help "Add box around comment"]
