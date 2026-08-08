@@ -66,8 +66,8 @@
 ;; kill-buffer-hook
 ;; find-file-hook
 
-;; Keymaps
-;; -------
+;;; Keymaps
+;;  -------
 ;; The dape package defines several keymaps, with the primary ones being:
 
 ;; dape-memory-mode-map                             ; Keybindings specific to the memory viewing mode.
@@ -77,6 +77,20 @@
 ;; (with-eval-after-load "prog-mode"
 ;;   (keymap-set prog-mode-map "C-c e n" #'flymake-goto-next-error)
 ;;   (keymap-set prog-mode-map "C-c e p" #'flymake-goto-prev-error))
+
+;;; Examples
+;;  --------
+;; foo.py
+;; ------
+;; In this example, we use dape to debug python.  Note the use of `:args' to set
+;; function arguments.  Note the list form is needed when using a single
+;; argument (:args ["-fn"])
+;;
+;; Run adapter: debugpy
+;;    :cwd "/mnt/HDD04_WDD_08TB/workspace/python/my-package/"
+;;    :program "foo.py"
+;;    :args ["--fullname" "-fn" "value for fn"]
+
 
 ;;; Code:
 
