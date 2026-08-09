@@ -27,9 +27,15 @@
 ;; editorconfig is a cross-editor/ide configuration tool to control
 ;; indentation, spaces vs tabs, etc.
 (use-package editorconfig)
+
 ;; a minor mode to always keep your code indented while editing blocks of code.
 (use-package aggressive-indent
   :delight)
+
+;;;; Breadcrumb mode.
+(use-package breadcrumb
+  :ensure t)
+
 ;; Jump to the definition of a function. Works using oldskool
 ;; rgrep type approaches. (No fancy tree-sitter here!)
 ;; https://github.com/jacktasia/dumb-jump
@@ -50,6 +56,10 @@
 
 (declare-function consult-eglot-embark-mode "consult-eglot-embark")
 (declare-function eldoc-box-hover-mode "eldoc-box-hover-mode")
+
+
+;;;; Breadcrumb setup
+(breadcrumb-mode 1)
 
 ;;;; eglot setup
 
