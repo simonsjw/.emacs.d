@@ -18,8 +18,8 @@
            :obj t)
 
 ;; define the master menu toggle.
-(define-key input-decode-map [C-tab] [control-tab])
-(global-set-key [control-tab] 'menu-bar-mode)
+(keymap-global-set "C-<tab>" 'menu-bar-mode)
+
 
 
 ;; Set context menu mode to t (right-click in buffer)
@@ -162,6 +162,7 @@ These are available in `prog-mode'."
 (keymap-set 'custom-windows-key-map "p" 'windmove-up)
 (keymap-set 'custom-windows-key-map "b" 'windmove-left)
 (keymap-set 'custom-windows-key-map "f" 'windmove-right)
+(keymap-set 'custom-windows-key-map "c" 'breadcrumb-mode)
 
 ;; Add new vertical shrink window command key binding.
 (keymap-set 'custom-windows-key-map "v" 'shrink-window)
