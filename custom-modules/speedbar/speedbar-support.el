@@ -24,13 +24,23 @@ Otherwise use native ezimage icons with file-type support.")
 (require 'speedbar-sort)
 (require 'speedbar-keys)
 
+
+
+
+
+;; NOTE: The three pinning variables are deliberately global (see
+;; speedbar-pinning.el).  Resetting them here on every new frame
+;; (including simple emacsclient frames) disabled pinning in the
+;; existing IDE session.  Do not re-introduce a setq of these
+;; variables inside after-make-frame-functions.
+
 ;; Ensure frame-local variables are initialized on new frames
-(add-hook 'after-make-frame-functions
-          (lambda (frame)
-            (with-selected-frame frame
-              (setq my-speedbar/pin-project-root nil
-                    my-speedbar/current-file nil
-                    my-speedbar/file-tree-root nil))))
+;; (add-hook 'after-make-frame-functions
+;;           (lambda (frame)
+;;             (with-selected-frame frame
+;;               (setq my-speedbar/pin-project-root nil
+;;                     my-speedbar/current-file nil
+;;                     my-speedbar/file-tree-root nil))))
 
 (provide 'speedbar-support)
 

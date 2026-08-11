@@ -7,7 +7,13 @@
 
 ;;; Commentary:
 ;; Project-root pinning system tightly bound to file view mode only.
-;; Uses ordinary variables + strong IDE-frame guards (no make-variable-frame-local).
+;;
+;; State is stored as frame parameters so that multiple IDE frames can
+;; have independent pinning, current-file and tree-root values.
+;; The Speedbar buffer content itself remains shared (as in the original
+;; design); only the control decisions are per-frame.
+;;
+;; Strong IDE-frame + file-view guards are retained.
 
 ;;; Code:
 
@@ -15,17 +21,39 @@
 (require 'dframe)
 (require 'logging-config)
 
-;;;;; User Variables
+;;;;; Frame-parameter accessors
 
-(defvar my-speedbar/pin-project-root nil
-  "When non-nil and Speedbar is in file view, project-root pinning mode is active.
-Only the IDE frame is allowed to change or act on this variable.")
+(defun my-speedbar--get-pin-project-root (&optional frame)
+  "Return the pin-project-root flag for FRAME (default: selected frame)."
+  (frame-parameter (or frame (selected-frame)) 'my-speedbar-pin-project-root))
 
-(defvar my-speedbar/current-file nil
-  "The most recently selected real file path (absolute) when pinning is active.")
+(defun my-speedbar--set-pin-project-root (value &optional frame)
+  "Set the pin-project-root flag for FRAME to VALUE.
+Returns VALUE."
+  (set-frame-parameter (or frame (selected-frame)) 'my-speedbar-pin-project-root value)
+  value)
 
-(defvar my-speedbar/file-tree-root nil
-  "Current project root directory displayed in Speedbar when pinning is active.")
+(defun my-speedbar--get-current-file (&optional frame)
+  "Return the current-file value for FRAME (default: selected frame)."
+  (frame-parameter (or frame (selected-frame)) 'my-speedbar-current-file))
+
+(defun my-speedbar--set-current-file (value &optional frame)
+  "Set the current-file value for FRAME to VALUE.
+Returns VALUE."
+  (set-frame-parameter (or frame (selected-frame)) 'my-speedbar-current-file value)
+  value)
+
+(defun my-speedbar--get-file-tree-root (&optional frame)
+  "Return the file-tree-root value for FRAME (default: selected frame)."
+  (frame-parameter (or frame (selected-frame)) 'my-speedbar-file-tree-root))
+
+(defun my-speedbar--set-file-tree-root (value &optional frame)
+  "Set the file-tree-root value for FRAME to VALUE.
+Returns VALUE."
+  (set-frame-parameter (or frame (selected-frame)) 'my-speedbar-file-tree-root value)
+  value)
+
+;;;;; Internal one-shot flags (remain global — they are transient)
 
 (defvar my-speedbar--ignore-next-buffer-change nil
   "Internal one-shot flag used to ignore the immediate buffer change after kill/bury.")
@@ -109,15 +137,15 @@ Only the IDE frame is allowed to change or act on this variable.")
   (setq speedbar-last-selected-file FILE))
 
 (defun my-speedbar/apply-pinning-for-file (FILE)
-  "Apply project pinning for FILE.
+  "Apply project pinning for FILE on the selected frame.
 When pinning is active, switch Speedbar to the project root of FILE
 (if different) and expand to the file."
-  (when (and my-speedbar/pin-project-root
+  (when (and (my-speedbar--get-pin-project-root)
              (my-speedbar--in-file-view-p)
              (my-speedbar--in-ide-frame-p)
              FILE
              (not (my-speedbar--special-buffer-p (current-buffer))))
-    (setq my-speedbar/current-file (expand-file-name FILE))
+    (my-speedbar--set-current-file (expand-file-name FILE))
     (let* ((project-root (my-speedbar/find-project-root FILE))
            (sb-buf (or (and (boundp 'speedbar-buffer) speedbar-buffer)
                        (get-buffer "*speedbar*")
@@ -129,7 +157,7 @@ When pinning is active, switch Speedbar to the project root of FILE
             (unless (string-equal current-root new-root)
               ;; Different project → switch root
               (setq default-directory (file-name-as-directory new-root))
-              (setq my-speedbar/file-tree-root default-directory)
+              (my-speedbar--set-file-tree-root default-directory)
               (let ((speedbar-smart-directory-expand-flag t))
                 (speedbar-update-contents)))
             ;; Always try to expand/highlight the file
@@ -139,7 +167,7 @@ When pinning is active, switch Speedbar to the project root of FILE
 
 (defun my-speedbar/dir-follow-advice (orig-fun TEXT TOKEN INDENT)
   "Directory clicks still expand normally when pinning is active."
-  (if (and my-speedbar/pin-project-root
+  (if (and (my-speedbar--get-pin-project-root)
            (my-speedbar--in-file-view-p)
            (my-speedbar--in-ide-frame-p))
       (progn
@@ -151,7 +179,7 @@ When pinning is active, switch Speedbar to the project root of FILE
 
 (defun my-speedbar/find-file-advice (orig-fun TEXT TOKEN INDENT)
   "File clicks work normally and trigger pinning (IDE frame only)."
-  (when (and my-speedbar/pin-project-root
+  (when (and (my-speedbar--get-pin-project-root)
              (my-speedbar--in-file-view-p)
              (my-speedbar--in-ide-frame-p))
     (let* ((line-dir (speedbar-line-directory INDENT))
@@ -165,7 +193,7 @@ When pinning is active, switch Speedbar to the project root of FILE
 
 (defun my-speedbar/handle-buffer-change ()
   "Only acts when pinning is active and we are in an IDE frame."
-  (when (and my-speedbar/pin-project-root
+  (when (and (my-speedbar--get-pin-project-root)
              (my-speedbar--in-file-view-p)
              (my-speedbar--in-ide-frame-p)
              (not my-speedbar--ignore-next-buffer-change))
@@ -181,7 +209,7 @@ When pinning is active, switch Speedbar to the project root of FILE
 
 (defun my-speedbar/kill-buffer-advice (orig-fun &rest ARGS)
   "Ignore immediate focus change when pinning is active (IDE frame only)."
-  (when (and my-speedbar/pin-project-root
+  (when (and (my-speedbar--get-pin-project-root)
              (my-speedbar--in-file-view-p)
              (my-speedbar--in-ide-frame-p))
     (setq my-speedbar--ignore-next-buffer-change t))
@@ -194,8 +222,8 @@ When pinning is active, switch Speedbar to the project root of FILE
 
 (defun my-speedbar/speedbar-update-contents-advice (orig-fun &rest args)
   "Protect pinning during updates, but allow project switches."
-  (if (and my-speedbar/pin-project-root
-           my-speedbar/current-file
+  (if (and (my-speedbar--get-pin-project-root)
+           (my-speedbar--get-current-file)
            (my-speedbar--in-file-view-p)
            (my-speedbar--in-ide-frame-p))
       (let ((sb-buf (or (and (boundp 'speedbar-buffer) speedbar-buffer)
@@ -207,7 +235,7 @@ When pinning is active, switch Speedbar to the project root of FILE
             ;; Do NOT force the old root here any more.
             ;; Let apply-pinning-for-file decide based on the current file.
             (setq result (apply orig-fun args))
-            (my-speedbar/apply-pinning-for-file my-speedbar/current-file)))
+            (my-speedbar/apply-pinning-for-file (my-speedbar--get-current-file))))
         result)
     (apply orig-fun args)))
 
@@ -219,12 +247,12 @@ When pinning is active, switch Speedbar to the project root of FILE
   "Toggle pinning (only effective in IDE frame / file view)."
   (interactive)
   (when (my-speedbar--in-ide-frame-p)
-    (setq my-speedbar/pin-project-root (not my-speedbar/pin-project-root))
-    (if my-speedbar/pin-project-root
+    (my-speedbar--set-pin-project-root (not (my-speedbar--get-pin-project-root)))
+    (if (my-speedbar--get-pin-project-root)
         (progn
           (message "🔒 Project pinning ENABLED (file view only)")
-          (when (and my-speedbar/current-file (my-speedbar--in-file-view-p))
-            (my-speedbar/apply-pinning-for-file my-speedbar/current-file)))
+          (when (and (my-speedbar--get-current-file) (my-speedbar--in-file-view-p))
+            (my-speedbar/apply-pinning-for-file (my-speedbar--get-current-file))))
       (message "🔓 Project pinning DISABLED – Speedbar behaves normally"))))
 
 (provide 'speedbar-pinning)

@@ -25,26 +25,26 @@
 
 FILE-PATH is the directory path (string).
 With prefix argument or PIN non-nil, also enable project pinning
-(MY-SPEEDBAR/PIN-PROJECT-ROOT set to t)."
+on the selected frame."
   (interactive "DDirectory: \nP")
   (let ((expanded-path (expand-file-name FILE-PATH)))
     (when (file-directory-p expanded-path)
       (setq default-directory expanded-path)
       (speedbar-refresh)
       (when PIN
-        (setq my-speedbar/pin-project-root t)
-        (setq my-speedbar/file-tree-root default-directory))
+        (my-speedbar--set-pin-project-root t)
+        (my-speedbar--set-file-tree-root default-directory))
       (message "Speedbar directory set to %s" expanded-path))))
 
 (defun my-speedbar/set-speedbar-directory-and-pin (DIRECTORY &optional QUIET)
-  "Set Speedbar directory to DIRECTORY and enable pinning."
+  "Set Speedbar directory to DIRECTORY and enable pinning on the selected frame."
   (interactive "DDirectory: ")
   (let ((expanded (expand-file-name DIRECTORY)))
     (when (file-directory-p expanded)
       (setq default-directory expanded)
       (speedbar-refresh)
-      (setq my-speedbar/pin-project-root t)
-      (setq my-speedbar/file-tree-root default-directory)
+      (my-speedbar--set-pin-project-root t)
+      (my-speedbar--set-file-tree-root default-directory)
       (unless QUIET
         (message "🔒 Pinned to: %s" expanded))
       expanded)))
@@ -59,9 +59,9 @@ With prefix argument or PIN non-nil, also enable project pinning
         (progn
           (log/debug :fn 'my-speedbar/toggle :msg "IDE frame – using sr-speedbar.")
           ;; Enable pinning by default on IDE frames
-          (setq my-speedbar/pin-project-root t)
-          (when my-speedbar/file-tree-root
-            (message "🔒 Pinning active (root: %s)" my-speedbar/file-tree-root))
+          (my-speedbar--set-pin-project-root t)
+          (when (my-speedbar--get-file-tree-root)
+            (message "🔒 Pinning active (root: %s)" (my-speedbar--get-file-tree-root)))
           (let ((top-left-window
                  (car (sort (window-list)
                             (lambda (w1 w2)
