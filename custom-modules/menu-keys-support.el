@@ -17,9 +17,36 @@
            :msg "Starting load of the menu-keys-support module."
            :obj t)
 
-;; define the master menu toggle.
-(keymap-global-set "C-<tab>" 'menu-bar-mode)
 
+
+;;;; KEYBOARDSHORTCUTS
+;;   -----------------
+;;   (no function commands with no corresponding menu item)
+
+;;;;; Dictionary
+;; define a key to define the word at point.
+(keymap-global-set "C-c d l" #'dictionary-lookup-definition)
+
+;;;;; Menu-bar
+;; define the master menu toggle.
+(keymap-global-set "C-<tab>" #'menu-bar-mode)
+
+;;;;; Menu-bar
+;; Define IDE view
+(with-eval-after-load 'startup-config
+  (keymap-global-set "C-c i d" #'IDE-refresh))
+
+
+;;;;; Org Links
+  ;; (global-set-key (kbd "C-c l s") #'org-store-link)
+  ;; (global-set-key (kbd "C-c l i") #'org-insert-link-global)
+  ;; (global-set-key (kbd "C-c l o") #'org-open-at-point-global)
+
+;;;;; Org Agenda
+;;  (keymap-global-set "C-c o a" #'my-org/open-agenda)
+
+;;;; Org Capture
+;; (global-set-key (kbd "C-c c") #'org-capture)
 
 
 ;; Set context menu mode to t (right-click in buffer)
@@ -27,18 +54,8 @@
 (context-menu-mode 1)
 (global-set-key [down-mouse-3] 'mouse-popup-menu)
 
-;; (with-eval-after-load 'vc
-;;   (defun my-menus/add-vc-mode-to-context-menu (menu click)
-;;     "Add the VC mode menu as a submenu to the context menu."
-;;     (when vc-mode
-;;       (define-key menu [vc-submenu]
-;;                   `(menu-item "Version Control" ,vc-menu-map))))
-;;   ;; Add the function to context-menu-functions
-;;   (add-hook 'context-menu-functions #'my-menus/add-vc-mode-to-context-menu))
-
-
-;;;; PROG_MODE Menus:
-
+;;;; PROG_MODE Menus
+;;   ---------------
 ;;;;;; Comment Key Map and Menu
 
 ;; The below comments menu is bound in lang-prog-mode.el in the
@@ -75,10 +92,6 @@ These are available in `prog-mode'."
  'my-key-maps/prog-mode-comment-map "a" 'my-in-buffer-tools/comment-align-buffer)
 (keymap-set
  'my-key-maps/prog-mode-comment-map "b" 'comment-box)
-;; (keymap-set
-;;   'my-key-maps/prog-mode-comment-map "p" 'ispell-comment-or-string-at-point)
-;; (keymap-set
-;;   'my-key-maps/prog-mode-comment-map "x" 'set-comment-set-column)
 (keymap-set
  'my-key-maps/prog-mode-comment-map ";" 'comment-dwim)
 (keymap-set
@@ -101,9 +114,6 @@ These are available in `prog-mode'."
     ["Fill Comment Paragraph" fill-comment-paragraph :keys "C-c c f" :help "Fill comment paragraph"]
     ["Add Box Around Comment" comment-box :keys "C-c c b" :help "Add box around comment"]
     ["Align All Comments" my-in-buffer-tools/comment-align-buffer :keys "C-c c a" :help "Align all inline comments in buffer to comment column"]
-    ;; ["Check Comment Spellings in Buffer" checkdoc-ispell-comments :keys "C-c c s" :help "Check comment spellings in buffer"]
-    ;; ["Check Comment Spellings at Point" ispell-comment-or-string-at-point :keys "C-c c p" :help "Check comment spellings at point"]
-    ;; ["Set Comment Column to Cursor" set-comment-set-column :keys "C-c c x" :help "Set comment column to cursor"]
     "---"
     ["Make Comment" :enable nil]
     ["Toggle/Tab Comment as Needed" comment-dwim :keys "C-c c ;" :help "Toggle/tab comment as needed"]

@@ -24,10 +24,6 @@
            :obj t)
 
 
-
-
-
-
 ;;;; Global Settings
 (setq-default lexical-binding t)                                                  ; set variable scoping to be within the functions called by default as per modern languages.
 (set-default-coding-systems 'utf-8)                                               ; set default coding system.
@@ -141,9 +137,7 @@
 
 ;; Revert Dired and other buffers
 ;; Automatically refresh files found with changes on disk.
-(setopt
- global-auto-revert-non-file-buffers t)
-
+(setopt global-auto-revert-non-file-buffers t)
 
 ;; Revert buffers when the underlying file has changed
 (global-auto-revert-mode 1)
@@ -294,12 +288,7 @@
 
 (setopt dictionary-default-dictionary "gcide")
 
-;; define a key to define the word at point.
-(keymap-set global-map "C-c d l" #'dictionary-lookup-definition)
-
-;; (global-set-key (kbd "C-c d a") #'my-dictionary/use-australian)
-;; (global-set-key (kbd "C-c d b") #'my-dictionary/use-british)
-;; (global-set-key (kbd "C-c d u") #'my-dictionary/use-american)
+;; define a key to define the word at point - menu-keys-support
 
 (use-package jinx
   :delight
