@@ -22,7 +22,7 @@
   :custom
   (flymake-mode-line-lighter "ERR")
   ;;(flymake-mode-line-format
-  ;; (flymake-mode-line-title flymake-mode-line-exception                         ; deleted " " from first position after bracket.
+  ;; (flymake-mode-line-title flymake-mode-line-exception    ; deleted " " from first position after bracket.
   ;;  flymake-mode-line-counters))
   (flymake-no-changes-timeout 1.0)
   (flymake-start-on-flymake-mode t)
@@ -211,13 +211,121 @@ and will keep many buffers alive in the background."
     (when (and delay (> delay 0))
       (run-with-timer delay nil #'flymake-show-project-diagnostics))))
 
+
+(defun my-flymake/preload-directory-for-diagnostics (&optional recursive auto-show-delay)
+  "Visit every regular file in the 'current' directory and enable Flymake.
+
+The current directory is determined as follows:
+
+- If the active buffer is *not* speedbar/sr-speedbar, use the directory
+  of the file visited by that buffer (or `default-directory' if the
+  buffer has no associated file).
+
+- If the active buffer *is* speedbar (or sr-speedbar), act only when
+  the current expansion list is one of \"files\", \"buffers\" or
+  \"quick buffers\".  In those cases the directory is taken from
+  `speedbar-line-directory' (i.e. the directory belonging to the
+  line under point in the file/buffer tree).  Any other speedbar
+  mode causes the function to do nothing.
+
+RECURSIVE: if non-nil, descend into subdirectories (useful for small
+submodules).  When nil (the default), only the files in the immediate
+directory are visited.
+
+AUTO-SHOW-DELAY: if non-nil, automatically run
+`flymake-show-project-diagnostics' after this many seconds
+(default 4).  Set to nil to disable auto-show.
+
+When called interactively, a prefix argument means RECURSIVE is non-nil."
+  (interactive (list current-prefix-arg))
+  (let* ((dir
+          (cond
+           ;; Speedbar / sr-speedbar case
+           ((or (eq major-mode 'speedbar-mode)
+                (and (boundp 'sr-speedbar-buffer-name)
+                     (string= (buffer-name) sr-speedbar-buffer-name))
+                (and (boundp 'speedbar-buffer)
+                     (eq (current-buffer) speedbar-buffer)))
+            (let ((mode (and (boundp 'speedbar-initial-expansion-list-name)
+                             speedbar-initial-expansion-list-name)))
+              (if (member mode '("files" "buffers" "quick buffers"))
+                  (let ((d (speedbar-line-directory)))
+                    ;; Normalise: ensure we have a directory
+                    (when (and d (stringp d) (not (string-empty-p d)))
+                      (setq d (expand-file-name d))
+                      (if (file-directory-p d)
+                          d
+                        (file-name-directory d))))
+                ;; Other speedbar modes → take no action
+                nil)))
+           ;; Ordinary buffer case
+           (t
+            (if (buffer-file-name)
+                (file-name-directory (buffer-file-name))
+              default-directory))))
+         (delay (if (numberp auto-show-delay) auto-show-delay 4)))
+
+    (unless (and dir (file-directory-p dir))
+      (message "my-flymake/preload-directory-for-diagnostics: no usable directory (speedbar mode not supported or no file context)")
+      (cl-return-from my-flymake/preload-directory-for-diagnostics))
+
+    (let* ((raw-files
+            (if recursive
+                ;; Recursive: all regular files under DIR (and its subdirs)
+                (directory-files-recursively dir ".*" nil t) ; t = follow-symlinks? adjust if desired
+              ;; Non-recursive: only the immediate directory
+              (directory-files dir t directory-files-no-dot-files-regexp t)))
+           (files (cl-remove-if-not #'file-regular-p raw-files))
+           (count (length files))
+           (done 0)
+           (errors 0))
+
+      (message "Preloading %d file(s)%s from %s for Flymake..."
+               count
+               (if recursive " (recursive)" "")
+               dir)
+
+      (dolist (file files)
+        (condition-case err
+            (let ((buf (find-file-noselect file)))
+              (with-current-buffer buf
+                (unless (bound-and-true-p flymake-mode)
+                  (flymake-mode 1))
+                (flymake-start))
+              (setq done (1+ done)))
+          (error
+           (setq errors (1+ errors))
+           (message "Warning: failed to preload %s: %s"
+                    file (error-message-string err))))
+        (when (and (> count 0) (= (mod done 10) 0))
+          (message "Preloaded %d/%d files (%.0f%%)..."
+                   done count (* 100.0 (/ done (float count))))))
+
+      (message "Directory preload complete: %d succeeded, %d errors from %s%s. %s"
+               done errors dir
+               (if recursive " (recursive)" "")
+               (if (and delay (> delay 0))
+                   (format "Project diagnostics will appear in ~%ds." delay)
+                 "Run `flymake-show-project-diagnostics' (or your wrapper) when ready."))
+
+      (when (and delay (> delay 0))
+        (run-with-timer delay nil #'flymake-show-project-diagnostics)))))
+
+(defun my-flymake/preload-directory-recursive ()
+  "Convenience wrapper: recursive preload of current directory."
+  (interactive)
+  (my-flymake/preload-directory-for-diagnostics t))
+
 ;; Keybindings
 (with-eval-after-load "prog-mode"
   (keymap-set prog-mode-map "C-c e n" #'flymake-goto-next-error)
   (keymap-set prog-mode-map "C-c e p" #'flymake-goto-prev-error)
-  (keymap-set python-ts-mode-map "C-c e p" #'my-flymake/show-project-diagnostics)
-  (keymap-set prog-mode-map "C-c e o" #'my-flymake/preload-project-for-diagnostics)
+  (keymap-set prog-mode-map "C-c e a" #'my-flymake/show-project-diagnostics)
+  (keymap-set prog-mode-map "C-c e l" #'my-flymake/preload-directory-for-diagnostics)
+  (keymap-set prog-mode-map "C-c e d" #'my-flymake/preload-project-for-diagnostics)
+  (keymap-set prog-mode-map "C-c e D" #'my-flymake/preload-directory-recursive)
   )
+
 
 (log/debug :fn 'flymake-config
            :msg "Finishing load of the flymake-config module."

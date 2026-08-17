@@ -76,6 +76,12 @@ Affects the visual prominence of the tab bar."
   :type 'integer
   :group 'tab-line)
 
+(defcustom my-tab-line/tab-text-height 105   ; ≈ 30 % smaller than 150
+  "Height of the text inside each tab.
+A smaller value than `my-tab-line/tab-line-height' creates vertical padding."
+  :type 'integer
+  :group 'tab-line)
+
 (defcustom my-tab-line/foreground-color info-theme-blue-steel
   "Foreground colour of the tab-line bar.
 Used for text and borders in active states."
@@ -137,7 +143,7 @@ Controls border thickness for visual separation."
                     :family "source code pro"
                     :background my-tab-line/mouse-over-color                      ; Green highlight.
                     :weight 'bold
-                    :height 110                                                   ; Slightly smaller than main bar.
+                    :height my-tab-line/tab-text-height                           ; smaller text
                     :box `(:line-width (,my-tab-line/tab-box-outline-h
                                         . ,my-tab-line/tab-box-outline-v)
                                        :color ,my-tab-line/foreground-color))     ; Consistent border.
@@ -146,7 +152,7 @@ Controls border thickness for visual separation."
                     :family "source code pro"
                     :foreground my-tab-line/background-color                      ; Inverted colours.
                     :background my-tab-line/foreground-color
-                    :height 110
+                    :height my-tab-line/tab-text-height                           ; smaller text
                     :weight 'bold
                     :box `(:line-width (,my-tab-line/tab-box-outline-h
                                         . ,my-tab-line/tab-box-outline-v)
@@ -157,7 +163,7 @@ Controls border thickness for visual separation."
                     :family "source code pro"
                     :foreground my-tab-line/focus-tab-foreground-color            ; White-grey text.
                     :background my-tab-line/foreground-color                      ; Steel background.
-                    :height 110
+                    :height my-tab-line/tab-text-height                           ; smaller text
                     :weight 'bold
                     :box `(:line-width (,my-tab-line/tab-box-outline-h
                                         . ,my-tab-line/tab-box-outline-v)
@@ -168,7 +174,7 @@ Controls border thickness for visual separation."
                     :family "source code pro"
                     :foreground my-tab-line/foreground-color                      ; Steel text.
                     :background my-tab-line/background-color                      ; Dark background.
-                    :height 110
+                    :height my-tab-line/tab-text-height                           ; smaller text
                     :inherit nil                                                  ; No inheritance to avoid conflicts.
                     :box `(:line-width (,my-tab-line/tab-box-outline-h
                                         . ,my-tab-line/tab-box-outline-v)
@@ -179,7 +185,7 @@ Controls border thickness for visual separation."
                     :family "source code pro"
                     :foreground my-tab-line/foreground-color
                     :background my-tab-line/background-color
-                    :height 110
+                    :height my-tab-line/tab-text-height                           ; smaller text
                     :inherit nil
                     :box `(:line-width (,my-tab-line/tab-box-outline-h
                                         . ,my-tab-line/tab-box-outline-v)
@@ -189,7 +195,8 @@ Controls border thickness for visual separation."
 (set-face-attribute 'tab-line-tab-modified nil                                    ; Modified (unsaved) tabs.
                     :family "source code pro"
                     :foreground my-tab-line/modified-tab-foreground-color         ; Yellow highlight.
-                    :height 110)                                                  ; No background/box to overlay on other faces.
+                    :height my-tab-line/tab-text-height                           ; smaller text
+                    )                                                             ; No background/box to overlay on other faces.
 
 ;; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Tab-line functionality enhancements.
@@ -203,60 +210,54 @@ Controls border thickness for visual separation."
 ;; General flow: Functions handle tab closing by checking buffer presence
 ;; across windows, burying or killing as needed, and potentially deleting
 ;; empty windows to maintain a clean workspace.
+(defun my-tab-line/buffer-in-window-history-p (buffer window)
+  "Return non-nil when BUFFER is the current, a prev or a next buffer of WINDOW."
+  (or (eq buffer (window-buffer window))
+      (memq buffer (window-next-buffers window))
+      (assq buffer (window-prev-buffers window))))
 
-(defun my-tab-line/tab-line-close-tab-given-buffer (buffer
-                                                    &optional given-window)
+(defun my-tab-line/tab-line-close-tab-given-buffer (buffer &optional given-window)
   "Close the tab for BUFFER in GIVEN-WINDOW (defaults to selected window).
 
-Purpose: Safely remove a tab while preserving the buffer if it's open elsewhere.
-Variables:
-- BUFFER: The buffer to close.
-- GIVEN-WINDOW: Optional window to operate on; defaults to selected.
-Output: No explicit return; modifies window and buffer states.
-Flow:
-1. Select the given window.
-2. Gather all buffers across all windows.
-3. If buffer appears in multiple windows, bury it in this window.
-4. If unique to this window, kill the buffer.
-5. If no tabs remain, delete the window.
-This function is optimised for IDE setups by minimising buffer loss."
-
-  (interactive)                                                                   ; Allow interactive call, though typically programmatic.
-  (unless given-window                                                            ; Default to current window if not provided.
+If BUFFER still appears in any other window's history it is only removed
+from this window's prev/next lists (or buried).  Otherwise the buffer is
+killed.  An empty window is deleted."
+  (interactive)
+  (unless given-window
     (setq given-window (selected-window)))
-  (with-selected-window given-window                                              ; Temporarily switch to target window.
-    (let ((tab-list (tab-line-tabs-window-buffers))                               ; Local tabs in this window.
-          (buffer-list                                                            ; Flatten buffers from all windows.
-           (flatten-list
-            (seq-reduce
-             (lambda (list window)
-               (select-window window t)                                           ; Switch to each window briefly.
-               (cons (tab-line-tabs-window-buffers) list))                        ; Collect tabs.
-             (window-list) nil))))
-      (select-window given-window)                                                ; Restore original window.
-      
-      (if (> (seq-count (lambda (b) (eq b buffer)) buffer-list) 1)                ; Buffer in multiple places?
-          
-          ;; If the buffer is in other windows - bury in this one to hide without killing.
+  (with-selected-window given-window
+    (let* ((tab-list (tab-line-tabs-window-buffers))
+           (shared   (> (seq-count
+                         (lambda (w) (my-tab-line/buffer-in-window-history-p buffer w))
+                         (window-list))
+                        1)))
+      (if shared
           (progn
-            (if (eq buffer (current-buffer))                                      ; If current, bury directly.
+            (if (eq buffer (current-buffer))
                 (bury-buffer)
-              (set-window-prev-buffers                                            ; Remove from history lists.
+              (set-window-prev-buffers
                given-window
-               (assq-delete-all buffer (window-prev-buffers)))
+               (assq-delete-all buffer (window-prev-buffers given-window)))
               (set-window-next-buffers
                given-window
-               (delq buffer (window-next-buffers))))
-            (unless (cdr tab-list)                                                ; No more tabs? Delete window.
+               (delq buffer (window-next-buffers given-window))))
+            (force-window-update given-window)
+            (unless (cdr tab-list)
               (ignore-errors (delete-window given-window))))
-        
-        ;; If the buffer is not in other windows - just kill it from this one.
-        (and (kill-buffer buffer)
-             (unless (cdr tab-list)
-               (ignore-errors (delete-window given-window))))
-        ))))                 ; Clean up window.
+        (when (kill-buffer buffer)
+          (force-window-update given-window)
+          (unless (cdr tab-list)
+            (ignore-errors (delete-window given-window))))))))
 
-
+(defun my-tab-line/tab-line-close-tab (&optional e)
+  "Close the tab under mouse event E or the current tab.
+Same semantics as `my-tab-line/tab-line-close-tab-given-buffer'."
+  (interactive "e")
+  (let* ((posnp  (event-start e))
+         (window (posn-window posnp))
+         (buffer (get-pos-property 1 'tab (car (posn-string posnp)))))
+    (when buffer
+      (my-tab-line/tab-line-close-tab-given-buffer buffer window))))
 
 
 (defun my-tab-line/tab-line-name-buffer (buffer &rest _buffers)
@@ -303,6 +304,9 @@ This dynamically adjusts for window resizing."
 ;; Enable global mode after definitions to apply customisations.
 (global-tab-line-mode t)
 
+
+
+
 ;;; Tab-line setup: Configure global variables for buttons and naming.
 ;; Flow: Set visibility, separators, and navigation buttons with Unicode
 ;; fallbacks for compatibility. Custom name function ensures dynamic sizing.
@@ -346,15 +350,24 @@ Flow:
 2. Check against exact names or prefixes.
 3. Enable mode if match found.
 This ensures key buffers like Messages always have tabs."
-
-  (let ((buffer-name (buffer-name)))                                              ; Current buffer name.
-    (when (or (member buffer-name my-tab-line/enabled-buffers)                    ; Exact match?
-              (cl-some (lambda (prefix) (string-prefix-p prefix buffer-name))     ; Prefix match?
+  (let ((buffer-name (buffer-name)))
+    (when (or (member buffer-name my-tab-line/enabled-buffers)
+              (cl-some (lambda (prefix)
+                         (string-prefix-p prefix buffer-name))
                        my-tab-line/enabled-prefixes))
-      (tab-line-mode 1))))                                                        ; Enable if yes.
+      (tab-line-mode 1))))
 
-(add-hook 'fundamental-mode-hook                                                  ; Hook into base mode for broad application.
+;; Prefer after-change-major-mode-hook so programmatically created
+;; buffers (and any later major-mode changes) also get the tab-line
+;; when their name matches the enable lists.
+(add-hook 'after-change-major-mode-hook
           #'my-tab-line/enable-tab-line-mode-for-specific-buffers)
+
+;; Very occasional fallback for buffers that stay in fundamental-mode
+;; without a proper mode call.
+(add-hook 'fundamental-mode-hook
+          #'my-tab-line/enable-tab-line-mode-for-specific-buffers)
+
 
 (defun my-tab-line/tab-line-tabs-window-buffers--removed-nameless-buffers ()
   "Return filtered list of window buffers for tab-line, excluding nameless ones.
@@ -393,87 +406,6 @@ This overrides the default `tab-line-tabs-function' for cleaner tabs."
                  
                  buf)))                                                           ; Keep if not excluded.
            buflist))))
-
-
-(defun my-tab-line/tab-line-close-tab (&optional e)
-  "Close the tab under mouse event E or the current tab.
-
-Purpose: Handle mouse-clicked tab closure safely, mirroring
-`my-tab-line/tab-line-close-tab-given-buffer' but for interactive events.
-This ensures buffers shared across windows are buried (hidden) rather than
-killed, while unique buffers are killed.  If the window ends up with no tabs,
-it is deleted to clean up the workspace.
-
-Variables:
-- E: Optional mouse event (from `interactive \"e\"`); if provided, extracts
-  the clicked position, window, and buffer. If nil, falls back to current
-  window and buffer (though typically called with event).
-
-Output: No explicit return value; side-effects include modifying window
-configurations, buffer lists, and potentially killing buffers or deleting
-windows.
-
-Flow:
-1. If E is provided, extract the click position (posnp), target window, and
-   buffer from the tab's text property.
-2. Temporarily select the target window using `with-selected-window`.
-3. Collect the local tab-list (buffers in this window's tabs).
-4. Build a global buffer-list by iterating over all windows, collecting their
-   tab buffers, and flattening the result.
-5. Check if the target buffer appears in multiple windows (shared):
-   - If yes, bury it if current, or remove from prev/next buffer histories.
-   - Force window update to refresh the tab-line immediately.
-   - If no more tabs remain, delete the window.
-6. If unique to this window, kill the buffer and delete the window if empty.
-
-Note on Empty buffer-list: If this is empty, it means no tabs were found
-across *any* windows—possible if `tab-line-mode` is disabled, custom
-`tab-line-tabs-function` filters everything out (e.g., your nameless buffer
-remover), or no prev/next buffers exist. In multi-window setups, verify
-`tab-line-tabs-window-buffers` returns at least the current buffer per window
-if not, check exclusions in `tab-line-exclude-modes` or custom filters."
-  (interactive "e")                                                               ; Mark as interactive; expects mouse event E for tab clicks.
-  (let* ((posnp (event-start e))                                                  ; Extract start position of event (detailed list: window, coords, etc.).
-         (window (posn-window posnp))                                             ; Get window object from position (where click occurred).
-         (buffer (get-pos-property 1 'tab (car (posn-string posnp)))))            ; Extract buffer from `tab' text property in the clicked string (nil if not on a tab).
-    (when buffer                                                                  ; Guard: Skip if no buffer extracted (e.g., click not on valid tab).
-      (with-selected-window window                                                ; Temporarily select target window; body executes in its context, restores after.
-        (let ((tab-list (tab-line-tabs-window-buffers))                           ; Local tabs: Buffers for this window's tab-line (calls custom `tab-line-tabs-function`).
-              (buffer-list                                                        ; Global list: Flatten tabs from *all* windows.
-               (flatten-list                                                      ; Combine nested lists into one.
-                (seq-reduce                                                       ; Accumulate over windows.
-                 (lambda (acc win)                                                ; Lambda: For each window, collect its tabs.
-
-                   ;; (log/debug :fn 'my-tab-line/tab-line-close-tab
-                   ;;            :msg "Closing tab with mouse event on tab-line."
-                   ;;            :obj (list :window window
-                   ;;                       :buffer buffer
-                   ;;                       :tabs (tab-line-tabs-window-buffers)))
-
-                   (select-window win t)                                          ; Select temporarily (t: no-record in history).
-                   (cons (tab-line-tabs-window-buffers) acc))                     ; Prepend its tabs to accumulator.
-                 (window-list) nil))))                                            ; All windows; start with empty acc.
-
-          ;; No need for (select-window window) here —
-          ;; `with-selected-window` already ensures this.
-          (if (> (seq-count (lambda (b) (eq b buffer)) buffer-list) 1)            ; Count buffer occurrences; >1 means shared across windows.
-              (progn                                                              ; Shared case: Hide without killing.
-                (if (eq buffer (current-buffer))                                  ; If active in this window.
-                    (bury-buffer)                                                 ; Move to end of buffer list (hides it).
-                  (set-window-prev-buffers
-                   window                                                         ; Remove from prev history.
-                   (assq-delete-all buffer (window-prev-buffers window)))
-                  (set-window-next-buffers
-                   window                                                         ; Remove from next list.
-                   (delq buffer (window-next-buffers window))))
-                (force-window-update window)                                      ; Force redisplay to update tab-line immediately.
-                (unless (cdr tab-list)                                            ; If no other tabs left (cdr nil means single-item list).
-                  (ignore-errors (delete-window window))))                        ; Delete window, ignore errors (e.g., last window).
-            (and (kill-buffer buffer)                                             ; Unique case: Kill buffer (t if success).
-                 (unless (cdr tab-list)
-                   (ignore-errors (delete-window window))))                       ; Clean up if empty.
-            ))))))
-
 
 
 (defalias 'tab-line-close-tab 'my-tab-line/tab-line-close-tab

@@ -15,15 +15,6 @@
            :msg "Starting load of the ide-config module."
            :obj t)
 
-
-;; whichkey is now built in.
-(use-package which-key
-  :delight
-  :ensure nil
-  :config
-  (setq which-key-lighter "")
-  (which-key-mode))
-
 ;; editorconfig is a cross-editor/ide configuration tool to control
 ;; indentation, spaces vs tabs, etc.
 (use-package editorconfig)

@@ -48,44 +48,37 @@ warnings in systemd user units pre-2024."
 ;; ----------------------------------------------------------------------
 (defun my-server/display-simple-frame (buffer)
   "Display BUFFER in a new, simple, single-window frame.
-
-Purpose:
-  Used by `server-window' for plain `emacsclient -c' (no IDE layout).
-  Creates an untagged frame, switches to BUFFER, ensures single window.
-
-Variables:
-  None required.
-
-Output: new frame (selected).
-Flow:
-  1. Create frame with explicit nil UI-TYPE and no custom management.
-  2. Switch to BUFFER and delete other windows.
-  3. Re-apply ALL visual customisations (thick blue dividers, icons, fringes).
-Efficiency: single make-frame + apply call, no recursion, <40 lines."
-  (let* ((frame-params `((UI-TYPE . nil)                  ; no IDE tag
-                         (custom-window-management . nil) ; bypass your window tools
+No IDE tagging, no category routing, no residual previous buffers."
+  (let* ((frame-params `((UI-TYPE . nil)
+                         (custom-window-management . nil)
                          (name . "Simple Client Frame")
                          (width . 120)
                          (height . 40)))
-         (frame (make-frame frame-params)))
+         (frame (make-frame frame-params))
+         (win   (frame-selected-window frame)))
     (select-frame frame)
-    (switch-to-buffer buffer)
-    (delete-other-windows)
+    ;; Force the requested buffer and erase history so the previous file cannot reappear
+    (set-window-buffer win buffer)
+    (set-window-prev-buffers win nil)
+    (set-window-next-buffers win nil)
+    (delete-other-windows win)
 
-    ;; === Re-apply visuals so dividers stay thick blue ===
-    ;; === Crash protection (prevents client window closing on visual error) ===
+    ;; Visuals only – never layout.  Protect against errors so the client frame stays alive.
     (condition-case err
-        (my-visual/apply-all-customisations)
+        (my-visual/apply-all-customisations)   ; ideally a faces/fringes/icons-only path when UI-TYPE is nil
       (error
        (log/error :fn 'my-server/display-simple-frame
                   :msg "Visual apply failed (non-fatal)."
                   :obj err)))
 
+    ;; Re-assert single window *after* the hook may have run
+    (delete-other-windows)
+    (set-window-buffer (selected-window) buffer)
+
     (log/info :fn 'my-server/display-simple-frame
-        :msg "Simple client frame created."
-        :obj (buffer-name buffer))
-        
-    frame))
+              :msg "Simple client frame created."
+              :obj (buffer-name buffer))
+    (selected-window)))   ; return the window, not the frame
 
 ;; Wire it in — this is what makes `emacsclient -c` use the simple frame
 (setq server-window #'my-server/display-simple-frame)
@@ -97,6 +90,28 @@ Efficiency: single make-frame + apply call, no recursion, <40 lines."
 ;; absolutely sure here too (idempotent, harmless to call twice).
 (when (daemonp)
   (add-hook 'server-after-make-frame-hook #'my-visual/apply-all-customisations t))
+
+
+
+;; ----------------------------------------------------------------------
+;; 4. Cleaning buffers when the last frame disappears
+;; ----------------------------------------------------------------------
+;; Make each new frame created from a daemon a new clean slate.  Only do this if
+;; you really want a clean-slate from the daemon.  Most people leave this out;
+;; the daemon is more useful when it remembers what you were working on.
+(defun my-server/cleanup-on-last-frame (frame)
+  "When the last ordinary frame is deleted, bury or kill non-essential buffers."
+  (when (and (daemonp)
+             (= 1 (length (frame-list))))   ; only the (now-deleted) frame was left
+    (dolist (buf (buffer-list))
+      (with-current-buffer buf
+        (unless (or (buffer-modified-p)
+                    (get-buffer-process buf)
+                    (string-match-p "\\` \\|\\*\\(Messages\\|scratch\\|Warnings\\|Completions\\)" (buffer-name)))
+          (bury-buffer)   ; or (kill-buffer) if you are more aggressive
+          )))))
+
+(add-hook 'after-delete-frame-functions #'my-server/cleanup-on-last-frame)
 
 
 (log/debug :fn 'server-support

@@ -230,11 +230,81 @@
 (defvar my-window-tools/in-ediff-session nil
   "Non-nil when inside an Ediff session (frame-local).")
 
-
+(defvar my-window-tools/keep-buffers
+  '("*emacs*" "*Emacs*" "*scratch*" "*Ibuffer*" "*SPEEDBAR*"
+    "*Warnings*" "*vc-dir*" "*vc-dir<.emacs.d>*" "xAI Chat")
+  "Do not delete these buffers when carrying out aggregate buffer deletes.
+Each element must be a string that exactly matches a `buffer-name'.")
 
 ;;; ----------------------------------------------------------------------
 ;;; Helpers
 ;;; ----------------------------------------------------------------------
+
+(defun my-window-tools/tidy-window ()
+  "Clean the buffer history of the focused window only.
+
+Other windows and the buffers they currently display are left
+completely untouched.
+
+The only buffers that belong to a window (apart from its current
+buffer) are the ones recorded in that window's private history:
+
+  - `window-prev-buffers'
+  - `window-next-buffers'
+
+This command therefore:
+
+1. Does nothing when both history lists are empty (the window has
+   never shown any other buffer).
+2. Removes every buffer that is not the current buffer and whose
+   name is not a member of `my-window-tools/keep-buffers' from the
+   focused window's history lists.
+3. Kills a buffer only when it is no longer displayed in any window
+   on any frame.  Consequently no other window ever changes its
+   visible buffer as a side-effect of this command.
+
+`my-window-tools/keep-buffers' should be a list of buffer names
+\(strings).  If the variable is unbound it is treated as the empty
+list.  For convenience the code also accepts buffer objects in the
+list.
+
+The current buffer of the focused window is always preserved."
+  (interactive)
+  (let* ((win      (selected-window))
+         (cur-buf  (window-buffer win))
+         (keep     (and (boundp 'my-window-tools/keep-buffers)
+                        my-window-tools/keep-buffers))
+         (prev     (window-prev-buffers win))
+         (next     (window-next-buffers win)))
+    (when (or prev next)
+      ;; Helper that decides whether a buffer may be kept in the
+      ;; window's history.
+      (cl-flet ((keep-p (buf)
+                  (or (eq buf cur-buf)
+                      (member buf keep)
+                      (member (buffer-name buf) keep))))
+        ;; 1. Kill any history buffer that is no longer displayed
+        ;;    anywhere and is not protected by the keep list.
+        (dolist (entry (append prev next))
+          (let ((buf (car entry)))
+            (when (and (buffer-live-p buf)
+                       (not (keep-p buf))
+                       (not (get-buffer-window buf t))) ; any frame
+              (kill-buffer buf))))
+        ;; 2. Rewrite the window's history so that only live, kept
+        ;;    buffers remain.  Order is preserved.
+        (set-window-prev-buffers
+         win
+         (cl-loop for entry in prev
+                  for buf = (car entry)
+                  when (and (buffer-live-p buf) (keep-p buf))
+                  collect entry))
+        (set-window-next-buffers
+         win
+         (cl-loop for entry in next
+                  for buf = (car entry)
+                  when (and (buffer-live-p buf) (keep-p buf))
+                  collect entry))))))
 
 (defun my-window-tools--in-ide-frame-p ()
   "Return t if current frame is an IDE frame."

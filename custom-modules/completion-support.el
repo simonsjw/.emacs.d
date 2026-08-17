@@ -182,24 +182,43 @@ Flow: Return literal-prefix style only for first word <4 chars."
 (use-package which-key
   :ensure nil                                                                     ; Built-in to Emacs 30+
   :custom
+  ;; window placement
   (which-key-popup-type 'side-window)                                             ; Display popup as a side window (right preferred, bottom fallback).
+  (which-key-frame-max-width 160)                                                 ; max width of which-key frame: number of columns (an integer)
+  (which-key-add-column-padding 5)                                                ; add a nice pad around the window frame.
   (which-key-side-window-location '(right bottom))                                ; Preferred location: right side, fallback to bottom.
-  (which-key-side-window-max-width 0.4)                                           ; Maximum width as fraction of frame (40% here).
+
+  ;; description detail
+  (which-key-show-docstrings t)
+  (which-key-max-description-length 160)
+  
+  ;; other settings
   (which-key-idle-delay 1.0)                                                      ; Delay before popup appears (seconds).
-  (which-key-max-description-length 27)                                           ; Maximum length of command descriptions before truncation.
   (which-key-separator " → ")                                                     ; Separator between keys and descriptions.
-  (which-key-show-prefix 'left)                                                   ; Show prefix (typed keys so far) on the left.
+  (which-key-show-prefix 'top)                                                    ; Show prefix (typed keys so far) on the left.
   (which-key-show-remaining-keys t)                                               ; Show remaining key count in mode-line.
+  (which-key-lighter "")
   :init
-  (which-key-mode 1))
+  (which-key-mode 1)
+  :config
+  (setq which-key-prefix-prefix "▸ ")                                             ; Nicer generic prefix indicator
 
-
-(log/debug :fn 'completion-support
-           :msg "Ending load of the completion-support module."
-           :obj t)
+  ;; Name the subgroups
+  (which-key-add-keymap-based-replacements
+    vc-prefix-map
+    "h" "diff-hl"
+    "b" "branches"
+    "M" "merge-base")
+  ;; (which-key-add-keymap-based-replacements
+  ;;   set-coding-system-map
+  ;;   )
+  
+  )
+  (log/debug :fn 'completion-support
+             :msg "Ending load of the completion-support module."
+             :obj t)
 
 (provide 'completion-support)
 ;;; completion-support.el ends here
 
-;; Local Variables:
-;; End:
+

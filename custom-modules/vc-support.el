@@ -52,10 +52,6 @@
   (diff-hl-flydiff-mode 1)
   (setq diff-hl-flydiff-delay 0.1)                                                ; Matches your old git-gutter interval.
 
-  ;; Set some useful vc keyboard shortcuts.
-  (global-set-key (kbd "C-x v f r") #'vc-rename-file) ; Track renamed files in git by renaming them *in* git.
-
-  
   ;; Customise symbols/faces if needed (efficient: Reuse your theme vars).
   (setq diff-hl-margin-symbols-alist
         '((insert . "+")
@@ -64,21 +60,8 @@
           (unknown . "?")
           (ignored . "i")))
 
-  ;; Keybindings: Mirror your git-gutter ones for hunk nav/stage/revert.
-  (global-set-key (kbd "C-x v n") #'diff-hl-next-hunk)
-  (global-set-key (kbd "C-x v p") #'diff-hl-previous-hunk)
-  (global-set-key (kbd "C-x v s") #'diff-hl-stage-current-hunk)                   ; Stages via VC.
-  (global-set-key (kbd "C-x v r") #'diff-hl-revert-hunk)
-  (global-set-key (kbd "C-x v =") #'diff-hl-show-hunk)                            ; Popup diff like git-gutter.
-  (global-set-key (kbd "C-x v v") #'my-vc/show-staged-diff)                       ; show the staged hunk in a separate buffer.
-  ;; Optiona#'l: If remote files are slow, disable there.
-  ;; (setq diff-hl-disable-on-remote t)
+
   )
-
-
-;; Extend diff-hl with global prefix key for transient-like access.
-;; Bind to C-c h; this pops a menu with sub-commands (e.g., n for next-hunk).
-(global-set-key (kbd "C-c h") 'diff-hl-command-map)
 
 (defun my-vc/show-staged-diff ()
   "Show staged changes diff using Git."
@@ -86,78 +69,6 @@
   (vc-git-command
    (get-buffer-create "*vc-git-staged*") 0 nil "diff" "--cached"))
 
-;; Define a fuller menu for diff-hl, extendable to menu-bar.
-;; Use easy-menu-define for integration:
-;;     (easy-menu-define
-;;         diff-hl-menu global-map "Diff Highlights" my-custom-menus/diff-hl)
-(defvar my-custom-menus/diff-hl
-  '("Diff Highlights"
-    ["Navigation" :enable nil]                                                    ; Section header; disabled for display.
-    ["Next hunk" diff-hl-next-hunk :keys "C-x v n"
-     :help "Jump to the next hunk in the buffer."]
-    ["Previous hunk" diff-hl-previous-hunk :keys "C-x v p"
-     :help "Jump to the previous hunk in the buffer."]
-    ["Goto hunk diff" diff-hl-diff-goto-hunk
-     :help "Open the diff buffer for the hunk at point."]
-    "---"
-    ["Hunk Operations" :enable nil]
-    ["Stage hunk" diff-hl-stage-current-hunk :keys "C-x v s"
-     :help "Stage the current hunk via VC for commit."]
-    ["Revert hunk" diff-hl-revert-hunk :keys "C-x v r"
-     :help "Revert the hunk at point to its previous state."]
-    ["Show hunk" diff-hl-show-hunk :keys "C-x v ="
-     :help "Display the diff for the hunk in a popup."]
-    ["Mark hunk" diff-hl-mark-hunk
-     :help "Select the current hunk as a region."]
-    "---"
-    ["Display Modes" :enable nil]
-    ["Toggle flydiff" diff-hl-flydiff-mode
-     :help "Enable/disable real-time diff updates."]
-    ["Toggle margin" diff-hl-margin-mode
-     :help "Switch between fringe and margin display."]
-    ["Toggle amends" diff-hl-show-staged-changes-p
-     :help "Show/hide staged changes in the display."]
-    "---"
-    ["Global Controls" :enable nil]
-    ["Global mode" diff-hl-global-mode
-     :help "Toggle diff-hl globally across buffers."]
-    ["Dired mode" diff-hl-dired-mode
-     :help "Enable diff-hl in Dired buffers."]
-    ["Dir mode" diff-hl-dir-mode
-     :help "Enable diff-hl in vc-dir buffers."]
-    ["Set reference rev" diff-hl-set-reference-rev
-     :help "Change the Git revision used for diffs."]
-    ["Overlay modified" diff-hl-overlay-modified
-     :help "Toggle overlay for modified lines."]
-    ["Show staged hunk(s)" my-vc/show-staged-dif
-     :help "Show the hunk or hunks staged for the next git commit."])
-  "Menu for diff-hl functions for navigation, operations, modes, and globals.")
-
-;; Function to add menu to menu-bar (call once in config).
-;; Prioritise efficiency: Only define if not already present.
-(defun my-vc/diff-hl-setup-menu ()
-  "Set up diff-hl menu in the menu-bar.
-Flow:
-- Check if menu exists to avoid duplicates.
-- Define via easy-menu for global-map integration."
-  (unless (lookup-key global-map [menu-bar Diff-HL])
-    (easy-menu-define diff-hl-menu global-map "Diff HL" my-custom-menus/diff-hl)))
-
-;; Call setup on load (efficient: Runs once).
-(my-vc/diff-hl-setup-menu)
-
-;; TODO: Other menus
-;; branch commands
-(defvar my-custom-menus/vc-branch
-  '("VC"
-    ["Branches" :enable nil]                                                    ; Section header; disabled for display.
-    ["Create branch" vc-create-branch :keys "C-x v b c"
-     :help "Make a branch called NAME in directory DIR.."]
-    ["Switch branch" vc-swich-branch  :keys "C-x v b s"
-     :help "Switch to the branch NAME in the directory DIR."]
-    ["Print Branch" vc-print-branch-log :keys "C-x v b l"
-     :help "Show the change log for BRANCH in another window."])
-  "Menu for git branch operations in VC.")
 
 ;; how do I merge a development branch `features/grok-client-refactor'
 ;; back to the main?
@@ -486,18 +397,18 @@ Flow:
 
 (defun my-vc-dir-enforce-single-window ()
   "Make `vc-dir' buffer use a single window, deleting extras.
-  
-  Checks for multiple windows in the frame; deletes those showing                 ; ;
+
+  Checks for multiple windows in the frame; deletes those showing
   VC-related sub-buffers (e.g., diffs/logs).  Balances if needed.
-  
+
   Flow:
   - If single window, return early.
   - Collect extra windows.
   - Delete if buffer matches VC patterns.
   - Log deletions.
   - Balance windows.
-  
-  Edge: Preserves non-VC windows; runs efficiently (O(n) on windows)."            ;
+
+  Edge: Preserves non-VC windows; runs efficiently (O(n) on windows)."
   (when (and (derived-mode-p 'vc-dir-mode)
              (> (length (window-list)) 1))
     (let ((main-win (selected-window))
@@ -514,15 +425,15 @@ Flow:
 
 (defun my-vc-dir-no-split-hook ()
   "Hook to prevent splits in `vc-dir-mode'.
-  
+
   Sets window unsplittable and defers single-window enforcement
   to handle async/post-command splits.
-  
+
   Flow:
   - Set 'no-split parameter.
   - Use `run-with-idle-timer' for deferred clean (0.1s delay).
-  
-  Edge: Timer avoids races with dispatcher async; cancel if needed."              ;
+
+  Edge: Timer avoids races with dispatcher async; cancel if needed."
   (when (equal (window-parameter nil 'window-category) 'vc)
     (set-window-parameter nil 'no-split t)
     (run-with-idle-timer 0.1 nil #'my-vc-dir-enforce-single-window)))
