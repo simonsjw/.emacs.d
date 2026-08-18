@@ -685,16 +685,15 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
 
   ;;; Construct menu map.
   ;; Integrate menus into the mode's menu-bar
-  (easy-menu-add-item nil '("Tools") my-custom-menus/python-documentation-menu)
-  (easy-menu-add-item nil '("Tools") "--")                                        ; Separator
-  ;; (easy-menu-add-item nil '("Tools") my-custom-menus/python-testing-menu)
-  (easy-menu-add-item nil '("Tools") my-custom-menus/python-running-menu)
-  (easy-menu-add-item nil '("Tools") my-custom-menus/python-errors-menu)
-  (easy-menu-add-item nil '("Tools") my-custom-menus/python-find-menu)
-  (easy-menu-add-item nil '("Tools") my-custom-menus/python-fixes-menu)
-  (easy-menu-add-item nil '("Tools") my-custom-menus/python-object-menu)
-  (easy-menu-add-item nil '("Tools") my-custom-menus/python-lsp-menu)
-  (easy-menu-add-item nil '("Tools") my-custom-menus/python-folding-menu)
+  (easy-menu-add-item python-ts-mode-map '("Tools") my-custom-menus/python-documentation-menu)
+  (easy-menu-add-item python-ts-mode-map '("Tools") "--")
+  (easy-menu-add-item python-ts-mode-map '("Tools") my-custom-menus/python-running-menu)
+  (easy-menu-add-item python-ts-mode-map '("Tools") my-custom-menus/python-errors-menu)
+  (easy-menu-add-item python-ts-mode-map '("Tools") my-custom-menus/python-find-menu)
+  (easy-menu-add-item python-ts-mode-map '("Tools") my-custom-menus/python-fixes-menu)
+  (easy-menu-add-item python-ts-mode-map '("Tools") my-custom-menus/python-object-menu)
+  (easy-menu-add-item python-ts-mode-map '("Tools") my-custom-menus/python-lsp-menu)
+  (easy-menu-add-item python-ts-mode-map '("Tools") my-custom-menus/python-folding-menu)
 
   (defun my-lang-python/context-menu (menu click)
     "Build a custom context menu for Python mode from scratch.
@@ -765,10 +764,10 @@ groups of submenus, and separators as per requirements."
        ["Start Aidermacs" my-llm/aidermacs-menu
         :help "Start Aidermacs in the project."])
       
-      ;; Add separator after first group.
+      ;; separator after the one-shot items
       (easy-menu-add-item menu nil "---")
 
-      ;; Add the full custom submenus, separated by implied lines (using separators for visual space).
+      ;; submenus belong on THIS context map, not on python-ts-mode-map
       (easy-menu-add-item menu nil my-custom-menus/python-fixes-menu)
       (easy-menu-add-item menu nil my-custom-menus/python-find-menu)
       (easy-menu-add-item menu nil my-custom-menus/python-errors-menu)
@@ -779,7 +778,14 @@ groups of submenus, and separators as per requirements."
       (easy-menu-add-item menu nil my-custom-menus/python-pytest)
       (easy-menu-add-item menu nil my-custom-menus/python-folding-menu)
       (easy-menu-add-item menu nil my-custom-menus/python-lsp-menu)
-      (easy-menu-add-item menu nil yas--minor-mode-menu)
+      (when (and (boundp 'yas-minor-mode-map)
+                 (keymapp yas-minor-mode-map))
+        (let ((yas-menu (or (lookup-key yas-minor-mode-map [menu-bar yasnippet])
+                            (and (boundp 'yas--minor-mode-menu)
+                                 (keymapp yas--minor-mode-menu)
+                                 yas--minor-mode-menu))))
+          (when (keymapp yas-menu)
+            (define-key menu [snippets] (cons "Snippets" yas-menu)))))
 
       menu))
   

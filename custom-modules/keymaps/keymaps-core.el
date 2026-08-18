@@ -95,6 +95,18 @@ Most of these already live on prog-mode-map; this is a safety net."
 
   ;; Placeholder registrations – the concrete maps are defined in the
   ;; sibling modules and will refine these titles further.
+  (which-key-add-key-based-replacements
+    "C-x v"     "VC"
+    "C-x v f"   "VC File"
+    "C-x v h"   "VC Diff"
+    "C-x D"     "Dired"
+    "C-x RET"   "Coding System"
+    "C-c d"     "Dictionaries"
+    "C-c g"     "Go"
+    "C-c n"     "Org Roam"
+    "C-c C-v"   "Org Babel"
+    "C-c C-x"   "Org Extra"
+    "C-c \""    "Plot")
   )
 
 (log/debug :fn 'keymaps-core

@@ -26,6 +26,7 @@
 (with-eval-after-load 'which-key
   (keymaps-core/add-titles vc-prefix-map
                            "h" "Diff HL"
+                           "f" "File-path"
                            "b" "Branches"
                            "M" "Merge Base"
                            "t" "Time Machine")
