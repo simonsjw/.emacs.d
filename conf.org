@@ -717,36 +717,53 @@ Implement accounting functionality with hledger.
   
 #+end_src
 
+Load the keymappings.
+
+#+begin_src emacs-lisp :tangle ./init.el
+
+
+  ;; load the keymaps
+  (require 'keymaps-core)
+  (require 'keymaps-vc)
+  (require 'keymaps-ui)
+  (require 'keymaps-prog)
+  (require 'keymaps-project)
+  (require 'keymaps-llm)
+  (require 'keymaps-org)
+  (require 'keymaps-menus)   ; last
+
+#+end_src
 
 Show the loading time via a the emacs-startup-hook.
 
 #+begin_src emacs-lisp :tangle ./init.el
 
-;; ---------------------------------------------
-;; All config and support files are now loaded.
 
-;; Profile emacs startup
-(defun my-startup/display-startup-time ()
-  "Display the startup time after Emacs is fully initialized."
-  (log/info :fn 'init
-            :msg (format "Emacs loaded in %s." (emacs-init-time))
-            :obj t))
+  ;; ---------------------------------------------
+  ;; All config and support files are now loaded.
 
-(add-hook
- 'emacs-startup-hook #'my-startup/display-startup-time)
+  ;; Profile emacs startup
+  (defun my-startup/display-startup-time ()
+    "Display the startup time after Emacs is fully initialized."
+    (log/info :fn 'init
+              :msg (format "Emacs loaded in %s." (emacs-init-time))
+              :obj t))
 
-(setq inhibit-startup-screen nil                                                 ; stop the default splash screen
-      inhibit-startup-message nil
-      inhibit-startup-echo-area-message nil)
+  (add-hook
+   'emacs-startup-hook #'my-startup/display-startup-time)
 
-(setq initial-scratch-message nil)                                             ; remove the message in the scratch buffer.
+  (setq inhibit-startup-screen nil                                                 ; stop the default splash screen
+        inhibit-startup-message nil
+        inhibit-startup-echo-area-message nil)
+
+  (setq initial-scratch-message nil)                                             ; remove the message in the scratch buffer.
 
 
-(recentf-mode 1)
-(savehist-mode 1)
+  (recentf-mode 1)
+  (savehist-mode 1)
 
-(provide 'init)
-;;; init.el ends here
+  (provide 'init)
+    ;;; init.el ends here
 
 #+end_src
 

@@ -53,9 +53,7 @@
 (keymap-set my-key-maps/comments "RET" #'comment-indent-new-line)
 
 (with-eval-after-load 'which-key
-  (keymaps-core/add-titles my-key-maps/comments
-    ;; Top-level title supplied by the sparse keymap name / prefix
-    ))
+  (which-key-add-key-based-replacements my-custom-prefix-keys/comment "Comments"))
 
 ;;; ----------------------------------------------------------------------
 ;;; Errors / Diagnostics (C-c e) – installed on prog-mode-map

@@ -269,6 +269,16 @@
 
 (require 'accounting-support)
 
+;; load the keymaps
+(require 'keymaps-core)
+(require 'keymaps-vc)
+(require 'keymaps-ui)
+(require 'keymaps-prog)
+(require 'keymaps-project)
+(require 'keymaps-llm)
+(require 'keymaps-org)
+(require 'keymaps-menus)   ; last
+
 ;; ---------------------------------------------
 ;; All config and support files are now loaded.
 
@@ -293,4 +303,4 @@
 (savehist-mode 1)
 
 (provide 'init)
-;;; init.el ends here
+  ;;; init.el ends here

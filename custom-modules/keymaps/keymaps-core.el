@@ -49,11 +49,14 @@
 (defun keymaps-core/add-titles (keymap &rest key-title-pairs)
   "Register which-key titles for KEYMAP.
 KEY-TITLE-PAIRS is a flat list of KEY TITLE KEY TITLE ...
+Do nothing if KEY-TITLE-PAIRS is empty: `which-key-add-keymap-based-replacements'
+requires at least one KEY REPLACEMENT pair.
+
 Example:
   (keymaps-core/add-titles vc-prefix-map
     \"h\" \"Diff HL\"
     \"b\" \"Branches\")"
-  (when (and (boundp 'which-key-mode) which-key-mode
+  (when (and key-title-pairs
              (fboundp 'which-key-add-keymap-based-replacements))
     (apply #'which-key-add-keymap-based-replacements keymap key-title-pairs)))
 
@@ -85,10 +88,10 @@ Most of these already live on prog-mode-map; this is a safety net."
   ;; These are registered early so that even before the individual
   ;; modules finish loading the titles are available.
   (keymaps-core/add-titles vc-prefix-map
-    "h" "Diff HL"
-    "b" "Branches"
-    "M" "Merge Base"
-    "t" "Time Machine")
+                           "h" "Diff HL"
+                           "b" "Branches"
+                           "M" "Merge Base"
+                           "t" "Time Machine")
 
   ;; Placeholder registrations – the concrete maps are defined in the
   ;; sibling modules and will refine these titles further.

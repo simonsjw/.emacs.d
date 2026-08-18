@@ -65,9 +65,7 @@
 (keymap-global-set custom-windows-prefix-key 'my-key-maps/windows)
 
 (with-eval-after-load 'which-key
-  (keymaps-core/add-titles my-key-maps/windows
-    ;; Top-level title is set by the prefix itself; leaves need no extra titles
-    ))
+  (which-key-add-key-based-replacements custom-windows-prefix-key "Windows"))
 
 ;;; ----------------------------------------------------------------------
 ;;; UI / Layout map (C-c i)
@@ -93,9 +91,9 @@
 
 (with-eval-after-load 'which-key
   (keymaps-core/add-titles my-key-maps/ui
-    "b" "Breadcrumbs"
-    "w" "Whitespace"
-    "t" "Tidy"))
+                           "b" "Breadcrumbs"
+                           "w" "Whitespace"
+                           "t" "Tidy"))
 
 (log/debug :fn 'keymaps-ui
            :msg "Ending load of the keymaps-ui module."

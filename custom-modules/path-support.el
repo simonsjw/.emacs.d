@@ -382,6 +382,13 @@ Creates the folder under var/INFODYNAMICS/.")
 (setq org-agenda-files
       (directory-files-recursively (concat org-directory "/agenda") "\\.org$"))
 
+
+;;;
+;; add Key-mappings.
+(add-to-list 'load-path (expand-file-name "custom-modules/keymaps" user-emacs-directory))
+
+;;;
+
 (message "✅ path-support.el loaded successfully — all paths defined (including former no-littering auto-paths)")
 
 (provide 'path-support)
