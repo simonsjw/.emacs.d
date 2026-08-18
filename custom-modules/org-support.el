@@ -366,27 +366,6 @@ ARG and KEYS are passed directly to `org-agenda'."
           (lambda ()
             (setq org-table-header-line-p t)))                                    ; keeps header visible when scrolling
 
-
-;;; ──────────────────────────────────────────────────────────────────────
-;;; 8. Global keybindings
-;;; ──────────────────────────────────────────────────────────────────────
-
-;; Create a dedicated prefix keymap for all Org-related commands.
-(defvar my-org-keymap (make-sparse-keymap)
-  "Keymap for Org-related commands under C-c C-o.")
-
-;; Bind the prefix itself.
-(global-set-key (kbd "C-c C-o") my-org-keymap)
-
-;; Sub-commands (add more here later without conflicts).
-;;(define-key my-org-keymap (kbd "a") #'my-org/agenda-in-new-frame)
-;;(define-key my-org-keymap (kbd "d") #'my-agenda/dashboard)
-
-;; Optional: keep the original C-c C-o behaviour for the dashboard
-;; (uncomment the line below *instead* of the define-key for "d" if you prefer):
-;; (global-set-key (kbd "C-c C-o") #'my-agenda/dashboard)
-
-
 
 (log/debug :fn 'org-support
            :msg "Finishing load of the org-support module."

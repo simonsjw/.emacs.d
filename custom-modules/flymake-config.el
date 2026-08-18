@@ -316,15 +316,7 @@ When called interactively, a prefix argument means RECURSIVE is non-nil."
   (interactive)
   (my-flymake/preload-directory-for-diagnostics t))
 
-;; Keybindings
-(with-eval-after-load "prog-mode"
-  (keymap-set prog-mode-map "C-c e n" #'flymake-goto-next-error)
-  (keymap-set prog-mode-map "C-c e p" #'flymake-goto-prev-error)
-  (keymap-set prog-mode-map "C-c e a" #'my-flymake/show-project-diagnostics)
-  (keymap-set prog-mode-map "C-c e l" #'my-flymake/preload-directory-for-diagnostics)
-  (keymap-set prog-mode-map "C-c e d" #'my-flymake/preload-project-for-diagnostics)
-  (keymap-set prog-mode-map "C-c e D" #'my-flymake/preload-directory-recursive)
-  )
+
 
 
 (log/debug :fn 'flymake-config

@@ -202,16 +202,6 @@ Flow: Return literal-prefix style only for first word <4 chars."
   (which-key-mode 1)
   :config
   (setq which-key-prefix-prefix "▸ ")                                             ; Nicer generic prefix indicator
-
-  ;; Name the subgroups
-  (which-key-add-keymap-based-replacements
-    vc-prefix-map
-    "h" "diff-hl"
-    "b" "branches"
-    "M" "merge-base")
-  ;; (which-key-add-keymap-based-replacements
-  ;;   set-coding-system-map
-  ;;   )
   
   )
   (log/debug :fn 'completion-support

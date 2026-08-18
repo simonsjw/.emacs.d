@@ -472,11 +472,6 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
   ;;;; Project settings.
 
   ;; keymaps for Pyvenv
-  ;; also have "C-c p f" and "C-c p o"
-  (keymap-set python-ts-mode-map "C-c p b" #'consult-project-buffer)
-  (keymap-set python-ts-mode-map "C-c p s" #'my-lang-python/save-env-to-project)
-  (keymap-set python-ts-mode-map "C-c p p" #'my-prog-mode/set-project-dictionary)
-  (keymap-set python-ts-mode-map "C-c e p" #' my-flymake/show-project-diagnostics)
   
   (defvar my-custom-menus/python-project-menu
     '("Project"
@@ -520,30 +515,22 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
   
 
   ;;;; Errors/linting
-  (keymap-set python-ts-mode-map "C-c e b" #'flymake-show-buffer-diagnostics)     ; list errors in buffer
-  (keymap-set python-ts-mode-map "C-c e m" #'consult-flymake)                     ; list errors in minibuffer
-  ;; (keymap-set python-ts-mode-map "C-c e p" #'flymake-show-project-diagnostics) SET IN PROJECT MENU PREVIOUSLY.              ; list errors in project
-  ;; formatting errors (not applicable)
-  ;; (keymap-set python-ts-mode-map "C-c C-n" )
-  (keymap-set python-ts-mode-map "C-c e n" #'flymake-goto-next-error)             ; go to next error
-  (keymap-set python-ts-mode-map "C-c e l" #'flymake-goto-prev-error)             ; go to previous error.
-
   (defvar my-custom-menus/python-errors-menu
     '("Errors/Linting"
       ["Display errors" :enable nil]
-      ["Visit Project Buffers" my-flymake/preload-project-for-diagnostics :keys "C-c e o"
+      ["Visit Project Buffers" my-flymake/preload-project-for-diagnostics 
        :help "Visit project buffers without selecting them."]
-      ["Error buffer" flymake-show-buffer-diagnostics :keys "C-c e b"
+      ["Error buffer" flymake-show-buffer-diagnostics
        :help "Show buffer errors in a buffer"]
-      ["Project error buffer" my-flymake/show-project-diagnostics :keys "C-c e p"
+      ["Project error buffer" my-flymake/show-project-diagnostics 
        :help "Show project errors in a buffer"]
-      ["Error list" consult-flymake :keys "C-c e m"
+      ["Error list" consult-flymake 
        :help "Show errors in the mini-buffer"]
       "---"
       ["Navigate errors" :enable nil]
-      ["Next error" flymake-goto-next-error :keys "C-c e n"
+      ["Next error" flymake-goto-next-error 
        :help "Move to the next error."]
-      ["Previous error" flymake-goto-prev-error :keys "C-c e l"
+      ["Previous error" flymake-goto-prev-error 
        :help "Move to the previous error."])
     "Menu for errors/linting-related functions in `python-ts-mode'.")
 
@@ -632,11 +619,7 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
   ;;;; add-missing-dependencies from Ruff + Eglot code related functions.
   ;; add format, import, remove import, sort import and fix import
   (keymap-set python-ts-mode-map "M-TAB" #'corfu-complete)
-  (keymap-set python-ts-mode-map "C-c i b" #'my-lang-python/format-buffer)        ; Format whole buffer
-  (keymap-set python-ts-mode-map "C-c i r" #'my-lang-python/format-region)        ; Format region or buffer
-  (keymap-set python-ts-mode-map "C-c i n" #'eglot-rename)                        ; Rename symbol project wide
-  (keymap-set python-ts-mode-map "C-c i o" #'my-lang-python/organize-imports)
-  (keymap-set python-ts-mode-map "C-c i f" #'eglot-code-action-quickfix)
+
 
   (defvar my-custom-menus/python-fixes-menu
     '("Formats/Imports/Fixes"
@@ -667,27 +650,19 @@ Operates on the whole buffer to match Apheleia's scope. Runs after formatting."
     (switch-to-buffer
      (eglot-stderr-buffer (eglot-current-server))))
 
-  (keymap-set python-ts-mode-map "C-c l i" #'eglot-inlay-hints-mode)              ; Toggle inlay hints
-  (keymap-set python-ts-mode-map "C-c l s" #'eglot)                               ; Start eglot
-  (keymap-set python-ts-mode-map "C-c l r" #'eglot-reconnect)                     ; Reconnect to server
-  (keymap-set python-ts-mode-map "C-c l q" #'eglot-shutdown)                      ; Shutdown server
-  (keymap-set python-ts-mode-map "C-c l l"
-              #'my-lang-python/view-current-eglot-server)                         ; Show events log buffer
-  (keymap-set python-ts-mode-map "C-c l e"
-              #'my-lang-python/view-current-eglot-stderr)                         ; Show stderr buffer
 
   (defvar my-custom-menus/python-lsp-menu
     '("Language server"
-      ["Toggle inlay hints" eglot-inlay-hints-mode :keys "C-c l i"
+      ["Toggle inlay hints" eglot-inlay-hints-mode 
        :help "Toggle inlay hints"]
       "---"
-      ["Start" eglot :keys "C-c l s" :help "Start Eglot"]
-      ["Reconnect" eglot-reconnect :keys "C-c l r" :help "Reconnect Eglot"]
-      ["Shutdown" eglot-shutdown :keys "C-c l q" :help "Shutdown Eglot"]
+      ["Start" eglot :help "Start Eglot"]
+      ["Reconnect" eglot-reconnect :help "Reconnect Eglot"]
+      ["Shutdown" eglot-shutdown :help "Shutdown Eglot"]
       "---"
-      ["Events log" my-lang-python/view-current-eglot-server :keys "C-c l l"
+      ["Events log" my-lang-python/view-current-eglot-server 
        :help "Show the eglot events log"]
-      ["stderr log" my-lang-python/view-current-eglot-stderr :keys "C-c l e"
+      ["stderr log" my-lang-python/view-current-eglot-stderr 
        :help "Show eglot errors log"])
     "Menu for Eglot management in `python-ts-mode'.")
 
@@ -732,78 +707,63 @@ groups of submenus, and separators as per requirements."
       (easy-menu-add-item
        menu nil
        ["Format Region" my-lang-python/format-region
-        :help "Apply Ruff formatting to the selected region"
-        :keys "C-c i r"])
+        :help "Apply Ruff formatting to the selected region"])
       (easy-menu-add-item
        menu nil
        ["Debug" dape
-        :help "Start debugging with Dape"
-        :keys "C-x C-a d"])
+        :help "Start debugging with Dape"])
       (easy-menu-add-item
        menu nil
        ["Doc at Point" eldoc-box-help-at-point
-        :help "Display documentation for thing at point"
-        :keys "C-c h p"])
+        :help "Display documentation for thing at point"])
       (easy-menu-add-item
        menu nil
        ["Rename Symbol" eglot-rename
-        :help "Rename the symbol at point project-wide"
-        :keys "C-c g r"])
+        :help "Rename the symbol at point project-wide"])
       (easy-menu-add-item
        menu nil
        ["Error Buffer" flymake-show-buffer-diagnostics
-        :help "Show buffer diagnostics in a separate buffer"
-        :keys "C-c e b"])
+        :help "Show buffer diagnostics in a separate buffer"])
       (easy-menu-add-item
        menu nil
        ["Consult Symbols" consult-eglot-symbols
-        :help "Show Eglot symbols in minibuffer"
-        :keys "C-c g s"])
+        :help "Show Eglot symbols in minibuffer"])
       (easy-menu-add-item
        menu nil
        ["Run Python" run-python
-        :help "Start an inferior Python process"
-        :keys "C-c r p"])
+        :help "Start an inferior Python process"])
       (easy-menu-add-item
        menu nil
        ["NumpyDoc template" numpydoc-generate
-        :help "Template for function/class doc strings."
-        :keys "C-c d n"])
+        :help "Template for function/class doc strings."])
       (easy-menu-add-item
        menu nil
        ["Generate stub" my-lang-python/generate-stub
-        :help "Generate a stub file for the active buffer."
-        :keys "C-c d s"])
+        :help "Generate a stub file for the active buffer."])
       (easy-menu-add-item
        menu nil
        ["Generate dir stubs" my-lang-python/generate-dir-stubs
-        :help "Generate stub files (all files in the active buffers directory)."
-        :keys "C-c d d"])
+        :help "Generate stub files (all files in the active buffers directory)."])
       (easy-menu-add-item
        menu nil
        ["Sort Imports" my-lang-python/organize-imports
-        :help "Organise imports via Ruff-isort"
-        :keys "C-c i o"])
+        :help "Organise imports via Ruff-isort"])
       (easy-menu-add-item
        menu nil
        ["Fix" eglot-code-action-quickfix
-        :help "Apply quick fixes via Eglot"
-        :keys "C-c i f"])
+        :help "Apply quick fixes via Eglot"])
       (easy-menu-add-item
        menu nil
        ["Toggle Fold" treesit-fold-toggle
-        :help "Toggle folding at point"
-        :keys "C-c f"])
+        :help "Toggle folding at point"])
       (easy-menu-add-item
        menu nil
        ["New chat" my-llm/new-chat
-        :help "Open a chat buffer."
-        :keys "C c l n"])
+        :help "Open a chat buffer."])
       (easy-menu-add-item
        menu nil
        ["Start Aidermacs" my-llm/aidermacs-menu
-        :help "Start Aidermacs in the project."
-        :keys "C c l a"])
+        :help "Start Aidermacs in the project."])
       
       ;; Add separator after first group.
       (easy-menu-add-item menu nil "---")

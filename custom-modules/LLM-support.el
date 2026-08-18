@@ -361,9 +361,6 @@ Reuses XAI_API_KEY and Ollama from your environment."
   (setq gptel-prompt-prefix-alist '((org-mode . "** User\n")))
   (setq gptel-response-prefix-alist '((org-mode . "** Assistant\n")))
 
-  (global-set-key (kbd "C-c l n") #'my-llm/new-chat)
-  (global-set-key (kbd "C-c l a") #'my-llm/aidermacs-menu)   ; ← new
-
   (log/info :fn 'my-llm/init
             :msg "LLM-support fully initialised. C-c l n (chat) • C-c l a (Aidermacs)"
             :obj t))

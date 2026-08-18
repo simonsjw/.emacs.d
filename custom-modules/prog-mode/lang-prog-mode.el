@@ -202,18 +202,6 @@ Run `M-x my-spell-check/add-prog-words` once per project to add them.")
   
   (setq-local truncate-lines t)                                                   ; deactivate line-wrapping.
 
-  ;; Keymaps and Menus
-  ;; Assign buffer local prefixes to comment keymap.
-  (local-set-key
-   (kbd my-custom-prefix-keys/comment) 'my-key-maps/comments)
-
-
-  ;; Create comment menu including those new buffer local keymaps.
-  (easy-menu-define my-prog-mode-menu                                             ; symbol-name
-    (current-local-map)                                                           ; maps
-    "Menu for comment-related functions."                                         ; docs
-    my-custom-menus/comment)                                                 ; menu
-
   )
 
 
