@@ -45,10 +45,13 @@
 (defvar my-paths/default-config-file)
 (defvar my-paths/default-log-file)
 (defvar my-paths/spreadsheet-dir)
+(defvar my-paths/desktop-layout-folder)
+(defvar my-window-state/ide nil
+  "Cached window-state object loaded from IDE_TEMPLATE.eld.")
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Robust IDE frame creation (handles uniquify + residual buffers)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 (defun my-ui--ensure-layout-buffers ()
   "Make sure the six buffers named in IDE_TEMPLATE.eld exist with exact names."
   (my-ui--force-buffer-name (or (get-buffer "*Emacs*") (get-buffer "*GNU Emacs*"))
@@ -295,6 +298,7 @@ restored."
                                         (frame-root-window frame))
 
                       ;; Tag first so we can address windows by category
+                      (my-window-tools/reset-closed-categories frame)
                       (let ((tag-list (cdr (assoc :IDE my-window-tools/category-map))))
                         (my-window-tools/tag-windows-by-list frame tag-list t))
 
@@ -336,14 +340,56 @@ restored."
                     :obj frame-class)
           frame)))))
 
+(defun my-ui/reapply-ide-template (&optional frame)
+  "Restore the full six-pane IDE template on FRAME and clear closed panes.
+
+This is the implementation behind `IDE-refresh': every category becomes
+eligible again, `IDE_TEMPLATE.eld' is applied, windows are re-tagged,
+and the category index is rebuilt."
+  (let ((frame (or frame (selected-frame)))
+        (my-window-tools--inhibit-retag t)
+        (my-window-tools--in-toggle t))
+    (unless (eq (frame-parameter frame 'UI-TYPE) 'IDE)
+      (user-error "Not an IDE frame"))
+    (with-selected-frame frame
+      (my-ui--ensure-layout-buffers)
+      (let ((ide-file (expand-file-name "IDE_TEMPLATE.eld"
+                                        my-paths/desktop-layout-folder)))
+        (when (file-readable-p ide-file)
+          (setq my-window-state/ide
+                (with-temp-buffer
+                  (insert-file-contents ide-file)
+                  (read (current-buffer))))))
+      (when my-window-state/ide
+        (window-state-put my-window-state/ide (frame-root-window frame)))
+      (my-window-tools/reset-closed-categories frame)
+      (let ((tag-list (cdr (assoc :IDE my-window-tools/category-map))))
+        (my-window-tools/tag-windows-by-list frame tag-list t))
+      (when-let ((data-win (my-window-tools/get-window-for-window-category 'data frame)))
+        (when (get-buffer "xAI Chat")
+          (set-window-buffer data-win (get-buffer "xAI Chat"))))
+      (when-let ((config-win (my-window-tools/get-window-for-window-category 'config frame)))
+        (when (get-buffer "*Ibuffer*")
+          (set-window-buffer config-win (get-buffer "*Ibuffer*"))))
+      (my-window-tools/rebuild-category-index frame)
+      (when (fboundp 'my-visual/apply-all-customisations)
+        (my-visual/apply-all-customisations))
+      (force-mode-line-update t)
+      frame)))
+
 (defun my-ui/startup-layout()
   "Reset the Emacs session to the default window layout.
 
 The default windows will be created and the default buffers assigned to them.
- If those buffers are not present, they will be opened.  No buffers should be
-closed as a result of this action."
+If those buffers are not present, they will be opened.  Closed IDE panes are
+reopened.  No buffers should be killed as a result of this action."
   (interactive)
-  (my-ui/create-project-frame user-emacs-directory))
+  (let ((frame (seq-find (lambda (f) (eq (frame-parameter f 'UI-TYPE) 'IDE))
+                         (frame-list))))
+    (if (not (frame-live-p frame))
+        (my-ui/create-project-frame user-emacs-directory)
+      (select-frame-set-input-focus frame)
+      (my-ui/reapply-ide-template frame))))
 
 (defalias 'IDE-refresh 'my-ui/startup-layout
   "Alias for `my-ui/startup-layout' to refresh the Emacs session layout.")

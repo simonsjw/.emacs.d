@@ -21,9 +21,9 @@
            :msg "Starting load of the keymaps-ui module."
            :obj t)
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Customisation groups
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defgroup custom-windows ()
   "Window related configuration for Custom Emacs."
@@ -45,9 +45,9 @@
   :group 'custom-ui
   :type 'string)
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Windows map (C-c w)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (define-prefix-command 'my-key-maps/windows)
 
@@ -62,14 +62,27 @@
 (keymap-set my-key-maps/windows ">" #'enlarge-window-horizontally)
 (keymap-set my-key-maps/windows "<" #'shrink-window-horizontally)
 
+(define-prefix-command 'my-key-maps/windows-toggle)
+
+(with-eval-after-load 'system-window-management
+  (keymap-set my-key-maps/windows-toggle "e" #'my-window-tools/toggle-edit)
+  (keymap-set my-key-maps/windows-toggle "d" #'my-window-tools/toggle-data)
+  (keymap-set my-key-maps/windows-toggle "c" #'my-window-tools/toggle-config)
+  (keymap-set my-key-maps/windows-toggle "l" #'my-window-tools/toggle-logs)
+  (keymap-set my-key-maps/windows-toggle "v" #'my-window-tools/toggle-vc)
+  (keymap-set my-key-maps/windows-toggle "s" #'my-window-tools/toggle-terminal)
+  (keymap-set my-key-maps/windows "t" #'my-key-maps/windows-toggle))
+
 (keymap-global-set custom-windows-prefix-key 'my-key-maps/windows)
 
 (with-eval-after-load 'which-key
-  (which-key-add-key-based-replacements custom-windows-prefix-key "Windows"))
+  (which-key-add-key-based-replacements custom-windows-prefix-key "Windows")
+  (which-key-add-key-based-replacements
+   (concat custom-windows-prefix-key " t") "Toggle pane"))
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; UI / Layout map (C-c i)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (define-prefix-command 'my-key-maps/ui)
 

@@ -27,7 +27,14 @@
 ;; being processed isn't impacted by the maps, then Emacs should behave exactly
 ;; as it would was this functionality not present.
 ;;
+;; Principle 4:
+;; IDE panes other than `edit' may be closed.  Buffers that would have been
+;; shown in a missing pane follow `my-window-tools/category-fallback' and are
+;; only sent to `edit' when no alternative pane is open.  The edit pane cannot
+;; be closed.
+;;
 
+(require 'cl-lib)
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'system-window-management
@@ -227,6 +234,51 @@
 (defvar my-window-tools/category-map
   '((:IDE . (edit data config logs vc terminal))))
 
+(defconst my-window-tools/category-fallback
+  '((edit)
+    (data logs vc config terminal edit)
+    (config logs vc data terminal edit)
+    (logs vc config data terminal edit)
+    (vc logs config data terminal edit)
+    (terminal logs vc config data edit))
+  "Alist of CATEGORY -> ordered lookup chain.
+
+The first element of each list is the home category.  `get-window-for-window-category'
+tries each entry in order until an open, live window of that category exists
+on the frame.  `edit' has no alternative: it cannot be redirected or closed.")
+
+(defconst my-window-tools/default-occupants
+  '((edit . "*Emacs*")
+    (data . "xAI Chat")
+    (config . "*Ibuffer*")
+    (logs . "*Warnings*")
+    (vc . "*vc-dir*")
+    (terminal . "*scratch*"))
+  "Default buffer names shown when a category pane is (re)created.")
+
+(defconst my-window-tools/ide-category-weight
+  '((edit . 0.639)
+    (data . 0.500)
+    (config . 0.500)
+    (logs . 0.320)
+    (vc . 0.344)
+    (terminal . 0.336))
+  "Relative weights used when splitting a neighbour to reopen a pane.")
+
+(defconst my-window-tools/ide-category-layout
+  '((data     . (:group right  :axis vertical   :order 0 :edit-side right :edit-frac 0.361))
+    (config   . (:group right  :axis vertical   :order 1 :edit-side right :edit-frac 0.361))
+    (logs     . (:group bottom :axis horizontal :order 0 :edit-side below :edit-frac 0.237))
+    (vc       . (:group bottom :axis horizontal :order 1 :edit-side below :edit-frac 0.237))
+    (terminal . (:group bottom :axis horizontal :order 2 :edit-side below :edit-frac 0.237)))
+  "Canonical combination metadata used to place a reopened category window.")
+
+(defvar my-window-tools--inhibit-retag nil
+  "Non-nil suppresses `my-window-tools/retag-on-config-change'.")
+
+(defvar my-window-tools--in-toggle nil
+  "Non-nil while a pane toggle or category close is rewriting the layout.")
+
 (defvar my-window-tools/in-ediff-session nil
   "Non-nil when inside an Ediff session (frame-local).")
 
@@ -236,9 +288,9 @@
   "Do not delete these buffers when carrying out aggregate buffer deletes.
 Each element must be a string that exactly matches a `buffer-name'.")
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Helpers
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defun my-window-tools/tidy-window ()
   "Clean the buffer history of the focused window only.
@@ -403,16 +455,20 @@ Flow:
 Purpose: Restore categories post-splits/quits without per-split advice.
 Variables: None (frame-local).
 Output: Nil (side-effect).
-Flow: Check IDE frame, get sorted windows, tag by list."
-  (when (my-window-tools--in-ide-frame-p)                                         ; Limit to IDE
-    (let ((frame (selected-frame))
-          (tag-list '(edit data config logs vc terminal)))
-      (my-window-tools/tag-windows-by-list frame tag-list t)
+Flow: Check IDE frame, get sorted windows, tag by list.
 
-      (log/debug-window-management :fn 'my-window-tools/retag-on-config-change
-                                   :msg "Re-tagged on config change"
-                                   :obj frame)
-      )))
+Closed categories are omitted from the assignment list so a newly created
+untagged window cannot resurrect a pane the user has toggled off.  The hook
+is a no-op while a toggle or layout restore is in progress."
+  (unless my-window-tools--inhibit-retag
+    (when (my-window-tools--in-ide-frame-p)                                       ; Limit to IDE
+      (let* ((frame (selected-frame))
+             (tag-list (my-window-tools/open-categories frame)))
+        (my-window-tools/tag-windows-by-list frame tag-list t)
+        (my-window-tools/rebuild-category-index frame)
+        (log/debug-window-management :fn 'my-window-tools/retag-on-config-change
+                                     :msg "Re-tagged on config change"
+                                     :obj (list :frame frame :open tag-list))))))
 
 (add-hook 'window-configuration-change-hook #'my-window-tools/retag-on-config-change)
 
@@ -492,7 +548,7 @@ Edge cases:
            :msg "Preserved existing category (stable after split or config change)"
            :obj (list :window window
                       :category (window-parameter window 'window-category))))
-         (t
+         ((and tag-list (> tag-count 0))
           (let ((tag (nth (mod tag-index tag-count) tag-list)))
             (set-window-parameter window 'window-category tag)
             (when set-quit-restore
@@ -501,7 +557,8 @@ Edge cases:
              :fn 'my-window-tools/tag-windows-by-list
              :msg "Assigned category to previously untagged window"
              :obj (list :window window :tag tag))
-            (setq tag-index (1+ tag-index)))))))))
+            (setq tag-index (1+ tag-index)))))
+      (my-window-tools/rebuild-category-index frame)))))
 
 (defconst my-window-tools/default-tag 'edit
   "The default tag assigned to non-system buffers when no tag is found.
@@ -548,43 +605,554 @@ speedbar when the window that contains it no longer exists."
 (add-hook
  'delete-frame-functions #'my-window-tools/close-sr-speedbar-on-frame-delete)
 
+(defun my-window-tools/ide-categories ()
+  "Return the list of IDE window categories from `my-window-tools/category-map'."
+  (cdr (assq :IDE my-window-tools/category-map)))
+
+(defun my-window-tools--normalize-category (window-name)
+  "Return WINDOW-NAME as a category symbol, or nil if it is not an IDE category.
+WINDOW-NAME may be a symbol or a string."
+  (let ((sym (cond
+              ((symbolp window-name) window-name)
+              ((stringp window-name) (intern (downcase window-name)))
+              (t nil))))
+    (and sym (memq sym (my-window-tools/ide-categories)) sym)))
+
+(defun my-window-tools/open-categories (&optional frame)
+  "Return IDE categories that are not marked closed on FRAME."
+  (let ((closed (frame-parameter (or frame (selected-frame))
+                                 'ide-closed-categories)))
+    (cl-remove-if (lambda (cat) (memq cat closed))
+                  (my-window-tools/ide-categories))))
+
+(defun my-window-tools/reset-closed-categories (&optional frame)
+  "Clear the closed-category set on FRAME and rebuild the lookup index.
+
+Called from `IDE-refresh' / a brand-new IDE frame so every pane is eligible
+again.  Does not itself restore geometry."
+  (let ((frame (or frame (selected-frame))))
+    (set-frame-parameter frame 'ide-closed-categories nil)
+    (set-frame-parameter frame 'ide-last-buffers nil)
+    (my-window-tools/rebuild-category-index frame)))
+
+(defun my-window-tools/rebuild-category-index (&optional frame)
+  "Rebuild the frame-local category -> window index for FRAME.
+
+Only the first live window of each category (spatial order) is recorded.
+Returns the new alist and stores it on the `ide-category-index' frame
+parameter.  Intended for layout changes, not the `display-buffer' hot path."
+  (let ((frame (or frame (selected-frame)))
+        (index '()))
+    (dolist (win (my-window-tools/sorted-window-list frame))
+      (let ((cat (window-parameter win 'window-category)))
+        (when (and cat (not (assq cat index)))
+          (push (cons cat win) index))))
+    (setq index (nreverse index))
+    (set-frame-parameter frame 'ide-category-index index)
+    index))
+
+(defun my-window-tools--index-window (category frame)
+  "Return the cached window for CATEGORY on FRAME, or nil."
+  (let* ((index (frame-parameter frame 'ide-category-index))
+         (win (cdr (assq category index))))
+    (and (window-live-p win) win)))
+
+(defun my-window-tools/window-open-p (window-name &optional frame)
+  "Return non-nil if the WINDOW-NAME pane is present on FRAME.
+
+WINDOW-NAME is a category symbol or string.  FRAME defaults to the selected
+frame.  A category that is recorded as closed, or whose cached window is
+dead, is treated as closed."
+  (let* ((frame (or frame (selected-frame)))
+         (category (my-window-tools--normalize-category window-name)))
+    (and category
+         (eq (frame-parameter frame 'UI-TYPE) 'IDE)
+         (not (memq category (frame-parameter frame 'ide-closed-categories)))
+         (or (my-window-tools--index-window category frame)
+             (cl-loop for win in (window-list frame 'no-minibuffer)
+                      when (eq category (window-parameter win 'window-category))
+                      return win)))))
+
+(defun my-window-tools--fallback-chain (category &optional skip-self)
+  "Return the lookup chain for CATEGORY.
+When SKIP-SELF is non-nil the home category is omitted (used when burying
+buffers off a pane that is about to be deleted)."
+  (let ((chain (copy-sequence
+                (or (assq category my-window-tools/category-fallback)
+                    (list category my-window-tools/default-tag)))))
+    (if skip-self
+        (delq category chain)
+      chain)))
+
 (defun my-window-tools/get-window-for-window-category (target-window-category frame)
-  "Retrieve the first window in FRAME associated with TARGET-WINDOW-CATEGORY.
-If no window is found, check for a window with `my-window-tools/default-tag'.
-Return the first matching window, or nil if none are found.
+  "Retrieve a window on FRAME for TARGET-WINDOW-CATEGORY.
+
+Tries the home category first, then each alternative listed in
+`my-window-tools/category-fallback', skipping categories that are marked
+closed or whose cached window is dead.  Rebuilds the frame index once if
+it is missing.
 
 TARGET-WINDOW-CATEGORY is the symbol (e.g., `edit', `logs') to search for.
 FRAME is the frame to search within (defaults to selected if nil).
 
-This function supports the principle of falling back to a default window
-to avoid popping up new ones unnecessarily, aligning with IDE workflows
-where buffers should consolidate into tagged windows.  It iterates over
-windows excluding mini-buffers.
-
-Edge cases:
-- If multiple windows match, returns the first (order from `window-list`).
-- If no `default-tag' window, returns nil (caller should handle pop-up).
-- Logs debug info for traceability in custom management frames.
-
-Returns: Window object or nil."
-  (let ((windows (window-list frame 'no-minibuffer)))
-    ;; First, search for exact category match to prioritize specific tagging.
-    (or (cl-loop for win in windows
-                 when (equal target-window-category
-                             (window-parameter win 'window-category))
+Returns a live window object, or nil if no open pane on the chain exists
+(the caller may pop up a new window)."
+  (let ((frame (or frame (selected-frame))))
+    (unless (frame-parameter frame 'ide-category-index)
+      (my-window-tools/rebuild-category-index frame))
+    (or (cl-loop for cat in (my-window-tools--fallback-chain target-window-category)
+                 for win = (my-window-tools--index-window cat frame)
+                 when (and win
+                           (not (memq cat (frame-parameter frame
+                                                           'ide-closed-categories))))
                  return win)
-        ;; Fallback to default tag if no exact match, preventing pop-ups.
-        (cl-loop for win in windows
-                 when (equal my-window-tools/default-tag
-                             (window-parameter win 'window-category))
-                 return win)
-        ;; If neither found, return nil and log for debugging.
+        ;; Cache may be stale after a raw deletion; rebuild once and retry.
         (progn
-          (log/debug-window-management :fn 'my-window-tools/get-window-for-window-category
-                                  :msg "No matching or default window found"
-                                  :obj (list :category target-window-category :frame frame))
+          (my-window-tools/rebuild-category-index frame)
+          (cl-loop for cat in (my-window-tools--fallback-chain target-window-category)
+                   for win = (my-window-tools--index-window cat frame)
+                   when (and win
+                             (not (memq cat (frame-parameter frame
+                                                             'ide-closed-categories))))
+                   return win))
+        (progn
+          (log/debug-window-management
+           :fn 'my-window-tools/get-window-for-window-category
+           :msg "No matching or fallback window found"
+           :obj (list :category target-window-category :frame frame
+                      :closed (frame-parameter frame 'ide-closed-categories)))
           nil))))
 
+
+;; ----------------------------------------------------------------------------
+;;; Pane toggle, bury, and reallocation
+;; ----------------------------------------------------------------------------
+
+(defun my-window-tools--placeholder-buffer-p (buffer)
+  "Return non-nil if BUFFER is a WINDOW_* placeholder."
+  (and (bufferp buffer)
+       (buffer-live-p buffer)
+       (string-prefix-p "WINDOW_" (buffer-name buffer))))
+
+(defun my-window-tools--last-buffer (category frame)
+  "Return the last recorded occupant of CATEGORY on FRAME, if live."
+  (let ((buf (cdr (assq category (frame-parameter frame 'ide-last-buffers)))))
+    (and (buffer-live-p buf) buf)))
+
+(defun my-window-tools--set-last-buffer (category frame buffer)
+  "Record BUFFER as the last occupant of CATEGORY on FRAME."
+  (when (and category (buffer-live-p buffer))
+    (let ((alist (assq-delete-all
+                  category
+                  (copy-sequence (frame-parameter frame 'ide-last-buffers)))))
+      (set-frame-parameter frame 'ide-last-buffers
+                           (cons (cons category buffer) alist)))))
+
+(defun my-window-tools--default-occupant (category)
+  "Return the live default occupant buffer for CATEGORY, or nil."
+  (let ((name (cdr (assq category my-window-tools/default-occupants))))
+    (and name (get-buffer name))))
+
+(defun my-window-tools--window-history-buffers (window)
+  "Return live buffers stored in WINDOW including its current buffer."
+  (let ((bufs (and (window-live-p window)
+                   (list (window-buffer window)))))
+    (when window
+      (dolist (entry (append (window-prev-buffers window)
+                             (window-next-buffers window)))
+        (when (and (consp entry) (buffer-live-p (car entry)))
+          (cl-pushnew (car entry) bufs :test #'eq))))
+    bufs))
+
+(defun my-window-tools--frame-candidate-buffers (frame)
+  "Buffers that belong to FRAME for reallocation purposes.
+Union of each window's current buffer and its prev/next histories, plus
+any recorded last-occupants.  Never walks the global buffer list."
+  (let ((bufs '()))
+    (dolist (win (window-list frame 'no-minibuffer))
+      (setq bufs (append (my-window-tools--window-history-buffers win) bufs)))
+    (dolist (cell (frame-parameter frame 'ide-last-buffers))
+      (when (buffer-live-p (cdr cell))
+        (push (cdr cell) bufs)))
+    (cl-delete-duplicates bufs :test #'eq)))
+
+(defun my-window-tools--history-entry (buffer)
+  "Return a `window-prev-buffers' entry for BUFFER.
+
+Emacs requires WINDOW-START and POS to be markers.  Integer positions
+(used in an earlier revision) make `push-window-buffer-onto-prev'
+signal `wrong-type-argument markerp'."
+  (when (buffer-live-p buffer)
+    (with-current-buffer buffer
+      (list buffer
+            (copy-marker (point-min) t)
+            (copy-marker (point))))))
+
+(defun my-window-tools--sanitize-history-list (entries)
+  "Rewrite ENTRIES so every start/point value is a live marker."
+  (let ((out '()))
+    (dolist (entry entries)
+      (let ((buf (car-safe entry))
+            (start (nth 1 entry))
+            (pos (nth 2 entry)))
+        (when (buffer-live-p buf)
+          (push (if (and (markerp start) (markerp pos)
+                         (eq (marker-buffer start) buf)
+                         (eq (marker-buffer pos) buf))
+                    entry
+                  (my-window-tools--history-entry buf))
+                out))))
+    (nreverse out)))
+
+(defun my-window-tools--sanitize-window-history (window)
+  "Repair WINDOW's prev/next histories so they only contain marker entries."
+  (when (window-live-p window)
+    (set-window-prev-buffers
+     window (my-window-tools--sanitize-history-list (window-prev-buffers window)))
+    (set-window-next-buffers
+     window (my-window-tools--sanitize-history-list (window-next-buffers window)))))
+
+(defun my-window-tools--sanitize-frame-histories (frame)
+  "Repair prev/next histories on every window of FRAME."
+  (dolist (win (window-list frame 'no-minibuffer))
+    (my-window-tools--sanitize-window-history win)))
+
+(defun my-window-tools--bury-buffers-on (window buffers)
+  "Append BUFFERS to WINDOW's previous-buffer list without changing the visible buffer.
+
+Buffers that are WINDOW's current buffer, already present in its history,
+or no longer live are skipped.  Each new history entry uses markers, as
+required by `push-window-buffer-onto-prev'."
+  (when (window-live-p window)
+    (my-window-tools--sanitize-window-history window)
+    (let* ((current (window-buffer window))
+           (prev (window-prev-buffers window))
+           (known (cons current (mapcar #'car prev))))
+      (dolist (buf buffers)
+        (when (and (buffer-live-p buf)
+                   (not (memq buf known)))
+          (let ((entry (my-window-tools--history-entry buf)))
+            (when entry
+              (setq prev (cons entry prev)
+                    known (cons buf known))))))
+      (set-window-prev-buffers window prev))))
+
+(defun my-window-tools--mark-category-closed (category frame)
+  "Add CATEGORY to FRAME's closed set.  `edit' is never recorded."
+  (unless (eq category 'edit)
+    (let ((closed (copy-sequence
+                   (frame-parameter frame 'ide-closed-categories))))
+      (cl-pushnew category closed)
+      (set-frame-parameter frame 'ide-closed-categories closed))))
+
+(defun my-window-tools--mark-category-open (category frame)
+  "Remove CATEGORY from FRAME's closed set."
+  (set-frame-parameter
+   frame 'ide-closed-categories
+   (delq category (copy-sequence
+                   (frame-parameter frame 'ide-closed-categories)))))
+
+(defun my-window-tools/sync-closed-set-from-windows (&optional frame)
+  "Rebuild FRAME's closed set from the categories actually present.
+
+Used after `winner-undo' / `winner-redo' so menu checks stay honest.
+`edit' is never marked closed."
+  (let ((frame (or frame (selected-frame))))
+    (when (eq (frame-parameter frame 'UI-TYPE) 'IDE)
+      (let* ((present (mapcar #'car (my-window-tools/rebuild-category-index frame)))
+             (closed (cl-remove-if
+                      (lambda (cat)
+                        (or (eq cat 'edit) (memq cat present)))
+                      (my-window-tools/ide-categories))))
+        (set-frame-parameter frame 'ide-closed-categories closed)
+        (force-mode-line-update t)
+        closed))))
+
+(defun my-window-tools--windows-of-category (category frame)
+  "Return live windows on FRAME tagged CATEGORY."
+  (cl-loop for win in (window-list frame 'no-minibuffer)
+           when (eq category (window-parameter win 'window-category))
+           collect win))
+
+(defun my-window-tools--fallback-destination (category frame)
+  "Window that should receive buffers when CATEGORY is closed on FRAME."
+  (cl-loop for cat in (my-window-tools--fallback-chain category t)
+           for win = (my-window-tools--index-window cat frame)
+           when (and win
+                     (not (memq cat (frame-parameter frame
+                                                     'ide-closed-categories))))
+           return win))
+
+(defun my-window-tools--pick-buffer-for-category (category frame)
+  "Choose a buffer to show when CATEGORY is reopened on FRAME."
+  (or (my-window-tools--last-buffer category frame)
+      (cl-loop for buf in (my-window-tools--frame-candidate-buffers frame)
+               when (eq category
+                        (with-selected-frame frame
+                          (my-window-tools/determine-buffer-category buf)))
+               return buf)
+      (my-window-tools--default-occupant category)
+      (get-buffer-create
+       (format "WINDOW_%s" (upcase (symbol-name category))))))
+
+(defun my-window-tools--step-window-back (window)
+  "Show WINDOW's previous history buffer, or its category default."
+  (when (window-live-p window)
+    (let* ((prev (window-prev-buffers window))
+           (next-buf (cl-loop for entry in prev
+                              for buf = (car entry)
+                              when (and (buffer-live-p buf)
+                                        (not (eq buf (window-buffer window))))
+                              return buf))
+           (cat (window-parameter window 'window-category)))
+      (cond
+       (next-buf
+        (set-window-buffer window next-buf))
+       ((and cat (my-window-tools--default-occupant cat))
+        (set-window-buffer window (my-window-tools--default-occupant cat)))))))
+
+(defun my-window-tools--split-from-edit (category frame)
+  "Create a window for CATEGORY by splitting the edit pane on FRAME."
+  (let* ((edit (or (my-window-tools--index-window 'edit frame)
+                   (frame-root-window frame)))
+         (meta (cdr (assq category my-window-tools/ide-category-layout)))
+         (side (or (plist-get meta :edit-side) 'below))
+         (frac (or (plist-get meta :edit-frac) 0.3))
+         (vertical (memq side '(above below)))
+         (total (if vertical (window-total-height edit) (window-total-width edit)))
+         (new-size (max 4 (round (* total frac)))))
+    (split-window edit (- new-size) side)))
+
+(defun my-window-tools--split-from-neighbour (category neighbour side)
+  "Split NEIGHBOUR on SIDE to create a window for CATEGORY."
+  (let* ((ncat (window-parameter neighbour 'window-category))
+         (w-c (or (cdr (assq category my-window-tools/ide-category-weight)) 1.0))
+         (w-n (or (cdr (assq ncat my-window-tools/ide-category-weight)) 1.0))
+         (vertical (memq side '(above below)))
+         (total (if vertical
+                    (window-total-height neighbour)
+                  (window-total-width neighbour)))
+         (new-size (max 4 (round (* total (/ w-c (+ w-c w-n)))))))
+    (split-window neighbour (- new-size) side)))
+
+(defun my-window-tools--insertion-neighbour (category frame)
+  "Return (WINDOW . SIDE) for inserting CATEGORY into its combination.
+
+Chooses the adjacent open sibling in canonical order so a reopened
+terminal lands to the right of vc (logs | vc | terminal), not between
+logs and vc."
+  (let* ((meta (cdr (assq category my-window-tools/ide-category-layout)))
+         (group (plist-get meta :group))
+         (order (or (plist-get meta :order) 0))
+         (axis (plist-get meta :axis))
+         (left nil)
+         (right nil))
+    (dolist (cell my-window-tools/ide-category-layout)
+      (let* ((cat (car cell))
+             (spec (cdr cell))
+             (win (and (not (eq cat category))
+                       (eq group (plist-get spec :group))
+                       (my-window-tools--index-window cat frame))))
+        (when (window-live-p win)
+          (let ((s-order (or (plist-get spec :order) 0)))
+            (cond
+             ((< s-order order)
+              (when (or (null left)
+                        (> s-order (plist-get left :order)))
+                (setq left (list :order s-order :win win))))
+             ((> s-order order)
+              (when (or (null right)
+                        (< s-order (plist-get right :order)))
+                (setq right (list :order s-order :win win)))))))))
+    (cond
+     (left
+      (cons (plist-get left :win)
+            (if (eq axis 'vertical) 'below 'right)))
+     (right
+      (cons (plist-get right :win)
+            (if (eq axis 'vertical) 'above 'left)))
+     (t nil))))
+
+(defun my-window-tools--place-window (category frame)
+  "Create and tag a window for CATEGORY on FRAME.  Return the new window."
+  (let* ((insert (my-window-tools--insertion-neighbour category frame))
+         (new
+          (condition-case err
+              (if insert
+                  (my-window-tools--split-from-neighbour
+                   category (car insert) (cdr insert))
+                (my-window-tools--split-from-edit category frame))
+            (error
+             (log/debug-window-management
+              :fn 'my-window-tools--place-window
+              :msg "Neighbour split failed, falling back to edit"
+              :obj err)
+             (my-window-tools--split-from-edit category frame)))))
+    (when (window-live-p new)
+      (set-window-parameter new 'window-category category)
+      (set-window-parameter new 'quit-restore nil)
+      (set-window-dedicated-p new nil))
+    new))
+
+(defun my-window-tools/reallocate-frame (&optional frame)
+  "Bury frame-local buffers onto the highest-priority open pane that owns them.
+
+Only buffers already associated with FRAME (visible or in window histories)
+are considered.  Visible buffers are left in place; this pass only attaches
+them to the correct pane's history.  Reclaim of a visible buffer when its
+home pane reopens is handled by `my-window-tools--open-category'."
+  (interactive)
+  (let ((frame (or frame (selected-frame))))
+    (unless (eq (frame-parameter frame 'UI-TYPE) 'IDE)
+      (user-error "Not an IDE frame"))
+    (my-window-tools/rebuild-category-index frame)
+    (my-window-tools--sanitize-frame-histories frame)
+    (let ((seen (make-hash-table :test #'eq)))
+      (with-selected-frame frame
+        (dolist (buf (my-window-tools--frame-candidate-buffers frame))
+          (when (and (buffer-live-p buf)
+                     (not (gethash buf seen)))
+            (puthash buf t seen)
+            (let* ((cat (my-window-tools/determine-buffer-category buf))
+                   (target (and cat
+                                (my-window-tools/get-window-for-window-category
+                                 cat frame))))
+              (when (and target
+                         (not (eq (window-buffer target) buf)))
+                (my-window-tools--bury-buffers-on target (list buf))))))))))
+
+(defun my-window-tools--close-category (category frame)
+  "Close every CATEGORY window on FRAME and bury its buffers on a fallback.
+
+`edit' is refused.  Returns the destination window, or nil."
+  (if (eq category 'edit)
+      (progn
+        (message "The edit window cannot be closed")
+        nil)
+    (let ((my-window-tools--in-toggle t)
+          (my-window-tools--inhibit-retag t))
+      (my-window-tools/rebuild-category-index frame)
+      (let* ((windows (my-window-tools--windows-of-category category frame))
+             (dest (or (my-window-tools--fallback-destination category frame)
+                       (my-window-tools--index-window 'edit frame)))
+             (collected '()))
+        (dolist (win windows)
+          (my-window-tools--set-last-buffer category frame (window-buffer win))
+          (setq collected
+                (append (my-window-tools--window-history-buffers win) collected))
+          (set-window-dedicated-p win nil))
+        (when (and dest (window-live-p dest))
+          (my-window-tools--bury-buffers-on dest collected)
+          (when (or (my-window-tools--placeholder-buffer-p (window-buffer dest))
+                    (not (window-buffer dest)))
+            (let ((show (or (my-window-tools--last-buffer category frame)
+                            (car collected))))
+              (when (buffer-live-p show)
+                (set-window-buffer dest show)))))
+        (dolist (win windows)
+          (when (and (window-live-p win)
+                     (not (eq win dest)))
+            (ignore-errors (delete-window win))))
+        (my-window-tools--mark-category-closed category frame)
+        (my-window-tools/rebuild-category-index frame)
+        (my-window-tools/reallocate-frame frame)
+        (force-mode-line-update t)
+        dest))))
+
+(defun my-window-tools--open-category (category frame)
+  "Reopen CATEGORY on FRAME, restore an occupant, and reclaim matching buffers."
+  (if (my-window-tools/window-open-p category frame)
+      (let ((existing (my-window-tools--index-window category frame)))
+        (when (window-live-p existing)
+          (select-window existing))
+        existing)
+    (let ((my-window-tools--in-toggle t)
+          (my-window-tools--inhibit-retag t))
+      (my-window-tools--mark-category-open category frame)
+      (my-window-tools/rebuild-category-index frame)
+      (let ((new (my-window-tools--place-window category frame)))
+        (unless (window-live-p new)
+          (user-error "Unable to reopen the %s window" category))
+        (let ((pick (my-window-tools--pick-buffer-for-category category frame)))
+          (when (buffer-live-p pick)
+            (dolist (win (window-list frame 'no-minibuffer))
+              (when (and (not (eq win new))
+                         (eq (window-buffer win) pick))
+                (my-window-tools--step-window-back win)))
+            (set-window-buffer new pick)
+            (my-window-tools--set-last-buffer category frame pick)))
+        (set-window-parameter new 'window-category category)
+        (my-window-tools/rebuild-category-index frame)
+        (my-window-tools/reallocate-frame frame)
+        (force-mode-line-update t)
+        new))))
+
+(defun my-window-tools/toggle (window-name &optional frame)
+  "Toggle the IDE pane named WINDOW-NAME on FRAME.
+
+WINDOW-NAME is a symbol or string matching an entry in the :IDE list of
+`my-window-tools/category-map' (`edit', `data', `config', `logs', `vc',
+`terminal').  FRAME defaults to the selected frame.
+
+The edit pane cannot be closed; toggling it is a documented no-op.
+On a non-IDE frame, or during Ediff, signal `user-error'.
+
+After a successful close or open, buffers already associated with the
+frame are reallocated according to category tags and
+`my-window-tools/category-fallback'."
+  (interactive
+   (list (intern (completing-read
+                  "Toggle IDE pane: "
+                  (mapcar #'symbol-name (my-window-tools/ide-categories))
+                  nil t))))
+  (let* ((frame (or frame (selected-frame)))
+         (category (my-window-tools--normalize-category window-name)))
+    (unless (eq (frame-parameter frame 'UI-TYPE) 'IDE)
+      (user-error "Pane toggle is only available in an IDE frame"))
+    (when (my-window-tools--in-ediff-p)
+      (user-error "Pane toggle is disabled during Ediff"))
+    (unless category
+      (user-error "Unknown IDE pane: %s" window-name))
+    (cond
+     ((eq category 'edit)
+      (message "The edit window cannot be closed")
+      (my-window-tools--index-window 'edit frame))
+     ((my-window-tools/window-open-p category frame)
+      (my-window-tools--close-category category frame)
+      (message "Closed the %s pane" category))
+     (t
+      (my-window-tools--open-category category frame)
+      (message "Opened the %s pane" category)))))
+
+(defun my-window-tools/toggle-edit ()
+  "No-op toggle for the immortal edit pane."
+  (interactive)
+  (my-window-tools/toggle 'edit))
+
+(defun my-window-tools/toggle-data ()
+  "Toggle the data pane in the current IDE frame."
+  (interactive)
+  (my-window-tools/toggle 'data))
+
+(defun my-window-tools/toggle-config ()
+  "Toggle the config pane in the current IDE frame."
+  (interactive)
+  (my-window-tools/toggle 'config))
+
+(defun my-window-tools/toggle-logs ()
+  "Toggle the logs pane in the current IDE frame."
+  (interactive)
+  (my-window-tools/toggle 'logs))
+
+(defun my-window-tools/toggle-vc ()
+  "Toggle the vc pane in the current IDE frame."
+  (interactive)
+  (my-window-tools/toggle 'vc))
+
+(defun my-window-tools/toggle-terminal ()
+  "Toggle the terminal pane in the current IDE frame."
+  (interactive)
+  (my-window-tools/toggle 'terminal))
 
 ;; ----------------------------------------------------------------------------
 ;; END OF Buffer assignment to windows
@@ -796,7 +1364,8 @@ Edge cases:
                                        :obj (list :buffer buffer-or-name
                                                   :frame effective-frame
                                                   :action action))
-          (apply orig-fun buffer-or-name action frame))
+          (my-window-tools--stabilize-ide-window
+           (apply orig-fun buffer-or-name action frame)))
       ;; IDE: Proceed with category assignment and modified action.
       (let* ((buffer (get-buffer buffer-or-name))                                 ; Get buffer for category check.
              (category
@@ -825,7 +1394,8 @@ Edge cases:
                 ;; else it is a simple category assignment. 
                 (my-window-tools/process-display-action action category))))
           
-          (apply orig-fun buffer-or-name (or new-action action) frame))))))
+          (my-window-tools--stabilize-ide-window
+           (apply orig-fun buffer-or-name (or new-action action) frame)))))))
 
 (defun display-buffer-in-category-window (buffer alist)
   "Display BUFFER in a window according to its category from ALIST.
@@ -892,6 +1462,7 @@ Edge cases:
                                                     :category (window-parameter
                                                                target-window 'window-category)))
             (set-window-buffer target-window buffer)
+            (my-window-tools--stabilize-ide-window target-window)
             target-window)
         ;; No match or default: Fallback to pop-up and tag the new window.
         (log/debug-window-management :fn 'display-buffer-in-category-window
@@ -899,10 +1470,19 @@ Edge cases:
                                      :obj (list :category category :frame frame))
         (let ((new-window (display-buffer-pop-up-window buffer alist)))
           (when new-window
-            (set-window-parameter new-window 'window-category category)
-            (log/debug-window-management :fn 'display-buffer-in-category-window
-                                         :msg "Created and tagged new window"
-                                         :obj (list :new-window new-window :category category)))
+            ;; Never tag a pop-up with a category the user has closed; that
+            ;; would resurrect the pane through the back door.
+            (let ((tag (if (memq category
+                                 (frame-parameter frame 'ide-closed-categories))
+                           my-window-tools/default-tag
+                         category)))
+              (set-window-parameter new-window 'window-category tag)
+              (my-window-tools--stabilize-ide-window new-window)
+              (my-window-tools/rebuild-category-index frame)
+              (log/debug-window-management
+               :fn 'display-buffer-in-category-window
+               :msg "Created and tagged new window"
+               :obj (list :new-window new-window :category tag))))
           new-window)))))
 
 (defun my-window-tools/determine-buffer-category (buffer)
@@ -1139,6 +1719,121 @@ Edge cases & considerations:
 (advice-add 'split-window
             :around #'my-window-tools/split-window-with-category-inherit)
 
+(defun my-window-tools--stabilize-ide-window (window)
+  "Keep an IDE category window from being treated as a temporary pop-up.
+
+`display-buffer' records a `quit-restore' parameter after the display
+action returns.  For log-edit / vc-log that parameter tells `quit-window'
+to delete the window when C-c C-c finishes the commit, which then hit
+`delete-window' advice and closed the whole vc pane.
+
+Clearing `quit-restore' (and `dedicated') on tagged IDE windows makes
+`quit-window' and `kill-buffer' fall back to the previous buffer
+instead of destroying the pane."
+  (when (and (window-live-p window)
+             (eq (frame-parameter (window-frame window) 'UI-TYPE) 'IDE)
+             (window-parameter window 'window-category))
+    (set-window-parameter window 'quit-restore nil)
+    (set-window-parameter window 'no-delete-other-windows t)
+    (set-window-dedicated-p window nil))
+  window)
+
+(defconst my-window-tools/explicit-delete-commands
+  '(delete-window
+    delete-other-windows
+    my-window-tools/mouse-delete-window-confirmation
+    my-window-tools/toggle
+    my-window-tools/toggle-edit
+    my-window-tools/toggle-data
+    my-window-tools/toggle-config
+    my-window-tools/toggle-logs
+    my-window-tools/toggle-vc
+    my-window-tools/toggle-terminal)
+  "Commands that mean the user asked to remove a pane, not a transient buffer.")
+
+(defun my-window-tools--user-initiated-window-delete-p ()
+  "Return non-nil when the current command is an explicit pane-close."
+  (memq this-command my-window-tools/explicit-delete-commands))
+
+(defun my-window-tools--preserve-ide-window (window)
+  "Keep WINDOW and show its previous or default occupant instead of deleting it."
+  (when (window-live-p window)
+    (my-window-tools--sanitize-window-history window)
+    (let* ((cat (window-parameter window 'window-category))
+           (current (window-buffer window))
+           (fallback
+            (or (cl-loop for entry in (window-prev-buffers window)
+                         for buf = (car-safe entry)
+                         when (and (buffer-live-p buf)
+                                   (not (eq buf current)))
+                         return buf)
+                (and cat (my-window-tools--default-occupant cat))
+                (get-buffer "*scratch*"))))
+      (when (and fallback (not (eq fallback current)))
+        (set-window-buffer window fallback))
+      (my-window-tools--stabilize-ide-window window)))
+  window)
+
+(defun my-window-tools/delete-window-advice (orig-fun &optional window)
+  "Keep the IDE closed-set in sync when a tagged window is deleted.
+
+Inside a toggle the work has already been done, so ORIG-FUN is called
+unmodified.  Deleting the last `edit' window is refused.
+
+An explicit user command (`delete-window', mode-line click, pane toggle)
+closes the whole category.  A package teardown such as `log-edit-done'
+or `quit-window' after C-c C-c is not treated as a pane close: the
+window is kept and the previous buffer (usually `*vc-dir*') is restored."
+  (let ((window (or window (selected-window))))
+    (if (or my-window-tools--in-toggle
+            my-window-tools--inhibit-retag
+            (not (window-live-p window))
+            (not (eq (frame-parameter (window-frame window) 'UI-TYPE) 'IDE)))
+        (funcall orig-fun window)
+      (let* ((frame (window-frame window))
+             (cat (window-parameter window 'window-category)))
+        (cond
+         ((eq cat 'edit)
+          (if (<= (length (my-window-tools--windows-of-category 'edit frame)) 1)
+              (progn
+                (message "The edit window cannot be closed")
+                window)
+            (funcall orig-fun window)))
+         (cat
+          (if (my-window-tools--user-initiated-window-delete-p)
+              (my-window-tools--close-category cat frame)
+            (my-window-tools--preserve-ide-window window)))
+         (t
+          (funcall orig-fun window)))))))
+
+(advice-add 'delete-window :around #'my-window-tools/delete-window-advice)
+
+(defun my-window-tools/delete-other-windows-advice (orig-fun &rest args)
+  "Mark every non-edit category closed when `delete-other-windows' runs in an IDE frame."
+  (if (or my-window-tools--in-toggle
+          my-window-tools--inhibit-retag
+          (not (my-window-tools--in-ide-frame-p)))
+      (apply orig-fun args)
+    (let ((frame (selected-frame)))
+      (dolist (cat (my-window-tools/ide-categories))
+        (unless (eq cat 'edit)
+          (when (my-window-tools/window-open-p cat frame)
+            (my-window-tools--close-category cat frame))))
+      (my-window-tools/rebuild-category-index frame)
+      (force-mode-line-update t)
+      (selected-window))))
+
+(advice-add 'delete-other-windows :around #'my-window-tools/delete-other-windows-advice)
+
+(defun my-window-tools/winner-sync-advice (&rest _)
+  "Rebuild the closed-category set after Winner restores a configuration."
+  (when (my-window-tools--in-ide-frame-p)
+    (my-window-tools/sync-closed-set-from-windows)))
+
+(with-eval-after-load 'winner
+  (advice-add 'winner-undo :after #'my-window-tools/winner-sync-advice)
+  (advice-add 'winner-redo :after #'my-window-tools/winner-sync-advice))
+
 ;; Configure display-buffer-alist
 ;;   ------------------------------
 ;; the below object controls how new buffers are assigned to windows in Emacs.
@@ -1158,10 +1853,27 @@ Edge cases & considerations:
                  (inhibit-same-window . nil)                                      ; Allow same if matches
                  (pop-up-windows . nil)                                           ; Stop popup behaviour
                  (dedicated . nil)                                                ; Ensure the buffer doesn't capture the window
-                 (reusable-frames . visible)))))                                  ; Limit scope
+                 (reusable-frames . visible)
+                 (window-parameters . ((quit-restore . nil)
+                                       (no-delete-other-windows . t)))))))
 
+(defun my-window-tools/restore-vc-dir-after-checkin (&rest _)
+  "After a VC check-in, keep the vc pane and show `*vc-dir*' again.
 
-(add-hook 'vc-checkin-hook 'vc-dir-refresh)                                       ; ensure the window layout is refreshed after check-in. 
+`log-edit-done' (C-c C-c) kills the commit buffer and may try to
+delete the window that showed it.  This hook puts `*vc-dir*' back
+in the vc category window so the pane survives the commit."
+  (when (my-window-tools--in-ide-frame-p)
+    (let* ((frame (selected-frame))
+           (win (my-window-tools/get-window-for-window-category 'vc frame))
+           (dir (get-buffer "*vc-dir*")))
+      (when (and (window-live-p win) (buffer-live-p dir))
+        (unless (eq (window-buffer win) dir)
+          (set-window-buffer win dir))
+        (my-window-tools--stabilize-ide-window win)))))
+
+(add-hook 'vc-checkin-hook #'my-window-tools/restore-vc-dir-after-checkin)
+(add-hook 'vc-checkin-hook #'vc-dir-refresh) 
 
 (defun my-window-tools/with-temporary-display-buffer-settings (settings &rest body)
   "Execute BODY with temporary DISPLAY-BUFFER-ALIST settings.
@@ -1210,14 +1922,15 @@ TAG must be one of the symbols defined in the :IDE entry of
                                    ide-symbols nil t)))
      (list (intern chosen))))
   (set-window-parameter (selected-window) 'window-category tag)
+  (my-window-tools/rebuild-category-index)
   (message "Window category set to %s" tag)
   (log/debug-window-management :fn 'my-window-tools/set-ide-category
                                :msg "Set active window tag. "
                                :obj (list :tag tag)))
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Ediff Support
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (with-eval-after-load 'ediff
   (defun my-window-tools/ediff-setup-windows-advice (orig-fun &rest args)

@@ -14,6 +14,11 @@
 ;; design); only the control decisions are per-frame.
 ;;
 ;; Strong IDE-frame + file-view guards are retained.
+;;
+;; 2026-08-23: Hardened against the classic dframe "dead frame" error
+;; (wrong-type-argument frame-live-p #<dead frame IDE: …>).
+;; See my-speedbar--safe-attached-frame and the tightened
+;; my-speedbar--in-ide-frame-p.
 
 ;;; Code:
 
@@ -61,16 +66,61 @@ Returns VALUE."
 (defvar my-speedbar--divert-message-shown nil
   "Internal flag to avoid repeating pinned-mode messages.")
 
+;;;;; Safe frame helpers (new – protect against dead-frame errors)
+
+(defun my-speedbar--safe-attached-frame ()
+  "Return the frame that dframe/speedbar considers attached, but only if it is live.
+Never returns a dead frame object.  This is the primary defence against
+the error:
+
+  (wrong-type-argument frame-live-p #<dead frame IDE: …>)
+
+which originates in `dframe-select-attached-frame' /
+`speedbar-reconfigure-keymaps'."
+  (let ((f (ignore-errors
+             (or (and (fboundp 'dframe-attached-frame)
+                      (dframe-attached-frame))
+                 (and (boundp 'speedbar-frame) speedbar-frame)
+                 (and (boundp 'sr-speedbar-frame) sr-speedbar-frame)))))
+    (and f (frame-live-p f) f)))
+
+(defun my-speedbar--speedbar-context-live-p ()
+  "Return non-nil when it is safe to call speedbar update / keymap functions.
+Requires both a live attached frame (if any) *and* a live speedbar buffer."
+  (let ((sb-buf (or (and (boundp 'speedbar-buffer) speedbar-buffer)
+                    (get-buffer "*speedbar*")
+                    (and (boundp 'sr-speedbar-buffer) sr-speedbar-buffer))))
+    (and (or (null (my-speedbar--safe-attached-frame)) ; no attached frame is fine for sr-speedbar
+             (my-speedbar--safe-attached-frame))
+         sb-buf
+         (buffer-live-p sb-buf))))
+
 ;;;;; Helpers
 
 (defun my-speedbar--in-ide-frame-p ()
-  "Return non-nil if the current frame is the IDE frame (or the dedicated Speedbar frame)."
-  (let ((name (frame-parameter nil 'name))
-        (ui-type (frame-parameter nil 'UI-TYPE)))
-    (or (eq ui-type 'IDE)
-        (string-prefix-p "IDE:" (or name ""))
-        (and (boundp 'speedbar-frame) (eq (selected-frame) speedbar-frame))
-        (and (boundp 'sr-speedbar-window) sr-speedbar-window))))
+  "Return non-nil if the *selected* frame is a live IDE frame (or dedicated Speedbar).
+
+Requires the selected frame itself to be live.  The previous version could
+return non-nil after the IDE frame had been deleted (via the
+`sr-speedbar-window' fallback), which allowed advice to run and then hit
+a dead frame inside dframe."
+  (let* ((frame (selected-frame))
+         (name  (and (frame-live-p frame) (frame-parameter frame 'name)))
+         (ui-type (and (frame-live-p frame) (frame-parameter frame 'UI-TYPE))))
+    (and (frame-live-p frame)
+         (or (eq ui-type 'IDE)
+             (and (stringp name) (string-prefix-p "IDE:" name))
+             ;; Accept the dedicated speedbar frame only when it is the
+             ;; currently selected (and live) frame.
+             (and (boundp 'speedbar-frame)
+                  (eq frame speedbar-frame)
+                  (frame-live-p speedbar-frame))
+             ;; Weaker signal: sr-speedbar window exists *and* the current
+             ;; frame still looks like an IDE frame.
+             (and (boundp 'sr-speedbar-window)
+                  sr-speedbar-window
+                  (or (eq ui-type 'IDE)
+                      (and (stringp name) (string-prefix-p "IDE:" name))))))))
 
 (defun my-speedbar--in-file-view-p ()
   "Return non-nil if Speedbar is currently in file view mode."
@@ -139,7 +189,10 @@ Returns VALUE."
 (defun my-speedbar/apply-pinning-for-file (FILE)
   "Apply project pinning for FILE on the selected frame.
 When pinning is active, switch Speedbar to the project root of FILE
-(if different) and expand to the file."
+(if different) and expand to the file.
+
+Hardened: never calls `speedbar-update-contents' unless the speedbar
+context (attached frame + buffer) is still live."
   (when (and (my-speedbar--get-pin-project-root)
              (my-speedbar--in-file-view-p)
              (my-speedbar--in-ide-frame-p)
@@ -150,7 +203,9 @@ When pinning is active, switch Speedbar to the project root of FILE
            (sb-buf (or (and (boundp 'speedbar-buffer) speedbar-buffer)
                        (get-buffer "*speedbar*")
                        (and (boundp 'sr-speedbar-buffer) sr-speedbar-buffer))))
-      (when (and sb-buf (buffer-live-p sb-buf))
+      (when (and sb-buf
+                 (buffer-live-p sb-buf)
+                 (my-speedbar--speedbar-context-live-p))   ; ← new guard
         (with-current-buffer sb-buf
           (let ((current-root (expand-file-name (or default-directory "")))
                 (new-root (expand-file-name project-root)))
@@ -221,11 +276,16 @@ When pinning is active, switch Speedbar to the project root of FILE
 ;;;;; Update contents protection
 
 (defun my-speedbar/speedbar-update-contents-advice (orig-fun &rest args)
-  "Protect pinning during updates, but allow project switches."
+  "Protect pinning during updates, but allow project switches.
+
+Hardened: the whole body is skipped if the attached frame or speedbar
+buffer is no longer live.  This prevents the nested call into
+`dframe-select-attached-frame' from seeing a dead frame object."
   (if (and (my-speedbar--get-pin-project-root)
            (my-speedbar--get-current-file)
            (my-speedbar--in-file-view-p)
-           (my-speedbar--in-ide-frame-p))
+           (my-speedbar--in-ide-frame-p)
+           (my-speedbar--speedbar-context-live-p))          ; ← new guard
       (let ((sb-buf (or (and (boundp 'speedbar-buffer) speedbar-buffer)
                         (get-buffer "*speedbar*")
                         (and (boundp 'sr-speedbar-buffer) sr-speedbar-buffer)))
@@ -235,7 +295,10 @@ When pinning is active, switch Speedbar to the project root of FILE
             ;; Do NOT force the old root here any more.
             ;; Let apply-pinning-for-file decide based on the current file.
             (setq result (apply orig-fun args))
-            (my-speedbar/apply-pinning-for-file (my-speedbar--get-current-file))))
+            ;; Re-apply pinning only if the context is still healthy
+            ;; (guards inside apply-pinning-for-file also protect us).
+            (when (my-speedbar--speedbar-context-live-p)
+              (my-speedbar/apply-pinning-for-file (my-speedbar--get-current-file)))))
         result)
     (apply orig-fun args)))
 
@@ -254,6 +317,26 @@ When pinning is active, switch Speedbar to the project root of FILE
           (when (and (my-speedbar--get-current-file) (my-speedbar--in-file-view-p))
             (my-speedbar/apply-pinning-for-file (my-speedbar--get-current-file))))
       (message "🔓 Project pinning DISABLED – Speedbar behaves normally"))))
+
+;;;;; Cleanup on IDE frame deletion (new)
+
+(defun my-speedbar--cleanup-on-frame-delete (frame)
+  "Clear stale dframe/speedbar frame references when an IDE frame is deleted.
+Prevents a deleted frame object from remaining in `dframe-attached-frame'
+or `speedbar-frame' and later causing a wrong-type-argument error."
+  (when (and (frame-parameter frame 'UI-TYPE)
+             (eq (frame-parameter frame 'UI-TYPE) 'IDE))
+    (when (and (boundp 'dframe-attached-frame)
+               (eq dframe-attached-frame frame))
+      (setq dframe-attached-frame nil))
+    (when (and (boundp 'speedbar-frame)
+               (eq speedbar-frame frame))
+      (setq speedbar-frame nil))
+    (when (and (boundp 'sr-speedbar-frame)
+               (eq sr-speedbar-frame frame))
+      (setq sr-speedbar-frame nil))))
+
+(add-hook 'delete-frame-functions #'my-speedbar--cleanup-on-frame-delete)
 
 (provide 'speedbar-pinning)
 ;;; speedbar-pinning.el ends here

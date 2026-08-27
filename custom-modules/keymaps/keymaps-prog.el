@@ -21,9 +21,9 @@
            :msg "Starting load of the keymaps-prog module."
            :obj t)
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Comments map (C-c c)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defgroup custom-comment-keymaps ()
   "Comment formatting keymaps."
@@ -55,9 +55,9 @@
 (with-eval-after-load 'which-key
   (which-key-add-key-based-replacements my-custom-prefix-keys/comment "Comments"))
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Errors / Diagnostics (C-c e) – installed on prog-mode-map
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (with-eval-after-load "prog-mode"
   ;; Standardised navigation (n/p preferred over the mixed n/l that
@@ -85,9 +85,9 @@
   (which-key-add-key-based-replacements
     "C-c e" "Errors"))
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Activation for prog-mode
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defun keymaps-prog/activate-in-prog-mode ()
   "Activate shared programming keymaps in the current buffer."

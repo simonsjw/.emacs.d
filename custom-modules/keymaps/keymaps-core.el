@@ -42,9 +42,9 @@
            :msg "Starting load of the keymaps-core module."
            :obj t)
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; which-key title helpers
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defun keymaps-core/add-titles (keymap &rest key-title-pairs)
   "Register which-key titles for KEYMAP.
@@ -60,9 +60,9 @@ Example:
              (fboundp 'which-key-add-keymap-based-replacements))
     (apply #'which-key-add-keymap-based-replacements keymap key-title-pairs)))
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Activation helpers (called from mode hooks / language files)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defun keymaps-core/activate-comments ()
   "Activate the shared comments keymap in the current buffer.
@@ -80,9 +80,9 @@ Most of these already live on prog-mode-map; this is a safety net."
   ;; This helper exists so language files can call a single entry point.
   nil)
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Global which-key titles that apply across the whole system
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (with-eval-after-load 'which-key
   ;; These are registered early so that even before the individual

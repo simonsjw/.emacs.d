@@ -26,24 +26,29 @@
            :msg "Starting load of the keymaps-menus module."
            :obj t)
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Helpers
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defun keymaps-menus/install-menu-bar (slot title menu-def)
-  "Install MENU-DEF on the menu-bar under SLOT if not already present.
+  "Install MENU-DEF on the menu-bar under SLOT.
 SLOT is a symbol used as the fake menu-bar key (e.g. `WINDOWS-FNS').
-TITLE is the visible menu-bar label.  MENU-DEF is an easy-menu list."
-  (unless (lookup-key global-map (vector 'menu-bar slot))
-    (let ((map (easy-menu-create-menu title menu-def)))
+TITLE is the visible menu-bar label.  MENU-DEF is an easy-menu list.
+
+If SLOT is already present the menu is replaced so a reload picks up
+new items (for example the IDE pane toggles)."
+  (let ((map (easy-menu-create-menu title menu-def))
+        (existing (lookup-key global-map (vector 'menu-bar slot))))
+    (if existing
+        (define-key global-map (vector 'menu-bar slot) (cons title map))
       (define-key-after (lookup-key global-map [menu-bar])
         (vector slot)
         (cons title map)
         t))))
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Comments (C-c c)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defvar my-custom-menus/comment
   '("Comments"
@@ -71,9 +76,9 @@ TITLE is the visible menu-bar label.  MENU-DEF is an easy-menu list."
      :keys "C-c c RET"])
   "Menu for comment-related functions.")
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Windows (C-c w)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defvar my-custom-menus/windows
   '("Windows"
@@ -92,12 +97,66 @@ TITLE is the visible menu-bar label.  MENU-DEF is an easy-menu list."
     "---"
     ["Layout History" :enable nil]
     ["Undo Window Change" winner-undo :keys "C-c w u"]
-    ["Redo Window Change" winner-redo :keys "C-c w r"])
+    ["Redo Window Change" winner-redo :keys "C-c w r"]
+    "---"
+    ["IDE panes" :enable nil]
+    ["Edit"
+     my-window-tools/toggle-edit
+     :style toggle
+     :selected t
+     :active nil
+     :keys "C-c w t e"
+     :help "The edit window cannot be closed"]
+    ["Data"
+     my-window-tools/toggle-data
+     :style toggle
+     :selected (and (fboundp 'my-window-tools/window-open-p)
+                    (my-window-tools/window-open-p 'data))
+     :active (and (fboundp 'my-window-tools--in-ide-frame-p)
+                  (my-window-tools--in-ide-frame-p))
+     :keys "C-c w t d"
+     :help "Show or hide the data pane"]
+    ["Config"
+     my-window-tools/toggle-config
+     :style toggle
+     :selected (and (fboundp 'my-window-tools/window-open-p)
+                    (my-window-tools/window-open-p 'config))
+     :active (and (fboundp 'my-window-tools--in-ide-frame-p)
+                  (my-window-tools--in-ide-frame-p))
+     :keys "C-c w t c"
+     :help "Show or hide the config pane"]
+    ["Logs"
+     my-window-tools/toggle-logs
+     :style toggle
+     :selected (and (fboundp 'my-window-tools/window-open-p)
+                    (my-window-tools/window-open-p 'logs))
+     :active (and (fboundp 'my-window-tools--in-ide-frame-p)
+                  (my-window-tools--in-ide-frame-p))
+     :keys "C-c w t l"
+     :help "Show or hide the logs pane"]
+    ["VC"
+     my-window-tools/toggle-vc
+     :style toggle
+     :selected (and (fboundp 'my-window-tools/window-open-p)
+                    (my-window-tools/window-open-p 'vc))
+     :active (and (fboundp 'my-window-tools--in-ide-frame-p)
+                  (my-window-tools--in-ide-frame-p))
+     :keys "C-c w t v"
+     :help "Show or hide the vc pane"]
+    ["Terminal"
+     my-window-tools/toggle-terminal
+     :style toggle
+     :selected (and (fboundp 'my-window-tools/window-open-p)
+                    (my-window-tools/window-open-p 'terminal))
+     :active (and (fboundp 'my-window-tools--in-ide-frame-p)
+                  (my-window-tools--in-ide-frame-p))
+     :keys "C-c w t s"
+     :help "Show or hide the terminal pane"])
   "Menu for window functions.")
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; UI / Layout (C-c i)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defvar my-custom-menus/ui
   '("UI"
@@ -121,9 +180,9 @@ TITLE is the visible menu-bar label.  MENU-DEF is an easy-menu list."
      :help "Clean the focused window's buffer history"])
   "Menu for UI / layout functions.")
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Errors / Diagnostics (C-c e)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defvar my-custom-menus/flymake
   '("Errors"
@@ -151,9 +210,9 @@ TITLE is the visible menu-bar label.  MENU-DEF is an easy-menu list."
      :keys "C-c e D"])
   "Menu for linting / Flymake functions.")
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Project (C-c p)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defvar my-custom-menus/project
   '("Project"
@@ -172,9 +231,9 @@ TITLE is the visible menu-bar label.  MENU-DEF is an easy-menu list."
      :help "cd the vterm buffer to the current file's directory"])
   "Menu for shared project commands.")
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; LLM (C-c m)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defvar my-custom-menus/llm
   '("LLM"
@@ -189,9 +248,9 @@ TITLE is the visible menu-bar label.  MENU-DEF is an easy-menu list."
     ["Start Qwen session" my-llm/aidermacs-start-qwen :keys "C-c m q"])
   "Menu for LLM / Aidermacs commands.")
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Org (C-c C-o)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defvar my-custom-menus/org
   '("Org"
@@ -208,9 +267,9 @@ TITLE is the visible menu-bar label.  MENU-DEF is an easy-menu list."
     ["Roam: toggle buffer" org-roam-buffer-toggle :keys "C-c n l"])
   "Menu for the strengthened Org keymap.")
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Diff HL / VC (C-x v h …)
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defvar my-custom-menus/diff-hl
   '("Diff Highlights"
@@ -244,9 +303,9 @@ TITLE is the visible menu-bar label.  MENU-DEF is an easy-menu list."
     ["Set reference rev" diff-hl-set-reference-rev])
   "Menu for diff-hl navigation, operations and modes.")
 
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 ;;; Installation
-;;; ----------------------------------------------------------------------
+;; ----------------------------------------------------------------------
 
 (defun keymaps-menus/install-global-menus ()
   "Install the shared menus on the menu-bar."

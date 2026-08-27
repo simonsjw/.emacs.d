@@ -173,6 +173,38 @@ interface for templates and standard directory/string prompts."
       (message "Project %s created successfully in %s."
                project-name parent-dir))))
 
+
+(defun my-project/query-replace-regexp-one-by-one (regexp to-string)
+  "Find and replace across large projects.
+
+Like `project-query-replace-regexp' but process files sequentially.
+Open each file, run an interactive query-replace, save if modified,
+then kill the buffer before moving to the next file.
+`REGEXP' is the expression to find and `TO-STRING' is the string replacement."
+  (interactive
+   (let ((args (query-replace-read-args
+                "Query replace regexp in project (one file at a time)" t t)))
+     (list (nth 0 args) (nth 1 args))))
+  (let* ((pr (project-current t))
+         (files (project-files pr))
+         (case-fold-search nil))          ; keep case-sensitive like the original
+    (dolist (file files)
+      (when (and (file-regular-p file)
+                 (not (file-symlink-p file)))
+        (let ((buf (find-file-noselect file)))
+          (with-current-buffer buf
+            (goto-char (point-min))
+            (perform-replace regexp to-string
+                             t               ; query
+                             t               ; regexp-flag
+                             nil             ; delimited
+                             nil nil
+                             (point-min) (point-max))
+            (when (buffer-modified-p)
+              (save-buffer)))
+          (kill-buffer buf)
+          (message "Finished %s" file))))))
+
 (log/debug :fn 'project-support
            :msg "Ending load of the project-support module."
            :obj t)
