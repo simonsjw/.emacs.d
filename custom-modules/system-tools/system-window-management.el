@@ -748,10 +748,22 @@ Returns a live window object, or nil if no open pane on the chain exists
       (set-frame-parameter frame 'ide-last-buffers
                            (cons (cons category buffer) alist)))))
 
+(defun my-window-tools--buffer-named (name)
+  "Return a live buffer called NAME, allowing a uniquify suffix.
+
+`*vc-dir*' is often renamed to `*vc-dir*<project>' so an exact
+`get-buffer' miss would skip restoring the vc pane after a commit."
+  (or (get-buffer name)
+      (cl-loop with prefix = (regexp-quote name)
+               for buf in (buffer-list)
+               when (string-match-p (concat "\\`" prefix "\\(<[^>]*>\\)?\\'")
+                                    (buffer-name buf))
+               return buf)))
+
 (defun my-window-tools--default-occupant (category)
   "Return the live default occupant buffer for CATEGORY, or nil."
   (let ((name (cdr (assq category my-window-tools/default-occupants))))
-    (and name (get-buffer name))))
+    (and name (my-window-tools--buffer-named name))))
 
 (defun my-window-tools--window-history-buffers (window)
   "Return live buffers stored in WINDOW including its current buffer."
@@ -1020,6 +1032,31 @@ home pane reopens is handled by `my-window-tools--open-category'."
               (when (and target
                          (not (eq (window-buffer target) buf)))
                 (my-window-tools--bury-buffers-on target (list buf))))))))))
+
+(defun my-window-tools--collapse-extra-category-windows (category frame)
+  "Delete surplus windows tagged CATEGORY on FRAME, keeping one pane.
+
+`log-edit-show-files' splits the vc pane to list the files in the
+commit.  After C-c C-c both windows are preserved and both show
+`*vc-dir*'.  This helper folds them back to the spatially first
+window of that category.
+
+Returns the surviving window, or nil."
+  (let ((windows (my-window-tools--windows-of-category category frame)))
+    (cond
+     ((null windows) nil)
+     ((null (cdr windows)) (car windows))
+     (t
+      (let ((my-window-tools--in-toggle t)
+            (my-window-tools--inhibit-retag t)
+            (keep (cl-find-if (lambda (w) (memq w windows))
+                              (my-window-tools/sorted-window-list frame))))
+        (dolist (win windows)
+          (when (and (window-live-p win) (not (eq win keep)))
+            (set-window-dedicated-p win nil)
+            (ignore-errors (delete-window win))))
+        (my-window-tools/rebuild-category-index frame)
+        keep)))))
 
 (defun my-window-tools--close-category (category frame)
   "Close every CATEGORY window on FRAME and bury its buffers on a fallback.
@@ -1780,9 +1817,12 @@ instead of destroying the pane."
 Inside a toggle the work has already been done, so ORIG-FUN is called
 unmodified.  Deleting the last `edit' window is refused.
 
-An explicit user command (`delete-window', mode-line click, pane toggle)
-closes the whole category.  A package teardown such as `log-edit-done'
-or `quit-window' after C-c C-c is not treated as a pane close: the
+An extra split of the same category (the usual leftover from
+`log-edit-show-files') is deleted as a normal window: the category
+stays open on the remaining pane.  Closing the *last* window of a
+category is a real pane-close only when the user asked for it
+(`delete-window', mode-line click, pane toggle).  Package teardown
+such as `log-edit-done' on that last pane is not a pane-close: the
 window is kept and the previous buffer (usually `*vc-dir*') is restored."
   (let ((window (or window (selected-window))))
     (if (or my-window-tools--in-toggle
@@ -1800,9 +1840,16 @@ window is kept and the previous buffer (usually `*vc-dir*') is restored."
                 window)
             (funcall orig-fun window)))
          (cat
-          (if (my-window-tools--user-initiated-window-delete-p)
-              (my-window-tools--close-category cat frame)
-            (my-window-tools--preserve-ide-window window)))
+          (let ((count (length (my-window-tools--windows-of-category cat frame))))
+            (cond
+             ((> count 1)
+              (let ((result (funcall orig-fun window)))
+                (my-window-tools/rebuild-category-index frame)
+                result))
+             ((my-window-tools--user-initiated-window-delete-p)
+              (my-window-tools--close-category cat frame))
+             (t
+              (my-window-tools--preserve-ide-window window)))))
          (t
           (funcall orig-fun window)))))))
 
@@ -1858,22 +1905,31 @@ window is kept and the previous buffer (usually `*vc-dir*') is restored."
                                        (no-delete-other-windows . t)))))))
 
 (defun my-window-tools/restore-vc-dir-after-checkin (&rest _)
-  "After a VC check-in, keep the vc pane and show `*vc-dir*' again.
+  "After a VC check-in, keep a single vc pane showing `*vc-dir*'.
 
-`log-edit-done' (C-c C-c) kills the commit buffer and may try to
-delete the window that showed it.  This hook puts `*vc-dir*' back
-in the vc category window so the pane survives the commit."
+`log-edit-show-files' splits the vc pane.  C-c C-c then used to leave
+both halves showing `*vc-dir*'.  Collapse those extras, put `*vc-dir*'
+in the remaining pane, and clear `quit-restore' so a later quit cannot
+delete it."
   (when (my-window-tools--in-ide-frame-p)
     (let* ((frame (selected-frame))
-           (win (my-window-tools/get-window-for-window-category 'vc frame))
-           (dir (get-buffer "*vc-dir*")))
+           (win (or (my-window-tools--collapse-extra-category-windows 'vc frame)
+                    (my-window-tools/get-window-for-window-category 'vc frame)))
+           (dir (my-window-tools--buffer-named "*vc-dir*")))
       (when (and (window-live-p win) (buffer-live-p dir))
         (unless (eq (window-buffer win) dir)
           (set-window-buffer win dir))
-        (my-window-tools--stabilize-ide-window win)))))
+        (my-window-tools--stabilize-ide-window win)
+        (my-window-tools/rebuild-category-index frame)))))
+
+(defun my-window-tools/after-log-edit-done (&rest _)
+  "Run vc-pane cleanup after `log-edit-done' has finished tearing down buffers."
+  (when (my-window-tools--in-ide-frame-p)
+    (run-at-time 0 nil #'my-window-tools/restore-vc-dir-after-checkin)))
 
 (add-hook 'vc-checkin-hook #'my-window-tools/restore-vc-dir-after-checkin)
-(add-hook 'vc-checkin-hook #'vc-dir-refresh) 
+(add-hook 'vc-checkin-hook #'vc-dir-refresh)
+(advice-add 'log-edit-done :after #'my-window-tools/after-log-edit-done) 
 
 (defun my-window-tools/with-temporary-display-buffer-settings (settings &rest body)
   "Execute BODY with temporary DISPLAY-BUFFER-ALIST settings.
