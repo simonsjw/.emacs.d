@@ -1,0 +1,16 @@
+* system-tools
+
+One line per file.  =keymap-tools.el= and =vtable-tools.el= are unloaded (on load-path only).  =custom-loadbalancer-support.el= lives under =custom-modules/= (not this directory) and is also unloaded; see =docs/MAP.org=.
+
+- =logging-config.el= — ~log/debug~ and friends via ~warnings.el~
+- =system-tools.el= — loader (~provide~ of the feature); dictionary and SSH helpers
+- =system-env-tools.el= — env, hash, and string helpers
+- =system-disk-tools.el= — dired, image, and filesystem helpers
+- =system-buffer-tools.el= — buffer and in-buffer helpers
+- =system-frame-tools.el= — frame, fringe/margin, and ~ss~ port helpers
+- =system-window-management.el= — loader (~provide~ of the feature); category maps
+- =system-window-helpers.el= — tagging helpers and ~log/debug-window-management~
+- =system-window-panes.el= — pane toggle, bury, and reallocation
+- =system-window-display.el= — ~display-buffer~ advice and Ediff
+- =keymap-tools.el= — unloaded; keymap inspection helpers on load-path
+- =vtable-tools.el= — unloaded; paginated ~vtable~ helpers on load-path

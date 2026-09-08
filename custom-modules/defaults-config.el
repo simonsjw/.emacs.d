@@ -1,18 +1,24 @@
-;;; defaults-config.el --- Defaults for the Emacs setup config  -*- lexical-binding: t; -*-
+;;; defaults-config.el --- Baseline Emacs settings, hunspell/jinx, exec-path. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2023 Simon Watson
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
 
 ;;; Commentary:
+
+;; Baseline Emacs defaults: coding systems, exec-path-from-shell,
+;; hunspell/jinx spelling (Australian English), and other global
+;; settings.  Inspired in part by Charles Choi and Mickey Petersen.
+;; Load from `init.el' after `logging-config' and `system-tools'.
 ;;
-;; Some of these settings were inspired by the following:
-;; - Charles Choi: "Surprise and Emacs Defaults"
-;;   http://yummymelon.com/devnull/surprise-and-emacs-defaults.html
-;; - Mickey Petersen: "Mastering Emacs",
-;;   especially "Demystifying Emacs’s Window Manager"
-;;   https://www.masteringemacs.org/article/demystifying-emacs-window-manager
+;; Map:
+;;   Feature:    defaults-config
+;;   Load-after: logging-config system-tools
+;;   Load-phase: defaults
+;;   Keymaps:    none
+;;   Docs:       docs/defaults-config.org
+;;   OS:         hunspell
 
 ;;; Code:
 

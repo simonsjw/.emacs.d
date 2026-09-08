@@ -1,0 +1,19 @@
+* prog-mode
+
+One line per file.  =lang-c.el= is unloaded (not required from =init.el=).
+
+- =lang-prog-mode.el= — shared ~prog-mode~ setup for language modules
+- =lang-bash.el= — Bash Tree-sitter, shfmt, shellcheck, and eglot
+- =lang-matlab.el= — MATLAB mode and language-server wiring
+- =lang-docker.el= — Dockerfile and docker-compose editing
+- =lang-lisp.el= — Emacs Lisp, Common Lisp, Clojure, Scheme
+- =lang-python.el= — loader (~provide~ of the feature); only ~python-ts-mode-hook~
+- =lang-python-format.el= — Ruff / Apheleia formatting (~format-setup~)
+- =lang-python-eglot.el= — Eglot / Pyrefly / pyvenv (~eglot-setup~)
+- =lang-python-menus.el= — Tools menu and context menu (~menus-setup~)
+- =lang-q.el= — Kdb/Q editing; loads q-loadbalancer
+- =lang-rust.el= — Rustic plus rust-analyzer via Eglot
+- =lang-systemd.el= — systemd unit editing via systemd-mode
+- =lang-vega.el= — Vega-view visualisations
+- =lang-web.el= — apache-mode, robots-txt-mode, and web-mode
+- =lang-c.el= — unloaded; C/C++ support not required from init

@@ -1,4 +1,4 @@
-;;; speedbar-config.el --- Core Speedbar configuration and faces -*- lexical-binding: t; -*-
+;;; speedbar-config.el --- Core Speedbar settings and faces. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
@@ -6,17 +6,34 @@
 ;; Author: Simon Watson
 
 ;;; Commentary:
-;; All basic customizations, variables, and faces for Speedbar.
+
+;; Piece of `speedbar-support': custom variables, faces, and early
+;; load of `pretty-speedbar'.  Required by the loader, not from
+;; `init.el' directly.
+;;
+;; Map:
+;;   Feature:    speedbar-config
+;;   Load-after: path-support theme-support
+;;   Load-phase: ui
+;;   Keymaps:    none
+;;   Docs:       docs/speedbar-config.org
+;;   OS:         none
 
 ;;; Code:
 
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'speedbar-config
+           :msg "Starting load of the speedbar-config module."
+           :obj t)
+
 (require 'speedbar)
 (require 'sr-speedbar)
-(require 'path-support)
 (require 'theme-support)
-;; ----------------------------------------------------------------------
-;; pretty-speedbar (icon package) - must load early
-;; ----------------------------------------------------------------------
+
+;;;; Pretty-speedbar
+;;   ---------------
+
 (use-package pretty-speedbar
   :load-path my-paths/pretty-speedbar
   :ensure nil
@@ -64,6 +81,10 @@
  `(speedbar-separator-face ((t (:inherit 'org-level-2
                                          :foreground ,info-theme-white-grey
                                          :background ,info-theme-dark-blue)))))
+
+(log/debug :fn 'speedbar-config
+           :msg "Ending load of the speedbar-config module."
+           :obj t)
 
 (provide 'speedbar-config)
 ;;; speedbar-config.el ends here

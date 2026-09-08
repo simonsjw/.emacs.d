@@ -1,16 +1,25 @@
-;;; lang-web.el --- systemd service file support for the crafted setup   -*- lexical-binding: t; -*-
+;;; lang-web.el --- apache-mode, robots-txt-mode, and web-mode. -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026 Simon Watson
+;; SPDX-License-Identifier: MIT
+
+;; Author: Simon Watson
 
 ;;; Commentary:
-;;
-;; Packages for web related high-jinx.
-;;
-;;
-;; Prerequisites:
-;;
 
+;; Language module for web-related modes: Apache config,
+;; robots.txt, and `web-mode'.  Completion uses CAPF / Corfu, not
+;; company-mode.
+;;
+;; Map:
+;;   Feature:    lang-web
+;;   Load-after: path-support logging-config
+;;   Load-phase: lang
+;;   Keymaps:    none
+;;   Docs:       docs/lang-web.org
+;;   OS:         none
 
 ;;; Code:
-
 
 ;;; Packages phase
 (require 'path-support)
@@ -24,7 +33,6 @@
 (use-package web-mode)                                                            ; format multiple modes in the same buffer; (HTML, javascript, php etc)
 
 ;;; Configuration phase
-;; (non - can add company-mode hooks if you use company though.)
 
 ;; set up web mode
 (require 'web-mode)

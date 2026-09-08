@@ -1,19 +1,26 @@
-;;; vc-support.el --- git/github support -*- lexical-binding: t; -*-
+;;; vc-support.el --- Built-in VC / vc-dir, diff-hl, git-modes. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
-;; Keywords: git, VC
 
 ;;; Commentary:
 
-;; This package handles the setup of the version control.
+;; Built-in VC / `vc-dir', diff-hl, git-modes, and git-timemachine.
+;; Keys live in `keymaps-vc.el'.  Load from `init.el' after
+;; `logging-config'.  Magit is not used.
+;;
+;; Map:
+;;   Feature:    vc-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: ide
+;;   Keymaps:    keymaps-vc.el
+;;   Docs:       docs/vc-support.org
+;;   OS:         git
 
-;;; library imports:
-;;     (none)
+;;; Code:
 
-;;; Package phase
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'vc-support
@@ -228,7 +235,7 @@
 
 ;;; Set up git tags list.
 
-;; Define `my-magit/tagCommits-alist` with `defcustom` to make it customizable
+;; Define `my-vc/tagCommits-alist' with `defcustom' to make it customisable
 ;; via Emacs's Customize interface.
 (defcustom my-vc/tagCommits-alist
   '(
@@ -248,7 +255,7 @@
 
 (defun my-vc/tagCommits ()
   "Display a list of tags for git commit messages and insert the selected tag.
-Utilises `tagCommits-alist` for retrieving the list of available tags.
+Utilises `my-vc/tagCommits-alist' for retrieving the list of available tags.
 Users can select a tag from a prompted list in the mini-buffer, and the
 selected tag is then inserted at the current cursor position in the active
 buffer."

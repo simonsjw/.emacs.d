@@ -1,15 +1,27 @@
-;;; startup-config.el --- Emacs configuration -*- mode: emacs-lisp; lexical-binding: t; -*-
+;;; startup-config.el --- IDE frame creation and startup layout. -*- lexical-binding: t; -*-
 
-;;; License
-;; Copyright (C) 2025
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Configuration for speedbar, a file-tree (and more), that comes builtin to
-;; Emacs it also has integration with some packages like Rmail.
+;; IDE frame creation and startup layout.  Builds or focuses the IDE
+;; frame, forces the six buffer names expected by `IDE_TEMPLATE.eld',
+;; and restores the saved window state from
+;; `my-paths/desktop-layout-folder'.  Speedbar lives in
+;; `speedbar-support.el'; this file is not that module.  Load from
+;; `init.el' after `logging-config', `summary-support',
+;; `system-window-management', `ui-config', and `system-tools'.
+;;
+;; Map:
+;;   Feature:    startup-config
+;;   Load-after: path-support logging-config summary-support system-window-management ui-config system-tools
+;;   Load-phase: startup
+;;   Keymaps:    none
+;;   Docs:       docs/startup-config.org
+;;   OS:         none
 
 ;;; Code:
 

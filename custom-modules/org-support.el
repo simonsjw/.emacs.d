@@ -1,31 +1,25 @@
-;;; org-support.el --- Modern Org-mode + Org-roam setup  -*- lexical-binding: t; -*-
+;;; org-support.el --- Org, Org-roam, agenda, and related packages. -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026 Simon Watson
+;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
-;; Keywords: org, org-roam, outlines, notes, calendar
-;; Package-Requires: ((emacs "29.1") (org "9.6") (org-modern "0.3") (org-appear "0.3"))
-;; Version: 0.4
-;; URL: (none – personal configuration)
 
 ;;; Commentary:
 
-;; Ultra-modern Org-mode configuration with emphasis on clean typography,
-;; beautiful indentation, Org-roam knowledge management, and a dedicated
-;; agenda dashboard frame.
-;; Note that the 'Olivetti' type look is achieved with the use of
-;; visual-fill-column in writing-config.el.  Set visual-fill-column-width to
-;; change the width of the buffer layout within the window.
+;; Org-mode setup with org-modern, Org-roam, agenda dashboard, and
+;; desktop notifications via org-alert / libnotify.  Typography width
+;; for writing buffers is handled in `writing-config' (visual-fill-column).
+;; Keys for Org live in `keymaps-org.el'.  Load from `init.el' after
+;; `logging-config'.
 ;;
-;; Main features:
-;; • org-modern + org-modern-indent + org-appear for contemporary looks
-;; • Pretty priorities, fancy checkboxes, modern tables
-;; • Org-roam with sensible defaults and keybindings
-;; • Dedicated Org Agenda frame + simple four-pane dashboard
-;; • Desktop notifications via org-alert + libnotify
-;;
-;; Dependencies (assumed installed):
-;; • org-modern, org-modern-indent (local), org-appear
-;; • org-fancy-priorities, org-roam, org-alert
-;; • my-window-tools (custom library for frame/window tagging)
+;; Map:
+;;   Feature:    org-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: bootstrap
+;;   Keymaps:    keymaps-org.el
+;;   Docs:       docs/org-support.org
+;;   OS:         libnotify
 
 ;;; Code:
 

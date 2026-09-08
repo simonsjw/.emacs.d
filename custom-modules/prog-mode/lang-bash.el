@@ -1,19 +1,26 @@
-;;; lang-bash.el --- Language support for Bash scripting -*- lexical-binding: t; -*-
+;;; lang-bash.el --- Bash Tree-sitter, shfmt, shellcheck, and eglot. -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026 Simon Watson
+;; SPDX-License-Identifier: MIT
+
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; A config for editing Bash scripts with:
-;; - Enhanced syntax highlighting via bash-ts-mode (Tree-sitter)
-;; - LSP code completion via Eglot (if bash-language-server is available and Eglot configured)
-;; - On-the-fly syntax checking with Flymake (using shellcheck)
+;; Language module for Bash scripts: `bash-ts-mode', Flymake with
+;; shellcheck, optional Eglot via bash-language-server, and shfmt
+;; formatting.  Load from `init.el' after `lang-prog-mode'.
 ;;
-;; Prerequisites:
-;; - Emacs >= 29 with built-in Tree-sitter support
-;; - bash-language-server (npm i -g bash-language-server)
-;; - shellcheck
-
+;; Map:
+;;   Feature:    lang-bash
+;;   Load-after: path-support logging-config lang-prog-mode
+;;   Load-phase: lang
+;;   Keymaps:    keymaps-prog.el
+;;   Docs:       docs/lang-bash.org
+;;   OS:         shfmt shellcheck bash-language-server
 
 ;;; Code:
+
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'lang-bash
@@ -137,11 +144,8 @@
 
 ;;;;; Variable/function references
   ;; xref-find-definitions
-  ;; (keymap-set bash-ts-mode-map "M-." #'anaconda-mode-find-definitions)
   ;; xref-find-references
-  ;;  (keymap-set bash-ts-mode-map "M-r" #'anaconda-mode-find-references)
   ;; xref-find-assignments
-  ;;  (keymap-set bash-ts-mode-map "M-=" #'anaconda-mode-find-assignments)
 
 
   (message

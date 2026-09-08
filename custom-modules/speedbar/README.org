@@ -1,0 +1,11 @@
+* speedbar
+
+One line per file.  Load with ~(require 'speedbar-support)~ (or ~use-package~), not ~(require 'speedbar)~ as the feature.
+
+- =speedbar-support.el= — loader, ~provide~ of the feature
+- =speedbar-config.el= — core settings, faces, and pretty-speedbar load
+- =speedbar-icons.el= — file-type and folder icons for Speedbar
+- =speedbar-pinning.el= — per-frame project-root pinning for the file view
+- =speedbar-commands.el= — interactive Speedbar navigation commands
+- =speedbar-sort.el= — file and directory sort type and direction
+- =speedbar-keys.el= — Speedbar mode map bindings and hooks

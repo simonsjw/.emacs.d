@@ -1,0 +1,60 @@
+* speedbar-support
+
+** Load point
+
+Require the module from =init.el= (via the tangle block in =conf.org=)
+after its dependencies.  The feature is ~speedbar-support~, not the
+built-in ~speedbar~ library:
+
+#+begin_src emacs-lisp
+(require 'speedbar-support)
+#+end_src
+
+or
+
+#+begin_src emacs-lisp
+(use-package speedbar-support
+  :load-path my-paths/speedbar-support
+  :demand t)
+#+end_src
+
+** Purpose
+
+Loader and ~provide~ of the Speedbar feature.  It ~require~s the
+piece files: config, icons, pinning, commands, sort, and keys.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~speedbar-support~ from =custom-modules/speedbar/speedbar-support.el=.
+
+** Keymaps
+
+- none (Speedbar mode keys live in =speedbar-keys.el=)
+
+** OS dependencies
+
+none
+
+** Variables
+
+- ~my-speedbar/use-pretty-icons~ : =t= — use pretty-speedbar icons
+
+** Commands and keys
+
+none on the loader itself; see =speedbar-commands.el= and
+=speedbar-keys.el=.
+
+** Related modules
+
+- ~speedbar-config~
+- ~speedbar-icons~
+- ~speedbar-pinning~
+- ~speedbar-commands~
+- ~speedbar-sort~
+- ~speedbar-keys~
+- ~pretty-speedbar~ (external repo; MAP/docs/OS only)

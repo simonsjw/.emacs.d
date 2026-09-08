@@ -1,0 +1,147 @@
+* OS integrations
+
+This page lists operating-system tools and environment that Emacs on
+these machines expects.  =conf.org= keeps the install-oriented table;
+this page is the narrative of *where* each piece lives, *how* to install
+it, and *how* Emacs finds it.  Keep the two in sync when a module gains
+or drops an OS dependency.
+
+Australian English in prose.  Sentences end with two spaces when more
+than one appears in a paragraph.
+
+** Launch and Emacs itself
+
+| Element | What it is | Where it lives | Install / setup | How Emacs finds it | Module |
+|---------+------------+----------------+-----------------+--------------------+--------|
+| GNU Emacs 30.1+ | Editor binary | =/usr/local/bin/emacs= (wrapper hard-codes this) | Build/install Emacs 30.1 with native-comp, Tree-sitter, HarfBuzz | ~PATH~; wrapper ~exec~s the absolute path | — |
+| ~emacsclient~ | Client to the daemon | same prefix | part of Emacs | ~PATH~ | =server-support.el= |
+| *emacs-daemon-wrapper* | Login-environment daemon launcher | =/home/simon/sync/primary/bin/emacs-daemon-wrapper=; GitHub https://github.com/simonsjw/emacs-daemon-wrapper | Clone/install onto ~PATH~ (~/.local/bin= or =~/bin=).  Do *not* copy into =.emacs.d=.  Point a systemd ~--user~ unit ~ExecStart=~ at the wrapper if used. | Wrapper sources =~/.profile= then =~/.bashrc=, sets ~QT_QPA_PLATFORM=wayland~, ~GDK_BACKEND=wayland~, re-asserts ~SSH_AUTH_SOCK~ from ~${XDG_RUNTIME_DIR}/keyring/ssh~ or ~gcr/ssh~, then ~exec /usr/local/bin/emacs --fg-daemon~.  =server-support.el= calls ~server-start~ if ~server-running-p~ is nil. | =server-support.el= (docs only for the wrapper) |
+| systemd user unit (optional) | Keeps the daemon alive across login | =~/.config/systemd/user/= | ~systemctl --user enable --now emacs.service~ with ~ExecStart=/path/to/emacs-daemon-wrapper~ | systemd | docs only |
+| Native-comp / compile-angel | Compiles =.el= to =.eln= on load/save | MELPA ~compile-angel~; cache =etc/$MY_NAME/eln-cache/= | Emacs built with libgccjit | ~startup-redirect-eln-cache~ in =early-init.el=; ~compile-angel-on-load-mode~ in =init.el= | =init.el= tangle |
+
+** Identity, paths, env
+
+| Element | What it is | Where it lives | Install / setup | How Emacs finds it | Module |
+|---------+------------+----------------+-----------------+--------------------+--------|
+| ~MY_NAME~ | Per-machine namespace | shell profile | ~export MY_NAME=INFODYNAMICS~ (or ~SYSTEM76~, …) | ~getenv~; ~envvar/SYSTEM_NAME~ in =early-init.el= (default ~INFODYNAMICS~) | =early-init.el=, =path-support.el= |
+| ~USER_EMACS_DIRECTORY~ | Config root | shell profile | ~export USER_EMACS_DIRECTORY=/home/simon/.emacs.d~ | =early-init.el= ~setq user-emacs-directory~ | =early-init.el= |
+| ~ENV_FILE~ | Extra env dump loaded at startup | e.g. =/home/simon/Me/secrets/serviceEnv.txt= | Create the file; ~export ENV_FILE=…~ | =init.el= ~load-environment-variables-from-file~ | =init.el= tangle |
+| =var/$MY_NAME/= | Machine-local *state* (elpa, backups, undo, projects, desktop layouts) | under this repo | created by =path-support.el= | ~no-littering-var-directory~ | =path-support.el= |
+| =etc/$MY_NAME/= | Machine-local *configuration* (=custom.el=, eln-cache, lang-servers, dape adapters) | under this repo | created by =path-support.el= | ~no-littering-etc-directory~ | =path-support.el= |
+| ~BIB_HOME~ | Default bibliography | e.g. LaTeX templates =refs.bib= | export in profile | ~citar-bibliography~ via ~(getenv "BIB_HOME")~ | =writing-config.el= |
+| ~REPO_LIST~ | CSV of git repos | e.g. dotfiles =repoList.csv= | export | ~my/REPO_LIST~ in =init.el= | =init.el= |
+| ~PROJECT_PATHS~ | Project search roots | profile + ~$ENV_FILE~ | Grammar: *comma-separated* ~dir:depth~ entries.  Example: ~export PROJECT_PATHS="/home/simon/Downloads/github:5,/home/simon/sync/primary/Adventures:5,/home/simon/sync/primary/dotfiles:5"~.  Rename ~PROJECTILE_PATHS~ to ~PROJECT_PATHS~ in =~/.bashrc~ and ~$ENV_FILE~ out of band (do not commit those files).  Lisp does not read this variable today (documented for ~project.el~ / project-view follow-up). | document for ~project.el~ / project-view | =conf.org=, =project-support.el= |
+| ~PATH~ | Binaries | login shell | wrapper sources bashrc | ~exec-path-from-shell~ / ~my-env-tools/exec-path-from-shell-report~ | =system-tools.el=, =defaults-config.el= |
+| SSH agent | ~SSH_AUTH_SOCK~ | gnome-keyring or gcr | wrapper re-asserts after bashrc | Magit is not used; ~vc~ / Tramp use the env | wrapper + Tramp |
+
+** Spell, dictionary, notify
+
+| Element | What it is | Where / install | How Emacs finds it | Module |
+|---------+------------+-----------------+--------------------+--------|
+| hunspell + ~hunspell-en-au~ | Spell dictionaries for Jinx/enchant | ~sudo apt install hunspell hunspell-en-au~ | enchant =~/.config/enchant/enchant.ordering= with ~*:hunspell,aspell~ and ~en_AU:hunspell~; Jinx ~jinx-languages~ ~"en_AU en_GB"~ | =defaults-config.el= |
+| enchant | Spell backend broker | pulled in with hunspell on Debian; config under =~/.config/enchant/= | enchant ordering file | =defaults-config.el= |
+| dict.org / ~dictionary~ | Word lookup | Emacs built-in client | ~dictionary-server~ ~dict.org~ | =defaults-config.el=, =menu-keys-support.el= (~C-c d l~) |
+| libnotify / ~notify-send~ | Desktop notifications | ~sudo apt install libnotify-bin~ | ~alert-default-style 'libnotify~ | =org-support.el= |
+| Nerd Font | Icons | install "Symbols Nerd Font Mono"; ~M-x nerd-icons-install-fonts~ | ~nerd-icons-font-family~ | =theme-support.el= |
+
+** VCS / search
+
+| Element | What it is | Where / install | How Emacs finds it | Module |
+|---------+------------+-----------------+--------------------+--------|
+| git | Version control | ~sudo apt install git~ | ~vc-handled-backends~ ~(Git)~; ~exec-path~ | =vc-support.el= |
+| git-man | Git manpages for ~man~ / Info | ~sudo apt install git-man~ | ~man~ executable; *not Magit* | =vc-support.el= |
+| ripgrep | Fast search | ~sudo apt install ripgrep~ | ~xref-search-program 'ripgrep~ | =project-support.el= |
+| ~ss~ | Socket/port listing (replaces netstat) | ~sudo apt install iproute2~ (provides ~ss~) | ~(executable-find "ss")~ | =system-tools.el=, =q-loadbalancer= |
+
+Do not install ~silversearcher-ag~ for this config unless a module actually calls ~ag~ (none does in first-party Lisp).
+
+** Python / data science
+
+| Element | What it is | Where / install | How Emacs finds it | Module |
+|---------+------------+-----------------+--------------------+--------|
+| Conda / Anaconda | Env manager | existing =~/anaconda3=; ~CONDA_PREFIX~, ~CONDA_DEFAULT_ENV~, ~WORKON_HOME~ | ~pyvenv~; ~my-lang-python/update-python-path~ | =lang-python.el= |
+| ipython | Inferior Python | ~conda install ipython~ | ~python-shell-interpreter "ipython"~ | =lang-python.el= |
+| ruff | Lint/format | ~pip install ruff~ (in the active env) | ~(executable-find "ruff")~; Apheleia formatters | =lang-python.el= |
+| *pyrefly* | Python LSP (*not* basedpyright) | install the ~pyrefly~ binary on ~PATH~ | ~eglot-server-programs~ ~("pyrefly" "lsp")~ | =ide-config.el=, =lang-python.el= |
+| basedpyright | Leftover; do *not* install for this config | remove from =conf.org= table when hygiene lands | commented out in =ide-config.el= | — |
+| debugpy | Debug adapter | ~pip install debugpy~ | Dape ~command "python" "-m" "debugpy.adapter"~ | =debugger-support.el= |
+| pytest | Tests | ~pip install pytest~ | ~python-pytest~ package | =lang-python.el= |
+| sphinx / sphinx-autobuild | Docs | ~pip install sphinx sphinx-autobuild~ | ~my-lang-python/sphinx-build~ | =lang-python.el= |
+| Jupyter | notebooks | ~JUPYTER_WORKING_DIRECTORY~, ~JUPYTER_ANACONDA_ENVIRONMENT~ | env only today | =conf.org= |
+| flymake-pyrefly | Optional Flymake backend | NonGNU ELPA | ~(require 'flymake-pyrefly nil 'noerror)~ | =lang-python.el= |
+
+** Shell, YAML, JSON, TOML, Markdown, TeX
+
+| Element | What it is | Where / install | How Emacs finds it | Module |
+|---------+------------+-----------------+--------------------+--------|
+| shfmt | Bash formatter | ~sudo apt install shfmt~ | ~shell-command-on-region~ ~"shfmt"~ | =lang-bash.el= |
+| bash-language-server | Bash LSP | ~snap install bash-language-server~ or npm | ~(executable-find …)~; eglot ~("bash-language-server" "start")~ | =ide-config.el=, =lang-bash.el= |
+| shellcheck | Bash lint | ~sudo apt install shellcheck~ (cabal path in =conf.org= is legacy) | ~flymake-shellcheck~ | =lang-bash.el= |
+| yaml-language-server | YAML LSP | ~npm install -g yaml-language-server~ | ~(executable-find …)~; eglot | YAML/JSON/TOML module (=file-format-support.el=) |
+| vscode-json-languageserver | JSON LSP | ~npm install -g vscode-langservers-extracted~ | ~(executable-find "vscode-json-languageserver")~ | =file-format-support.el= |
+| taplo | TOML LSP | ~cargo install taplo-cli --features lsp~ | ~(executable-find "taplo")~ | =file-format-support.el= |
+| marksman | Markdown LSP | ~sudo snap install marksman~ | eglot ~("marksman")~; Snap binary often =/snap/bin/marksman= | =markdown-support.el= |
+| markdownlint-cli2 | Markdown lint | ~npm install -g markdownlint-cli2~ | flymake-markdownlint-cli2 | =markdown-support.el= |
+| pandoc | Document conversion | ~sudo apt install pandoc~ | ~pandoc-mode~ | =writing-config.el= |
+| texlive-full | LaTeX | ~sudo apt install texlive-full~ | ~(executable-find "latex")~ / ~latexmk~ | =writing-config.el= |
+| texlab | TeX LSP | submodule =etc/$MY_NAME/lang-servers/texlab=; build ~cargo build --release~ *or* ~sudo apt install texlab~ | ~lsp-bin-texlab~ in =path-support.el= | =ide-config.el=, =writing-config.el= |
+| ImageMagick | Raster/PDF conversion for LaTeX preview | ~sudo apt install imagemagick~ | ~convert~ on ~PATH~; see PDF policy below | =writing-config.el=, Org LaTeX preview |
+| poppler / pdf-tools deps | PDF rendering | ~sudo apt install libpoppler-dev libpoppler-glib-dev libcairo2-dev libpng-dev zlib1g-dev libglib2.0-dev make elpa-pdf-tools-server~ | ~pdf-loader-install~ | =writing-config.el= |
+| visudo | sudoers syntax check | ~sudo~ package | Flymake backend runs ~sudo visudo -c -f TEMP~ | =file-format-support.el= |
+
+*** ImageMagick PDF policy
+
+Security policy file: =/etc/ImageMagick-6/policy.xml= or
+=/etc/ImageMagick/policy.xml=.
+
+Change:
+
+#+begin_src xml
+  <policy domain="coder" rights="none" pattern="PDF" />
+#+end_src
+
+to:
+
+#+begin_src xml
+  <policy domain="coder" rights="read|write" pattern="PDF" />
+#+end_src
+
+Needed so Org/LaTeX preview can produce PDFs.
+
+** Language-specific binaries
+
+| Element | What it is | Where / install | How Emacs finds it | Module |
+|---------+------------+-----------------+--------------------+--------|
+| rust-analyzer | Rust LSP | rustup or =~/.cargo/bin/rust-analyzer= | ~rustic-analyzer-command~ | =lang-rust.el= |
+| cargo / rustc | Rust toolchain | rustup | ~PATH~ | =lang-rust.el= |
+| docker + compose plugin | Containers | Docker CE + compose | ~docker.el~ shells out to ~docker~ | =lang-docker.el= |
+| node | JS runtime | nvm (~NVM_DIR~ in env dump) | MATLAB LS and Vega CLI | =lang-matlab.el=, =lang-vega.el= |
+| MATLAB | MATLAB install | MathWorks installer | ~matlab-mode~; LS via node | =lang-matlab.el= |
+| MATLAB-language-server | LSP | In-tree submodule =etc/$MY_NAME/lang-servers/MATLAB-language-server= (=src/=, =package.json=; *no* =out/index.js= until ~npm install && npm run build~).  The old eglot path under =dotfiles/emacs/.emacs.d/…/out/index.js= does *not* exist. | After path hygiene: ~my-paths/matlab-language-server~ + node ~--stdio~ | =lang-matlab.el= |
+| kdb/q | Q interpreter | KX install; ~QHOME~, ~QSPACE~, ~Q_MAIN_PROJECT_PATH~ | =q-loadbalancer= + =lang-q.el= | =lang-q.el= |
+| vega / vega-lite / vega-cli | Visualisations | ~npm install -g vega vega-lite vega-cli~ | ~vega-view~ pipes to CLI | =lang-vega.el= |
+| canvas (npm) | PNG backend for Vega | ~npm install -g canvas~ | ~vega-view~ | =lang-vega.el= |
+| SBCL / Guile / Clojure tools | Lisp family | distro packages as needed | ~sly~, ~geiser-guile~, ~cider~ | =lang-lisp.el= |
+| systemd | Unit files | the OS | ~systemd-mode~ from submodule | =lang-systemd.el= |
+
+** Data, finance, terminal, LLM
+
+| Element | What it is | Where / install | How Emacs finds it | Module |
+|---------+------------+-----------------+--------------------+--------|
+| PostgreSQL | Database | ~sudo apt install postgresql postgresql-doc libpq-dev~ | ~sql-postgres~; password ~POSTGRES_U_DC_PW~ (and related ~POSTGRES_*~ in ~$ENV_FILE~) | =db-support.el= |
+| php / php-pgsql | Optional web+pg | ~sudo apt install php php-pgsql~ | not required by Lisp today; =conf.org= row | =lang-web.el= / docs |
+| pgFormatter | SQL beautifier | https://github.com/darold/pgFormatter | ~sqlformat~ package | =db-support.el= |
+| hledger + hledger-web | Plain-text accounting | ~sudo apt install hledger hledger-web~ (or cabal/stack) | ~hledger-binary-path~; ~accounting-start-web-ui~ | =accounting-support.el= |
+| libvterm / cmake | vterm module compile | ~sudo apt install libvterm-dev cmake~ | ~vterm~ MELPA build | =vterm-support.el= |
+| bash | vterm shell | =/bin/bash= | ~vterm-shell~ | =vterm-support.el= |
+| gpg | EPA/epg | ~sudo apt install gnupg~ | ~epg-gpg-program "/usr/bin/gpg"~ in =init.el= | =init.el= |
+| aider | AI pair-programming CLI | ~python -m pip install --upgrade aider-install && aider-install~ | ~aidermacs~ package | =llm-support.el= |
+| ollama | Local LLM | ollama install; models such as ~qwen3-coder-next~, ~glm-4.7-flash~ | gptel/aidermacs backends | =llm-support.el= |
+| xAI / OpenAI keys | API auth | in ~$ENV_FILE~ (~XAI_API_KEY~, ~OPENAI_API_KEY~, …) | ~getenv~ | =llm-support.el= |
+| make | Docs export | ~sudo apt install make~ | =docs/Makefile= | =docs/my-docs.el= |
+
+** Related pages
+
+- =docs/getting-started-guide.org= — symlink, daemon launch, env overview
+- =conf.org= — Required environmental variables and External dependencies tables
+- =docs/MAP.org= — which Lisp feature owns each integration

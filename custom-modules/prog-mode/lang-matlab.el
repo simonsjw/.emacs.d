@@ -1,26 +1,33 @@
-;;; lang-matlab.el --- python support for the crafted setup   -*- lexical-binding: t; -*-
+;;; lang-matlab.el --- MATLAB mode and language-server wiring. -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026 Simon Watson
+;; SPDX-License-Identifier: MIT
+
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; A starter config for editing Matlab code.
+;; Language module for MATLAB editing (`matlab-mode', Tree-sitter
+;; when available, and the in-tree MATLAB language server).  Load
+;; from `init.el' after `lang-prog-mode'.
 ;;
-;; Prerequisites:
-;;
-;; - Matlab installation.
-
-
-;;; Package phase
-(use-package matlab-mode)
-
-
+;; Map:
+;;   Feature:    lang-matlab
+;;   Load-after: path-support logging-config lang-prog-mode
+;;   Load-phase: lang
+;;   Keymaps:    keymaps-prog.el
+;;   Docs:       docs/lang-matlab.org
+;;   OS:         matlab node
 
 ;;; Code:
+
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'lang-matlab
            :msg "Starting load of the lang-matlab module."
            :obj t)
 
+(use-package matlab-mode)
 
 (defun matlab-mode-treesit-setup ()
   "Enable Tree-sitter features in `matlab-mode`."
@@ -145,10 +152,8 @@
 
   ;; document thing at point:
   ;; (keymap-set python-ts-mode-map "C-c C-c C-r" #'eldoc)
-  ;;  (keymap-set python-ts-mode-map "M-?" #'anaconda-mode-show-doc)
   ;; testing (tbd)
   ;; (keymap-set python-ts-mode-map "C-c C-c C-t"
-  ;; #'projectile-test-project)
 
   ;; running the code
   ;;  (keymap-set python-ts-mode-map "C-c r b" #'eval-buffer)
@@ -157,8 +162,6 @@
   ;;  (keymap-set python-ts-mode-map "C-c r p" #'run-python)
 
   ;; formatting
-  ;; (keymap-set python-ts-mode-map "C-c C-f b" #'blacken-buffer)
-  ;;  (keymap-set python-ts-mode-map "C-c C-f r" #'blacken-buffer)
 
    ;;;;; Errors/linting
 
@@ -179,11 +182,8 @@
    ;;;;; Variable/function references
 
   ;; xref-find-definitions
-  ;; (keymap-set python-ts-mode-map "M-." #'anaconda-mode-find-definitions)
   ;; xref-find-references
-  ;;  (keymap-set python-ts-mode-map "M-r" #'anaconda-mode-find-references)
   ;; xref-find-assignments
-  ;;  (keymap-set python-ts-mode-map "M-=" #'anaconda-mode-find-assignments)
   
   (message
    "[%s ; DEBUG; my-lang/matlab-mode-setup]finished loading the defun ; ;"
@@ -213,7 +213,7 @@
 
 ;; advice:
 ;; Stop an annoying back tab error when you accidentally go backwards at
-;; beginning of a terminal line. 
+;; beginning of a terminal line.
 (advice-add 'matlab-shell-delete-backwards-no-prompt :around
             (lambda (orig-fun &rest args)
               "Wrap matlab-shell-delete-backwards-no-prompt to ignore errors at prompt start."

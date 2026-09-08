@@ -1,79 +1,24 @@
-;;; treesit-support.el --- setup for treesit -*- lexical-binding: t; -*-
+;;; treesit-support.el --- Tree-sitter grammars, fold, and Combobulate. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
-;; Author: System Crafters Community
+;; Author: Simon Watson
 
-;;; Commentary
+;;; Commentary:
 
-;; Support for tree-sit in Emacs.
-;; Text here is from Micky's site, masteringemacs.org.
-;; https://www.masteringemacs.org/article/how-to-get-started-tree-sitter
-
-;;; Suggested additional keybindings
-
-;;; customization
-
-;; (use-package tree-sitter-indent)
-;; (use-package tree-sitter-ispell)
-
-(require 'path-support)
-(require 'logging-config)
-(log/debug :fn 'treesit-support
-           :msg "Starting load of the treesit-support module."
-           :obj t)
-
-(use-package treesit-fold
-  :delight
-  :vc (:url "https://github.com/emacs-tree-sitter/treesit-fold.git")
-  :ensure t)
-
-(use-package combobulate
-  :delight
-  :vc (:url "git@github.com:mickeynp/combobulate.git")
-  ensure t
-  :custom
-  ;; You can customize Combobulate's key prefix here.
-  ;; Note that you may have to restart Emacs for this to take effect!
-  (combobulate-key-prefix "C-c o")
-  :hook ((prog-mode . combobulate-mode))
-  )
-
-;; (use-package treesit-auto
-;;   :ensure t
-;;   :custom
-;;   (treesit-auto-install 'prompt)
-;;   :config
-;;   (treesit-auto-add-to-auto-mode-alist 'all)
-;;   (global-treesit-auto-mode))
-
-(defvar treesit-fold-indicators-fringe)
-(defvar treesit-fold-indicators-priority)
-(defvar fold-state)
-(declare-function treesit-fold-mode "treesit-fold")
-(declare-function combobulate-mode "combobulate")
-
-;; (require 'tree-sitter-indent)
-;; (require 'tree-sitter-ispell)
-;; (require 'treesit-fold)
-;;(require 'combobulate)
-;;(require 'treesit-auto)
-
-;; tree-sitter-load-path is set in early-init.el.
-;; path is added to load-path in custom-path-support.el.
-
-;; set a fallback should the treesitter grammar not be installed like this:
-;; (add-to-list 'treesit-auto-fallback-alist '(toml-ts-mode . conf-toml-mode))
-
-;; override any of the language names so they match the emacs mode
-;; (for instance - javascript is js)
-;;(setq treesit-load-name-override-list
-;; '((js "libtree-sitter-js" "tree_sitter_javascript")))
+;; Tree-sitter support for Emacs 30: grammar setup, `treesit-fold',
+;; and Combobulate.  Load from `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    treesit-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: ide
+;;   Keymaps:    none
+;;   Docs:       docs/treesit-support.org
+;;   OS:         none
 
 ;;; Code:
-
-
 
 ;; Commands 	                        Description
 ;; |treesit-fold-mode 	               | enable treesit-fold-mode in the current buffer.
@@ -93,11 +38,11 @@
 
 
 ;; Note the version numbers set below. These were selected where
-;; this code was sourced since that version was known to work 
+;; this code was sourced since that version was known to work
 ;; with that app and emacs:
 ;; https://github.com/mickeynp/combobulate
 ;; (defvar treesit-language-source-alist
-;;   nil 
+;;   nil
 ;;   "The variable treesit-language-source-alist is a simple alist that
 ;; expects a form in the format of
 ;;     (LANG . (URL REVISION SOURCE-DIR CC C++))
@@ -176,7 +121,7 @@
   (interactive)
   (dolist (grammar
            treesit-language-source-alist)
-    
+
     ;; Only install `grammar' if we don't already have it
     ;; installed. However, if you want to *update* a grammar then
     ;; this obviously prevents that from happening.

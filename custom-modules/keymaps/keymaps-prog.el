@@ -1,16 +1,26 @@
-;;; keymaps-prog.el --- Comments and Errors / Diagnostics keymaps -*- lexical-binding: t; -*-
+;;; keymaps-prog.el --- Comments and errors keymaps for lang-prog-mode. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
+;; Author: Simon Watson
+
 ;;; Commentary:
+
+;; Keymap module for `lang-prog-mode' and language files.  Shared
+;; Comments (`C-c c') and Errors / Diagnostics (`C-c e') on
+;; `prog-mode-map'.  Language files should call
+;; `keymaps-core/activate-comments' (or rely on the prog-mode hook)
+;; rather than redefining these maps.  Load after `keymaps-core'.
+;; Menus last in `keymaps-menus.el'.
 ;;
-;; Shared programming-related keymaps:
-;;   - Comments (C-c c)
-;;   - Errors / Diagnostics (C-c e) on prog-mode-map
-;;
-;; Language files should call `keymaps-core/activate-comments' (or rely
-;; on the prog-mode hook) rather than re-defining these maps.
+;; Map:
+;;   Feature:    keymaps-prog
+;;   Load-after: keymaps-core logging-config
+;;   Load-phase: keymaps
+;;   Keymaps:    keymaps-prog.el
+;;   Docs:       docs/keymaps-prog.org
+;;   OS:         none
 
 ;;; Code:
 
@@ -21,9 +31,8 @@
            :msg "Starting load of the keymaps-prog module."
            :obj t)
 
-;; ----------------------------------------------------------------------
-;;; Comments map (C-c c)
-;; ----------------------------------------------------------------------
+;;;; Comments map (C-c c)
+;;   --------------------
 
 (defgroup custom-comment-keymaps ()
   "Comment formatting keymaps."
@@ -31,7 +40,7 @@
   :group 'custom)
 
 (defcustom my-custom-prefix-keys/comment "C-c c"
-  "Key prefix for comment formatting functions (available in prog-mode)."
+  "Key prefix for comment formatting functions (available in `prog-mode')."
   :group 'custom-comment-keymaps
   :type 'string)
 
@@ -55,9 +64,8 @@
 (with-eval-after-load 'which-key
   (which-key-add-key-based-replacements my-custom-prefix-keys/comment "Comments"))
 
-;; ----------------------------------------------------------------------
-;;; Errors / Diagnostics (C-c e) – installed on prog-mode-map
-;; ----------------------------------------------------------------------
+;;;; Errors / Diagnostics (C-c e)
+;;   ----------------------------
 
 (with-eval-after-load "prog-mode"
   ;; Standardised navigation (n/p preferred over the mixed n/l that
@@ -85,9 +93,8 @@
   (which-key-add-key-based-replacements
     "C-c e" "Errors"))
 
-;; ----------------------------------------------------------------------
-;;; Activation for prog-mode
-;; ----------------------------------------------------------------------
+;;;; Activation for prog-mode
+;;   ------------------------
 
 (defun keymaps-prog/activate-in-prog-mode ()
   "Activate shared programming keymaps in the current buffer."

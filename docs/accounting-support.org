@@ -1,0 +1,56 @@
+* accounting-support
+
+** Load point
+
+Require the module from =init.el= (via the tangle block in =conf.org=)
+after its dependencies, unless MAP marks it unloaded:
+
+#+begin_src emacs-lisp
+(require 'accounting-support)
+#+end_src
+
+** Purpose
+
+hledger-mode reports and hledger-web launcher.  Completion uses CAPF
+with Corfu when ~hledger-completion-at-point~ is available (not
+company-mode).
+
+** Depends
+
+Features that must already be loaded (match the Commentary =Map:=
+block and the row in =docs/MAP.org=):
+
+- ~logging-config~
+
+** Provides
+
+- Feature ~accounting-support~ from =custom-modules/accounting-support.el=.
+
+** Keymaps
+
+- none (global ~C-c a~ report keys live in this module)
+
+** OS dependencies
+
+List binaries or services the module expects.  Keep this in sync with
+the External dependencies table in =conf.org= and =docs/os-integrations.org=.
+
+| Tool | Install hint | Used for |
+|------+--------------+----------|
+| hledger + hledger-web | ~sudo apt install hledger hledger-web~ | reports and web UI |
+
+** Variables
+
+Stub.  Fill during the Commentary pass for this module.
+
+** Commands and keys
+
+- ~C-c a b~ — ~accounting-show-balance-sheet~
+- ~C-c a n~ — ~accounting-show-net-worth~
+- ~C-c a i~ — ~accounting-show-investments~
+- ~C-c a t~ — ~accounting-show-tax-overview~
+- ~C-c a w~ — ~accounting-start-web-ui~
+
+** Related modules
+
+See =docs/MAP.org= Depends and Keymaps for ~accounting-support~.

@@ -1,14 +1,22 @@
-;;; spreadsheet-support.el --- Spreadsheet configuration -*- mode: emacs-lisp; mode: outline-minor; lexical-binding: t; -*-
+;;; spreadsheet-support.el --- SES spreadsheet mode setup. -*- lexical-binding: t; -*-
 
-;;; License
-;; Copyright (C) 2022
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
-;; Author: Erik Lundstedt, System Crafters Community
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; configure a spreadsheet like buffer.
+;; Built-in SES spreadsheet mode setup and helpers.  Load from
+;; `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    spreadsheet-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: ui
+;;   Keymaps:    none
+;;   Docs:       docs/spreadsheet-support.org
+;;   OS:         none
 
 ;;; Code:
 

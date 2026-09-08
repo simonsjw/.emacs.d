@@ -1,0 +1,65 @@
+* keymaps-core
+
+** Load point
+
+Require the module from =init.el= (via the tangle block in =conf.org=)
+first among the keymap files:
+
+#+begin_src emacs-lisp
+(require 'keymaps-core)
+#+end_src
+
+Load the siblings afterwards, with =keymaps-menus.el= last.
+
+** Purpose
+
+Shared which-key titles and keymap activation helpers.  This file does
+not own a prefix map.  Later =keymaps-*= modules bind the owning
+features.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~keymaps-core~ from =custom-modules/keymaps/keymaps-core.el=.
+
+** Keymaps
+
+- none (this module is infrastructure)
+
+Owning features:
+
+- ~vc-support~ → =keymaps-vc.el=
+- ~ui-config~ → =keymaps-ui.el=
+- ~lang-prog-mode~ → =keymaps-prog.el=
+- ~project-support~ → =keymaps-project.el=
+- ~llm-support~ → =keymaps-llm.el=
+- ~org-support~ → =keymaps-org.el=
+- menus → =keymaps-menus.el= (last)
+
+** OS dependencies
+
+none
+
+** Variables
+
+none of public interest
+
+** Commands and keys
+
+- ~keymaps-core/add-titles~ — register which-key titles on a map
+- ~keymaps-core/activate-comments~ — attach the comments prefix in the current buffer
+- ~keymaps-core/activate-errors~ — no-op safety net; bindings live in =keymaps-prog.el=
+
+** Related modules
+
+- ~keymaps-vc~
+- ~keymaps-ui~
+- ~keymaps-prog~
+- ~keymaps-project~
+- ~keymaps-llm~
+- ~keymaps-org~
+- ~keymaps-menus~

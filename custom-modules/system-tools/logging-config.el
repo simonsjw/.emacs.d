@@ -1,28 +1,34 @@
-;;; logging-config.el --- Emacs logging using built-in warnings/messages -*- lexical-binding: t; -*-
+;;; logging-config.el --- Keyword logging via warnings.el and message. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2023-2025
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
-;; Author: Simon Watson (refactored with Grok's advice)
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Logging system using Emacs's native `warnings.el' and `message'.
-;; - Uses built-in levels:
-;;    :emergency (fatal),
-;;    :error,
-;;    :warning,
-;;    :debug (via `display-warning'),
-;;    :info (via `message').
-;; - Provides separate logging functions (`log/fatal', `log/error', etc.)
-;;    for clarity and consistency.
-;; - Enriches logs with timestamp (seconds), origin (function name),
-;;    and optional objects.
-;; - Saves `*Warnings*' buffer to `init.log' on Emacs exit for persistence.
-;; - Displays `load-history' in `*Load-History*' buffer with
-;;   `logging-view-mode'.
-;; - Integrates with `logging-view-mode.el' for viewing `*Warnings*',
-;;   `*Messages*', and `*Load-History*'.
+;; First-party logging for this Emacs 30 tree.  Other modules call
+;; `log/debug', `log/info', `log/warn', `log/error', and `log/fatal'
+;; with keyword arguments `:fn', `:msg', and `:obj'.  Two spaces after
+;; sentences in `:msg' when the string contains more than one.
+;;
+;; Warnings go through `display-warning' (`*Warnings*').  Info goes
+;; through `message' (`*Messages*').  On `kill-emacs-hook' the
+;; warnings buffer is written to `init.log'.  `logging-view-mode' (a
+;; first-party package under `custom-packages/') fonts and filters
+;; those buffers.
+;;
+;; This file cannot `require' itself.  `path-support' is already on
+;; the load-path from `early-init.el'.  Call `log/debug' only after
+;; the keyword functions below have been defined.
+;;
+;; Map:
+;;   Feature:    logging-config
+;;   Load-after: path-support
+;;   Load-phase: bootstrap
+;;   Keymaps:    none
+;;   Docs:       docs/logging-config.org
+;;   OS:         none
 
 ;;;; Key Changes and Rationale
 
@@ -144,7 +150,8 @@
 
 ;;; Code:
 
-(require 'warnings)  ; For display-warning and customizations.
+(require 'path-support)
+(require 'warnings)
 
 ;; Define log path for optional file save.
 (defconst log/init-log
@@ -367,6 +374,10 @@ Overwriting without prompt."
   (add-to-list 'auto-mode-alist '("\\<init\\.log\\'" . logging-view-mode)))
 
 
+
+(log/debug :fn 'logging-config
+           :msg "Starting load of the logging-config module."
+           :obj t)
 
 (provide 'logging-config)
 ;;; logging-config.el ends here

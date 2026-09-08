@@ -1,11 +1,27 @@
-;;; lang-prog-mode.el --- parent mode for programming -*- lexical-binding: t; -*-
+;;; lang-prog-mode.el --- Shared prog-mode setup for language modules. -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026 Simon Watson
+;; SPDX-License-Identifier: MIT
+
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Functionality common across all lang settings.
+;; Common hooks and helpers for all `lang-*.el' modules: shebang
+;; support, line numbers, and shared programming defaults.  Load
+;; early from `init.el' (also via `use-package').  Shared comments
+;; and errors keys live in `keymaps-prog.el'.
 ;;
+;; Map:
+;;   Feature:    lang-prog-mode
+;;   Load-after: path-support logging-config menu-keys-support
+;;   Load-phase: lang
+;;   Keymaps:    keymaps-prog.el
+;;   Docs:       docs/lang-prog-mode.org
+;;   OS:         none
 
 ;;; Code:
+
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'lang-prog-mode
@@ -60,7 +76,7 @@
 
 (setq executable-insert t                                                         ; always offer to insert
       executable-prefix-env t                                                     ; use \"/usr/bin/env\" in interpreter magic number.
-      executable-prefix "#! "                                                     ; default is "#!" so this just shows you the variable exists. 
+      executable-prefix "#! "                                                     ; default is "#!" so this just shows you the variable exists.
       executable-chmod 73                                                         ; octal for 0755. Alternatively, executable-chmod t would do chmod +x after insert
       executable-query t)                                                         ; ask user before changing an existing magic number.
 
@@ -147,7 +163,7 @@
 (defun my-prog-mode/programming-mode-config-hook ()
   "Set useful layout tweaks for programming modes."
   (interactive)
-  
+
   (require 'eldoc)
   (require 'eldoc-box)
   (eldoc-mode 1)                                                                  ; enable eldoc-mode.
@@ -159,7 +175,7 @@
   (setq-local display-line-numbers-type 'absolute)
   (display-line-numbers-mode)                                                     ; activate line numbers.
   (set-face-attribute 'line-number nil :height 0.8)
-  
+
   ;; Auto-save files.
   (my-prog-mode/auto-save-hook)
 
@@ -175,13 +191,13 @@
   ;; show the fill column with an indicator line
   (setq-local display-fill-column-indicator-column t)
   (display-fill-column-indicator-mode)
-  
+
   ;; ensure changes are visible in the buffer.
   ;; (highlight-changes-mode)
 
   ;; (setq yas-use-menu 'abbreviate)                                              ; show only the snippets for the mode of the buffer.
 
-  ;; Set up the Jinx spell checker. 
+  ;; Set up the Jinx spell checker.
   (jinx-mode 1)
   ;; Common programming words (you can run this manually per project)
   (defconst my-prog-mode/prog-mode-accepted-words
@@ -189,17 +205,17 @@
       "ARGS" "Args" "Backtrace" "bmk" "bmenu" "DDirectory" "LaTeX" "LocalWords" "OPTARG"
       "README" "SPEEDBAR" "TODO" "alist" "autosave" "aspell" "basedpyright" "cd" "chmod" "chown" "concat" "const" "conda"
       "config" "csv" "defconst" "defcustom" "defvar" "dir" "docstring" "dotfile" "dotfiles"
-      "docstrings" "Eglot" "eglot" "el" "elpa" "Emacs" "emacs"  "env" "flymake" "flyspell" 
-      "github" "gitignore" "hdb" "http" "https" "ipynb" "ipython" "jdk" 
-      "joinpath" "json" "jsonl" "keymap" "keymaps" "lang" "lvl" "makefile" "md" "mnt" "modeline" "noqa" "odbc" 
-      "prog" "py" "rlwrap" "scipy" "sudo" "setq" "speedbar" "sql" "str" "sym" "systemd" "journalctl" "tmp" 
+      "docstrings" "Eglot" "eglot" "el" "elpa" "Emacs" "emacs"  "env" "flymake" "flyspell"
+      "github" "gitignore" "hdb" "http" "https" "ipynb" "ipython" "jdk"
+      "joinpath" "json" "jsonl" "keymap" "keymaps" "lang" "lvl" "makefile" "md" "mnt" "modeline" "noqa" "odbc"
+      "prog" "py" "rlwrap" "scipy" "sudo" "setq" "speedbar" "sql" "str" "sym" "systemd" "journalctl" "tmp"
       "txt" "urls" "usr" "vterm" "ws" "yas" "yasmate" "yasnippet")
     "Words commonly accepted in all programming modes.
 Run `M-x my-spell-check/add-prog-words` once per project to add them.")
 
   (my-spell-check/add-words-to-jinx
    my-prog-mode/prog-mode-accepted-words 'session 'prog-mode)
-  
+
   (setq-local truncate-lines t)                                                   ; deactivate line-wrapping.
 
   )

@@ -1,74 +1,23 @@
-;;;; markdown-support.el --- Tree-sitter powered Markdown editing support  -*- lexical-binding: t; -*-
+;;; markdown-support.el --- Markdown mode, Marksman, and markdownlint. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2023-2026
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
-;; Author: Simon Watson (refactored from writing-config.el)
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; This module provides a clean, modular, and modern configuration for
-;; editing Markdown files in Emacs.  It prioritises Tree-sitter
-;; (`markdown-ts-mode') for fast, accurate syntax highlighting,
-;; structural navigation, and folding.  It integrates Marksman (LSP)
-;; via Eglot for intelligent completion, diagnostics, and refactoring.
+;; Markdown editing via `markdown-ts-mode', Marksman through Eglot,
+;; and markdownlint Flymake.  Load from `init.el' after
+;; `logging-config'.
 ;;
-;; Additional tools include live preview (with Mermaid support),
-;; automatic table of contents, linting via markdownlint, and sensible
-;; defaults for fill columns, visual wrapping, and display indicators.
-;;
-;; The design follows these principles:
-;; - Verbose, self-documenting docstrings with two spaces after
-;;   sentence periods.
-;; - All function arguments (when present) documented in UPPER CASE
-;;   in the docstring, with clear explanations of purpose, expected
-;;   type, and usage constraints.
-;; - Lazy loading via `use-package' and `defer' / `hook' where
-;;   possible for startup efficiency.
-;; - Compatibility shims for both `markdown-mode' (classic) and
-;;   `markdown-ts-mode' (Tree-sitter) so existing workflows continue
-;;   to work while new files benefit from Tree-sitter.
-;; - Idempotent grammar installation and safe fallbacks if
-;;   Tree-sitter or Marksman are unavailable.
-;; - Use of the modern `major-mode-remap-alist` to avoid polluting
-;;   `auto-mode-alist' with duplicate entries.
-;;
-;; To use this module:
-;;   1. Place this file in your `load-path' (e.g. ~/.emacs.d/lisp/).
-;;   2. Add (require 'markdown-support) to your init.el or
-;;      writing-config.el AFTER (require 'path-support) and
-;;      (require 'logging-config) if you use them.
-;;   3. **IMPORTANT:** Remove or comment out ALL Markdown-related
-;;      sections from writing-config.el (especially any
-;;      `auto-mode-alist' entries for .md, the old
-;;      `my-writing-config/markdown-mode-setup' function, and any
-;;      direct `add-hook' for markdown-ts-mode).  Duplicate entries
-;;      are the #1 cause of the exact error you are seeing.
-;;   4. Restart Emacs or `M-x eval-buffer' on this file.
-;;   5. Open a .md file; Tree-sitter mode should activate
-;;      automatically (run `M-x treesit-install-language-grammar'
-;;      for `markdown' and `markdown-inline' if prompted or if
-;;      highlighting is incomplete).
-;;
-;; Edge cases handled:
-;; - No Tree-sitter support: falls back to classic `markdown-mode'.
-;; - Missing Marksman: Eglot silently skips; manual `M-x eglot' still
-;;   possible with other servers.
-;; - Grammar not installed: clear message with exact command.
-;; - Mixed classic / ts buffers: both hooks run safely.
-;; - Duplicate auto-mode-alist entries from old config: prevented by
-;;   using `major-mode-remap-alist' + single clean entry.
-;; - Windows / macOS / Linux path differences: relies on
-;;   `executable-find' which is cross-platform.
-;;
-;; Implications:
-;; - Tree-sitter gives ~10-100x faster fontification and enables
-;;   structural editing (e.g. `treesit-forward-sexp').
-;; - Marksman provides cross-file link completion and diagnostic
-;;   squiggles that classic regex-based modes cannot match.
-;; - You can still use Pandoc / LaTeX export pipelines unchanged.
-;; - This setup is future-proof for Emacs 31+ where `markdown-ts-mode'
-;;   is built-in.
+;; Map:
+;;   Feature:    markdown-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: ide
+;;   Keymaps:    none
+;;   Docs:       docs/markdown-support.org
+;;   OS:         marksman markdownlint
 
 ;;; Code:
 
@@ -82,8 +31,8 @@
 ;;   -------------------------------------------------------------
 
 (defun markdown-support/markdown-mode-setup ()
-  "Apply productivity defaults to any Markdown buffer (classic or
-Tree-sitter).
+  "Apply productivity defaults to any Markdown buffer.
+Works for classic Markdown and Tree-sitter modes.
 
 This function is the single hook target for both
 `markdown-mode-hook' and `markdown-ts-mode-hook'.  It performs the
@@ -100,7 +49,7 @@ do not cause errors:
 - Sets generous fill columns (140) suitable for modern wide
   displays and documentation that may contain long code examples
   or tables.
-- Turns on the fill-column indicator as a visual guide.
+- Turns on the `fill-column' indicator as a visual guide.
 - Optionally loads `treesit-fold' (the require is safe).
 
 No arguments are accepted.  The function inspects the current
@@ -117,7 +66,7 @@ Edge-case behaviour:
   has no adverse effects.
 - It is safe to call even if the buffer is not actually a Markdown
   buffer (it simply does nothing harmful)."
-  (visual-line-mode -1)                                                           ; switch off visual line mode. 
+  (visual-line-mode -1)                                                           ; switch off visual line mode.
 
   (when (fboundp 'eglot-ensure)
     (eglot-ensure))

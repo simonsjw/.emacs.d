@@ -1,21 +1,26 @@
-;;; keymaps-menus.el --- Easy-menu definitions for the centralised keymaps -*- lexical-binding: t; -*-
+;;; keymaps-menus.el --- Menu-bar entries for the keymap modules. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
+;; Author: Simon Watson
+
 ;;; Commentary:
+
+;; Load this file last among the keymap modules.  Easy-menu definitions
+;; stay in lock-step with the sibling `keymaps-*' files: every top-level
+;; group that has a keymap also has a menu here.  Global groups go on
+;; the menu-bar once; Comments / Errors also install mode-locally via
+;; `keymaps-menus/install-prog-menus'.  Safe after `menu-keys-support':
+;; each installer checks whether the menu-bar slot already exists.
 ;;
-;; Menu definitions that stay in lock-step with the keymaps in the
-;; sibling modules.  Every top-level group that has a keymap also has
-;; a menu here.
-;;
-;; Installation:
-;;   - Global groups are added to the menu-bar once.
-;;   - Comments / Errors are also available for mode-local installation
-;;     via `keymaps-menus/install-prog-menus'.
-;;
-;; This module is safe to load after `menu-keys-support.el': each
-;; installer checks whether the menu-bar slot already exists.
+;; Map:
+;;   Feature:    keymaps-menus
+;;   Load-after: keymaps-core logging-config
+;;   Load-phase: keymaps
+;;   Keymaps:    keymaps-menus.el
+;;   Docs:       docs/keymaps-menus.org
+;;   OS:         none
 
 ;;; Code:
 
@@ -26,12 +31,11 @@
            :msg "Starting load of the keymaps-menus module."
            :obj t)
 
-;; ----------------------------------------------------------------------
-;;; Helpers
-;; ----------------------------------------------------------------------
+;;;; Helpers
+;;   -------
 
 (defun keymaps-menus/install-menu-bar (slot title menu-def)
-  "Install MENU-DEF on the menu-bar under SLOT.
+  "Install SLOT titled TITLE using MENU-DEF on the menu-bar.
 SLOT is a symbol used as the fake menu-bar key (e.g. `WINDOWS-FNS').
 TITLE is the visible menu-bar label.  MENU-DEF is an easy-menu list.
 
@@ -46,9 +50,8 @@ new items (for example the IDE pane toggles)."
         (cons title map)
         t))))
 
-;; ----------------------------------------------------------------------
-;;; Comments (C-c c)
-;; ----------------------------------------------------------------------
+;;;; Comments (C-c c)
+;;   ----------------
 
 (defvar my-custom-menus/comment
   '("Comments"
@@ -76,9 +79,8 @@ new items (for example the IDE pane toggles)."
      :keys "C-c c RET"])
   "Menu for comment-related functions.")
 
-;; ----------------------------------------------------------------------
-;;; Windows (C-c w)
-;; ----------------------------------------------------------------------
+;;;; Windows (C-c w)
+;;   ---------------
 
 (defvar my-custom-menus/windows
   '("Windows"
@@ -154,9 +156,8 @@ new items (for example the IDE pane toggles)."
      :help "Show or hide the terminal pane"])
   "Menu for window functions.")
 
-;; ----------------------------------------------------------------------
-;;; UI / Layout (C-c i)
-;; ----------------------------------------------------------------------
+;;;; UI / Layout (C-c i)
+;;   -------------------
 
 (defvar my-custom-menus/ui
   '("UI"
@@ -180,9 +181,8 @@ new items (for example the IDE pane toggles)."
      :help "Clean the focused window's buffer history"])
   "Menu for UI / layout functions.")
 
-;; ----------------------------------------------------------------------
-;;; Errors / Diagnostics (C-c e)
-;; ----------------------------------------------------------------------
+;;;; Errors / Diagnostics (C-c e)
+;;   ----------------------------
 
 (defvar my-custom-menus/flymake
   '("Errors"
@@ -210,9 +210,8 @@ new items (for example the IDE pane toggles)."
      :keys "C-c e D"])
   "Menu for linting / Flymake functions.")
 
-;; ----------------------------------------------------------------------
-;;; Project (C-c p)
-;; ----------------------------------------------------------------------
+;;;; Project (C-c p)
+;;   ---------------
 
 (defvar my-custom-menus/project
   '("Project"
@@ -231,9 +230,8 @@ new items (for example the IDE pane toggles)."
      :help "cd the vterm buffer to the current file's directory"])
   "Menu for shared project commands.")
 
-;; ----------------------------------------------------------------------
-;;; LLM (C-c m)
-;; ----------------------------------------------------------------------
+;;;; LLM (C-c m)
+;;   -----------
 
 (defvar my-custom-menus/llm
   '("LLM"
@@ -248,9 +246,8 @@ new items (for example the IDE pane toggles)."
     ["Start Qwen session" my-llm/aidermacs-start-qwen :keys "C-c m q"])
   "Menu for LLM / Aidermacs commands.")
 
-;; ----------------------------------------------------------------------
-;;; Org (C-c C-o)
-;; ----------------------------------------------------------------------
+;;;; Org (C-c C-o)
+;;   -------------
 
 (defvar my-custom-menus/org
   '("Org"
@@ -267,9 +264,8 @@ new items (for example the IDE pane toggles)."
     ["Roam: toggle buffer" org-roam-buffer-toggle :keys "C-c n l"])
   "Menu for the strengthened Org keymap.")
 
-;; ----------------------------------------------------------------------
-;;; Diff HL / VC (C-x v h …)
-;; ----------------------------------------------------------------------
+;;;; Diff HL / VC (C-x v h)
+;;   ----------------------
 
 (defvar my-custom-menus/diff-hl
   '("Diff Highlights"
@@ -303,9 +299,8 @@ new items (for example the IDE pane toggles)."
     ["Set reference rev" diff-hl-set-reference-rev])
   "Menu for diff-hl navigation, operations and modes.")
 
-;; ----------------------------------------------------------------------
-;;; Installation
-;; ----------------------------------------------------------------------
+;;;; Installation
+;;   ------------
 
 (defun keymaps-menus/install-global-menus ()
   "Install the shared menus on the menu-bar."

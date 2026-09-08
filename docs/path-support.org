@@ -1,0 +1,55 @@
+* path-support
+
+** Load point
+
+Loaded from =early-init.el= (tangled from =conf.org=) before
+~logging-config~:
+
+#+begin_src emacs-lisp
+(load-file (expand-file-name "custom-modules/path-support.el"
+                             user-emacs-directory))
+#+end_src
+
+** Purpose
+
+Single source of ~my-paths/~ constants, ~no-littering-var-directory~ /
+~no-littering-etc-directory~, and load-path roots.  Form-feed (~^L~)
+characters in the Lisp file are historical; do not add more.
+
+** Depends
+
+- none (early; logging is not available yet)
+
+** Provides
+
+- Feature ~path-support~ from =custom-modules/path-support.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+List binaries or services the module expects.  Keep this in sync with
+the External dependencies table in =conf.org= and =docs/os-integrations.org=.
+
+| Tool | Install hint | Used for |
+|------+--------------+----------|
+|      |              |          |
+
+** Variables
+
+- ~envvar/SYSTEM_NAME~ — from ~$MY_NAME~, default ~INFODYNAMICS~
+- ~no-littering-var-directory~ — =var/$MY_NAME/=
+- ~no-littering-etc-directory~ — =etc/$MY_NAME/=
+- ~my-paths/~ constants — every first-party path; add new ones in the
+  dedicated path-constants PR, not as drive-by edits
+
+** Commands and keys
+
+- ~my-on-disk-tools/ensure-directory-exists~ — create DIR and parents
+
+** Related modules
+
+- ~logging-config~ (loads after this file)
+- ~early-init.el~ (loads this file)

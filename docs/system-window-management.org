@@ -1,0 +1,54 @@
+* system-window-management
+
+** Load point
+
+Require the module from =init.el= (via the tangle block in =conf.org=)
+after its dependencies:
+
+#+begin_src emacs-lisp
+(require 'system-window-management)
+#+end_src
+
+Do not require the piece files from =init.el=; the loader pulls them in.
+
+** Purpose
+
+Loader and ~provide~ of IDE window tagging.  Category maps live here.
+Piece files handle helpers, pane toggle, and ~display-buffer~ / Ediff.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~system-window-management~ from =custom-modules/system-tools/system-window-management.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+none
+
+** Variables
+
+- ~my-buffer-tools/category-map~ — buffer name/regexp/mode to category
+- ~my-window-tools/category-map~ — IDE category list
+- ~my-window-tools/category-fallback~ — lookup chain when a pane is closed
+- ~my-window-tools/default-occupants~ — default buffer per category
+- ~my-window-tools/keep-buffers~ — names protected from aggregate deletes
+
+** Commands and keys
+
+none on the loader itself; see the piece files.
+
+** Related modules
+
+- ~system-window-helpers~
+- ~system-window-panes~
+- ~system-window-display~
+- ~startup-config~
+- ~ui-config~

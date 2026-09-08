@@ -1,15 +1,26 @@
-;;; lang-docker.el --- systemd service file support for the crafted setup   -*- lexical-binding: t; -*-
+;;; lang-docker.el --- Dockerfile and docker-compose editing. -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026 Simon Watson
+;; SPDX-License-Identifier: MIT
+
+;; Author: Simon Watson
 
 ;;; Commentary:
-;;
-;; Packages for docker related high-jinx.
-;;
-;;
-;; Prerequisites: docker and the compose plugin. 
-;;
 
+;; Language module for Docker: `docker.el' commands and
+;; `docker-compose-mode'.  Requires Docker and the compose plugin
+;; on the host.  Load from `init.el'.
+;;
+;; Map:
+;;   Feature:    lang-docker
+;;   Load-after: path-support logging-config
+;;   Load-phase: lang
+;;   Keymaps:    none
+;;   Docs:       docs/lang-docker.org
+;;   OS:         docker
 
 ;;; Code:
+
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'lang-docker

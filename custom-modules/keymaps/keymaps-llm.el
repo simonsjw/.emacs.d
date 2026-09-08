@@ -1,15 +1,24 @@
-;;; keymaps-llm.el --- LLM / AI keymap (C-c m) -*- lexical-binding: t; -*-
+;;; keymaps-llm.el --- LLM prefix map for llm-support. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
+;; Author: Simon Watson
+
 ;;; Commentary:
+
+;; Keymap module for `llm-support'.  gptel and Aidermacs bindings under
+;; `C-c m' (not `C-c l').  Commands live in `llm-support.el'; this
+;; file owns the keymap and which-key titles.  Load after
+;; `keymaps-core'.  Menus last in `keymaps-menus.el'.
 ;;
-;; LLM and Aidermacs bindings under the new prefix C-c m
-;; (moved from the previous C-c l to free that prefix).
-;;
-;; The actual implementation of the commands lives in LLM-support.el;
-;; this module only owns the keymap and which-key titles.
+;; Map:
+;;   Feature:    keymaps-llm
+;;   Load-after: keymaps-core logging-config
+;;   Load-phase: keymaps
+;;   Keymaps:    keymaps-llm.el
+;;   Docs:       docs/keymaps-llm.org
+;;   OS:         none
 
 ;;; Code:
 
@@ -20,15 +29,14 @@
            :msg "Starting load of the keymaps-llm module."
            :obj t)
 
-;; ----------------------------------------------------------------------
-;;; LLM map (C-c m)
-;; ----------------------------------------------------------------------
+;;;; LLM map (C-c m)
+;;   ---------------
 
 (define-prefix-command 'my-key-maps/llm)
 
 (keymap-global-set "C-c m" 'my-key-maps/llm)
 
-;; Core commands (defined in LLM-support.el)
+;; Core commands (defined in llm-support.el)
 (when (fboundp 'my-llm/new-chat)
   (keymap-set my-key-maps/llm "n" #'my-llm/new-chat))
 
@@ -53,14 +61,11 @@
                            "g" "Grok"
                            "q" "Qwen"))
 
-;; ----------------------------------------------------------------------
-;;; Migration note
-;; ----------------------------------------------------------------------
-;; The previous global bindings
-;;   (global-set-key (kbd "C-c l n") #'my-llm/new-chat)
-;;   (global-set-key (kbd "C-c l a") #'my-llm/aidermacs-menu)
-;; should be removed from LLM-support.el once this module is loaded.
-;; Until then both prefixes will work (harmless but confusing).
+;;;; Migration note
+;;   --------------
+
+;; Previous `C-c l' globals should not be restored; `C-c m' is the
+;; live prefix.
 
 (log/debug :fn 'keymaps-llm
            :msg "Ending load of the keymaps-llm module."

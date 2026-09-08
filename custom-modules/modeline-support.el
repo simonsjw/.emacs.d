@@ -1,16 +1,24 @@
-;;; mode-line-support.el --- modeline support for the crafted setup   -*- lexical-binding: t -*-
+;;; modeline-support.el --- Mode-line segments and indicators. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
-;; Keywords: mode-line modeline
 
 ;;; Commentary:
 
-;; This package handles modeline customisation.
+;; Mode-line segments and indicators (delight, nerd-icons, custom
+;; segments).  Load from `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    modeline-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: ui
+;;   Keymaps:    none
+;;   Docs:       docs/modeline-support.org
+;;   OS:         none
 
-;;; Declarations and imports
+;;; Code:
 
 (require 'delight)
 
@@ -28,7 +36,6 @@
 
 (defvar nerd-icons-mode-icon-alist "nerd-icons")
 
-;;; Code:
 ;; Show compile status in the mode line
 (setq auto-compile-use-mode-line t)
 
@@ -77,7 +84,7 @@
             match-string
           ;; Fall back to the default mode-line position formatting.
           (format-mode-line my-modeline/default-mode-line-position))))
-  "This mode-line element displays position or matching bracket info,
+  "Display position or matching-bracket info in the mode line.
 
 The matching bracket info is shown if the cursor is near a bracket.")
 

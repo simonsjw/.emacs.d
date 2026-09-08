@@ -1,4 +1,4 @@
-;;; speedbar-keys.el --- Key bindings for Speedbar -*- lexical-binding: t; -*-
+;;; speedbar-keys.el --- Speedbar mode-map bindings. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
@@ -6,9 +6,26 @@
 ;; Author: Simon Watson
 
 ;;; Commentary:
-;; All key bindings and mode hooks for the Speedbar package.
+
+;; Piece of `speedbar-support': mode hooks and key bindings for the
+;; Speedbar buffer and file keymap.  Required by the loader, not from
+;; `init.el' directly.
+;;
+;; Map:
+;;   Feature:    speedbar-keys
+;;   Load-after: speedbar-pinning speedbar-commands
+;;   Load-phase: ui
+;;   Keymaps:    none
+;;   Docs:       docs/speedbar-keys.org
+;;   OS:         none
 
 ;;; Code:
+
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'speedbar-keys
+           :msg "Starting load of the speedbar-keys module."
+           :obj t)
 
 (require 'speedbar)
 (require 'speedbar-pinning)
@@ -39,6 +56,10 @@
   (define-key speedbar-mode-map "v" #'my-speedbar/open-vterm-in-dir))
 
 (global-set-key (kbd "C-c s") #'my-speedbar/toggle)
+
+(log/debug :fn 'speedbar-keys
+           :msg "Ending load of the speedbar-keys module."
+           :obj t)
 
 (provide 'speedbar-keys)
 ;;; speedbar-keys.el ends here

@@ -1,27 +1,26 @@
-;;; lang-systemd.el --- systemd service file support for the crafted setup   -*- lexical-binding: t; -*-
+;;; lang-systemd.el --- systemd unit editing via systemd-mode. -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026 Simon Watson
+;; SPDX-License-Identifier: MIT
+
+;; Author: Simon Watson
 
 ;;; Commentary:
+
+;; Language module for systemd unit files using the local
+;; `systemd-mode' submodule.  Completion uses CAPF / Corfu, not
+;; company-mode.
 ;;
-;; Major mode for editing systemd units.
-;;
-;; Similar to `conf-mode' but with enhanced highlighting; e.g. for
-;; specifiers and booleans.  Employs strict regex for whitespace.
-;; Features a facility for browsing documentation: use C-c C-o to open
-;; links to documentation in a unit (cf. systemctl help).
-;;
-;; Supports completion of directives and sections in either units or
-;; network configuration.  Both a completer for
-;; `completion-at-point-functions' and a company backend are provided.
-;; The latter can be enabled by adding `company-mode' to
-;; `systemd-mode-hook' and adding `systemd-company-backend' to
-;; `company-backends'.
-;;
-;; Prerequisites:
-;;
-;; - Not sure its a Prerequisite but having systemd on your system helps. 
-;; Repo home:[[https://github.com/holomorph/systemd-mode][systemd-mode]]
+;; Map:
+;;   Feature:    lang-systemd
+;;   Load-after: path-support logging-config
+;;   Load-phase: lang
+;;   Keymaps:    none
+;;   Docs:       docs/lang-systemd.org
+;;   OS:         systemd
 
 ;;; Code:
+
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'lang-systemd
@@ -33,7 +32,6 @@
 (add-to-list 'load-path my-paths/systemd-mode) ; Add directory to the load path
 
 ;;; Configuration phase
-;; (non - can add company-mode hooks if you use company though.)
 
 (log/debug :fn 'lang-systemd
            :msg "Ending load of the lang-systemd module."

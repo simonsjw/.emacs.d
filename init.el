@@ -1,8 +1,8 @@
 ;; init.el -- Simon's Emacs user customization file -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; This file is generated from config.org.  If you want to edit the
-;; configuration, DO NOT edit init.el, edit config.org, instead.
+;; This file is generated from conf.org.  If you want to edit the
+;; configuration, DO NOT edit init.el, edit conf.org, instead.
 
 ;;; Code:
 
@@ -230,7 +230,7 @@
 (require 'markdown-support)
 
 ;; Additional file format support.
-(require 'fileFormat-support)
+(require 'file-format-support)
 
 ;; version control
 (require 'vc-support)
@@ -254,7 +254,7 @@
 (require 'summary-support)
   (require 'system-window-management)
   (require 'startup-config)
-  (require 'LLM-support)
+  (require 'llm-support)
   (require 'menu-keys-support)
   (require 'server-support)
 

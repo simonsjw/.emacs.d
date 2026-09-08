@@ -1,15 +1,22 @@
-;;; theme-support.el --- theme support for the crafted setup   -*- lexical-binding: t; -*-
+;;; theme-support.el --- Modus themes, nerd-icons, info-theme colours. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
-;; Keywords: colour color theme font face
 
 ;;; Commentary:
 
-;; This module handles the Emacs themes settings.
-;; good doom-themes: pale-night, material and grovbox.
+;; Modus themes, nerd-icons, and the `info-theme-*' colour palette used
+;; across the tree.  Load from `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    theme-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: ui
+;;   Keymaps:    none
+;;   Docs:       docs/theme-support.org
+;;   OS:         nerd-font
 
 ;;; Code:
 (require 'system-tools)
@@ -280,7 +287,7 @@ Converts keys to strings and ensures values are strings."
              `(default
                ((t (:inherit nil
                              :weight regular :height 100
-                             :family "Noto Mono"))))   ;; fira code
+                             :family "JetBrains Mono"))))   ;; Noto Mono"; fira code
 
              '(fixed-pitch
                ((t (:inherit nil
@@ -295,7 +302,7 @@ Converts keys to strings and ensures values are strings."
              '(fixed-pitch-serif
                ((t (:inherit nil
                              :weight regular :height 100
-                             :family "Courier New"))))
+                             :family "JetBrains Mono"))))
 
              ;; Now generate the modus themes faces.
              `(modus-themes-heading-0
@@ -306,27 +313,27 @@ Converts keys to strings and ensures values are strings."
 
              `(modus-themes-heading-1
                ((t (:foreground ,info-theme-white-grey :weight Bold
-                                :height 140 :family "arial")))
+                                :height 140 :family "JetBrains Mono")))
                t)
 
              `(modus-themes-heading-2
                ((t (:foreground ,info-theme-white-grey :weight Bold
-                                :height 130 :family "arial")))
+                                :height 130 :family "JetBrains Mono")))
                t)
 
              `(modus-themes-heading-3
                ((t (:foreground ,info-theme-white-grey :weight Bold
-                                :height 120 :family "arial")))
+                                :height 120 :family "JetBrains Mono")))
                t)
 
              `(modus-themes-heading-4
                ((t (:foreground ,info-theme-white-grey :weight regular
-                                :height 120 :family "arial")))
+                                :height 120 :family "JetBrains Mono")))
                t)
 
              `(modus-themes-heading-5
                ((t (:foreground ,info-theme-white-grey :weight regular
-                                :height 80 :family "arial")))
+                                :height 80 :family "JetBrains Mono")))
                t)
 
              )

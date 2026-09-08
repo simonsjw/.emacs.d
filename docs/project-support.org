@@ -1,0 +1,85 @@
+* project-support
+
+** Load point
+
+Require the module from =init.el= (via the tangle block in =conf.org=)
+after its dependencies:
+
+#+begin_src emacs-lisp
+(require 'project-support)
+#+end_src
+
+** Purpose
+
+Built-in ~project.el~ integration and the loader for the local
+~project-view~ package.  Sets ~xref-search-program~ to ripgrep,
+appends a transient directory fallback after VC finders, and provides
+helpers to create a project from ~project-templates-archive~.
+
+** Depends
+
+Features that must already be loaded (match the Commentary =Map:=
+block and the row in =docs/MAP.org=):
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~project-support~ from =custom-modules/project-support.el=.
+
+** Keymaps
+
+- =custom-modules/keymaps/keymaps-project.el= (~C-c p~)
+
+This module also binds:
+
+- =C-c p f= — ~consult-project-extra-find~
+- =C-c p o= — ~consult-project-extra-find-other-window~
+
+** OS dependencies
+
+List binaries or services the module expects.  Keep this in sync with
+the External dependencies table in =conf.org= and =docs/os-integrations.org=.
+
+| Tool | Install hint | Used for |
+|------+--------------+----------|
+| ripgrep | ~sudo apt install ripgrep~ | ~xref-search-program~ |
+| tar | system ~tar~ with xz | list and extract ~project-templates-archive~ |
+| git | ~sudo apt install git~ | ~git init~ in a new template project |
+
+The environment variable ~PROJECT_PATHS~ is documented in =conf.org=
+and =docs/os-integrations.org~ for a later ~project-view~ follow-up.
+Lisp does not read it today.
+
+** Variables
+
+- ~xref-search-program~ — set to ~ripgrep~
+- ~project-templates-archive~ — defined in =path-support.el=; do not
+  add a second copy here
+- ~project-list-file~ — ~project.el~ list under =var/$MY_NAME/projects/=
+  (defined in =path-support.el=)
+- ~my-paths/project-view~ — load path for the local ~project-view~
+  package (defined in =path-support.el=)
+
+** Commands and keys
+
+- ~my-project/fallback~ — transient project finder on
+  ~project-find-functions~ (not a user command)
+- ~my-project/template-name-list~ — language folders in the templates
+  archive
+- ~my-project/create-project-from-template~ — =C-c p t= via
+  =keymaps-project.el=
+- ~my-project/query-replace-regexp-one-by-one~ — sequential
+  query-replace across project files
+- ~consult-project-extra-find~ — =C-c p f=
+- ~consult-project-extra-find-other-window~ — =C-c p o~
+- ~consult-project-buffer~ — =C-c p b= via =keymaps-project.el=
+
+** Related modules
+
+- ~path-support~ (path constants, including ~project-templates-archive~)
+- ~logging-config~
+- ~keymaps-project~
+- ~project-view~ (external repo simonsjw/project-view; MAP/docs/OS only)
+- ~vc-support~ (git)

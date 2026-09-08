@@ -1,7 +1,8 @@
+ORG_FILES := $(wildcard *.org)
 
-ORG_FILES=$(wildcard crafted-*.org) getting-started-guide.org mit-license.org
+.PHONY: docs
 
-docs: custom-emacs.info
+docs: emacs-config.info
 
-custom-emacs.info: $(ORG_FILES)
-	emacs -Q --script crafted-docs.el --funcall crafted-docs-export-info
+emacs-config.info: $(ORG_FILES) my-docs.el
+	emacs -Q --script my-docs.el --funcall my-docs-export-info

@@ -1,0 +1,52 @@
+* lang-python-format
+
+** Load point
+
+Required by ~lang-python~, not from =init.el= directly:
+
+#+begin_src emacs-lisp
+(require 'lang-python-format)
+#+end_src
+
+** Purpose
+
+Piece of ~lang-python~: Ruff format/isort via Apheleia.
+~my-lang-python/format-setup~ enables ~apheleia-mode~ and the
+buffer-local before-save comment alignment.  Do not enable Apheleia at
+~require~.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~lang-python-format~ from =custom-modules/prog-mode/lang-python-format.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+| Tool | Install hint | Used for |
+|------+--------------+----------|
+| ruff | ~pip install ruff~ | ~ruff format~ / ~ruff check --select=I~ |
+
+** Variables
+
+none; writes ~apheleia-formatters~ entries from ~format-setup~.
+
+** Commands and keys
+
+- ~my-lang-python/format-setup~
+- ~my-lang-python/format-buffer~
+- ~my-lang-python/format-region~
+- ~my-lang-python/organize-imports~
+- ~my-lang-python/align-comments-before-save~
+
+** Related modules
+
+- ~lang-python~
+- ~system-buffer-tools~ (~comment-align-buffer~)

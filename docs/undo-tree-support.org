@@ -1,0 +1,51 @@
+* undo-tree-support
+
+** Load point
+
+Require the module from =init.el= (via the tangle block in =conf.org=)
+after its dependencies, unless MAP marks it unloaded:
+
+#+begin_src emacs-lisp
+(require 'undo-tree-support)
+#+end_src
+
+** Purpose
+
+Undo-tree history and persistence
+
+** Depends
+
+Features that must already be loaded (match the Commentary =Map:=
+block and the row in =docs/MAP.org=):
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~undo-tree-support~ from =custom-modules/undo-tree-support.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+List binaries or services the module expects.  Keep this in sync with
+the External dependencies table in =conf.org= and =docs/os-integrations.org=.
+
+| Tool | Install hint | Used for |
+|------+--------------+----------|
+|      |              |          |
+
+** Variables
+
+Stub.  Fill during the Commentary pass for this module.
+
+** Commands and keys
+
+Stub.  Fill during the Commentary pass for this module.
+
+** Related modules
+
+See =docs/MAP.org= Depends and Keymaps for ~undo-tree-support~.

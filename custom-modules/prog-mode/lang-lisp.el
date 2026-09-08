@@ -1,60 +1,47 @@
-;;; lang-lisp.el --- Lisp development configuration -*- lexical-binding: t; -*-
+;;; lang-lisp.el --- Emacs Lisp, Common Lisp, Clojure, Scheme, Racket. -*- lexical-binding: t; -*-
 
-;; Local Variables:
-;; outline-regexp:  ';;;+'
-;; outline-start:  ';;'
-;; outline-level: my-outline-mode/outline-level
-;; End:
-
-;; Copyright (C) 2022
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
-;; Author: System Crafters Community
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Configuration for the Lisp family of languages, including Common
-;; Lisp, Clojure, Scheme, and Racket.
+;; Language module for the Lisp family.  Emacs Lisp uses Flymake,
+;; checkdoc, and outline-minor-mode (see `my-lang/elisp-mode-setup').
+;; Common Lisp uses SLY (install SBCL, CLISP, or CMUCL on the host).
+;; Clojure uses CIDER and clj-refactor; diagnostics are Flymake, not
+;; Flycheck.  Scheme and Racket use Geiser (this tree loads
+;; `geiser-guile' and `geiser-racket').
+;;
+;; Load from `init.el' after `lang-prog-mode'.  Shared comments and
+;; errors keys live in `keymaps-prog.el'.
+;;
+;; Map:
+;;   Feature:    lang-lisp
+;;   Load-after: path-support logging-config lang-prog-mode
+;;   Load-phase: lang
+;;   Keymaps:    keymaps-prog.el
+;;   Docs:       docs/lang-lisp.org
+;;   OS:         sbcl guile clojure
 
-;; For Common Lisp, configure SLY and a few related packages.
-;;    An implementation of CL will need to be installed, examples are:
-;;    * CLISP (GNU Common Lisp)q
-;;    * CMUCL (Carnegie-Mellon Common Lisp)
-;;    * SBCL (Steel-Bank Common Lisp)
+;;; Code:
 
-;; For Clojure, configure cider, clj-refactor
-
-;; For Scheme and Racket, configure geiser.
-;;   Out of the box, geiser already supports some scheme
-;;   implementations.  However, there are several modules which can be
-;;   added to geiser for specific implementations:
-;;   * geiser-chez
-;;   * geiser-chibi
-;;   * geiser-chicken
-;;   * geiser-gambitg
-;;   * geiser-gauche
-;;   * geiser-guile
-;;   * geiser-kawa
-;;   * geiser-mit
-;;   * geiser-racket
-;;   * geiser-stklos
-
-
-;;; Requirements:
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'lang-lisp
            :msg "Starting load of the lang-lisp module."
            :obj t)
 
-
 (require 'system-tools)
 (require 'eldoc)
 (require 'yasnippet)
 (require 'yasnippet-snippets)
-(require 'eldoc)
 
-;;; Packages:
+;;;; Packages
+;;   --------
+
+
 
 ;;;; Emacs Lisp
 ;; https://codeberg.org/ideasman42/emacs-elisp-autofmt
@@ -71,14 +58,11 @@
 (use-package cider)
 (use-package clj-refactor)
 (use-package clojure-mode)
-(use-package flycheck-clojure)
 
 ;;;; Scheme and Racket
 (use-package geiser)
 (use-package geiser-guile)
 (use-package geiser-racket)
-
-;;; Code:
 
 ;;;; Settings for Emacs lisp
 (defun my-lang/elisp-mode-setup ()
@@ -113,12 +97,12 @@
   ;; Provide a function to set the fill column indicator.
   ;; This has a default of 80 but can be set on a per mode basis.
   ;; Set the preferred fill column indicator for the mode and activate it.
-  
+
   (setq display-fill-column-indicator-column 80)                                  ; comment indicator column visual prompt
-  (setq fill-column  80)                                                          ; Column beyond which line wrapping occurs if it is activated. 
-  (setq comment-fill-column 260)                                                  ; Column to use for 'comment-indent'. If nil, use 'fill-column' instead. 
-  (setq comment-column 82)                                                        ; Column to indent right-margin comments to. 
-  (display-fill-column-indicator-mode 1)                                          ; show the visual prompt. 
+  (setq fill-column  80)                                                          ; Column beyond which line wrapping occurs if it is activated.
+  (setq comment-fill-column 260)                                                  ; Column to use for 'comment-indent'. If nil, use 'fill-column' instead.
+  (setq comment-column 82)                                                        ; Column to indent right-margin comments to.
+  (display-fill-column-indicator-mode 1)                                          ; show the visual prompt.
 
    ;;;;; Set up outline
 
@@ -126,7 +110,7 @@
   (setq-local outline-minor-mode-use-buttons 'in-margins)                         ; Show buttons
   (setq-local outline-blank-line t)                                               ; Blank line before headers
   (setq-local outline-minor-mode-highlight t)                                     ; Font-lock outlines
-  (setq-local outline-regexp "^[[:space:]]*;;;+")                                 ; Match `;;;' and more. 
+  (setq-local outline-regexp "^[[:space:]]*;;;+")                                 ; Match `;;;' and more.
   (setq-local outline-start ";;")                                                 ; Start marker
   (setq-local outline-level #'my-outline-mode/outline-level)                      ; Custom level function
 
@@ -134,9 +118,9 @@
   (setq-local fringe-indicator-alist
               (cons '(outline . (right-fringe . left-fringe))
                     (assq-delete-all 'outline fringe-indicator-alist)))
-  
+
   (outline-minor-mode 1)                                                          ; Use outline-minor-mode
-  
+
    ;;;;; IDE functionality map
 
   ;; compiling the code (Not applicable)
@@ -157,7 +141,6 @@
 
   ;; testing (tbd)
   ;; (keymap-set python-ts-mode-map "C-c C-c C-t"
-  ;; #'projectile-test-project)
 
   ;; running the code
   (keymap-set emacs-lisp-mode-map "C-c r b" #'eval-buffer)
@@ -170,7 +153,7 @@
 
   ;; fix whitespace
   (keymap-set emacs-lisp-mode-map "C-c C-w" #'whitespace-cleanup)
-  
+
    ;;; Errors/linting
 
   ;; list errors in buffer
@@ -249,10 +232,7 @@ a message telling you which statement you are at."
       ;; conflict with cider, use this by default as it does
       ;; not conflict and is a better mnemonic
       (cljr-add-keybindings-with-prefix "C-c r")))
-  (add-hook 'clojure-mode-hook #'my-lang/clojure-mode-setup)
-
-  (with-eval-after-load "flycheck"
-    (flycheck-clojure-setup)))
+  (add-hook 'clojure-mode-hook #'my-lang/clojure-mode-setup))
 
 ;;; Scheme and Racket
 ;; The default is "scheme" which is used by cmuscheme, xscheme and
@@ -268,4 +248,4 @@ a message telling you which statement you are at."
 (provide 'lang-lisp)
 ;;; lang-lisp.el ends here
 
-;; LocalWords:  codeberg ui flycheck clojure
+;; LocalWords:  codeberg ui clojure

@@ -1,23 +1,23 @@
-;;; completion-support.el --- Modern completion framework -*- lexical-binding: t; -*-
+;;; completion-support.el --- Vertico, Orderless, Marginalia, Consult, Corfu, Cape. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025 Simon Watson
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
+
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; This file configures a modern, cohesive completion experience using:
-;; - Vertico: Vertical minibuffer completion UI
-;; - Orderless: Flexible out-of-order (fuzzy) matching
-;; - Marginalia: Rich candidate annotations in the minibuffer
-;; - Consult: Enhanced completion commands with preview
-;; - Embark: Contextual actions on candidates
-;; - Corfu: In-buffer completion UI (child-frame popup)
-;; - Cape: Additional completion-at-point backends
-;; - Built-in which-key (Emacs 30+): Keybinding discovery popup
-
-;; All configuration is consolidated within `use-package' declarations
-;; for clarity and maintainability.  Extensive inline comments explain
-;; each setting.
+;; Minibuffer and in-buffer completion: Vertico, Orderless, Marginalia,
+;; Consult, Embark, Corfu, and Cape.  Load from `init.el' after
+;; `logging-config'.
+;;
+;; Map:
+;;   Feature:    completion-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: ui
+;;   Keymaps:    none
+;;   Docs:       docs/completion-support.org
+;;   OS:         none
 
 ;;; Code:
 

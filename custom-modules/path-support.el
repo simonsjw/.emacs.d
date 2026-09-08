@@ -1,16 +1,31 @@
-;;; path-support.el --- Path configuration for Emacs (with no-littering)  -*- lexical-binding: t; -*-
+;;; path-support.el --- Single source of my-paths/ constants. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2024 Simon Watson
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Single source of truth for ALL Emacs paths.
-;; Loaded exactly once from early-init.el.
-;; We fully replicate the useful parts of no-littering here so there is zero dependency
-;; on the package for any path logic.
+;; Loaded once from `early-init.el' before `logging-config' exists, so
+;; this file must not `require' `logging-config' or call `log/debug'.
+;; It is the only place first-party modules should add path
+;; constants (`defconst my-paths/...').  Machine-local state lives
+;; under `var/$MY_NAME/' (`no-littering-var-directory'); machine-local
+;; config under `etc/$MY_NAME/' (`no-littering-etc-directory').
+;; `envvar/SYSTEM_NAME' comes from `$MY_NAME' (default INFODYNAMICS).
+;;
+;; Form-feed characters (`^L') already in this file are historical
+;; section markers.  Do not add more; new sections use `;;;;' headings.
+;; New path constants belong in a later dedicated PR, not here.
+;;
+;; Map:
+;;   Feature:    path-support
+;;   Load-after: none
+;;   Load-phase: early
+;;   Keymaps:    none
+;;   Docs:       docs/path-support.org
+;;   OS:         none
 
 ;;; Code:
 
@@ -98,11 +113,11 @@
 
 (defconst my-paths/org-modern-indent-folder
   (locate-user-emacs-file "custom-packages/org-modern-indent/")
-  "Project to use org-modern-indent in  Emacs.")
+  "Folder holding the org-modern-indent package for this Emacs tree.")
 
 (defconst my-paths/systemd-mode
   (locate-user-emacs-file "custom-packages/systemd-mode/")
-  "systemD font-locking and keywords — minor local update to fix loading issue.")
+  "Systemd font-locking and keywords for this local package copy.")
 
 (defconst my-paths/logging-view-mode
   (locate-user-emacs-file "custom-packages/logging-view-mode/")
@@ -202,11 +217,11 @@
 
 (defconst org-roam-directory
   (expand-file-name "org-roam/" org-directory)
-  "Root directory for Org-roam (all Org data lives under org-directory).")
+  "Root directory for Org-roam (all Org data lives under `org-directory').")
 
 (defconst org-default-notes-file
   (expand-file-name "notes/notes.org" org-directory)
-  "Path to the Emacs notes file for org-capture functionality.")
+  "Path to the Emacs notes file for `org-capture' functionality.")
 
 (defconst org-default-inbox-file
   (expand-file-name "inbox.org" org-directory)

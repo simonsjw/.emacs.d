@@ -1,12 +1,23 @@
-;;; keymaps-org.el --- Org keymap (C-c C-o) -*- lexical-binding: t; -*-
+;;; keymaps-org.el --- Org keymap for org-support. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
+;; Author: Simon Watson
+
 ;;; Commentary:
+
+;; Keymap module for `org-support'.  Populates `my-org-keymap' under
+;; `C-c C-o' with agenda, dashboard, and date helpers.  Load after
+;; `keymaps-core'.  Menus last in `keymaps-menus.el'.
 ;;
-;; Populate the previously almost-empty my-org-keymap.
-;; The three highest-priority unbound Org functions now receive keys.
+;; Map:
+;;   Feature:    keymaps-org
+;;   Load-after: keymaps-core logging-config
+;;   Load-phase: keymaps
+;;   Keymaps:    keymaps-org.el
+;;   Docs:       docs/keymaps-org.org
+;;   OS:         none
 
 ;;; Code:
 
@@ -17,9 +28,8 @@
            :msg "Starting load of the keymaps-org module."
            :obj t)
 
-;; ----------------------------------------------------------------------
-;;; Org map (C-c C-o)
-;; ----------------------------------------------------------------------
+;;;; Org map (C-c C-o)
+;;   -----------------
 
 ;; The sparse keymap was already created in org-support.el.
 ;; We simply ensure it exists and then populate it.

@@ -1,27 +1,23 @@
-;;; accounting-support.el --- High-level accounting tools and wife-friendly reports -*- lexical-binding: t; -*-
+;;; accounting-support.el --- hledger-mode reports and hledger-web launcher. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2026 Simon
+;; Copyright (C) 2026 Simon Watson
+;; SPDX-License-Identifier: MIT
 
-;; Author: Simon <simon_sjw>
-;; Version: 1.1
-;; Package-Requires: ((emacs "29.1") (hledger-mode "1.0"))
-;; Keywords: finance, accounting, hledger, plaintext
-;; URL: https://github.com/simonsjw/.emacs.d
+;; Author: Simon Watson
 
 ;;; Commentary:
+
+;; hledger-mode reports and an hledger-web launcher.  Load from
+;; `init.el' after `logging-config'.  Keep the `C-c a …' bindings in
+;; this file; do not move them in this PR.
 ;;
-;; This module provides the "mod cons" for personal finance in Emacs.
-;; It is designed to be loaded via the use-package expression shown above.
-;;
-;; Core features:
-;; - Clean wrapper functions for the most useful reports (balance sheet,
-;;   net worth, investments, tax overview)
-;; - One-command launcher for hledger-web (perfect for your wife)
-;; - Light org-mode integration hooks
-;; - All functions are fully documented following strict Elisp guidelines
-;;
-;; The basic hledger-mode setup (auto-mode, completion, keybindings) now
-;; lives in the use-package declaration for a cleaner separation of concerns.
+;; Map:
+;;   Feature:    accounting-support
+;;   Load-after: logging-config
+;;   Load-phase: tools
+;;   Keymaps:    none
+;;   Docs:       docs/accounting-support.org
+;;   OS:         hledger
 
 ;;; Code:
 
@@ -30,7 +26,14 @@
            :msg "Starting load of the accounting-support module."
            :obj t)
 
-
+(defun accounting-support--setup-completion ()
+  "Wire hledger completion into `completion-at-point-functions' when available.
+If `hledger-completion-at-point' is bound, add it buffer-locally so Corfu
+can use it.  Otherwise leave completion to global Corfu and whatever
+hledger-mode already installed."
+  (when (fboundp 'hledger-completion-at-point)
+    (add-hook 'completion-at-point-functions
+              #'hledger-completion-at-point nil t)))
 
 (use-package hledger-mode
   :ensure t
@@ -40,12 +43,8 @@
   (hledger-binary-path "hledger")
   (hledger-show-expanded-report nil "Cleaner reports by default")
   :config
-  ;; Load our custom accounting module after hledger-mode is ready
-  (require 'accounting-support)
-
-  ;; Modern completion (company-mode)
-  (when (bound-and-true-p company-mode)
-    (add-to-list 'company-backends 'hledger-company))
+  ;; Completion via CAPF + Corfu (not company-mode).
+  (add-hook 'hledger-mode-hook #'accounting-support--setup-completion)
 
   ;; Helpful keybindings that work everywhere (not just in hledger buffers)
   (global-set-key (kbd "C-c a b") #'accounting-show-balance-sheet)
@@ -65,26 +64,31 @@ by non-Emacs users."
   :group 'applications
   :prefix "accounting-")
 
+;; FLAG (do not fix in this PR): `setq' before `defcustom' uses a
+;; different default (`~/Documents/org/accounting/main.journal' vs
+;; `~/finance/main.journal').  Deleting the `setq' would change the
+;; live value.
 (setq accounting-main-journal-file "~/Documents/org/accounting/main.journal")
 
 (defcustom accounting-main-journal-file "~/finance/main.journal"
-  "Path to your primary hledger journal file.  Set this once in your
-init file or via customize.  All report functions use this by default."
+  "Path to your primary hledger journal file.
+Set this once in your init file or via customize.  All report
+functions use this by default."
   :type 'file
   :group 'accounting-support)
 
 (defcustom accounting-web-port 5000
-  "TCP port used by `accounting-start-web-ui' when launching the
-hledger-web dashboard for your wife and other non-Emacs users."
+  "TCP port used by `accounting-start-web-ui'.
+Used when launching the hledger-web dashboard for non-Emacs users."
   :type 'integer
   :group 'accounting-support)
 
 ;;; Section: Core Report Engine
 
 (defun accounting-run-report (COMMAND &optional ARGS)
-  "Run any hledger report command and display the result in a nicely
-formatted buffer.  COMMAND is the hledger subcommand (e.g. \"balance\",
-\"balancesheet\").  ARGS is an optional string of extra flags."
+  "Run any hledger report COMMAND and show the result in a buffer.
+COMMAND is the hledger subcommand (e.g. \"balance\", \"balancesheet\").
+ARGS is an optional string of extra flags."
   (interactive "sHledger command: ")
   (let* ((journal accounting-main-journal-file)
          (cmd (format "hledger -f %s %s %s"
@@ -116,14 +120,14 @@ formatted buffer.  COMMAND is the hledger subcommand (e.g. \"balance\",
 Runs with --dry-run first so you can review.  Perfect for monthly updates."
   (interactive)
   (let ((default-directory accounting-cashflows-dir))
-    (when (y-or-n-p "Run DRY RUN first? (recommended) ")
+    (when (y-or-n-p "Run DRY RUN first (recommended)? ")
       (shell-command "hledger import *.csv --rules-file import.rules --dry-run"))
     (when (y-or-n-p "Proceed with real import? ")
       (shell-command "hledger import *.csv --rules-file import.rules")
       (message "Import complete.  Review with M-x accounting-show-balance-sheet"))))
 
 (defun accounting-import-single-csv (CSV-FILE)
-  "Import a single CSV file with review step."
+  "Import a single CSV-FILE with a review step."
   (interactive "fCSV file to import: ")
   (let ((default-directory accounting-cashflows-dir))
     (shell-command (format "hledger import %s --rules-file import.rules --dry-run"
@@ -136,9 +140,9 @@ Runs with --dry-run first so you can review.  Perfect for monthly updates."
 ;;; Section: High-Level Report Functions
 
 (defun accounting-show-balance-sheet ()
-  "Display a professional balance sheet showing Assets, Liabilities,
-and Equity/Net Worth.  This is the single most useful view for
-understanding your overall financial position."
+  "Display a professional balance sheet.
+Shows Assets, Liabilities, and Equity/Net Worth.  This is the single
+most useful view for understanding your overall financial position."
   (interactive)
   (accounting-run-report "balancesheet" "--pretty-tables -H"))
 
@@ -155,19 +159,18 @@ Ideal for tracking shares, ETFs, superannuation, and crypto."
   (accounting-run-report "balance" "assets:investments -V --pretty-tables"))
 
 (defun accounting-show-tax-overview ()
-  "Generate a tax-focused summary.  Looks for accounts or tags
-containing 'tax', 'deductible', 'gst', or 'ato'.  Customize the
-query inside this function if your tagging differs."
+  "Generate a tax-focused summary.
+Looks for accounts or tags containing tax, deductible, gst, or ato.
+Customise the query inside this function if your tagging differs."
   (interactive)
   (accounting-run-report "balance" "tag:tax or tag:deductible or tag:gst --pretty-tables"))
 
 ;;; Section: Wife-Friendly Web Dashboard
 
 (defun accounting-start-web-ui ()
-  "Start hledger-web on port `accounting-web-port' and open it in
-your default browser.  This gives your wife (and anyone else) a
-beautiful interactive dashboard with charts and filters without
-needing to use Emacs at all."
+  "Start hledger-web on `accounting-web-port' and open it in a browser.
+This gives a interactive dashboard with charts and filters without
+needing to use Emacs."
   (interactive)
   (let ((port accounting-web-port)
         (journal accounting-main-journal-file))
@@ -210,8 +213,8 @@ needing to use Emacs at all."
             (setq truncate-lines t)))
 
 
-(log/debug :fn 'markdown-support
-           :msg "Finished load of accounting-support.el module."
+(log/debug :fn 'accounting-support
+           :msg "Finished load of the accounting-support module."
            :obj t)
 
 

@@ -1,0 +1,12 @@
+* keymaps
+
+One line per file.  Load after the modules they bind; =keymaps-menus.el= last.
+
+- =keymaps-core.el= — which-key titles and shared keymap helpers (loaded first)
+- =keymaps-vc.el= — bindings on ~vc-prefix-map~
+- =keymaps-ui.el= — UI, ibuffer, tab-line, and vterm bindings
+- =keymaps-prog.el= — programming, Flymake, and debugger bindings
+- =keymaps-project.el= — bindings on ~project-prefix-map~
+- =keymaps-llm.el= — LLM prefix map (~C-c m~)
+- =keymaps-org.el= — Org agenda, capture, and roam bindings
+- =keymaps-menus.el= — menu-bar entries; load last among keymaps

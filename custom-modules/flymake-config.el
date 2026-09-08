@@ -1,13 +1,22 @@
-;;; flymake-config.el --- Configure Flymake -*- lexical-binding: t; -*-
+;;; flymake-config.el --- Flymake UI and shared diagnostics helpers. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2023
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
-;; Author: System Crafters Community
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Flymake configuration.
+;; Flymake UI and shared diagnostics helpers.  Keys live in
+;; `keymaps-prog.el'.  Load from `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    flymake-config
+;;   Load-after: path-support logging-config
+;;   Load-phase: ide
+;;   Keymaps:    keymaps-prog.el
+;;   Docs:       docs/flymake-config.org
+;;   OS:         none
 
 ;;; Code:
 (require 'path-support)
@@ -234,7 +243,7 @@ directory are visited.
 
 AUTO-SHOW-DELAY: if non-nil, automatically run
 `flymake-show-project-diagnostics' after this many seconds
-(default 4).  Set to nil to disable auto-show.
+\(default 4).  Set to nil to disable auto-show.
 
 When called interactively, a prefix argument means RECURSIVE is non-nil."
   (interactive (list current-prefix-arg))

@@ -1,0 +1,53 @@
+* system-window-panes
+
+** Load point
+
+Required by ~system-window-management~, not from =init.el= directly:
+
+#+begin_src emacs-lisp
+(require 'system-window-panes)
+#+end_src
+
+** Purpose
+
+Piece of ~system-window-management~: pane toggle, bury, and
+reallocation.  ~my-window-tools--open-category~ stays in this file.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+- ~system-window-helpers~
+
+** Provides
+
+- Feature ~system-window-panes~ from =custom-modules/system-tools/system-window-panes.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+none
+
+** Variables
+
+- ~my-window-tools/window-state~
+
+** Commands and keys
+
+- ~my-window-tools/toggle~
+- ~my-window-tools/toggle-edit~
+- ~my-window-tools/toggle-data~
+- ~my-window-tools/toggle-config~
+- ~my-window-tools/toggle-logs~
+- ~my-window-tools/toggle-vc~
+- ~my-window-tools/toggle-terminal~
+- ~my-window-tools/reallocate-frame~
+
+** Related modules
+
+- ~system-window-management~
+- ~system-window-helpers~
+- ~system-window-display~

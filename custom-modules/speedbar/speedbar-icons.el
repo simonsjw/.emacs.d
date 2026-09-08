@@ -1,4 +1,4 @@
-;;; speedbar-icons.el --- Enhanced Pretty Speedbar Icons -*- lexical-binding: t; -*-
+;;; speedbar-icons.el --- Pretty Speedbar icons by file type. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
@@ -6,21 +6,32 @@
 ;; Author: Simon Watson
 
 ;;; Commentary:
-;; Improved icon system for Speedbar using pretty-speedbar.
-;; Features:
-;; - Base folder/file/tag icons
-;; - File-type specific icons (different icon per extension)
-;; - Re-entrant setup for daemon + client frames
-;; - Easy to extend
+
+;; Piece of `speedbar-support': Nerd Font / pretty-speedbar icons,
+;; including per-extension glyphs.  Re-entrant for daemon and client
+;; frames.  Required by the loader, not from `init.el' directly.
+;;
+;; Map:
+;;   Feature:    speedbar-icons
+;;   Load-after: logging-config theme-support
+;;   Load-phase: ui
+;;   Keymaps:    none
+;;   Docs:       docs/speedbar-icons.org
+;;   OS:         none
 
 ;;; Code:
 
-(require 'pretty-speedbar)
+(require 'path-support)
 (require 'logging-config)
+(log/debug :fn 'speedbar-icons
+           :msg "Starting load of the speedbar-icons module."
+           :obj t)
+
+(require 'pretty-speedbar)
 (require 'theme-support)
-;;; ------------------------------------------------------------------
-;;; 1. Base Icon Definitions (Nerd Font glyphs)
-;;; ------------------------------------------------------------------
+
+;;;; Base icon definitions
+;;   ---------------------
 
 (defvar my-speedbar/base-icons
   '((folder          . "\uf07b")      ; Closed folder
@@ -100,7 +111,8 @@ Falls back to default file icon if no specific icon exists."
 ;;; ------------------------------------------------------------------
 
 (defun my-speedbar--insert-files-with-icons (orig-fun files level)
-  "Advise speedbar-insert-files-at-point to use file-type specific icons."
+  "Advise `speedbar-insert-files-at-point' to use file-type specific icons.
+ORIG-FUN is the original function.  FILES and LEVEL are passed through."
   (let ((dirs (car files))
         (lst  (cadr files)))
     ;; Insert directories (unchanged)
@@ -228,6 +240,10 @@ Safe to call multiple times (daemon + client frames)."
                 (my-speedbar/setup-pretty-icons))
               (when (fboundp 'sr-speedbar-refresh)
                 (sr-speedbar-refresh)))))
+
+(log/debug :fn 'speedbar-icons
+           :msg "Ending load of the speedbar-icons module."
+           :obj t)
 
 (provide 'speedbar-icons)
 ;;; speedbar-icons.el ends here

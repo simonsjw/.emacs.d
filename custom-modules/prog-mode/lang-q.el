@@ -1,26 +1,22 @@
-;;; lang-q.el --- KDB/Q Language configuration      -*- lexical-binding: t; -*-
+;;; lang-q.el --- Kdb/Q editing; loads q-loadbalancer. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
-;; Keywords: KDB/Q
 
 ;;; Commentary:
 
-;; Suggested additional keybindings for python-mode
-;; (with-eval-after-load "python"
-;;   (define-key python-mode-map (kbd "C-c C-n") #'numpydoc-generate)
-;;   (define-key python-mode-map (kbd "C-c e n") #'flymake-goto-next-error)
-;;   (define-key python-mode-map (kbd "C-c e p") #'flymake-goto-prev-error))
-
-;; Suggested keybindings for pyvenv mode
-;; (with-eval-after-load "pyvenv"
-;;   (define-key pyvenv-mode-map (kbd "C-c p a") #'pyvenv-activate)
-;;   (define-key pyvenv-mode-map (kbd "C-c p d") #'pyvenv-deactivate)
-;;   (define-key pyvenv-mode-map (kbd "C-c p w") #'pyvenv-workon))
-
-
+;; Language module for Kdb/Q.  Loads the first-party
+;; `q-loadbalancer' package.  Load from `init.el'.
+;;
+;; Map:
+;;   Feature:    lang-q
+;;   Load-after: path-support logging-config
+;;   Load-phase: lang
+;;   Keymaps:    none
+;;   Docs:       docs/lang-q.org
+;;   OS:         q ss
 
 ;;; Code:
 

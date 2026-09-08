@@ -1,14 +1,23 @@
-;;; keymaps-project.el --- Shared Project keymap (C-c p) -*- lexical-binding: t; -*-
+;;; keymaps-project.el --- Project prefix map for project-support. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
+;; Author: Simon Watson
+
 ;;; Commentary:
+
+;; Keymap module for `project-support'.  Shared Project prefix
+;; (`C-c p') so language files can stay thin overrides.  Load after
+;; `keymaps-core'.  Menus last in `keymaps-menus.el'.
 ;;
-;; Shared Project prefix (C-c p).
-;; Common project-related commands live here so that language files
-;; (especially Python) can become thin overrides instead of owning
-;; the only copy of these bindings.
+;; Map:
+;;   Feature:    keymaps-project
+;;   Load-after: keymaps-core logging-config
+;;   Load-phase: keymaps
+;;   Keymaps:    keymaps-project.el
+;;   Docs:       docs/keymaps-project.org
+;;   OS:         none
 
 ;;; Code:
 
@@ -19,9 +28,8 @@
            :msg "Starting load of the keymaps-project module."
            :obj t)
 
-;; ----------------------------------------------------------------------
-;;; Project map (C-c p)
-;; ----------------------------------------------------------------------
+;;;; Project map (C-c p)
+;;   -------------------
 
 (define-prefix-command 'my-key-maps/project)
 

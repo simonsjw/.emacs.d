@@ -1,96 +1,23 @@
-;;; debugger-support.el --- Provide Dape debugging -*- lexical-binding: t; -*-
+;;; debugger-support.el --- Dape debug adapter configuration. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2023
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Provide Dape debugging with customisation.
-;; General Configuration:
-;; ----------------------
-;; dape-adapter-dir: Directory for adapter files.
-;; dape-configs: Defines configurations for various adapters or debug sessions.
-;; dape-command: Base command used to start the debug adapter.
-
-;; User Interface:
-;; ---------------
-;; dape-display-source-buffer-action: Controls how source buffers are displayed.
-;; dape-buffer-window-arrangement: Manages window arrangement for dape buffers.
-;; dape-info-buffer-window-groups: Manages grouping for info buffers.
-
-;; Info Buffer Customisation:
-;; -------------------------
-;; dape-info-variable-table-aligned                 : Controls alignment in variable tables.
-;; dape-info-variable-table-row-config              : Configures rows in variable tables.
-;; dape-info-thread-buffer-verbose-names            : Customize the appearance and information displayed in thread buffers.
-;; dape-info-thread-buffer-locations                : Customize the appearance and information displayed in thread buffers.
-;; dape-info-thread-buffer-addresses                : Customise the appearance and information displayed in thread buffers.
-;; dape-info-stack-buffer-locations                 : Similar settings for stack buffers.
-;; dape-info-stack-buffer-modules                   : Similar settings for stack buffers.
-;; dape-info-stack-buffer-addresses                 : Similar settings for stack buffers.
-;; dape-info-buffer-variable-format                 : Formatting options for variables in the info buffer.
-
-;; REPL Settings:
-;; ---------------------
-;; dape-repl-use-shorthand                          : Enables shorthand commands in the REPL.
-;; dape-repl-commands                               : Define custom commands available in the REPL.
-
-;; Memory View Customisation:
-;; -------------------------
-;; dape-memory-page-size                            : Page size for memory views.
-;; dape-info-hide-mode-line                         : Hides the mode line in specific buffers.
-
-;; Miscellaneous Options:
-;; ----------------------
-;; dape-breakpoint-margin-string                    : Sets the string for breakpoints.
-;; dape-request-timeout                             : Timeout for requests to the debugger.
-;; dape-debug                                       : Enables debugging for dape itself.
-;; dape-inlay-hints                                 : Enables inlay hints in code views.
-
-;; Hooks
-;; -----
-;; dape provides various hooks that you can use to add custom behaviors:
-
-;; Debug Session Hooks:
-;; dape-start-hook                                  : Runs when a debug session starts.
-;; dape-stopped-hook                                : Runs when a debug session stops.
-;; dape-update-ui-hook                              : Runs when the UI updates (e.g., on new data or view refreshes).
-;; dape-display-source-hook                         : Executes before displaying a source buffer.
-
-;; UI and Completion:
-;; completion-at-point-functions                    : Several instances in dape where this hook is used to handle in-buffer completion.
-
-;; managing buffers and file operations
-;; kill-buffer-hook
-;; find-file-hook
-
-;;; Keymaps
-;;  -------
-;; The dape package defines several keymaps, with the primary ones being:
-
-;; dape-memory-mode-map                             ; Keybindings specific to the memory viewing mode.
-;; dape-info-watch-mode-map                         : Keybindings for managing watched variables.
-
-;; Suggested additional keybindings
-;; (with-eval-after-load "prog-mode"
-;;   (keymap-set prog-mode-map "C-c e n" #'flymake-goto-next-error)
-;;   (keymap-set prog-mode-map "C-c e p" #'flymake-goto-prev-error))
-
-;;; Examples
-;;  --------
-;; foo.py
-;; ------
-;; In this example, we use dape to debug python.  Note the use of `:args' to set
-;; function arguments.  Note the list form is needed when using a single
-;; argument (:args ["-fn"])
+;; Dape debug adapter configuration.  Keys live in `keymaps-prog.el'.
+;; Load from `init.el' after `logging-config'.  Do not move path
+;; constants here (that is a later dedicated PR).
 ;;
-;; Run adapter: debugpy
-;;    :cwd "/mnt/HDD04_WDD_08TB/workspace/python/my-package/"
-;;    :program "foo.py"
-;;    :args ["--fullname" "-fn" "value for fn"]
-
+;; Map:
+;;   Feature:    debugger-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: ide
+;;   Keymaps:    keymaps-prog.el
+;;   Docs:       docs/debugger-support.org
+;;   OS:         debugpy
 
 ;;; Code:
 

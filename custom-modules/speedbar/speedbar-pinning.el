@@ -1,4 +1,4 @@
-;;; speedbar-pinning.el --- Project-root pinning for Speedbar / sr-speedbar (file view only) -*- lexical-binding: t; -*-
+;;; speedbar-pinning.el --- Per-frame project-root pinning for Speedbar. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
@@ -6,25 +6,32 @@
 ;; Author: Simon Watson
 
 ;;; Commentary:
-;; Project-root pinning system tightly bound to file view mode only.
+
+;; Piece of `speedbar-support': pin the file-view tree to a project
+;; root.  State is stored as frame parameters so IDE frames can differ.
+;; The Speedbar buffer content stays shared; only control decisions are
+;; per-frame.  Hardened against dframe dead-frame errors via
+;; `my-speedbar--safe-attached-frame' and `my-speedbar--in-ide-frame-p'.
+;; Required by the loader, not from `init.el' directly.
 ;;
-;; State is stored as frame parameters so that multiple IDE frames can
-;; have independent pinning, current-file and tree-root values.
-;; The Speedbar buffer content itself remains shared (as in the original
-;; design); only the control decisions are per-frame.
-;;
-;; Strong IDE-frame + file-view guards are retained.
-;;
-;; 2026-08-23: Hardened against the classic dframe "dead frame" error
-;; (wrong-type-argument frame-live-p #<dead frame IDE: …>).
-;; See my-speedbar--safe-attached-frame and the tightened
-;; my-speedbar--in-ide-frame-p.
+;; Map:
+;;   Feature:    speedbar-pinning
+;;   Load-after: logging-config
+;;   Load-phase: ui
+;;   Keymaps:    none
+;;   Docs:       docs/speedbar-pinning.org
+;;   OS:         none
 
 ;;; Code:
 
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'speedbar-pinning
+           :msg "Starting load of the speedbar-pinning module."
+           :obj t)
+
 (require 'speedbar)
 (require 'dframe)
-(require 'logging-config)
 
 ;;;;; Frame-parameter accessors
 
@@ -33,8 +40,8 @@
   (frame-parameter (or frame (selected-frame)) 'my-speedbar-pin-project-root))
 
 (defun my-speedbar--set-pin-project-root (value &optional frame)
-  "Set the pin-project-root flag for FRAME to VALUE.
-Returns VALUE."
+  "Set the pin-project-root flag to VALUE for FRAME.
+FRAME defaults to the selected frame.  Returns VALUE."
   (set-frame-parameter (or frame (selected-frame)) 'my-speedbar-pin-project-root value)
   value)
 
@@ -43,8 +50,8 @@ Returns VALUE."
   (frame-parameter (or frame (selected-frame)) 'my-speedbar-current-file))
 
 (defun my-speedbar--set-current-file (value &optional frame)
-  "Set the current-file value for FRAME to VALUE.
-Returns VALUE."
+  "Set the current-file value to VALUE for FRAME.
+FRAME defaults to the selected frame.  Returns VALUE."
   (set-frame-parameter (or frame (selected-frame)) 'my-speedbar-current-file value)
   value)
 
@@ -53,8 +60,8 @@ Returns VALUE."
   (frame-parameter (or frame (selected-frame)) 'my-speedbar-file-tree-root))
 
 (defun my-speedbar--set-file-tree-root (value &optional frame)
-  "Set the file-tree-root value for FRAME to VALUE.
-Returns VALUE."
+  "Set the file-tree-root value to VALUE for FRAME.
+FRAME defaults to the selected frame.  Returns VALUE."
   (set-frame-parameter (or frame (selected-frame)) 'my-speedbar-file-tree-root value)
   value)
 
@@ -69,11 +76,11 @@ Returns VALUE."
 ;;;;; Safe frame helpers (new – protect against dead-frame errors)
 
 (defun my-speedbar--safe-attached-frame ()
-  "Return the frame that dframe/speedbar considers attached, but only if it is live.
+  "Return the live frame that dframe/speedbar considers attached.
 Never returns a dead frame object.  This is the primary defence against
 the error:
 
-  (wrong-type-argument frame-live-p #<dead frame IDE: …>)
+  \(wrong-type-argument `frame-live-p' #<dead frame IDE: …>)
 
 which originates in `dframe-select-attached-frame' /
 `speedbar-reconfigure-keymaps'."
@@ -98,7 +105,7 @@ Requires both a live attached frame (if any) *and* a live speedbar buffer."
 ;;;;; Helpers
 
 (defun my-speedbar--in-ide-frame-p ()
-  "Return non-nil if the *selected* frame is a live IDE frame (or dedicated Speedbar).
+  "Return non-nil if the selected frame is a live IDE or Speedbar frame.
 
 Requires the selected frame itself to be live.  The previous version could
 return non-nil after the IDE frame had been deleted (via the
@@ -164,7 +171,7 @@ a dead frame inside dframe."
     (or root dir)))
 
 (defun my-speedbar/expand-to-file (FILE)
-  "Expand ancestors and highlight FILE. Safe for new files."
+  "Expand ancestors and highlight FILE.  Safe for new files."
   (let* ((root (expand-file-name default-directory))
          (file-dir (file-name-directory (expand-file-name FILE)))
          (rel (file-relative-name file-dir root))
@@ -189,7 +196,7 @@ a dead frame inside dframe."
 (defun my-speedbar/apply-pinning-for-file (FILE)
   "Apply project pinning for FILE on the selected frame.
 When pinning is active, switch Speedbar to the project root of FILE
-(if different) and expand to the file.
+when different, and expand to the file.
 
 Hardened: never calls `speedbar-update-contents' unless the speedbar
 context (attached frame + buffer) is still live."
@@ -221,7 +228,9 @@ context (attached frame + buffer) is still live."
 ;;;;; Directory / File click advice
 
 (defun my-speedbar/dir-follow-advice (orig-fun TEXT TOKEN INDENT)
-  "Directory clicks still expand normally when pinning is active."
+  "Directory clicks still expand normally when pinning is active.
+ORIG-FUN is the original command.  TEXT, TOKEN and INDENT are the
+usual Speedbar click arguments."
   (if (and (my-speedbar--get-pin-project-root)
            (my-speedbar--in-file-view-p)
            (my-speedbar--in-ide-frame-p))
@@ -233,7 +242,9 @@ context (attached frame + buffer) is still live."
 (advice-add 'speedbar-dir-follow :around #'my-speedbar/dir-follow-advice)
 
 (defun my-speedbar/find-file-advice (orig-fun TEXT TOKEN INDENT)
-  "File clicks work normally and trigger pinning (IDE frame only)."
+  "File clicks work normally and trigger pinning (IDE frame only).
+ORIG-FUN is the original command.  TEXT, TOKEN and INDENT are the
+usual Speedbar click arguments."
   (when (and (my-speedbar--get-pin-project-root)
              (my-speedbar--in-file-view-p)
              (my-speedbar--in-ide-frame-p))
@@ -263,7 +274,8 @@ context (attached frame + buffer) is still live."
 ;;;;; Kill / bury
 
 (defun my-speedbar/kill-buffer-advice (orig-fun &rest ARGS)
-  "Ignore immediate focus change when pinning is active (IDE frame only)."
+  "Ignore immediate focus change when pinning is active (IDE frame only).
+ORIG-FUN is the original command.  ARGS are passed through."
   (when (and (my-speedbar--get-pin-project-root)
              (my-speedbar--in-file-view-p)
              (my-speedbar--in-ide-frame-p))
@@ -277,6 +289,7 @@ context (attached frame + buffer) is still live."
 
 (defun my-speedbar/speedbar-update-contents-advice (orig-fun &rest args)
   "Protect pinning during updates, but allow project switches.
+ORIG-FUN is the original command.  ARGS are passed through.
 
 Hardened: the whole body is skipped if the attached frame or speedbar
 buffer is no longer live.  This prevents the nested call into
@@ -321,7 +334,7 @@ buffer is no longer live.  This prevents the nested call into
 ;;;;; Cleanup on IDE frame deletion (new)
 
 (defun my-speedbar--cleanup-on-frame-delete (frame)
-  "Clear stale dframe/speedbar frame references when an IDE frame is deleted.
+  "Clear stale dframe/speedbar frame references when FRAME is deleted.
 Prevents a deleted frame object from remaining in `dframe-attached-frame'
 or `speedbar-frame' and later causing a wrong-type-argument error."
   (when (and (frame-parameter frame 'UI-TYPE)
@@ -337,6 +350,10 @@ or `speedbar-frame' and later causing a wrong-type-argument error."
       (setq sr-speedbar-frame nil))))
 
 (add-hook 'delete-frame-functions #'my-speedbar--cleanup-on-frame-delete)
+
+(log/debug :fn 'speedbar-pinning
+           :msg "Ending load of the speedbar-pinning module."
+           :obj t)
 
 (provide 'speedbar-pinning)
 ;;; speedbar-pinning.el ends here

@@ -1,0 +1,60 @@
+* system-tools
+
+** Load point
+
+Require the module from =init.el= (via the tangle block in =conf.org=)
+after its dependencies:
+
+#+begin_src emacs-lisp
+(require 'system-tools)
+#+end_src
+
+Do not require the piece files from =init.el=; the loader pulls them in.
+
+** Purpose
+
+Loader and ~provide~ of shared system helpers.  Keeps dictionary and
+SSH commands.  Requires the piece files: env, disk, buffer, and frame.
+
+Directory creation is ~my-on-disk-tools/ensure-directory-exists~ in
+=path-support.el= (~"Creating directory: %s"~).  Do not reintroduce a
+second copy.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~system-tools~ from =custom-modules/system-tools/system-tools.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+| Tool | Install hint | Used for |
+|------+--------------+----------|
+| ss | ~sudo apt install iproute2~ | socket/port listing (~system-frame-tools~) |
+
+** Variables
+
+none on the loader itself; see the piece files.
+
+** Commands and keys
+
+- ~my-dictionary/use-american~
+- ~my-dictionary/use-british~
+- ~my-dictionary/use-australian~
+- ~my-ssh/refresh-ssh-agent~
+
+** Related modules
+
+- ~system-env-tools~
+- ~system-disk-tools~
+- ~system-buffer-tools~
+- ~system-frame-tools~
+- ~path-support~
+- ~logging-config~

@@ -1,14 +1,25 @@
-;;; ide-config.el --- Provide IDE-like features -*- lexical-binding: t; -*-
+;;; ide-config.el --- Eglot server registrations, breadcrumb, editorconfig. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
 
 ;;; Commentary:
-;; A selection of packages to provide functionality for the UI.
 
-;; Eglot has been built-in since Emacs 29.
+;; Eglot server registrations, breadcrumb, editorconfig, and related
+;; IDE helpers.  Load from `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    ide-config
+;;   Load-after: path-support logging-config
+;;   Load-phase: ide
+;;   Keymaps:    none
+;;   Docs:       docs/ide-config.org
+;;   OS:         none
+
+;;; Code:
+
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'ide-config
@@ -34,9 +45,6 @@
 ;; Get some yasnippets installed.
 ;; https://github.com/AndreaCrotti/yasnippet-snippets
 (use-package yasnippet-snippets)
-
-
-;;; Code:
 
 ;; (require 'eglot)
 (require 'consult)

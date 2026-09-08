@@ -1,0 +1,52 @@
+* system-frame-tools
+
+** Load point
+
+Required by ~system-tools~, not from =init.el= directly:
+
+#+begin_src emacs-lisp
+(require 'system-frame-tools)
+#+end_src
+
+** Purpose
+
+Piece of ~system-tools~: frame helpers, fringe/margin theme helpers,
+and ~ss~ port listing.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~system-frame-tools~ from =custom-modules/system-tools/system-frame-tools.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+| Tool | Install hint | Used for |
+|------+--------------+----------|
+| ss | ~sudo apt install iproute2~ | socket/port listing |
+
+** Variables
+
+- ~my-frame-tools-inhibit-kill~ — inhibit buffer kill on frame close
+
+** Commands and keys
+
+- ~my-frame-tools/kill-buffers-on-frame-close~
+- ~my-frame-tools/delete-frame-by-name~
+- ~my-frame-tools/get-frame-by-name~
+- ~my-frame-tools/set-current-frame-name~
+- ~my-theme-support/tone-down-fringes~
+- ~my-os-tools/get-ss-output~
+- ~my-os-tools/find-available-ports~
+
+** Related modules
+
+- ~system-tools~
+- ~startup-config~ (uses frame-close helpers)

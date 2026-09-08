@@ -1,0 +1,52 @@
+* system-env-tools
+
+** Load point
+
+Required by ~system-tools~, not from =init.el= directly:
+
+#+begin_src emacs-lisp
+(require 'system-env-tools)
+#+end_src
+
+** Purpose
+
+Piece of ~system-tools~: environment snapshots
+(~my-env-tools/exec-path-from-shell-report~), hash-table helpers, and
+string utilities.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~system-env-tools~ from =custom-modules/system-tools/system-env-tools.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+none
+
+** Variables
+
+none specific; reads ~exec-path-from-shell-variables~.
+
+** Commands and keys
+
+- ~my-env-tools/exec-path-from-shell-report~
+- ~my-env-tools/exec-path-from-shell-report-full~
+- ~my-hash-tools/define-hash-table~
+- ~my-strings/ensure-directory-path~
+- ~my-strings/current-time-with-milliseconds~
+- ~my-strings/human-readable-file-sizes-to-bytes~
+- ~my-strings/number-to-human-readable-string~
+- ~my-strings/bytes-to-human-readable-file-sizes~
+
+** Related modules
+
+- ~system-tools~
+- ~defaults-config~ (calls the env report after ~exec-path-from-shell~)

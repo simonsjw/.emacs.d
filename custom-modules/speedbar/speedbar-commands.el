@@ -1,4 +1,4 @@
-;;; speedbar-commands.el --- Interactive Speedbar commands (updated for new pinning) -*- lexical-binding: t; -*-
+;;; speedbar-commands.el --- Interactive Speedbar navigation commands. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
@@ -6,19 +6,29 @@
 ;; Author: Simon Watson
 
 ;;; Commentary:
-;; User-facing interactive commands for Speedbar.
-;; Updated to work with the new dynamic MY-SPEEDBAR/PIN-PROJECT-ROOT model.
+
+;; Piece of `speedbar-support': user-facing commands (toggle, go home,
+;; workspace, pin overrides).  Manual root commands such as
+;; `my-speedbar/go-workspace' remain explicit overrides that jump and
+;; pin.  Required by the loader, not from `init.el' directly.
 ;;
-;; Note on manual root commands:
-;; Functions like `my-speedbar/set-speedbar-directory-and-pin`, `my-speedbar/go-workspace`
-;; and `my-speedbar/go-home` are retained as **explicit manual overrides**.
-;; They jump to a specific root and enable pinning. They are still useful
-;; even in the new dynamic model (e.g. for quickly locking to workspace or home).
+;; Map:
+;;   Feature:    speedbar-commands
+;;   Load-after: logging-config
+;;   Load-phase: ui
+;;   Keymaps:    none
+;;   Docs:       docs/speedbar-commands.org
+;;   OS:         none
 
 ;;; Code:
 
-(require 'speedbar)
+(require 'path-support)
 (require 'logging-config)
+(log/debug :fn 'speedbar-commands
+           :msg "Starting load of the speedbar-commands module."
+           :obj t)
+
+(require 'speedbar)
 
 (defun my-speedbar/set-speedbar-directory-to-file-path (FILE-PATH &optional PIN)
   "Set the Speedbar directory to FILE-PATH and refresh it.
@@ -37,7 +47,8 @@ on the selected frame."
       (message "Speedbar directory set to %s" expanded-path))))
 
 (defun my-speedbar/set-speedbar-directory-and-pin (DIRECTORY &optional QUIET)
-  "Set Speedbar directory to DIRECTORY and enable pinning on the selected frame."
+  "Set Speedbar directory to DIRECTORY and enable pinning on the selected frame.
+If QUIET is non-nil, suppress the echo-area confirmation."
   (interactive "DDirectory: ")
   (let ((expanded (expand-file-name DIRECTORY)))
     (when (file-directory-p expanded)
@@ -127,10 +138,11 @@ SPEEDBAR-VIEW is the name of the desired expansion list (string)."
   (speedbar-change-initial-expansion-list SPEEDBAR-VIEW))
 
 (defun my-speedbar/go-workspace ()
-  "Switch Speedbar to the workspace directory and enable project pinning.
+  "Switch Speedbar to the workspace directory and pin the project.
 
-Checks that Speedbar is active in file view before pinning to the workspace path.
-This is an explicit manual override that sets MY-SPEEDBAR/PIN-PROJECT-ROOT to t."
+Checks that Speedbar is active in file view before pinning to the
+workspace path.  This is an explicit manual override that sets
+pinning on."
   (interactive)
   (when (and (bound-and-true-p speedbar-frame)
              (eq speedbar-frame (selected-frame))
@@ -150,6 +162,10 @@ This is an explicit manual override that sets MY-SPEEDBAR/PIN-PROJECT-ROOT to t.
              (eq speedbar-buffer (current-buffer))
              (string-equal speedbar-initial-expansion-list-name "files"))
     (my-speedbar/set-speedbar-directory-and-pin (expand-file-name "~/"))))
+
+(log/debug :fn 'speedbar-commands
+           :msg "Ending load of the speedbar-commands module."
+           :obj t)
 
 (provide 'speedbar-commands)
 ;;; speedbar-commands.el ends here

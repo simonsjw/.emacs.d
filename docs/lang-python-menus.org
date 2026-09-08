@@ -1,0 +1,59 @@
+* lang-python-menus
+
+** Load point
+
+Required by ~lang-python~, not from =init.el= directly:
+
+#+begin_src emacs-lisp
+(require 'lang-python-menus)
+#+end_src
+
+** Purpose
+
+Piece of ~lang-python~: Tools menu entries and the Python context menu.
+~my-lang-python/menus-setup~ installs menus, remaining keys, and
+~context-menu-functions~ from the loader hook.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~lang-python-menus~ from =custom-modules/prog-mode/lang-python-menus.el=.
+
+** Keymaps
+
+- none on a dedicated keymap file; binds on ~python-ts-mode-map~ from ~menus-setup~
+
+** OS dependencies
+
+none
+
+** Variables
+
+- ~my-custom-menus/python-folding-menu~
+- ~my-custom-menus/python-pytest~
+- ~my-custom-menus/python-running-menu~
+- ~my-custom-menus/python-project-menu~
+- ~my-custom-menus/python-documentation-menu~
+- ~my-custom-menus/python-errors-menu~
+- ~my-custom-menus/python-find-menu~
+- ~my-custom-menus/python-fixes-menu~
+- ~my-custom-menus/python-lsp-menu~
+- ~my-custom-menus/python-object-menu~
+
+** Commands and keys
+
+- ~my-lang-python/menus-setup~
+- ~my-lang-python/context-menu~
+- ~my-lang-python/find-symbol~
+- ~my-lang-python/view-current-eglot-server~
+- ~my-lang-python/view-current-eglot-stderr~
+
+** Related modules
+
+- ~lang-python~
+- ~lang-python-format~
+- ~keymaps-prog~

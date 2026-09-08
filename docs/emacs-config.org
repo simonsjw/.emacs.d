@@ -1,0 +1,106 @@
+#+title: Simon Watson's Emacs configuration
+#+author: Simon Watson
+#+texinfo_filename: emacs-config.info
+#+texinfo_dir_category: Emacs
+#+texinfo_dir_title: Emacs Config: (emacs-config)
+#+texinfo_dir_desc: Simon Watson's Emacs 30 configuration
+
+* This tree
+
+#+include: getting-started-guide.org
+
+* Contributing documentation
+
+#+include: CONTRIBUTING.org
+
+* OS integrations
+
+#+include: os-integrations.org
+
+* Module map
+
+#+include: MAP.org
+
+* Modules
+
+First-party feature pages.  Stubs match =docs/MAP.org=; Commentary
+passes replace Purpose, Depends, OS, Variables, and Commands with
+full content.
+
+#+include: path-support.org
+#+include: logging-config.org
+#+include: system-tools.org
+#+include: system-env-tools.org
+#+include: system-disk-tools.org
+#+include: system-buffer-tools.org
+#+include: system-frame-tools.org
+#+include: keymap-tools.org
+#+include: vtable-tools.org
+#+include: elisp-packages.org
+#+include: org-support.org
+#+include: defaults-config.org
+#+include: treesit-support.org
+#+include: undo-tree-support.org
+#+include: theme-support.org
+#+include: project-support.org
+#+include: completion-support.org
+#+include: ui-config.org
+#+include: ibuffer-support.org
+#+include: tabline-support.org
+#+include: speedbar-support.org
+#+include: speedbar-config.org
+#+include: speedbar-icons.org
+#+include: speedbar-pinning.org
+#+include: speedbar-commands.org
+#+include: speedbar-sort.org
+#+include: speedbar-keys.org
+#+include: modeline-support.org
+#+include: vterm-support.org
+#+include: spreadsheet-support.org
+#+include: logging-view-mode.org
+#+include: flymake-config.org
+#+include: ide-config.org
+#+include: debugger-support.org
+#+include: writing-config.org
+#+include: markdown-support.org
+#+include: file-format-support.org
+#+include: vc-support.org
+#+include: lang-prog-mode.org
+#+include: lang-bash.org
+#+include: lang-matlab.org
+#+include: lang-docker.org
+#+include: lang-lisp.org
+#+include: lang-python.org
+#+include: lang-python-format.org
+#+include: lang-python-eglot.org
+#+include: lang-python-menus.org
+#+include: lang-q.org
+#+include: lang-rust.org
+#+include: lang-systemd.org
+#+include: lang-vega.org
+#+include: lang-web.org
+#+include: lang-c.org
+#+include: db-support.org
+#+include: summary-support.org
+#+include: system-window-management.org
+#+include: system-window-helpers.org
+#+include: system-window-panes.org
+#+include: system-window-display.org
+#+include: startup-config.org
+#+include: llm-support.org
+#+include: menu-keys-support.org
+#+include: server-support.org
+#+include: accounting-support.org
+#+include: custom-loadbalancer-support.org
+#+include: keymaps-core.org
+#+include: keymaps-vc.org
+#+include: keymaps-ui.org
+#+include: keymaps-prog.org
+#+include: keymaps-project.org
+#+include: keymaps-llm.org
+#+include: keymaps-org.org
+#+include: keymaps-menus.org
+#+include: project-view.org
+#+include: pretty-speedbar.org
+#+include: q-loadbalancer.org
+#+include: memory-object-tree.org

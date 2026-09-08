@@ -1,23 +1,35 @@
-;;; vtable-tools.el --- useful functionality for emacs vtables -*- mode: emacs-lisp; lexical-binding: t; -*-
+;;; vtable-tools.el --- Paginated vtable helpers with mode-line controls. -*- lexical-binding: t; -*-
 
-;;; License
-;; Copyright (C) 2022
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; This file contains code to help the creation and use of vtables.
-;; It supports paginated vtables with mode-line controls for navigation.
-;; Optionally, it handles multiple vtables in a single buffer using overlays
-;; to track regions and per-vtable state, allowing dynamic selection based
-;; on point position for updating the mode line.
+;; Unloaded helper on the system-tools load-path.  `init.el' does not
+;; `require' this feature.  Paginated `vtable' display with mode-line
+;; navigation.  Optional multi-vtable buffers use overlays so the
+;; mode-line follows the table at point.
+;;
+;; Map:
+;;   Feature:    vtable-tools
+;;   Load-after: path-support
+;;   Load-phase: tools
+;;   Keymaps:    none
+;;   Docs:       docs/vtable-tools.org
+;;   OS:         none
 
 ;;; Code:
 
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'vtable-tools
+           :msg "Starting load of the vtable-tools module."
+           :obj t)
+
 (require 'vtable)
-(require 'cl-lib)  ; For cl-defstruct.
+(require 'cl-lib)
 
 (cl-defstruct (my-vtable-info
                (:constructor my-vtable-make-info)
@@ -69,7 +81,7 @@ In multi mode: Appends vtable, uses overlays and per-vtable state.
 Flow: validate inputs, get/create buffer, optionally erase (single only),
 set state vars (single) or multi-mode flag, create vtable with paged objects,
 set current info (multi), insert it, setup overlay (multi), bind keys,
-add mode-line. Switches to buffer and enables tab-line-mode."
+add mode-line.  Switches to buffer and enables `tab-line-mode'."
   (my-vtable/validate-vtable-inputs columns full-data)
   (let ((buf (get-buffer-create buffer-name)))
     (with-current-buffer buf
@@ -174,7 +186,7 @@ Flow: check mode, return accordingly."
 
 (defun my-vtable/update-selected ()
   "Update my-vtable-current-info based on point in multi-mode.
-Called via post-command-hook.
+Called via `post-command-hook'.
 Flow: find overlays at point, get first with 'my-vtable-info,
 set current; if none, keep previous or nil."
   (when my-vtable-multi-mode
@@ -308,6 +320,10 @@ Flow: get info, if nil return empty; else compute, make keymaps, concat."
     (dotimes (i 1000)
       (push (list (format "Person %d" i) (random 100) (format "City %d" (random 10))) data))
     (nreverse data)))
+
+(log/debug :fn 'vtable-tools
+           :msg "Ending load of the vtable-tools module."
+           :obj t)
 
 (provide 'vtable-tools)
 ;;; vtable-tools.el ends here

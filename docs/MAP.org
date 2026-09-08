@@ -1,0 +1,96 @@
+#+title: .emacs.d module map
+
+This file is the inventory for humans and coding agents.
+Feature equals the ~provide~ symbol and the filename stem.
+Keep one row per first-party feature.  Update it in the same change
+as the Lisp.
+
+Phases: ~early~, ~bootstrap~, ~defaults~, ~ui~, ~ide~, ~lang~, ~tools~,
+~keymaps~, ~startup~.  Depends lists features that must already be loaded.
+Keymaps names the =custom-modules/keymaps/= file when bindings live there.
+Docs paths are the intended =docs/<feature>.org= pages (stubs come in a
+later PR).
+
+| Feature | File | Phase | Depends | Keymaps | Docs | Purpose |
+|---------+------+-------+---------+---------+------+---------|
+| path-support | =custom-modules/path-support.el= | early | — | none | =docs/path-support.org= | Single source of ~my-paths/~ constants and load-path roots |
+| logging-config | =custom-modules/system-tools/logging-config.el= | bootstrap | path-support | none | =docs/logging-config.org= | ~log/debug~ and friends via ~warnings.el~ |
+| system-tools | =custom-modules/system-tools/system-tools.el= | bootstrap | path-support logging-config | none | =docs/system-tools.org= | Loader for env/buffer/disk/frame pieces; dictionary and SSH helpers |
+| system-env-tools | =custom-modules/system-tools/system-env-tools.el= | bootstrap | path-support logging-config | none | =docs/system-env-tools.org= | Env, hash, and string helpers (piece of system-tools) |
+| system-disk-tools | =custom-modules/system-tools/system-disk-tools.el= | bootstrap | path-support logging-config | none | =docs/system-disk-tools.org= | Dired, image, and filesystem helpers (piece of system-tools) |
+| system-buffer-tools | =custom-modules/system-tools/system-buffer-tools.el= | bootstrap | path-support logging-config | none | =docs/system-buffer-tools.org= | Buffer and in-buffer helpers (piece of system-tools) |
+| system-frame-tools | =custom-modules/system-tools/system-frame-tools.el= | bootstrap | path-support logging-config | none | =docs/system-frame-tools.org= | Frame, fringe, and ~ss~ port helpers (piece of system-tools) |
+| keymap-tools | =custom-modules/system-tools/keymap-tools.el= | tools | path-support logging-config | none | =docs/keymap-tools.org= | Unloaded; keymap inspection helpers on load-path |
+| vtable-tools | =custom-modules/system-tools/vtable-tools.el= | tools | path-support | none | =docs/vtable-tools.org= | Unloaded; paginated ~vtable~ helpers on load-path |
+| elisp-packages | =custom-modules/elisp-packages.el= | bootstrap | path-support logging-config | none | =docs/elisp-packages.org= | Bootstrap ~dash~, ~s~, and ~jump~ |
+| org-support | =custom-modules/org-support.el= | bootstrap | path-support logging-config | =keymaps-org.el= | =docs/org-support.org= | Org, Org-roam, agenda, and related packages |
+| defaults-config | =custom-modules/defaults-config.el= | defaults | logging-config system-tools | none | =docs/defaults-config.org= | Baseline Emacs settings, hunspell/jinx, exec-path |
+| treesit-support | =custom-modules/treesit-support.el= | ide | path-support logging-config | none | =docs/treesit-support.org= | Tree-sitter grammars, fold, and Combobulate |
+| undo-tree-support | =custom-modules/undo-tree-support.el= | ide | path-support logging-config | none | =docs/undo-tree-support.org= | Undo-tree history and persistence |
+| theme-support | =custom-modules/theme-support.el= | ui | path-support logging-config | none | =docs/theme-support.org= | Modus themes, nerd-icons, info-theme colours |
+| project-support | =custom-modules/project-support.el= | ide | path-support logging-config | =keymaps-project.el= | =docs/project-support.org= | ~project.el~ integration and project-view loader |
+| completion-support | =custom-modules/completion-support.el= | ui | path-support logging-config | none | =docs/completion-support.org= | Vertico, Orderless, Marginalia, Consult, Corfu, Cape |
+| ui-config | =custom-modules/ui-config.el= | ui | path-support logging-config | =keymaps-ui.el= | =docs/ui-config.org= | Frame, window, and general UI chrome |
+| ibuffer-support | =custom-modules/ibuffer-support.el= | ui | path-support logging-config | =keymaps-ui.el= | =docs/ibuffer-support.org= | Ibuffer columns, filters, and icons |
+| tabline-support | =custom-modules/tabline-support.el= | ui | path-support logging-config | =keymaps-ui.el= | =docs/tabline-support.org= | Built-in ~tab-line~ configuration |
+| speedbar-support | =custom-modules/speedbar/speedbar-support.el= | ui | path-support logging-config | none | =docs/speedbar-support.org= | Speedbar package loader (~provide~ of the feature) |
+| speedbar-config | =custom-modules/speedbar/speedbar-config.el= | ui | path-support theme-support | none | =docs/speedbar-config.org= | Core Speedbar settings, faces, and pretty-speedbar load |
+| speedbar-icons | =custom-modules/speedbar/speedbar-icons.el= | ui | logging-config theme-support | none | =docs/speedbar-icons.org= | File-type and folder icons for Speedbar |
+| speedbar-pinning | =custom-modules/speedbar/speedbar-pinning.el= | ui | logging-config | none | =docs/speedbar-pinning.org= | Per-frame project-root pinning for the file view |
+| speedbar-commands | =custom-modules/speedbar/speedbar-commands.el= | ui | logging-config | none | =docs/speedbar-commands.org= | Interactive Speedbar navigation commands |
+| speedbar-sort | =custom-modules/speedbar/speedbar-sort.el= | ui | — | none | =docs/speedbar-sort.org= | File/directory sort type and direction |
+| speedbar-keys | =custom-modules/speedbar/speedbar-keys.el= | ui | speedbar-pinning speedbar-commands | none | =docs/speedbar-keys.org= | Speedbar mode map bindings and hooks |
+| modeline-support | =custom-modules/modeline-support.el= | ui | path-support logging-config | none | =docs/modeline-support.org= | Mode-line segments and indicators |
+| vterm-support | =custom-modules/vterm-support.el= | ui | path-support logging-config | =keymaps-ui.el= | =docs/vterm-support.org= | Vterm shell and toggle helpers |
+| spreadsheet-support | =custom-modules/spreadsheet-support.el= | ui | path-support logging-config | none | =docs/spreadsheet-support.org= | SES spreadsheet mode setup |
+| logging-view-mode | =custom-packages/logging-view-mode/logging-view-mode.el= | tools | logging-config | none | =docs/logging-view-mode.org= | View ~*Warnings*~ / ~*Messages*~ / load-history; external repo simonsjw/logging-view-mode; MAP/docs/OS only |
+| flymake-config | =custom-modules/flymake-config.el= | ide | path-support logging-config | =keymaps-prog.el= | =docs/flymake-config.org= | Flymake UI and shared diagnostics helpers |
+| ide-config | =custom-modules/ide-config.el= | ide | path-support logging-config | none | =docs/ide-config.org= | Eglot server registrations, breadcrumb, editorconfig |
+| debugger-support | =custom-modules/debugger-support.el= | ide | path-support logging-config | =keymaps-prog.el= | =docs/debugger-support.org= | Dape debug adapter configuration |
+| writing-config | =custom-modules/writing-config.el= | ide | path-support logging-config | none | =docs/writing-config.org= | AUCTeX, citar, pandoc, and pdf-tools |
+| markdown-support | =custom-modules/markdown-support.el= | ide | path-support logging-config | none | =docs/markdown-support.org= | Markdown mode, Marksman, and markdownlint |
+| file-format-support | =custom-modules/file-format-support.el= | ide | path-support logging-config | none | =docs/file-format-support.org= | YAML, JSON, TOML, sudoers, csv, dotenv, and vlf |
+| vc-support | =custom-modules/vc-support.el= | ide | path-support logging-config | =keymaps-vc.el= | =docs/vc-support.org= | Built-in VC / ~vc-dir~, diff-hl, git-modes |
+| lang-prog-mode | =custom-modules/prog-mode/lang-prog-mode.el= | lang | path-support logging-config menu-keys-support | =keymaps-prog.el= | =docs/lang-prog-mode.org= | Shared ~prog-mode~ setup for language modules |
+| lang-bash | =custom-modules/prog-mode/lang-bash.el= | lang | path-support logging-config lang-prog-mode | =keymaps-prog.el= | =docs/lang-bash.org= | Bash Tree-sitter, shfmt, shellcheck, and eglot |
+| lang-matlab | =custom-modules/prog-mode/lang-matlab.el= | lang | path-support logging-config lang-prog-mode | =keymaps-prog.el= | =docs/lang-matlab.org= | MATLAB mode and language-server wiring |
+| lang-docker | =custom-modules/prog-mode/lang-docker.el= | lang | path-support logging-config | none | =docs/lang-docker.org= | Dockerfile and docker-compose editing |
+| lang-lisp | =custom-modules/prog-mode/lang-lisp.el= | lang | path-support logging-config lang-prog-mode | =keymaps-prog.el= | =docs/lang-lisp.org= | Emacs Lisp, Common Lisp, Clojure, Scheme |
+| lang-python | =custom-modules/prog-mode/lang-python.el= | lang | path-support logging-config lang-prog-mode | =keymaps-prog.el= | =docs/lang-python.org= | Loader: python-ts-mode hook; Pyrefly/Eglot, Ruff, pytest |
+| lang-python-format | =custom-modules/prog-mode/lang-python-format.el= | lang | path-support logging-config | none | =docs/lang-python-format.org= | Ruff / Apheleia formatting (piece of lang-python) |
+| lang-python-eglot | =custom-modules/prog-mode/lang-python-eglot.el= | lang | path-support logging-config | none | =docs/lang-python-eglot.org= | Eglot / Pyrefly / pyvenv setup (piece of lang-python) |
+| lang-python-menus | =custom-modules/prog-mode/lang-python-menus.el= | lang | path-support logging-config | none | =docs/lang-python-menus.org= | Tools menu and context menu (piece of lang-python) |
+| lang-q | =custom-modules/prog-mode/lang-q.el= | lang | path-support logging-config | none | =docs/lang-q.org= | Kdb/Q editing; loads q-loadbalancer |
+| lang-rust | =custom-modules/prog-mode/lang-rust.el= | lang | path-support logging-config | =keymaps-prog.el= | =docs/lang-rust.org= | Rustic plus rust-analyzer via Eglot |
+| lang-systemd | =custom-modules/prog-mode/lang-systemd.el= | lang | path-support logging-config | none | =docs/lang-systemd.org= | systemd unit editing via systemd-mode |
+| lang-vega | =custom-modules/prog-mode/lang-vega.el= | lang | path-support logging-config | none | =docs/lang-vega.org= | Vega-view visualisations |
+| lang-web | =custom-modules/prog-mode/lang-web.el= | lang | path-support logging-config | none | =docs/lang-web.org= | apache-mode, robots-txt-mode, and web-mode |
+| lang-c | =custom-modules/prog-mode/lang-c.el= | lang | path-support logging-config | none | =docs/lang-c.org= | Unloaded; C/C++ support not required from init |
+| db-support | =custom-modules/db-support.el= | tools | path-support logging-config | none | =docs/db-support.org= | PostgreSQL / ~pq~ / sqlformat |
+| summary-support | =custom-modules/summary-support.el= | tools | path-support logging-config | none | =docs/summary-support.org= | Startup splash / dashboard content |
+| system-window-management | =custom-modules/system-tools/system-window-management.el= | tools | path-support logging-config | none | =docs/system-window-management.org= | Loader: category maps; requires helpers, panes, display |
+| system-window-helpers | =custom-modules/system-tools/system-window-helpers.el= | tools | path-support logging-config | none | =docs/system-window-helpers.org= | Tagging helpers and ~log/debug-window-management~ (piece of system-window-management) |
+| system-window-panes | =custom-modules/system-tools/system-window-panes.el= | tools | path-support logging-config system-window-helpers | none | =docs/system-window-panes.org= | Pane toggle, bury, and reallocation (piece of system-window-management) |
+| system-window-display | =custom-modules/system-tools/system-window-display.el= | tools | path-support logging-config system-window-helpers system-window-panes | none | =docs/system-window-display.org= | ~display-buffer~ advice and Ediff (piece of system-window-management) |
+| startup-config | =custom-modules/startup-config.el= | startup | path-support logging-config summary-support system-window-management ui-config system-tools | none | =docs/startup-config.org= | IDE frame creation and startup layout |
+| llm-support | =custom-modules/llm-support.el= | tools | path-support logging-config | =keymaps-llm.el= | =docs/llm-support.org= | gptel, aidermacs, and local/remote LLM backends |
+| menu-keys-support | =custom-modules/menu-keys-support.el= | startup | path-support logging-config | none | =docs/menu-keys-support.org= | Shared menu and prefix key scaffolding |
+| server-support | =custom-modules/server-support.el= | startup | path-support logging-config | none | =docs/server-support.org= | Daemon-aware ~server-start~; launch via emacs-daemon-wrapper |
+| accounting-support | =custom-modules/accounting-support.el= | tools | logging-config | none | =docs/accounting-support.org= | hledger-mode reports and hledger-web launcher |
+| custom-loadbalancer-support | =custom-modules/custom-loadbalancer-support.el= | tools | path-support logging-config | none | =docs/custom-loadbalancer-support.org= | Unloaded; legacy kdb load-balancer env helpers (not in init) |
+| keymaps-core | =custom-modules/keymaps/keymaps-core.el= | keymaps | — | none | =docs/keymaps-core.org= | which-key titles and shared keymap helpers (loaded first) |
+| keymaps-vc | =custom-modules/keymaps/keymaps-vc.el= | keymaps | keymaps-core vc-support | none | =docs/keymaps-vc.org= | Bindings on ~vc-prefix-map~ |
+| keymaps-ui | =custom-modules/keymaps/keymaps-ui.el= | keymaps | keymaps-core | none | =docs/keymaps-ui.org= | UI, ibuffer, tab-line, and vterm bindings |
+| keymaps-prog | =custom-modules/keymaps/keymaps-prog.el= | keymaps | keymaps-core | none | =docs/keymaps-prog.org= | Programming, Flymake, and debugger bindings |
+| keymaps-project | =custom-modules/keymaps/keymaps-project.el= | keymaps | keymaps-core project-support | none | =docs/keymaps-project.org= | Bindings on ~project-prefix-map~ |
+| keymaps-llm | =custom-modules/keymaps/keymaps-llm.el= | keymaps | keymaps-core llm-support | none | =docs/keymaps-llm.org= | LLM prefix map (~C-c m~) |
+| keymaps-org | =custom-modules/keymaps/keymaps-org.el= | keymaps | keymaps-core org-support | none | =docs/keymaps-org.org= | Org agenda, capture, and roam bindings |
+| keymaps-menus | =custom-modules/keymaps/keymaps-menus.el= | keymaps | keymaps-core | none | =docs/keymaps-menus.org= | Menu-bar entries; load last among keymaps |
+| project-view | =custom-packages/project-view/project-view.el= | ide | project-support | =keymaps-project.el= | =docs/project-view.org= | Multi-project UI on ~project.el~; external repo simonsjw/project-view; MAP/docs/OS only |
+| pretty-speedbar | =custom-packages/pretty-speedbar/pretty-speedbar.el= | ui | speedbar-config | none | =docs/pretty-speedbar.org= | Speedbar icon package; external repo simonsjw/pretty-speedbar; MAP/docs/OS only |
+| q-loadbalancer | =custom-packages/q-loadbalancer/q-loadbalancer.el= | lang | path-support | none | =docs/q-loadbalancer.org= | Kdb/Q process groups; OS ~ss~; external repo simonsjw/q-loadbalancer; MAP/docs/OS only |
+| memory-object-tree | =custom-packages/memory-object-tree/memory-object-tree.el= | lang | path-support | none | =docs/memory-object-tree.org= | MATLAB workspace tree UI; external repo simonsjw/memory-object-tree; MAP/docs/OS only; path constant exists; require is commented |
+
+* Dead files
+
+- =custom-modules/finances-support.el= duplicates ~(provide 'accounting-support)~ and is not required from =init.el=.  The live feature is =accounting-support.el=.  Do not invent a =finances-support= MAP row.  Delete the dead file in PR-13.

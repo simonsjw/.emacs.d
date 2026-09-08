@@ -1,0 +1,67 @@
+* startup-config
+
+** Load point
+
+Require the module from =init.el= (via the tangle block in =conf.org=)
+after its dependencies:
+
+#+begin_src emacs-lisp
+(require 'startup-config)
+#+end_src
+
+** Purpose
+
+IDE frame creation and startup layout.  Builds or focuses the IDE
+frame, forces the six buffer names expected by =IDE_TEMPLATE.eld=, and
+restores the saved window state.  Speedbar lives in ~speedbar-support~;
+this file is not that module.
+
+** Depends
+
+Features that must already be loaded (match the Commentary =Map:=
+block and the row in =docs/MAP.org=):
+
+- ~path-support~
+- ~logging-config~
+- ~summary-support~
+- ~system-window-management~
+- ~ui-config~
+- ~system-tools~
+
+** Provides
+
+- Feature ~startup-config~ from =custom-modules/startup-config.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+none
+
+** Variables
+
+- ~my-window-state/ide~ — cached window-state object loaded from
+  =IDE_TEMPLATE.eld=
+- ~my-paths/desktop-layout-folder~ — directory of the template (defined
+  in =path-support.el=)
+
+** Commands and keys
+
+- ~my-ui/create-project-frame~ — create or focus the IDE frame for a
+  project path
+- ~my-ui/reapply-ide-template~ — restore the six-pane template on an
+  existing IDE frame
+- ~my-ui/startup-layout~ — interactive reset; alias ~IDE-refresh~
+
+** Related modules
+
+- ~path-support~
+- ~logging-config~
+- ~summary-support~
+- ~system-window-management~
+- ~ui-config~
+- ~system-tools~
+- ~speedbar-support~ (file tree; not this module)
+- ~server-support~ (daemon launch via emacs-daemon-wrapper)

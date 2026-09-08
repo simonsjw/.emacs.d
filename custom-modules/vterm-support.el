@@ -1,20 +1,23 @@
-;;; vterm-support.el --- vterm support for emacs setup   -*- lexical-binding: t; -*-
+;;; vterm-support.el --- Vterm shell and toggle helpers. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
-;; Keywords: vterm, bash, terminal
 
 ;;; Commentary:
-;; Consolidated vterm configuration.
-;; Includes:
-;; - Directory-changing helpers (file dir + project root)
-;; - Easy copy/paste with vterm-copy-mode
-;; - Counsel yank-pop fix
-;; - <C-backspace> word deletion
-;; - Bash re-sourcing hack (important for your .bashrc guards)
-;; - Clean keybindings under C-c g prefix
+
+;; Vterm shell setup and directory/toggle helpers.  Keys live in
+;; `keymaps-ui.el'.  Load from `init.el' after `logging-config'.  Do
+;; not move path constants here (that is a later dedicated PR).
+;;
+;; Map:
+;;   Feature:    vterm-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: ui
+;;   Keymaps:    keymaps-ui.el
+;;   Docs:       docs/vterm-support.org
+;;   OS:         libvterm bash
 
 ;;; Code:
 (require 'path-support)
@@ -65,7 +68,7 @@
 ;;; --- Helper functions ---
 
 (defun my-vterm/cd-to-current-dir ()
-  "cd the vterm buffer to the directory of the current buffer.
+  "Change the vterm buffer to the directory of the current buffer.
 Creates a vterm if none exists."
   (interactive)
   (let* ((orig-buffer (current-buffer))
@@ -81,7 +84,7 @@ Creates a vterm if none exists."
     (switch-to-buffer orig-buffer)))
 
 (defun my-vterm/cd-to-project-root ()
-  "cd vterm to the current project's root directory.
+  "Change vterm to the current project's root directory.
 Falls back to current directory if no project is active."
   (interactive)
   (let* ((orig-buffer (current-buffer))
@@ -96,7 +99,8 @@ Falls back to current directory if no project is active."
     (switch-to-buffer orig-buffer)))
 
 (defun my-vterm/counsel-yank-pop-action (orig-fun &rest args)
-  "Make counsel-yank-pop work correctly inside vterm buffers."
+  "Make `counsel-yank-pop' work correctly inside vterm buffers.
+ORIG-FUN is the original command.  ARGS are passed through."
   (if (equal major-mode 'vterm-mode)
       (let ((inhibit-read-only t)
             (yank-undo-function (lambda (_start _end) (vterm-undo))))

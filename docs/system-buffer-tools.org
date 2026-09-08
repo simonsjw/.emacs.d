@@ -1,0 +1,50 @@
+* system-buffer-tools
+
+** Load point
+
+Required by ~system-tools~, not from =init.el= directly:
+
+#+begin_src emacs-lisp
+(require 'system-buffer-tools)
+#+end_src
+
+** Purpose
+
+Piece of ~system-tools~: buffer management and in-buffer editing
+helpers (comment alignment, brackets, temp buffers).
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~system-buffer-tools~ from =custom-modules/system-tools/system-buffer-tools.el=.
+
+** Keymaps
+
+- none on a dedicated keymap file
+- =C-c t= — ~my-buffer-tools/open-temp-org-buffer~
+
+** OS dependencies
+
+none
+
+** Variables
+
+- ~my-buffer-attributes~ — per-buffer attribute alist
+
+** Commands and keys
+
+- ~my-buffer-tools/open-temp-buffer~
+- ~my-buffer-tools/open-temp-org-buffer~ (=C-c t=)
+- ~my-buffer-tools/safe-kill-buffer~
+- ~my-buffer-tools/keyboard-escape-quit~
+- ~my-buffer-tools/copy-buffer-in-new-frame~
+- ~my-in-buffer-tools/comment-align-buffer~
+- ~my-in-buffer-tools/get-matching-bracket-position~
+
+** Related modules
+
+- ~system-tools~

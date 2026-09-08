@@ -1,16 +1,24 @@
-;;; ibuffer-support.el --- setup for treesit -*- lexical-binding: t; -*-
+;;; ibuffer-support.el --- Ibuffer columns, filters, and icons. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Support for ibuffer in Emacs.
+;; Ibuffer columns, filters, and nerd-icons.  Keys live in
+;; `keymaps-ui.el'.  Load from `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    ibuffer-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: ui
+;;   Keymaps:    keymaps-ui.el
+;;   Docs:       docs/ibuffer-support.org
+;;   OS:         none
 
-;;; Imports:
-
+;;; Code:
 
 (require 'path-support)
 (require 'logging-config)
@@ -38,7 +46,6 @@
 (put 'vc-status 'ibuffer-column-name "VC status")
 (put 'filename-and-process+vc 'ibuffer-column-name "Filename/Process")
 
-;;; Code:
 
 ;;;; Ibuffer column definitions
 
@@ -294,7 +301,7 @@ It respects `nerd-icons-color-icons'."
           (setq header (concat header padded))
           (cl-incf total-width min)))
       ;;(message "Col: %S, Header so far: %S, Total width: %d" col header total-width); Debug each step
-      )  
+      )
     ;; Truncate or pad to window width
     (let ((current-width (string-width header)))
       (if (> current-width window-width)
@@ -304,7 +311,7 @@ It respects `nerd-icons-color-icons'."
 (defun my-ibuffer/ibuffer-config-hook (&rest _)
   "Set up the ibuffer header after update."
   (when (eq major-mode 'ibuffer-mode)
-    (ibuffer-auto-mode 1)                                                         ; make ibuffer refresh automatically. 
+    (ibuffer-auto-mode 1)                                                         ; make ibuffer refresh automatically.
     (setq header-line-format (my-ibuffer/build-header-line))))
 
 ;; Advice to run config after ibuffer-update
@@ -315,7 +322,7 @@ It respects `nerd-icons-color-icons'."
   "Bring the buffer chosen with the mouse to the front.
 
 If the BUFFER is already displayed in any window (including on other
-frames), select that window and raise the frame to the top.  
+frames), select that window and raise the frame to the top.
 
 Otherwise, visit the buffer in the current window using
 `SWITCH-TO-BUFFER'.
@@ -337,7 +344,7 @@ restores normal flow."
 
 (with-eval-after-load 'ibuffer
 
-  (define-key ibuffer-name-map [mouse-1] #'my-ibuffer/mouse-bring-to-front)       ; set up ibuffer so clicking the names brings that element to the front in whatever window it is in. 
+  (define-key ibuffer-name-map [mouse-1] #'my-ibuffer/mouse-bring-to-front)       ; set up ibuffer so clicking the names brings that element to the front in whatever window it is in.
   )
 
 

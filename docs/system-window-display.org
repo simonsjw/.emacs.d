@@ -1,0 +1,50 @@
+* system-window-display
+
+** Load point
+
+Required by ~system-window-management~, not from =init.el= directly:
+
+#+begin_src emacs-lisp
+(require 'system-window-display)
+#+end_src
+
+** Purpose
+
+Piece of ~system-window-management~: ~display-buffer~ advice that
+places buffers in category panes, plus Ediff window advice.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+- ~system-window-helpers~
+- ~system-window-panes~
+
+** Provides
+
+- Feature ~system-window-display~ from =custom-modules/system-tools/system-window-display.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+none
+
+** Variables
+
+none specific; uses category maps from the loader.
+
+** Commands and keys
+
+- ~my-window-tools/assign-category-advice~ (around ~display-buffer~)
+- ~my-window-tools/determine-buffer-category~
+- ~my-window-tools/set-ide-category~
+- ~my-window-tools/ediff-setup-windows-advice~
+
+** Related modules
+
+- ~system-window-management~
+- ~system-window-helpers~
+- ~system-window-panes~

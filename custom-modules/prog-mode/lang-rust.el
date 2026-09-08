@@ -1,9 +1,22 @@
-;;; lang-rust.el --- Modern Rust development with rustic + eglot -*- lexical-binding: t; -*-
+;;; lang-rust.el --- Rustic plus rust-analyzer via Eglot. -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026 Simon Watson
+;; SPDX-License-Identifier: MIT
+
+;; Author: Simon Watson
 
 ;;; Commentary:
-;; Clean, native-Emacs-friendly Rust setup.
-;; Uses rustic as the primary mode (best practice in 2026).
-;; LSP via eglot, completion via corfu, tree-sitter, and nice cargo keybindings.
+
+;; Language module for Rust: `rustic' with Eglot / rust-analyzer
+;; and Flymake diagnostics enabled.  Load from `init.el'.
+;;
+;; Map:
+;;   Feature:    lang-rust
+;;   Load-after: path-support logging-config
+;;   Load-phase: lang
+;;   Keymaps:    keymaps-prog.el
+;;   Docs:       docs/lang-rust.org
+;;   OS:         rust-analyzer cargo
 
 ;;; Code:
 
@@ -34,9 +47,6 @@
 (defun my-lang/rust-setup ()
   "All the functionality you need for Rust development."
   (eglot-ensure)
-
-  ;; Prefer eglot diagnostics over flymake
-  (add-hook 'eglot--managed-mode-hook (lambda () (flymake-mode -1)))
 
   ;; Completion popup delay (tweak if needed)
   (customize-set-variable 'corfu-auto-delay 0.25)

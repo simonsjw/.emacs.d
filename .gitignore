@@ -90,3 +90,4 @@ var/INFODYNAMICS/undo-tree-hist/
 var/INFODYNAMICS/bmkp/
 etc/INFODYNAMICS/custom.el
 var/INFODYNAMICS/auto-save-list/
+etc/INFODYNAMICS/custom.el~

@@ -1,0 +1,48 @@
+* system-disk-tools
+
+** Load point
+
+Required by ~system-tools~, not from =init.el= directly:
+
+#+begin_src emacs-lisp
+(require 'system-disk-tools)
+#+end_src
+
+** Purpose
+
+Piece of ~system-tools~: Dired directory picker, image icons, and
+on-disk path helpers.  Directory creation lives in ~path-support~ as
+~my-on-disk-tools/ensure-directory-exists~.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~system-disk-tools~ from =custom-modules/system-tools/system-disk-tools.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+none
+
+** Variables
+
+none
+
+** Commands and keys
+
+- ~my-interactive-tools/select-directory-using-dired~
+- ~my-image-tools/create-image-icon~
+- ~my-on-disk-tools/summary-path~
+- ~my-in-buffer-tools/insert-section-header~
+
+** Related modules
+
+- ~system-tools~
+- ~path-support~

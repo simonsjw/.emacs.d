@@ -1,15 +1,26 @@
-;;; elisp-packages.el --- packages to wrangle e-lisp -*- lexical-binding: t -*-
+;;; elisp-packages.el --- Bootstrap dash, s, and jump. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Packages to provide base libraries extending Emacs functionality.
+;; Bootstrap third-party Elisp libraries used across the tree:
+;; `dash', `s', and `jump'.  Keep these three; do not remove them as a
+;; drive-by cleanup.  Load from `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    elisp-packages
+;;   Load-after: path-support logging-config
+;;   Load-phase: bootstrap
+;;   Keymaps:    none
+;;   Docs:       docs/elisp-packages.org
+;;   OS:         none
 
 ;;; Code:
+
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'elisp-packages

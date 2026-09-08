@@ -1,46 +1,25 @@
-;;; lang-c.el --- c and c++ support for the crafted setup   -*- lexical-binding: t; -*-
+;;; lang-c.el --- Unloaded C/C++ support (not required from init). -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026 Simon Watson
+;; SPDX-License-Identifier: MIT
+
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; A starter config for editing Python code.
+;; Unloaded language module for C and C++.  `init.el' does not
+;; `require' this feature.  Kept on the prog-mode load-path for
+;; optional use.  Do not add it to `init.el' in this PR.
 ;;
-;; This configuration provides syntax highlighting via tree sitter
-;; (with python-ts-mode), LSP code completion via Eglot and Corfu, and
-;; some helpful keybindings for python tooling.
-;;
-;; Prerequisites:
-;;
-;; - Emacs with Tree Sitter installed (this comes with Emacs 29).
-;;
-;; - A Python language server (e.g. pyls or pyright).
-
-;; Python development environment configuration.  Several python
-;; packages can be installed with `pip'.  Many of these are needed by
-;; the Emacs packages used in this configuration.
-
-;; * autopep8      -- automatically formats python code to conform to
-;;                    PEP 8 style guide
-;; * black         -- uncompromising code formatter
-;; * flake8        -- style guide enforcement
-;; * importmagic   -- automatically add, remove, manage imports
-;; * ipython       -- interactive python shell
-;; * yapf          -- formatter for python code
-
-;; Emacs packages to support python development:
-;; * anaconda      -- code navigation, documentation and completion
-;; * blacken       -- buffer formatting on save using black
-;;                    (need to pip install black)
-;; * eglot         -- language server integration
-;;                    (need to pip install pyright)
-;; * numpydoc      -- python doc templates, uses `yasnippets'
-;; * pythonic      -- utility packages for running python in different
-;;                    environments (dependency of anaconda)
-;; * pyvenv        -- virtualenv wrapper
-
-
+;; Map:
+;;   Feature:    lang-c
+;;   Load-after: path-support logging-config
+;;   Load-phase: lang
+;;   Keymaps:    none
+;;   Docs:       docs/lang-c.org
+;;   OS:         none
 
 ;;; Code:
-
 
 ;;;; Packages phase
 (require 'eglot)
@@ -195,11 +174,7 @@
   ;; typing. Be careful if you set it to 0 in a large project!
   (customize-set-variable 'corfu-auto-delay 0.25)
 
-  ;; Enable Anaconda mode for Python code navigation and documentation
-  ;;(anaconda-mode)
 
-  ;; Do not enable blacken mode for automatic code formatting
-  ;; (blacken-mode)
 
   ;; Enable isort for Python import sorting
   ;;(python-isort-on-save-mode)
@@ -243,10 +218,8 @@
 
   ;; document thing at point:
   ;; (keymap-set python-ts-mode-map "C-c C-c C-r" #'eldoc)
-  ;;  (keymap-set python-ts-mode-map "M-?" #'anaconda-mode-show-doc)
   ;; testing (tbd)
   ;; (keymap-set python-ts-mode-map "C-c C-c C-t"
-  ;; #'projectile-test-project)
 
   ;; running the code
   (keymap-set python-ts-mode-map "C-c r b" #'eval-buffer)
@@ -255,8 +228,6 @@
   (keymap-set python-ts-mode-map "C-c r p" #'run-python)
 
   ;; formatting
-  ;; (keymap-set python-ts-mode-map "C-c C-f b" #'blacken-buffer)
-  ;;  (keymap-set python-ts-mode-map "C-c C-f r" #'blacken-buffer)
 
   ;; Errors/linting
   ;; --------------
@@ -275,11 +246,8 @@
   ;; variable/function references
   ;; ----------------------------
   ;; xref-find-definitions
-  ;; (keymap-set python-ts-mode-map "M-." #'anaconda-mode-find-definitions)
   ;; xref-find-references
-  ;;  (keymap-set python-ts-mode-map "M-r" #'anaconda-mode-find-references)
   ;; xref-find-assignments
-  ;;  (keymap-set python-ts-mode-map "M-=" #'anaconda-mode-find-assignments)
 
 
   ;; add-missing-dependencies

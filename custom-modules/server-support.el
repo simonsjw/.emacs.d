@@ -1,20 +1,24 @@
-;;; server-support.el --- Emacs server support -*- lexical-binding: t; -*-
+;;; server-support.el --- Daemon-aware server-start; launch via emacs-daemon-wrapper. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
-;; Keywords: emacs server daemon client
 
 ;;; Commentary:
 
-;; Modern daemon-aware server setup (2026 best practice).
-;; • Starts server only if not already running.
-;; • Simple client frames (emacsclient -c) are single-window, untagged.
-;; • All visual customisations (thick blue dividers, pretty speedbar icons,
-;;   fringes, etc.) are re-applied via my-visual/apply-all-customisations
-;;   so every frame looks identical to the IDE frame.
-;; • No face resetting — the unified visual function is the single source of truth.
+;; Daemon-aware `server-start' and simple client-frame helpers.  Launch
+;; Emacs via `emacs-daemon-wrapper' on `PATH' (external repo
+;; simonsjw/emacs-daemon-wrapper); do not import that wrapper into this
+;; tree.  Load from `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    server-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: startup
+;;   Keymaps:    none
+;;   Docs:       docs/server-support.org
+;;   OS:         emacs-daemon-wrapper
 
 ;;; Code:
 
@@ -31,7 +35,7 @@
 
 Efficiency: short-circuit early using `server-running-p'.
 Works identically in normal and --fg-daemon sessions.
-Historical note: redundant server-start calls were a common cause of
+Historical note: redundant `server-start' calls were a common cause of
 warnings in systemd user units pre-2024."
   (when (and (fboundp 'server-running-p)
              (not (server-running-p)))
@@ -100,7 +104,8 @@ No IDE tagging, no category routing, no residual previous buffers."
 ;; you really want a clean-slate from the daemon.  Most people leave this out;
 ;; the daemon is more useful when it remembers what you were working on.
 (defun my-server/cleanup-on-last-frame (frame)
-  "When the last ordinary frame is deleted, bury or kill non-essential buffers."
+  "When FRAME is the last ordinary frame deleted, bury leftover buffers.
+Buries buffers that are safe to drop on daemon cleanup."
   (when (and (daemonp)
              (= 1 (length (frame-list))))   ; only the (now-deleted) frame was left
     (dolist (buf (buffer-list))

@@ -1,4 +1,4 @@
-;;; speedbar-sort.el --- Interactive Speedbar commands -*- lexical-binding: t; -*-
+;;; speedbar-sort.el --- File and directory sort for Speedbar. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
@@ -6,9 +6,25 @@
 ;; Author: Simon Watson
 
 ;;; Commentary:
-;; Sorting speedbar elements in the file/directory view.
+
+;; Piece of `speedbar-support': sort the file/directory view by name,
+;; date, or type.  Required by the loader, not from `init.el' directly.
+;;
+;; Map:
+;;   Feature:    speedbar-sort
+;;   Load-after: none
+;;   Load-phase: ui
+;;   Keymaps:    none
+;;   Docs:       docs/speedbar-sort.org
+;;   OS:         none
 
 ;;; Code:
+
+(require 'path-support)
+(require 'logging-config)
+(log/debug :fn 'speedbar-sort
+           :msg "Starting load of the speedbar-sort module."
+           :obj t)
 
 (with-eval-after-load 'speedbar
 
@@ -110,6 +126,10 @@ Otherwise, switch type and reset direction to 'ascending."
 
   (message "Speedbar file sorting keys loaded (s n / s d / s t)"))
 
+
+(log/debug :fn 'speedbar-sort
+           :msg "Ending load of the speedbar-sort module."
+           :obj t)
 
 (provide 'speedbar-sort)
 ;;; speedbar-sort.el ends here

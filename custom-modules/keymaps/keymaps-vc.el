@@ -1,14 +1,24 @@
-;;; keymaps-vc.el --- VC / Diff / Git keymaps and titles -*- lexical-binding: t; -*-
+;;; keymaps-vc.el --- Bindings and which-key titles for vc-support. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
+;; Author: Simon Watson
+
 ;;; Commentary:
+
+;; Keymap module for `vc-support'.  Titles and a few bindings on
+;; `vc-prefix-map' and `diff-hl-command-map'.  Load after
+;; `keymaps-core'.  Menus for these keys live in `keymaps-menus.el'
+;; (loaded last).
 ;;
-;; Centralised VC, diff-hl and related bindings.
-;; Most of the heavy lifting still lives in vc-support.el and
-;; menu-keys-support.el; this module focuses on which-key titles
-;; and a clean activation point.
+;; Map:
+;;   Feature:    keymaps-vc
+;;   Load-after: keymaps-core logging-config
+;;   Load-phase: keymaps
+;;   Keymaps:    keymaps-vc.el
+;;   Docs:       docs/keymaps-vc.org
+;;   OS:         none
 
 ;;; Code:
 
@@ -19,9 +29,8 @@
            :msg "Starting load of the keymaps-vc module."
            :obj t)
 
-;; ----------------------------------------------------------------------
-;;; which-key titles for the VC family
-;; ----------------------------------------------------------------------
+;;;; Which-key titles for the VC family
+;;   ----------------------------------
 
 (with-eval-after-load 'which-key
   (keymaps-core/add-titles vc-prefix-map
@@ -38,9 +47,8 @@
                              "r" "Revert Hunk"
                              "v" "Show Staged")))
 
-;; ----------------------------------------------------------------------
-;;; Extra bindings that were previously scattered
-;; ----------------------------------------------------------------------
+;;;; Extra VC bindings
+;;   -----------------
 
 ;; Rename file via VC (already present in menu-keys-support; kept here
 ;; for completeness when that file is thinned).

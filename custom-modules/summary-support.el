@@ -1,13 +1,22 @@
-;;; summary-support.el --- Emacs splash screen  -*- lexical-binding: t -*-
+;;; summary-support.el --- Startup splash / dashboard content. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Provide a fancy splash screen.
+;; Startup splash / dashboard content via emacs-dashboard.  Load from
+;; `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    summary-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: tools
+;;   Keymaps:    none
+;;   Docs:       docs/summary-support.org
+;;   OS:         none
 
 ;;; Code:
 
@@ -77,7 +86,7 @@
                        (:family "Symbols Nerd Font Mono"
                                 :height 1.0
                                 :foreground "white")
-                       display (raise 0.0) 
+                       display (raise 0.0)
                        rear-nonsticky t))
        #(".bash_profile" 0 13 `(face (:foreground ,info-theme-light-blue)))
        "Open .bash_profile"

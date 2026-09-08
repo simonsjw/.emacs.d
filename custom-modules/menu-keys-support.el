@@ -1,14 +1,22 @@
-;;; menu-keys-support.el --- Menu configuration  -*- lexical-binding: t; -*-
+;;; menu-keys-support.el --- Shared menu and prefix key scaffolding. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2024
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
-;; Keywords: UI, menu
 
 ;;; Commentary:
 
-;; Better menu organisation and key bindings.
+;; Shared menu-bar and prefix-key scaffolding used by language and UI
+;; modules.  Load from `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    menu-keys-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: startup
+;;   Keymaps:    none
+;;   Docs:       docs/menu-keys-support.org
+;;   OS:         none
 
 ;;; Code:
 (require 'path-support)

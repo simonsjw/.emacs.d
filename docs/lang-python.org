@@ -1,0 +1,67 @@
+* lang-python
+
+** Load point
+
+Require the module from =init.el= (via the tangle block in =conf.org=)
+after its dependencies:
+
+#+begin_src emacs-lisp
+(require 'lang-python)
+#+end_src
+
+Do not require the piece files from =init.el=; the loader pulls them in.
+
+** Purpose
+
+Loader for Python Tree-sitter support.  ~my-lang-python/python-mode-setup~
+is the only ~python-ts-mode-hook~ function.  It calls
+~my-lang-python/format-setup~, ~my-lang-python/eglot-setup~, and
+~my-lang-python/menus-setup~, then leftover jinx/Dape/folding/imenu
+and pytest/pyvenv keys.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+- ~lang-prog-mode~
+
+** Provides
+
+- Feature ~lang-python~ from =custom-modules/prog-mode/lang-python.el=.
+
+** Keymaps
+
+- =custom-modules/keymaps/keymaps-prog.el=
+- Mode map keys installed from the loader hook leftovers and ~menus-setup~
+
+** OS dependencies
+
+| Tool | Install hint | Used for |
+|------+--------------+----------|
+| ruff | ~pip install ruff~ | format / isort |
+| pyrefly | install ~pyrefly~ on ~PATH~ | Eglot LSP |
+| debugpy | ~pip install debugpy~ | Dape |
+| pytest | ~pip install pytest~ | python-pytest |
+| conda | existing Anaconda | pyvenv |
+
+** Variables
+
+- ~my-prog-mode/python-base-mode-accepted-words~ — jinx session words
+- ~python-shell-interpreter~ — =ipython=
+
+** Commands and keys
+
+- ~my-lang-python/python-mode-setup~ — only ~python-ts-mode-hook~ function
+- ~my-lang-python/save-env-to-project~
+- ~my-lang-python/generate-stub~ / ~my-lang-python/generate-dir-stubs~
+- ~my-lang-python/sphinx-build~ / ~my-lang-python/sphinx-autobuild~
+- ~my-lang-python/update-python-path~
+- pytest keys =C-c t t= / =C-c t r=; pyvenv keys =C-c v …=; fold =C-c f=
+
+** Related modules
+
+- ~lang-python-format~
+- ~lang-python-eglot~
+- ~lang-python-menus~
+- ~lang-prog-mode~
+- ~debugger-support~

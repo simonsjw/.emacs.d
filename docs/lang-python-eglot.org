@@ -1,0 +1,48 @@
+* lang-python-eglot
+
+** Load point
+
+Required by ~lang-python~, not from =init.el= directly:
+
+#+begin_src emacs-lisp
+(require 'lang-python-eglot)
+#+end_src
+
+** Purpose
+
+Piece of ~lang-python~: Eglot + Pyrefly, pyvenv, Flymake, yasnippet,
+and fill-column.  ~my-lang-python/eglot-setup~ runs those buffer-local
+forms from the loader hook.  Do not call ~eglot-ensure~ at ~require~.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~lang-python-eglot~ from =custom-modules/prog-mode/lang-python-eglot.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+| Tool | Install hint | Used for |
+|------+--------------+----------|
+| pyrefly | install ~pyrefly~ on ~PATH~ | Eglot LSP |
+| conda | existing Anaconda | pyvenv |
+
+** Variables
+
+none specific.
+
+** Commands and keys
+
+- ~my-lang-python/eglot-setup~
+
+** Related modules
+
+- ~lang-python~
+- ~ide-config~ (Eglot server registrations)

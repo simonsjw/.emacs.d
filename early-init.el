@@ -1,8 +1,9 @@
 ;; early-init.el --- Emacs early initialization -*- lexical-binding: t; no-byte-compile: t -*-
 
 ;;; Commentary:
-;; Work that is done before Emacs can be initialised.
-;; All paths + package management + GC + native-comp now live here.
+;; Tangled from conf.org.  Work that is done before Emacs can be
+;; initialised.  All paths + package management + GC + native-comp
+;; now live here.
 
 ;;; Code:
 

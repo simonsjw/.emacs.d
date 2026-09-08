@@ -1,0 +1,48 @@
+* system-window-helpers
+
+** Load point
+
+Required by ~system-window-management~, not from =init.el= directly:
+
+#+begin_src emacs-lisp
+(require 'system-window-helpers)
+#+end_src
+
+** Purpose
+
+Piece of ~system-window-management~: tagging helpers, category index,
+Speedbar window tagging, and ~log/debug-window-management~.
+
+** Depends
+
+- ~path-support~
+- ~logging-config~
+
+** Provides
+
+- Feature ~system-window-helpers~ from =custom-modules/system-tools/system-window-helpers.el=.
+
+** Keymaps
+
+- none
+
+** OS dependencies
+
+none
+
+** Variables
+
+- ~log-window-management-flag~ — gate for ~log/debug-window-management~
+
+** Commands and keys
+
+- ~my-window-tools/tidy-window~
+- ~my-window-tools/tag-windows-by-list~
+- ~my-window-tools/rebuild-category-index~
+- ~my-window-tools/get-window-for-window-category~
+- ~my-window-tools/tag-speedbar-window~
+
+** Related modules
+
+- ~system-window-management~
+- ~speedbar-pinning~

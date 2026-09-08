@@ -1,15 +1,23 @@
-;;;; writing-config.el --- Configuration for writing text documents  -*- lexical-binding: t; -*-
+;;; writing-config.el --- AUCTeX, citar, pandoc, and pdf-tools. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2023
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
-;; Author: Simon Watson (based on system-crafters template)
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Configures Markdown, LaTeX, and general text editing in Emacs.
-;; Prioritises efficiency by lazy-loading where possible, clarity via docstrings,
-;; and readability by decomposing long functions.
+;; AUCTeX, citar, pandoc, pdf-tools, and related writing helpers.
+;; Markdown lives in `markdown-support.el'.  Load from `init.el' after
+;; `logging-config'.
+;;
+;; Map:
+;;   Feature:    writing-config
+;;   Load-after: path-support logging-config
+;;   Load-phase: ide
+;;   Keymaps:    none
+;;   Docs:       docs/writing-config.org
+;;   OS:         pandoc texlive imagemagick texlab
 
 ;;; Code:
 (require 'path-support)
@@ -120,7 +128,7 @@
 ;;   :hook ((org-mode org-roam-mode) . visual-fill-column-mode)
 ;;   :custom
 ;;   (visual-fill-column-width 88)                                                   ; or 88 if you’re strict
-;;   (visual-fill-column-center-text t))    
+;;   (visual-fill-column-center-text t))
                                                                                   ; optional but very popular
 
 ;; Soft-wrap lines at the window edge instead of hard line breaks
@@ -189,12 +197,12 @@ turns on `global-whitespace-mode' to use spaces instead of tabs:
   (crafted-writing-configure-whitespace nil t)
 
 ;; overwrites the above to turn to use tabs instead of spaces,
-;; does not turn off global-whitespace-mode, adds a hook to
+;; does not turn off `global-whitespace-mode', adds a hook to
 ;; makefile-mode-hook
  (crafted-writing-configure-whitespace t nil 'makefile-mode)
 
 Instead, use a configuration like this:
-;; turns on global-whitespace-mode to use spaces instead of tabs
+;; turns on `global-whitespace-mode' to use spaces instead of tabs
  (crafted-writing-configure-whitespace nil t)
 
 ;; turn on the buffer-local mode for using tabs instead of spaces.
@@ -214,7 +222,7 @@ Example usage:
 ;; Configure whitespace mode, but turn it on globally.
  (crafted-writing-configure-whitespace nil t)
 
-;; Configure whitespace mode and turn it on only for prog-mode
+;; Configure whitespace mode and turn it on only for `prog-mode'
 ;; and derived modes.
  (crafted-writing-configure-whitespace nil nil 'prog-mode)"
   (if use-tabs
@@ -264,8 +272,8 @@ Example usage:
   (setq fill-column 140                                                            ; Column beyond which line wrapping occurs if it is activated.
         comment-fill-column 140                                                    ; Colujmn to use for 'comment-indent'. If nil, use 'fill-column' instead.
         comment-column 142)                                                        ; Column to indent right-margin comments to.
-  (display-fill-column-indicator-mode 1)                                          ; show fill column indicator 
-  
+  (display-fill-column-indicator-mode 1)                                          ; show fill column indicator
+
   )
 
 ;; Add the custom setup to toml-ts-mode-hook
@@ -335,7 +343,7 @@ Returns t if all are present, nil otherwise.
   t)
 
 (defun my-lang-tex/setup-outline ()
-  "Configure outline-minor-mode for LaTeX buffers.
+  "Configure `outline-minor-mode' for LaTeX buffers.
 
 - Uses LaTeX section commands for headings.
 - Enables buttons, highlighting, and blank lines."
@@ -376,7 +384,7 @@ Returns t if all are present, nil otherwise.
 
   ;; Tree-sitter for parsing.
   (treesit-major-mode-setup)
-  
+
   ;; display flymake project level window.
   (my-flymake/show-project-diagnostics)
   )

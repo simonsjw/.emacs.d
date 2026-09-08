@@ -1,16 +1,24 @@
-;;; keymaps-ui.el --- Windows and UI / Layout keymaps -*- lexical-binding: t; -*-
+;;; keymaps-ui.el --- Window and UI layout keymaps for ui-config. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
+;; Author: Simon Watson
+
 ;;; Commentary:
+
+;; Keymap module for `ui-config' (and window toggles from
+;; `system-window-management').  Prefixes: Windows (`C-c w') and UI /
+;; Layout (`C-c i').  Load after `keymaps-core'.  Menus last in
+;; `keymaps-menus.el'.
 ;;
-;; Centralised definitions for:
-;;   - Windows management (C-c w)
-;;   - UI / Layout helpers (C-c i)
-;;
-;; These maps were previously defined in menu-keys-support.el.
-;; They are moved here so that language files never shadow them.
+;; Map:
+;;   Feature:    keymaps-ui
+;;   Load-after: keymaps-core logging-config
+;;   Load-phase: keymaps
+;;   Keymaps:    keymaps-ui.el
+;;   Docs:       docs/keymaps-ui.org
+;;   OS:         none
 
 ;;; Code:
 
@@ -21,9 +29,8 @@
            :msg "Starting load of the keymaps-ui module."
            :obj t)
 
-;; ----------------------------------------------------------------------
-;;; Customisation groups
-;; ----------------------------------------------------------------------
+;;;; Customisation groups
+;;   --------------------
 
 (defgroup custom-windows ()
   "Window related configuration for Custom Emacs."
@@ -45,9 +52,8 @@
   :group 'custom-ui
   :type 'string)
 
-;; ----------------------------------------------------------------------
-;;; Windows map (C-c w)
-;; ----------------------------------------------------------------------
+;;;; Windows map (C-c w)
+;;   -------------------
 
 (define-prefix-command 'my-key-maps/windows)
 
@@ -80,9 +86,8 @@
   (which-key-add-key-based-replacements
    (concat custom-windows-prefix-key " t") "Toggle pane"))
 
-;; ----------------------------------------------------------------------
-;;; UI / Layout map (C-c i)
-;; ----------------------------------------------------------------------
+;;;; UI / Layout map (C-c i)
+;;   -----------------------
 
 (define-prefix-command 'my-key-maps/ui)
 

@@ -1,20 +1,22 @@
-;;; db-support.el --- database support for emacs setup   -*- lexical-binding: t; -*-
+;;; db-support.el --- PostgreSQL / pq / sqlformat. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
-;; Author: System Crafters Community
-;; Keywords: SQL, postgresSQL
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; This package handles database support
-;; included here:
-;;    * Package phase
-;;    * Code phase
-;;    * Config phase
-;;    * Hook phase
-;;    * keymap phase
+;; PostgreSQL helpers via `pq' and `sqlformat'.  Load from `init.el'
+;; after `logging-config'.
+;;
+;; Map:
+;;   Feature:    db-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: tools
+;;   Keymaps:    none
+;;   Docs:       docs/db-support.org
+;;   OS:         postgresql pgFormatter
 
 ;;; Code:
 

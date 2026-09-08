@@ -1,22 +1,23 @@
-;;; tabline-support.el --- Tab-line configuration  -*- lexical-binding: t -*-
+;;; tabline-support.el --- Built-in tab-line configuration. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
 ;; Author: Simon Watson
-;; Keywords: tabline ui
 
 ;;; Commentary:
 
-;; This module configures and extends Emacs' built-in tab-line functionality
-;; to manage buffers and window workspaces effectively.
-;; It defines custom variables for styling, exceptions, and behaviours,
-;; and provides utility functions for tab management, such as closing tabs
-;; while preserving buffers in other windows where appropriate.
-;; The tab-line is customised for appearance and usability, drawing inspiration
-;; from external resources like blog posts on emulating Atom-like tabs.
-;; Key features include dynamic tab sizing, mode-based exclusions, and
-;; specific buffer enabling.
+;; Built-in `tab-line' configuration: styling, exclusions, and tab
+;; helpers.  Keys live in `keymaps-ui.el'.  Load from `init.el' after
+;; `logging-config'.
+;;
+;; Map:
+;;   Feature:    tabline-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: ui
+;;   Keymaps:    keymaps-ui.el
+;;   Docs:       docs/tabline-support.org
+;;   OS:         none
 
 ;;; Code:
 
@@ -130,7 +131,7 @@ Controls border thickness for visual separation."
 ;; to create a cohesive, modern look inspired by Atom editor tabs.
 
 (set-face-attribute 'tab-line nil                                                 ; Background strip behind all tabs.
-                    :family "source code pro"                                     ; Monospace font for alignment.
+                    :family "JetBrains Mono"                                     ; Monospace font for alignment.
                     :background my-tab-line/background-color                      ; Dark base.
                     :foreground my-tab-line/foreground-color                      ; Steel text.
                     :height my-tab-line/tab-line-height                           ; Scaled height.
@@ -140,7 +141,7 @@ Controls border thickness for visual separation."
                                        :color ,my-tab-line/foreground-color))     ; Border box.
 
 (set-face-attribute 'tab-line-highlight nil                                       ; Tab under mouse hover.
-                    :family "source code pro"
+                    :family "JetBrains Mono"
                     :background my-tab-line/mouse-over-color                      ; Green highlight.
                     :weight 'bold
                     :height my-tab-line/tab-text-height                           ; smaller text
@@ -149,7 +150,7 @@ Controls border thickness for visual separation."
                                        :color ,my-tab-line/foreground-color))     ; Consistent border.
 
 (set-face-attribute 'tab-line-tab nil                                             ; Active tab in another window.
-                    :family "source code pro"
+                    :family "JetBrains Mono"
                     :foreground my-tab-line/background-color                      ; Inverted colours.
                     :background my-tab-line/foreground-color
                     :height my-tab-line/tab-text-height                           ; smaller text
@@ -160,7 +161,7 @@ Controls border thickness for visual separation."
                     :extend t)                                                    ; Extend background to edges.
 
 (set-face-attribute 'tab-line-tab-current nil                                     ; Active tab with focus.
-                    :family "source code pro"
+                    :family "JetBrains Mono"
                     :foreground my-tab-line/focus-tab-foreground-color            ; White-grey text.
                     :background my-tab-line/foreground-color                      ; Steel background.
                     :height my-tab-line/tab-text-height                           ; smaller text
@@ -171,7 +172,7 @@ Controls border thickness for visual separation."
                     :extend t)                                                    ; Extend for full coverage.
 
 (set-face-attribute 'tab-line-tab-inactive nil                                    ; Inactive tabs.
-                    :family "source code pro"
+                    :family "JetBrains Mono"
                     :foreground my-tab-line/foreground-color                      ; Steel text.
                     :background my-tab-line/background-color                      ; Dark background.
                     :height my-tab-line/tab-text-height                           ; smaller text
@@ -182,7 +183,7 @@ Controls border thickness for visual separation."
                     :weight 'bold)                                                ; Bold for visibility.
 
 (set-face-attribute 'tab-line-tab-inactive-alternate nil                          ; Alternate inactive style (unused variant).
-                    :family "source code pro"
+                    :family "JetBrains Mono"
                     :foreground my-tab-line/foreground-color
                     :background my-tab-line/background-color
                     :height my-tab-line/tab-text-height                           ; smaller text
@@ -193,7 +194,7 @@ Controls border thickness for visual separation."
                     :weight 'bold)
 
 (set-face-attribute 'tab-line-tab-modified nil                                    ; Modified (unsaved) tabs.
-                    :family "source code pro"
+                    :family "JetBrains Mono"
                     :foreground my-tab-line/modified-tab-foreground-color         ; Yellow highlight.
                     :height my-tab-line/tab-text-height                           ; smaller text
                     )                                                             ; No background/box to overlay on other faces.

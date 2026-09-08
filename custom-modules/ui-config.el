@@ -1,22 +1,23 @@
-;;; ui-config.el --- UI configuration  -*- lexical-binding: t; -*-
+;;; ui-config.el --- Frame, window, and general UI chrome. -*- lexical-binding: t; -*-
 
-;; Local Variables:
-;; outline-regexp:  ";;;+"
-;; outline-start:  ";;"
-;; outline-level: my-outline-mode/outline-level
-;; End:
-
-;; Copyright (C) 2022
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
-;; Author: System Crafters Community
-;; Keywords: UI User Interface
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Use tabline to manage workspaces
-;; Define useful functions to manage workspaces.
-;; (tabline is built in).
+;; Frame borders, window dividers, and general UI chrome.  Tab-line
+;; lives in `tabline-support.el'; do not confuse the two.  Keys live in
+;; `keymaps-ui.el'.  Load from `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    ui-config
+;;   Load-after: path-support logging-config
+;;   Load-phase: ui
+;;   Keymaps:    keymaps-ui.el
+;;   Docs:       docs/ui-config.org
+;;   OS:         none
 
 ;;; Code:
 
@@ -121,7 +122,7 @@
 ;;
 ;;    2. From the Emacs-Wiki Web site:
 ;;       https://www.emacswiki.org/emacs/BookmarkPlus.
-;;    
+;;
 ;;    3. From the Bookmark+ group customization buffer:
 ;;       `M-x customize-group bookmark-plus', then click link
 ;;       `Commentary'.
@@ -146,7 +147,7 @@
        (other-files
         (remove (expand-file-name "bookmark+-mac.el" bookmarkplus-dir)
                 (directory-files bookmarkplus-dir t "\\.el$"))))
-  
+
   (require 'url)
   (add-to-list 'load-path bookmarkplus-dir)
   (make-directory bookmarkplus-dir t)
@@ -156,7 +157,7 @@
                 (url-copy-file
                  (concat emacswiki-base arg) local-file t))))
           bookmark-files)
-  
+
   ;; Handle native compilation.
   (unless macros-file-already-exists-p
     ;; if bookmark+-mac.el has just been downloaded, it is compiled first to
@@ -283,7 +284,7 @@
 
 (custom-set-variables
  '(outline-minor-mode-cycle t)                                                    ; Enable cycling through outline states by default.
- '(outline-minor-mode-highlight 'override)                                        ; Use the outline face, overwriting attributes of the existing face by default. 
+ '(outline-minor-mode-highlight 'override)                                        ; Use the outline face, overwriting attributes of the existing face by default.
  '(outline-minor-mode-prefix [3 64])                                              ; Set the prefix keys for the mode ([3 64] corresponds to 'C-c @').
  '(outline-minor-mode-use-buttons 'in-margins))                                   ; Use buttons in margins by default
 
@@ -372,7 +373,7 @@ parameters for the minibuffer function."
 ;;;; Manually apply fontification
 ;; -----------------------------------------------------------------------------
 ;; Force reapplication of fonts where jit has failed to manage a high volume of
-;; text added to a buffer in a small period of time. 
+;; text added to a buffer in a small period of time.
 (defun my-refontify-buffer (&optional beg end)
   "Force `font-lock' to re-examine the buffer or the active region.
 With a region, only that region is refontified; otherwise the whole
@@ -406,7 +407,7 @@ BEG and END are optional variables to specify a region to fontify."
 ;; (setq ediff-window-setup-function 'ediff-setup-windows-plain)                  ; prevent frame creation.
 ;; (setq ediff-split-window-function 'ignore)                                     ; Prevent any window splitting
 
-;; 
+;;
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;;; Define key maps
 ;; -----------------------------------------------------------------------------
@@ -429,4 +430,10 @@ BEG and END are optional variables to specify a region to fontify."
 
 (provide 'ui-config)
 ;;; ui-config.el ends here
+
+;; Local Variables:
+;; outline-regexp: ";;;+"
+;; outline-start: ";;"
+;; outline-level: my-outline-mode/outline-level
+;; End:
 

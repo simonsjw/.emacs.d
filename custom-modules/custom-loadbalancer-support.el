@@ -1,15 +1,25 @@
-;;; custom-loadbalancer-support.el --- LoadBalancer configuration -*- mode: emacs-lisp; lexical-binding: t; -*-
+;;; custom-loadbalancer-support.el --- Legacy kdb load-balancer env helpers. -*- lexical-binding: t; -*-
 
-;;; License
-;; Copyright (C) 2022
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
-;; Author: Erik Lundstedt, System Crafters Community
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; This file was made with outline-minor-mode in mind
-;; and therefore have ";;;+"-comments as headers.
+;; Unloaded legacy kdb load-balancer environment helpers.  Not required
+;; from `init.el'.  Do not fold `/home/simon' literals here; that is a
+;; later dedicated PR.  On load-path for manual use after
+;; `logging-config'.
+;;
+;; Map:
+;;   Feature:    custom-loadbalancer-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: tools
+;;   Keymaps:    none
+;;   Docs:       docs/custom-loadbalancer-support.org
+;;   OS:         none
+
 ;;; Code:
 
 ;;; Configure variables
@@ -19,14 +29,13 @@
 (require 'path-support)
 (require 'logging-config)
 (log/debug :fn 'custom-loadbalancer-support
-           :msg "Starting load of the LLM-support module."
+           :msg "Starting load of the custom-loadbalancer-support module."
            :obj t)
 
 ;;;; 1. functions to set/get environmental variables for KDB setup.
 ;;   --------------------------------------------------------------
 (defun loadBalancer/set-env-vars-for-base-config ()
-  "Set up the environmental variables needed for the base kdb/q
-configuration. "
+  "Set environmental variables for the base kdb/q configuration."
 
   ;; Base setup
   ;; ----------
@@ -55,9 +64,8 @@ configuration. "
   )
 
 (defun loadBalancer/set-env-vars-for-loadbalancer-gateway ()
-  "Get environmental variables for the loadbalancer and gateway
-machinery. If not present then set them to a default value. "
-  
+  "Get or default environmental variables for loadbalancer and gateway."
+
   ;; LoadBalancer
   ;; ------------
   (unless (getenv "kdb_loadBalancer_PORT")
@@ -86,9 +94,9 @@ machinery. If not present then set them to a default value. "
   )
 
 (defun loadBalancer/set-env-vars-for-developer()
-  "Set up then environmental variables needed by KDB Developer. "
+  "Set environmental variables needed by KDB Developer."
 
-  ;; AX Libraries 
+  ;; AX Libraries
   ;; ------------
   ;; (additional functionality in Developer)
   (unless (getenv "AXLIBRARIES_HOME")
@@ -124,7 +132,7 @@ machinery. If not present then set them to a default value. "
 
   (unless (getenv "DEVELOPER_EDITOR_DISPLAY_ON_EXECUTE")
     (setenv "DEVELOPER_EDITOR_DISPLAY_ON_EXECUTE" "no"))
-  
+
   (unless (getenv "kdb_developer_PORT")
     (setenv "kdb_developer_PORT" "8081"))
   (unless (getenv "kdb_developer_dir")
@@ -141,7 +149,7 @@ machinery. If not present then set them to a default value. "
   )
 
 (defun loadBalancer/set-env-vars-for-base_q_client()
-  "Set up then environmental variables needed by the base q client. "
+  "Set environmental variables needed by the base q client."
   (unless (getenv "kdb_client_PORT")
     (setenv "kdb_client_PORT" "8080"))
   (unless (getenv "kdb_client_dir")
@@ -156,7 +164,7 @@ machinery. If not present then set them to a default value. "
   )
 
 (defun loadBalancer/set-env-vars-for-dash()
-  "Set up then environmental variables needed by KDB Dash. "
+  "Set environmental variables needed by KDB Dash."
   ;; Dash
   ;; ----
   (unless (getenv "kdb_dash_PORT")
@@ -172,12 +180,11 @@ machinery. If not present then set them to a default value. "
   )
 
 (defun loadBalancer/set-env-vars-for-process-secondary()
-  "Set up then environmental variables needed by secondary processes
-on the loadbalancer.
+  "Set environmental variables for secondary loadbalancer processes.
 
-A Secondary Process is like a service except that it is not attached
-to an HDB so has no memory mapping overhead."
-  
+A secondary process is like a service except that it is not attached
+to an HDB, so it has no memory mapping overhead."
+
   ;; Process Secondary
   ;; -----------------
   (unless (getenv "kdb_process_secondary_PORT")
@@ -198,16 +205,14 @@ to an HDB so has no memory mapping overhead."
   )
 
 (defun loadBalancer/set-env-vars-for-service-equities()
-  "Set up then environmental variables needed by equities services
-on the loadbalancer.
+  "Set environmental variables for equities services on the loadbalancer.
 
-A Service is a process linked to an HDB. Multiple services can be
-attached to the same HDB so care is needed to avoid mutiple writes to
-the same element on disk.
+A service is a process linked to an HDB.  Multiple services can be
+attached to the same HDB, so care is needed to avoid multiple writes
+to the same element on disk.
 
-In this case, the Equities HDNBcontains a set of tables with share 
-price data. "
-  
+In this case, the Equities HDB contains tables with share price data."
+
   ;; Service Equities
   ;; ----------------
   (unless (getenv "kdb_service_equities_PORT")
@@ -227,15 +232,14 @@ price data. "
     (setenv "kdb_service_equities_conda_env" "pyTorch")))
 
 (defun loadBalancer/set-env-vars-for-service-ai()
-  "Set up then environmental variables needed by ai services
-on the loadbalancer.
+  "Set environmental variables for AI services on the loadbalancer.
 
-A Service is a process linked to an HDB. Multiple services can be
-attached to the same HDB so care is needed to avoid mutiple writes to
-the same element on disk.
+A service is a process linked to an HDB.  Multiple services can be
+attached to the same HDB, so care is needed to avoid multiple writes
+to the same element on disk.
 
-In this case, the ai HDB ontains a set of functions integrated into 
-pyTorch and tables containing information from neural networks. "
+In this case, the AI HDB contains PyTorch-integrated functions and
+tables with neural-network information."
 
   ;; Service Ai
   ;; ----------
@@ -255,16 +259,14 @@ pyTorch and tables containing information from neural networks. "
     (setenv "kdb_service_ai_conda_env" "pyTorch")))
 
 (defun loadBalancer/set-env-vars-for-service-reddit()
-  "Set up then environmental variables needed by reddit services
-on the loadbalancer.
+  "Set environmental variables for Reddit services on the loadbalancer.
 
-A Service is a process linked to an HDB. Multiple services can be
-attached to the same HDB so care is needed to avoid mutiple writes to
-the same element on disk.
+A service is a process linked to an HDB.  Multiple services can be
+attached to the same HDB, so care is needed to avoid multiple writes
+to the same element on disk.
 
-In this case, the Reddit HDB contains a set of data from the Reddit
-corpus. "
-  
+In this case, the Reddit HDB contains data from the Reddit corpus."
+
   ;; Service Reddit
   ;; ----------------
   (unless (getenv "kdb_service_ai_PORT")
@@ -286,7 +288,7 @@ corpus. "
 
 
 
-;;;; 2. functions to manage KDB processes. 
+;;;; 2. functions to manage KDB processes.
 ;;   -------------------------------------
 
 
@@ -315,7 +317,7 @@ corpus. "
 
 
 ;;;;; 1. Function to Check and Manage Ports
-;; This is similar to what you might have in your shell scripts, 
+;; This is similar to what you might have in your shell scripts,
 ;; but adapted to be initiated from Emacs.
 (defun loadBalancer/find-next-available-port (start-port)
   "Find the next available port starting from START-PORT."
@@ -355,8 +357,10 @@ corpus. "
      script_file_path_txt
      secondary_threads_txt
      port)
-  "Create a string that can be used with a terminal to start a
-KDB/Q process."
+  "Create a shell command string that starts a KDB/Q process.
+ENV_FILE_TEXT, CONDA_ENV_TXT, SCRIPT_DIR_TXT, Q_EXECUTABLE_TXT,
+SCRIPT_FILE_PATH_TXT and SECONDARY_THREADS_TXT are interpolated into
+the template.  PORT is the listen port."
   (format "source /home/simon/anaconda3/etc/profile.d/conda.sh
              source ${env_file}; \
              conda activate ${conda_env}; \
@@ -384,7 +388,7 @@ KDB/Q process."
        (start-port (getenv "kdb_process_secondary_PORT"))
        (port (loadBalancer/find-next-available-port start-port))
 
-       
+
 
        (loadBalancer/command-string-to-start-Q-process
         env_file_txt
@@ -400,7 +404,8 @@ KDB/Q process."
 ;; You can write functions to send commands to the process, stop it,
 ;; or restart it.
 (defun loadBalancer/send-command-to-process (process-name command)
-  "Send a COMMAND to a process with PROCESS-NAME."
+  "Send to PROCESS-NAME the text COMMAND.
+PROCESS-NAME selects the buffer.  COMMAND is inserted at point-max."
   (let ((buffer (get-buffer (format "*%s*" process-name))))
     (when buffer
       (with-current-buffer buffer
@@ -431,7 +436,7 @@ KDB/Q process."
 
 (defun start-kdb-process (session-name)
   ;; (start-port num-processes)
-  "Start multiple KDB processes from START-PORT up to NUM-PROCESSES."
+  "Start a KDB process session named SESSION-NAME."
   (interactive
    (list
     (read-number "Start Port: ")

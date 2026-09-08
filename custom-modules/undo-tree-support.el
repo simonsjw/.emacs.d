@@ -1,33 +1,25 @@
-;;; undo-tree-support.el --- better undo-tree in emacs -*- lexical-binding: t; -*-
+;;; undo-tree-support.el --- Undo-tree history and persistence. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022
+;; Copyright (C) 2026 Simon Watson
 ;; SPDX-License-Identifier: MIT
 
-;; Author: System Crafters Community
+;; Author: Simon Watson
 
 ;;; Commentary:
 
-;; Get quality undo-tree support in Emacs.
-
-
-
-;;; Packages:
-
-(require 'system-tools)
-(require 'path-support)
-(require 'logging-config)
-(log/debug :fn 'undo-tree-support
-           :msg "Starting load of the undo-tree-support module."
-           :obj t)
-
-;; Undo-tree package
-;; https://gitlab.com/tsc25/undo-tree/-/blob/master/undo-tree.el
-(use-package undo-tree
-  :delight)
-
-(require 'undo-tree)
+;; Undo-tree configuration and persistence under the no-littering
+;; var directory.  Load from `init.el' after `logging-config'.
+;;
+;; Map:
+;;   Feature:    undo-tree-support
+;;   Load-after: path-support logging-config
+;;   Load-phase: ide
+;;   Keymaps:    none
+;;   Docs:       docs/undo-tree-support.org
+;;   OS:         none
 
 ;;; Code:
+
 (global-undo-tree-mode)
 
 
@@ -63,13 +55,13 @@ Note: Requires Emacs version 24.3 or higher."
   :type 'boolean
   :group 'undo-tree)
 
-;; restore undo-tree history for buffer: 
+;; restore undo-tree history for buffer:
 ;;    `undo-tree-load-history` (command)
 ;; (not done by default)
 
 ;; manually save undo history to file for buffer when
 ;; undo-tree-auto-save-history is not t:
-;;    `undo-tree-save-history` 
+;;    `undo-tree-save-history`
 
 
 
@@ -84,6 +76,7 @@ Note: Requires Emacs version 24.3 or higher."
 
 (defadvice undo-tree-make-history-save-file-name
     (after undo-tree activate)
+  "Append .gz to the undo-tree history save file name."
   (setq ad-return-value (concat ad-return-value ".gz")))
 
 
