@@ -1,9 +1,3 @@
-[submodule "etc/INFODYNAMICS/lang-servers/MATLAB-language-server"]
-	path = etc/INFODYNAMICS/lang-servers/MATLAB-language-server
-	url = https://github.com/mathworks/MATLAB-language-server
-[submodule "etc/INFODYNAMICS/lang-servers/texlab"]
-	path = etc/INFODYNAMICS/lang-servers/texlab
-	url = https://github.com/latex-lsp/texlab
 [submodule "custom-packages/org-modern-indent"]
 	path = custom-packages/org-modern-indent
 	url = git@github.com:jdtsmith/org-modern-indent.git

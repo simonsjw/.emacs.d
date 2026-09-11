@@ -13,7 +13,7 @@
 ;; constants (`defconst my-paths/...').  Machine-local state lives
 ;; under `var/$MY_NAME/' (`no-littering-var-directory'); machine-local
 ;; config under `etc/$MY_NAME/' (`no-littering-etc-directory').
-;; `envvar/SYSTEM_NAME' comes from `$MY_NAME' (default INFODYNAMICS).
+;; `envvar/SYSTEM_NAME' comes from `$MY_NAME' (default DEFAULT).
 ;;
 ;; Form-feed characters (`^L') already in this file are historical
 ;; section markers.  Do not add more; new sections use `;;;;' headings.
@@ -32,9 +32,10 @@
 
 
 (defvar envvar/SYSTEM_NAME
-  (or (getenv "MY_NAME") "INFODYNAMICS")
+  (or (getenv "MY_NAME") "DEFAULT")
   "The name of the system on which we are currently running Emacs.")
 
+
 ;; === NO-LITTERING paths + PACKAGE SETUP (all early) ===
 
 (defvar no-littering-var-directory
@@ -49,6 +50,8 @@
 (unless (and no-littering-var-directory no-littering-etc-directory)
   (warn "no-littering-var-directory and/or no-littering-etc-directory were not set in early-init.el"))
 
+(message "no-littering var directory set: %s" no-littering-var-directory)
+(message "no-littering etc directory set: %s" no-littering-etc-directory)
 
 
 ;; set up the info directory.
@@ -61,26 +64,18 @@
   (when (and custom-info-dir (file-directory-p custom-info-dir))
     (add-to-list 'Info-additional-directory-list custom-info-dir)))
 
-
-;;;
-;; Local helper (dependency-free)
-(defun my-on-disk-tools/ensure-directory-exists (dir)
-  "Ensure the directory DIR exists, creating it (and parents) if needed."
-  (unless (file-directory-p dir)
-    (message "Creating directory: %s" dir)
-    (make-directory dir t)))
 
-;; === ALL PATHS AS defconst (value + rich docstring in one place) ===
 
-;;;
+;;; === ALL PATHS AS defconst (value + rich docstring in one place) ===
 
-;; **** eln-cache set in early-init.el
+
+;;;; **** eln-cache set in early-init.el
 (defconst my-paths/eln-cache
   (expand-file-name "eln-cache/" no-littering-etc-directory)
   "Path for the folder for the eln compile cache.")
 
 (defconst my-paths/desktop-layout-folder
-  (expand-file-name "desktop-layout/" no-littering-var-directory)
+  (expand-file-name "var/desktop-layout/" user-emacs-directory)
   "Folder storing desktop layouts for the IDE (uses `window-tree' output).")
 
 (defconst my-paths/spreadsheet-dir
@@ -180,20 +175,9 @@
   (expand-file-name "sql-history/" no-littering-var-directory)
   "Directory for SQL history files.")
 
-(defconst project-templates-archive
-  (expand-file-name "var/project-templates.tar.xz" user-emacs-directory)
-  "Path to the project templates archive file.")
-
-(defconst project-list-file
-  (expand-file-name "projects/project-list.el" no-littering-var-directory)
-  "Location of the project-list.el file used by project.el.")
-
-(defconst project-view/workspace-list-file
-  (expand-file-name "projects/workspace-list.el" no-littering-var-directory)
-  "Location of my custom workspace list.")
-
 (defconst lsp-bin-texlab
-  (expand-file-name "lang-servers/texlab/target/release/texlab" no-littering-etc-directory)
+  (expand-file-name "lang-servers/texlab/target/release/texlab"
+                    no-littering-etc-directory)
   "Path to the texlab language-server binary.")
 
 (defconst dape-adapter-dir
@@ -239,7 +223,7 @@
   (locate-user-emacs-file "etc/images/pretty-speedbar-icons/")
   "Directory containing icons for the pretty-speedbar package.")
 
-;; Cleanups for a perfectly tidy ~/.emacs.d root
+;;;; Cleanups for a perfectly tidy ~/.emacs.d root
 (defconst recentf-save-file
   (expand-file-name "recentf-save.el" no-littering-var-directory)
   "Location of the recent-files list (recentf-save.el).")
@@ -261,8 +245,7 @@
   "Location of the Org-roam locations tracker.")
 
 
-
-;; === Paths that no-littering would set automatically (now explicit) ===
+;;;; === Paths that no-littering would set automatically (now explicit) ===
 
 (defconst abbrev-file-name
   (expand-file-name "abbrev.el" no-littering-etc-directory)
@@ -307,46 +290,19 @@ Creates the folder under var/INFODYNAMICS/.")
 
 
 
-;; === Path setup & directory creation ===
-(message "no-littering var directory set: %s" no-littering-var-directory)
-(message "no-littering etc directory set: %s" no-littering-etc-directory)
-
-;; Ensure main no-littering directories
-(dolist
-    (dir
-     (list
-      no-littering-var-directory
-      no-littering-etc-directory
-      )
-     )
-  (my-on-disk-tools/ensure-directory-exists dir))
-
-;; Ensure all writeable directories (including the new ones)
-(dolist (dir (list my-paths/eln-cache
-                   auto-save-dir
-                   backup-dir
-                   org-preview-latex-image-directory
-                   save-sql-history-dir
-                   my-paths/desktop-layout-folder
-                   my-paths/spreadsheet-dir
-                   dape-adapter-directory-bash
-                   (expand-file-name "dape/" no-littering-var-directory)
-                   (expand-file-name "projects/" no-littering-var-directory)
-                   package-user-dir
-                   (expand-file-name "auto-save-list/" no-littering-var-directory)
-                   (expand-file-name "auto-save/sessions/" no-littering-var-directory)
-                   eshell-directory-name
-                   server-auth-dir
-                   (expand-file-name "tramp/" no-littering-var-directory)
-                   url-configuration-directory))
-  (my-on-disk-tools/ensure-directory-exists dir))
-
-
-;; Load paths
+;;; Load paths
 (add-to-list 'load-path custom-packages-dir)
 (add-to-list 'load-path custom-modules-dir)
 (add-to-list 'load-path custom-system-tools-dir)
 (add-to-list 'load-path custom-prog-mode-dir)
+
+
+;; Local helper (dependency-free)
+(defun my-on-disk-tools/ensure-directory-exists (dir)
+  "Ensure the directory DIR exists, creating it (and parents) if needed."
+  (unless (file-directory-p dir)
+    (message "Creating directory: %s" dir)
+    (make-directory dir t)))
 
 
 ;;;
@@ -363,44 +319,139 @@ Creates the folder under var/INFODYNAMICS/.")
 (setq recentf-save-file recentf-save-file)
 (setq savehist-file savehist-file)
 
-;; Bookmark+
+
+;;; Bookmark+
 (with-eval-after-load 'bookmark+
   (setq bmkp-current-bookmark-file
-        (expand-file-name "bmkp/bookmark-default.bmk" no-littering-var-directory))
+        (expand-file-name "bmkp/bookmark-default.bmk"
+                          no-littering-var-directory))
   (setq bookmark-default-file bmkp-current-bookmark-file)
   (setq bmkp-desktop-default-directory
         (expand-file-name "bmkp/desktops/" no-littering-var-directory))
-  (my-on-disk-tools/ensure-directory-exists bmkp-desktop-default-directory)
   (setq bmkp-bmenu-state-file
-        (expand-file-name "bmkp/emacs-bmk-bmenu-state.el" no-littering-var-directory)))
+        (expand-file-name "bmkp/emacs-bmk-bmenu-state.el"
+                          no-littering-var-directory))
 
-;; Yasnippet
+  (my-on-disk-tools/ensure-directory-exists bmkp-desktop-default-directory)
+  )
+
+
+;;; Yasnippet
 (with-eval-after-load 'yasnippet
   (setq yasnippets-directory-personal
         (expand-file-name "yasnippet/snippets/" no-littering-var-directory))
   (setq yasnippets-directory-default
         (expand-file-name "yasnippet-snippets-1.0/snippets/" package-user-dir))
   (setq yasnippets-directory-yasmate
-        (expand-file-name "yasnippet/yasmate/snippets/" no-littering-var-directory))
+        (expand-file-name "yasnippet/yasmate/snippets/"
+                          no-littering-var-directory))
   (setq yas-snippet-dirs
         (list yasnippets-directory-personal
               yasnippets-directory-default
               yasnippets-directory-yasmate))
+
   (my-on-disk-tools/ensure-directory-exists yasnippets-directory-personal)
-  (my-on-disk-tools/ensure-directory-exists yasnippets-directory-yasmate))
+  (my-on-disk-tools/ensure-directory-exists yasnippets-directory-yasmate)
 
-;; Org Mode dynamic lists
+  )
+
 
-;;;
+;;; Projects and project-view
+(defconst project-templates-archive
+  (expand-file-name "var/project-templates.tar.xz" user-emacs-directory)
+  "Path to the project templates archive file.")
+
+(defconst project-list-file
+  (expand-file-name "projects/project-list.el" no-littering-var-directory)
+  "Location of the project-list.el file used by project.el.")
+
+(with-eval-after-load 'project-view
+  project-view/workspace-list-file
+  (setopt project-view/workspace-list-file
+          (expand-file-name "projects/workspace-list.el"
+                            no-littering-var-directory)
+          )
+  (setopt project-view/cache-file
+          (expand-file-name "projects/project-view-cache.el"
+                            no-littering-var-directory)
+          )
+  )
+
+
+
+;;; Org Mode dynamic lists
+
+
+(defconst org-directory "~/Documents/org"
+  "Root directory for all Org-mode files.")
+
+(defconst org-contacts-directory
+  (expand-file-name "contacts/" org-directory)
+  "Path to the Emacs contacts directory for org-contacts functionality.")
+
 (setq org-contacts-files
-      (directory-files-recursively org-contacts-directory "\\.org$"))
+      (and (file-directory-p org-contacts-directory)
+           (directory-files-recursively org-contacts-directory "\\.org$")))
 (setq org-agenda-files
-      (directory-files-recursively (concat org-directory "/agenda") "\\.org$"))
+      (let ((dir (expand-file-name "agenda/" org-directory)))
+        (and (file-directory-p dir)
+             (directory-files-recursively dir "\\.org$"))))
+
 
 
-;;;
-;; add Key-mappings.
-(add-to-list 'load-path (expand-file-name "custom-modules/keymaps" user-emacs-directory))
+;;; add Key-mappings.
+(add-to-list 'load-path
+             (expand-file-name "custom-modules/keymaps" user-emacs-directory))
+
+
+
+;;; Ensure all writeable directories for directories not waiting on packages loading. 
+
+;; Crate any missing directories.
+(dolist (dir (list
+              ;; Ensure main no-littering directories
+              no-littering-var-directory
+              no-littering-etc-directory
+              
+              my-paths/eln-cache
+              auto-save-dir
+              backup-dir
+              org-preview-latex-image-directory
+              save-sql-history-dir
+              my-paths/desktop-layout-folder
+              my-paths/spreadsheet-dir
+              dape-adapter-directory-bash
+              (expand-file-name "dape/" no-littering-var-directory)
+              (expand-file-name "projects/" no-littering-var-directory)
+              package-user-dir
+              (expand-file-name "auto-save-list/" no-littering-var-directory)
+              (expand-file-name "auto-save/sessions/"
+                                no-littering-var-directory)
+
+              (expand-file-name "bmkp/desktops/" no-littering-var-directory)
+              (expand-file-name "org/" no-littering-var-directory)
+              (file-name-directory project-list-file)
+              
+              eshell-directory-name
+              server-auth-dir
+              (expand-file-name "tramp/" no-littering-var-directory)
+              url-configuration-directory
+
+              org-directory
+              org-contacts-directory
+              org-roam-directory
+              (expand-file-name "agenda/" org-directory)
+              (expand-file-name "notes/" org-directory)
+              (file-name-directory org-default-journal-file)
+              (file-name-directory diary-file)
+
+              )
+             )
+  (my-on-disk-tools/ensure-directory-exists dir))
+
+
+
+
 
 ;;;
 

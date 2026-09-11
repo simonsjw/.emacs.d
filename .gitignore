@@ -9,7 +9,7 @@
 # Compiled / native-compiled Emacs Lisp
 *.elc
 *.eln
-*.eld
+# *.eld - keep this - stores data like desktop configs.
 
 # Logs and backups
 *.log
@@ -62,8 +62,6 @@ var/**/auto-save
 var/**/backups
 var/**/elisp-autofmt/
 var/**/org/persist/
-var/**/project-list.el
-var/**/projectile
 var/**/recentf-save.el
 var/**/savehist.el
 var/**/transient/
